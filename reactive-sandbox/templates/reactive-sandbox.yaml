@@ -1,0 +1,129 @@
+---
+apiVersion: "apps/v1beta1"
+kind: Deployment
+metadata:
+  name: {{ template "reactive-sandbox.fullname" . }}
+  labels:
+    app: {{ template "reactive-sandbox.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "reactive-sandbox.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 9042 # cassandra
+        - containerPort: 9200 # elasticsearch
+        - containerPort: 9092 # kafka
+        - containerPort: 2181 # zookeeper
+        env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: MAX_HEAP_SIZE
+            value: 512m
+          - name: HEAP_NEWSIZE
+            value: 100m
+        readinessProbe:
+          exec:
+            command: [
+              "/bin/bash",
+              "-c",
+              "(/opt/cassandra/bin/nodetool status | grep $POD_IP | grep ^UN) && (wget \"http://$POD_IP:9200/_cat/health\" -O - -q | grep green) && (/opt/kafka/bin/kafka-topics.sh --zookeeper 127.1.0.1 --list) && [ \"$(echo ruok | nc 127.0.0.1 2181)\" = \"imok\" ]"
+            ]
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ template "reactive-sandbox.fullname" . }}-cassandra"
+  labels:
+    app: {{ template "reactive-sandbox.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 9042
+      targetPort: 9042
+      protocol: TCP
+      name: cql
+  selector:
+    app: {{ template "reactive-sandbox.name" . }}
+    release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ template "reactive-sandbox.fullname" . }}-elasticsearch"
+  labels:
+    app: {{ template "reactive-sandbox.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 9200
+      targetPort: 9200
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "reactive-sandbox.name" . }}
+    release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ template "reactive-sandbox.fullname" . }}-kafka"
+  labels:
+    app: {{ template "reactive-sandbox.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 9092
+      targetPort: 9092
+      protocol: TCP
+      name: broker
+  selector:
+    app: {{ template "reactive-sandbox.name" . }}
+    release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ template "reactive-sandbox.fullname" . }}-zookeeper"
+  labels:
+    app: {{ template "reactive-sandbox.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 2181
+      targetPort: 2181
+      protocol: TCP
+      name: client
+  selector:
+    app: {{ template "reactive-sandbox.name" . }}
+    release: {{ .Release.Name }}

@@ -1,0 +1,3 @@
+image:
+  repository: lightbend-docker-registry.bintray.io/rp/reactive-sandbox
+  pullPolicy: IfNotPresent
