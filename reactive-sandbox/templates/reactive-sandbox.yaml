@@ -30,10 +30,22 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-          - name: MAX_HEAP_SIZE
-            value: 512m
-          - name: HEAP_NEWSIZE
-            value: 100m
+          - name: RS_ENABLE_CASSANDRA
+            value: {{ if .Values.cassandra.enabled  }} "1" {{ else }} "0" {{ end }}
+          - name: RS_ENABLE_ELASTICSEARCH
+            value: {{ if .Values.elasticsearch.enabled  }} "1" {{ else }} "0" {{ end }}
+          - name: RS_ENABLE_KAFKA
+            value: {{ if .Values.kafka.enabled  }} "1" {{ else }} "0" {{ end }}
+          - name: RS_ENABLE_ZOOKEEPER
+            value: {{ if .Values.zookeeper.enabled  }} "1" {{ else }} "0" {{ end }}
+          - name: RS_CASSANDRA_HEAP
+            value: {{ .Values.cassandra.heap }}
+          - name: RS_ELASTICSEARCH_HEAP
+            value: {{ .Values.elasticsearch.heap }}
+          - name: RS_KAFKA_HEAP
+            value: {{ .Values.kafka.heap }}
+          - name: RS_ZOOKEEPER_HEAP
+            value: {{ .Values.zookeeper.heap }}
         readinessProbe:
           exec:
             command: [
@@ -43,6 +55,8 @@ spec:
             ]
           initialDelaySeconds: 15
           timeoutSeconds: 5
+
+{{ if .Values.cassandra.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -64,6 +78,9 @@ spec:
   selector:
     app: {{ template "reactive-sandbox.name" . }}
     release: {{ .Release.Name }}
+{{ end }}
+
+{{ if .Values.elasticsearch.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -85,6 +102,9 @@ spec:
   selector:
     app: {{ template "reactive-sandbox.name" . }}
     release: {{ .Release.Name }}
+{{ end }}
+
+{{ if .Values.kafka.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -106,6 +126,9 @@ spec:
   selector:
     app: {{ template "reactive-sandbox.name" . }}
     release: {{ .Release.Name }}
+{{ end }}
+
+{{ if .Values.zookeeper.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -127,3 +150,4 @@ spec:
   selector:
     app: {{ template "reactive-sandbox.name" . }}
     release: {{ .Release.Name }}
+{{ end }}
