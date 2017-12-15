@@ -39,19 +39,20 @@ spec:
           - name: RS_ENABLE_ZOOKEEPER
             value: {{ if .Values.zookeeper.enabled  }} "1" {{ else }} "0" {{ end }}
           - name: RS_CASSANDRA_HEAP
-            value: {{ .Values.cassandra.heap }}
+            value: "{{- .Values.cassandra.heap -}}"
           - name: RS_ELASTICSEARCH_HEAP
-            value: {{ .Values.elasticsearch.heap }}
+            value: "{{- .Values.elasticsearch.heap -}}"
           - name: RS_KAFKA_HEAP
-            value: {{ .Values.kafka.heap }}
+            value: "{{- .Values.kafka.heap -}}"
           - name: RS_ZOOKEEPER_HEAP
-            value: {{ .Values.zookeeper.heap }}
+            value: "{{- .Values.zookeeper.heap -}}"
         readinessProbe:
           exec:
+            # todo - readiness check without using subshells?
             command: [
               "/bin/bash",
               "-c",
-              "(/opt/cassandra/bin/nodetool status | grep $POD_IP | grep ^UN) && (wget \"http://$POD_IP:9200/_cat/health\" -O - -q | grep green) && (/opt/kafka/bin/kafka-topics.sh --zookeeper 127.1.0.1 --list) && [ \"$(echo ruok | nc 127.0.0.1 2181)\" = \"imok\" ]"
+              "([ \"$RS_ENABLE_CASSANDRA\" = 0 ] || (/opt/cassandra/bin/nodetool status | grep $POD_IP | grep ^UN)) && ([ \"$RS_ENABLE_ELASTICSEARCH\" = 0 ] || (wget \"http://$POD_IP:9200/_cat/health\" -O - -q | grep green)) && ([ \"$RS_ENABLE_KAFKA\" = 0 ] || /opt/kafka/bin/kafka-topics.sh --zookeeper 127.1.0.1 --list) && ([ \"$RS_ENABLE_ZOOKEEPER\" = 0 ] || [ \"$(echo ruok | nc 127.0.0.1 2181)\" = \"imok\" ])"
             ]
           initialDelaySeconds: 15
           timeoutSeconds: 5
