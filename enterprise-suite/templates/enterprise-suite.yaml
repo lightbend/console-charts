@@ -1,0 +1,107 @@
+{{ if .Values.reactiveconsole.enabled }}
+---
+# todo: pipeline could generate this yaml from the rp tool
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: reactive-console
+  labels:
+    appName: reactive-console
+    appNameVersion: reactive-console
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      appNameVersion: reactive-console
+  template:
+    metadata:
+      labels:
+        appName: reactive-console
+        appNameVersion: reactive-console
+    spec:
+      containers:
+      - name: reactive-console
+        image: "{{ .Values.reactiveconsole.image.repository }}:{{ .Values.reactiveconsole.version }}"
+        ports:
+        - containerPort: 9000
+          name: read-only-http
+        - containerPort: 9001
+          name: read-write-http
+        imagePullPolicy: IfNotPresent
+        volumeMounts: []
+        env:
+        - name: RP_APP_NAME
+          value: reactive-console
+        - name: RP_APP_TYPE
+          value: basic
+        - name: RP_APP_VERSION
+          value: 0.0.1-SNAPSHOT
+        - name: RP_ENDPOINTS
+          value: READ_ONLY_HTTP,READ_WRITE_HTTP
+        - name: RP_ENDPOINTS_COUNT
+          value: '2'
+        - name: RP_ENDPOINT_0_BIND_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_0_BIND_PORT
+          value: '9000'
+        - name: RP_ENDPOINT_0_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_0_PORT
+          value: '9000'
+        - name: RP_ENDPOINT_1_BIND_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_1_BIND_PORT
+          value: '9001'
+        - name: RP_ENDPOINT_1_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_1_PORT
+          value: '9001'
+        - name: RP_ENDPOINT_READ_ONLY_HTTP_BIND_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_READ_ONLY_HTTP_BIND_PORT
+          value: '9000'
+        - name: RP_ENDPOINT_READ_ONLY_HTTP_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_READ_ONLY_HTTP_PORT
+          value: '9000'
+        - name: RP_ENDPOINT_READ_WRITE_HTTP_BIND_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_READ_WRITE_HTTP_BIND_PORT
+          value: '9001'
+        - name: RP_ENDPOINT_READ_WRITE_HTTP_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_ENDPOINT_READ_WRITE_HTTP_PORT
+          value: '9001'
+        - name: RP_JAVA_OPTS
+          value: "-Dconfig.resource=rp-application.conf"
+        - name: RP_KUBERNETES_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RP_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: RP_MODULES
+          value: common,service-discovery
+        - name: RP_PLATFORM
+          value: kubernetes
+      volumes: []
+
+{{ end }}

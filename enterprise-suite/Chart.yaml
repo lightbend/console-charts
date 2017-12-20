@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Lightbend Enterprise Suite
+name: enterprise-suite
+version: 0.0.1
