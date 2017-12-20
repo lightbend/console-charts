@@ -8,7 +8,7 @@
 
 2. Edit Chart.yaml for the respective subdirectory (e.g. reactive-sandbox), updating version as necessary.
 
-3. Create the package: `helm package reactive-sandbox`
+3. Create the package: `helm package reactive-sandbox` or `helm package enterprise-suite`
 
 4. Move the file into docs: `mv reactive-sandbox-0.1.3.tgz docs`
 
