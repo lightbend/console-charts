@@ -24,7 +24,7 @@ Releasing the enterprise-suite is partially automated. To release, see *Enterpri
 
 ## Maintenance
 
-Enterprise Suite Platform Team <es-platform@lightbend.com>
+Enterprise Suite Team <es-all@lightbend.com>
 
 ## License
 
