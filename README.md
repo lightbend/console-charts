@@ -2,11 +2,17 @@
 
 ## Publishing Charts
 
+### enterprise-suite
+
+Releasing the enterprise-suite is partially automated. To release, see *Enterprise Suite Release Process* on Google Drive.
+
+### reactive-sandbox
+
 > These are manual steps until we have the time to automate them.
 
-1. First, make sure you've published the new image if necessary.
+1. First, make sure you've published the new image. See *Platform Tooling Release Process* on Google Drive.
 
-2. Edit Chart.yaml for the respective subdirectory (e.g. reactive-sandbox), updating version as necessary.
+2. Edit `reactive-sandbox/Chart.yaml`, updating version as necessary.
 
 3. Create the package: `helm package reactive-sandbox` or `helm package enterprise-suite`
 
