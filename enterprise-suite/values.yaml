@@ -1,6 +1,0 @@
-reactiveconsole:
-  enabled: true
-  version: 0.0.1
-  image:
-    repository: lightbend-docker-es-registry.bintray.io/reactive-console
-    pullPolicy: IfNotPresent

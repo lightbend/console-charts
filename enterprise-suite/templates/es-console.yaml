@@ -1,0 +1,26 @@
+{{ if .Values.reactiveConsole.enabled }}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ template "enterprise-suite.fullname" . }}-reactive-console"
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-reactive-console
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ template "enterprise-suite.name" . }}-reactive-console
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-reactive-console
+        image: "{{ .Values.reactiveConsole.image.repository }}:{{ .Values.reactiveConsole.version }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+{{ end }}

@@ -1,0 +1,13 @@
+prometheus:
+  enabled: true
+  version: 0 #prometheus-version
+  image:
+    repository: lightbend-docker-registry.bintray.io/enterprise-suite/es-prometheus
+    pullPolicy: IfNotPresent
+
+reactiveConsole:
+  enabled: true
+  version: 0 #reactive-console-version
+  image:
+    repository: lightbend-docker-registry.bintray.io/enterprise-suite/es-console
+    pullPolicy: IfNotPresent
