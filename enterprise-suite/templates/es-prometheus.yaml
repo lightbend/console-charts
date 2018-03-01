@@ -23,4 +23,24 @@ spec:
         ports:
         - name: http
           containerPort: 9090
+        env:
+        - name: ES_PROMETHEUS_DYNAMIC_ARGS
+          value: "--log.level=debug --web.route-prefix=/ --web.external-url={{ .Values.enterpriseSuite.ingressPrefix }}service/prometheus"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ template "enterprise-suite.fullname" . }}-prometheus"
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-prometheus
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ template "enterprise-suite.name" . }}-prometheus
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
 {{ end }}

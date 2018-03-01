@@ -23,4 +23,26 @@ spec:
         ports:
         - containerPort: 80
           name: http
+        env:
+        - name: ES_PROMETHEUS_SERVICE
+          value: "{{ template "enterprise-suite.fullname" . }}-prometheus:9090"
+        - name: ES_GRAFANA_SERVICE
+          value: "{{ template "enterprise-suite.fullname" . }}-grafana:3000"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ template "enterprise-suite.fullname" . }}-reactive-console"
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-reactive-console
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ template "enterprise-suite.name" . }}-reactive-console
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
 {{ end }}

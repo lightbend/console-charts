@@ -1,3 +1,15 @@
+enterpriseSuite:
+  ingressEnabled: false
+  ingressHost: null
+  ingressPrefix: /
+
+grafana:
+  enabled: true
+  version: 5.0.0
+  image:
+    repository: grafana/grafana
+    pullPolicy: IfNotPresent
+
 prometheus:
   enabled: true
   version: 0 #prometheus-version

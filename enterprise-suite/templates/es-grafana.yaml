@@ -1,0 +1,47 @@
+{{ if .Values.grafana.enabled }}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ template "enterprise-suite.fullname" . }}-grafana"
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-grafana
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ template "enterprise-suite.name" . }}-grafana
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-grafana
+        image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.version }}"
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GF_SERVER_ROOT_URL
+          value: "%(protocol)s://%(domain)s:%(http_port)s{{ .Values.enterpriseSuite.ingressPrefix }}service/grafana"
+        ports:
+        - containerPort: 3000
+          name: http
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ template "enterprise-suite.fullname" . }}-grafana"
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-grafana
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ template "enterprise-suite.name" . }}-grafana
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+{{ end }}
+

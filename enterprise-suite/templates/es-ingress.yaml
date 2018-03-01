@@ -1,0 +1,19 @@
+{{ if .Values.enterpriseSuite.ingressEnabled }}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "enterprise-suite.name" . }}-reactive-console
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: "{{ .Values.enterpriseSuite.ingressPrefix }}"
+        backend:
+          serviceName: "{{ template "enterprise-suite.fullname" . }}-reactive-console"
+          servicePort: 80
+        {{ if .Values.enterpriseSuite.ingressHost }}host: "{{ .Values.enterpriseSuite.ingressHost }}"{{ end }}
+{{ end }}
