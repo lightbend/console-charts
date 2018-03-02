@@ -1,0 +1,47 @@
+{{ if .Values.nodeExporter.enabled }}
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: "{{ template "enterprise-suite.fullname" . }}-node-exporter"
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-node-exporter
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  template:
+    metadata:
+      name:  "{{ template "enterprise-suite.fullname" . }}-node-exporter"
+      labels:
+        name: "{{ template "enterprise-suite.fullname" . }}-node-exporter"
+      annotations:
+        prometheus.io.scrape: "true"
+    spec:
+      hostPID: true
+      hostNetwork: true
+      containers:
+      - name: {{ .Chart.Name }}-node-exporter
+        image: "{{ .Values.nodeExporter.image.repository }}:{{ .Values.nodeExporter.version }}"
+        imagePullPolicy: {{ .Values.nodeExporter.image.pullPolicy }}
+        securityContext:
+          privileged: true
+        args:
+          - --path.procfs=/host/proc
+          - --path.sysfs=/host/sys
+          - --collector.filesystem.ignored-mount-points=(/etc|/dev|.*/var/lib/).*
+          - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs|tmpfs|nfsd|subfs|devfs|kernfs|ignore|none|smbfs|cifs|rootfs)$
+          - --no-collector.netstat
+        ports:
+          - name: metrics
+            containerPort: 9100
+            hostPort: 9100
+        volumeMounts:
+          - name: hostfs
+            mountPath: /host
+            readOnly: true
+      volumes:
+        - name: hostfs
+          hostPath:
+            path: /
+{{ end }}
+

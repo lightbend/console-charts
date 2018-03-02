@@ -10,6 +10,13 @@ grafana:
     repository: grafana/grafana
     pullPolicy: IfNotPresent
 
+nodeExporter:
+  enabled: true
+  version: v0.15.2
+  image:
+    repository: prom/node-exporter
+    pullPolicy: IfNotPresent
+
 prometheus:
   enabled: true
   version: 0 #prometheus-version

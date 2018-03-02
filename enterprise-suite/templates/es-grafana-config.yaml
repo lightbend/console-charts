@@ -1,0 +1,155 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-grafana
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: {{ template "enterprise-suite.name" . }}-grafana
+data:
+  grafana.ini: |-
+    app_mode = production
+    instance_name = ${HOSTNAME}
+
+    [paths]
+    ;data = /var/lib/grafana
+    ;logs = /var/log/grafana
+    ;plugins = /var/lib/grafana/plugins
+    provisioning = conf/provisioning
+
+    [server]
+    protocol = http
+    ;http_addr =
+    ;http_port = 3000
+    ;domain = localhost
+    ;enforce_domain = false
+    ;root_url = http://localhost:3000
+    ;router_logging = false
+    ;static_root_path = public
+    ;enable_gzip = false
+    ;cert_file =
+    ;cert_key =
+    ;socket =
+
+    [database]
+    # Either "mysql", "postgres" or "sqlite3", it's your choice
+    ;type = sqlite3
+    ;host = 127.0.0.1:3306
+    ;name = grafana
+    ;user = root
+    # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
+    ;password =
+
+    # Use either URL or the previous fields to configure the database
+    # Example: mysql://user:secret@host:port/database
+    ;url =
+
+    # For "postgres" only, either "disable", "require" or "verify-full"
+    ;ssl_mode = disable
+
+    # For "sqlite3" only, path relative to data_path setting
+    ;path = grafana.db
+
+    # Max idle conn setting default is 2
+    ;max_idle_conn = 2
+
+    # Max conn setting default is 0 (mean not set)
+    ;max_open_conn =
+
+    # Set to true to log the sql calls and execution times.
+    log_queries =
+
+    #################################### Session ####################################
+    [session]
+    # Either "memory", "file", "redis", "mysql", "postgres", default is "file"
+    ;provider = file
+
+    # Provider config options
+    # memory: not have any config yet
+    # file: session dir path, is relative to grafana data_path
+    # redis: config like redis server e.g. `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+    # mysql: go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
+    # postgres: user=a password=b host=localhost port=5432 dbname=c sslmode=disable
+    ;provider_config = sessions
+
+    cookie_name = grafana_sess
+
+    session_life_time = 86400
+
+    [analytics]
+    reporting_enabled = false
+    check_for_updates = false
+
+    [security]
+    admin_user = admin
+    admin_password = admin
+    secret_key = SW2YcwTIb9zpOOhoPsMm
+    disable_gravatar = true
+
+    [dashboards]
+    versions_to_keep = 20
+
+    [users]
+    allow_sign_up = false
+    allow_org_create = true
+    auto_assign_org = true
+
+    auto_assign_org_role = Admin
+
+    # "dark" or "light")
+    default_theme = dark
+
+    [auth]
+    #disable_login_form = true
+    #disable_signout_menu = true
+
+    [auth.anonymous]
+    enabled = true
+    org_name = "Main Org."
+    org_role = "Admin"
+
+    [log]
+    mode = console
+    # "debug", "info", "warn", "error", "critical"
+    level = info
+
+    # For "console" mode only
+    [log.console]
+    ;level =
+
+    # log line format, valid options are text, console and json
+    ;format = console
+
+    [alerting]
+    enabled = false
+
+    # Metrics available at HTTP API Url /metrics
+    [metrics]
+    enabled           = true
+    interval_seconds  = 10
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ template "enterprise-suite.name" . }}-grafana-data-sources
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: {{ template "enterprise-suite.name" . }}-grafana-data-sources
+data:
+  enterprise-suite.yaml: |-
+    apiVersion: 1
+
+    datasources:
+    - name: Enterprise Suite
+      type: prometheus
+      access: proxy
+      orgId: 1
+      url: http://{{ template "enterprise-suite.fullname" . }}-prometheus:9090
+      withCredentials: false
+      isDefault: true
+      version: 1
+      editable: false

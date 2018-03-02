@@ -19,13 +19,27 @@ spec:
       containers:
       - name: {{ .Chart.Name }}-prometheus
         image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.version }}"
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.prometheus.image.pullPolicy }}
         ports:
         - name: http
           containerPort: 9090
         env:
         - name: ES_PROMETHEUS_DYNAMIC_ARGS
           value: "--log.level=debug --web.route-prefix=/ --web.external-url={{ .Values.enterpriseSuite.ingressPrefix }}service/prometheus"
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: 9090
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+        volumeMounts:
+          - name: config
+            mountPath: /etc/prometheus
+      terminationGracePeriodSeconds: 300
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "enterprise-suite.name" . }}-prometheus
 ---
 kind: Service
 apiVersion: v1

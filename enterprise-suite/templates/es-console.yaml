@@ -19,7 +19,7 @@ spec:
       containers:
       - name: {{ .Chart.Name }}-reactive-console
         image: "{{ .Values.reactiveConsole.image.repository }}:{{ .Values.reactiveConsole.version }}"
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.reactiveConsole.image.pullPolicy }}
         ports:
         - containerPort: 80
           name: http
