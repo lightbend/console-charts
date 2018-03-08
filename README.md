@@ -1,10 +1,24 @@
 # helm-charts
 
+Contains public Helm charts for various Lightbend projects. This project is hosted on [GitHub Pages](https://lightbend.github.io/helm-charts/index.yaml).
+
+## Setup
+
+```bash
+helm init
+helm repo add lightbend-helm-charts https://lightbend.github.io/helm-charts
+helm update
+```
+
+## Installation
+
+Refer to the documentation for installation instructions.
+
 ## Publishing Charts
 
 ### enterprise-suite
 
-Releasing the enterprise-suite is partially automated. To release, see *Enterprise Suite Release Process* on Google Drive.
+Releasing the enterprise-suite is automated. To release, see *Enterprise Suite Release Process* on Google Drive.
 
 ### reactive-sandbox
 
