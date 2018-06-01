@@ -1,48 +1,69 @@
-{{ if .Values.reactiveConsole.enabled }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lightbend
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: "{{ template "enterprise-suite.fullname" . }}-reactive-console"
-  labels:
-    app: {{ template "enterprise-suite.name" . }}-reactive-console
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: es-console
+  namespace: lightbend
 spec:
   template:
     metadata:
       labels:
-        app: {{ template "enterprise-suite.name" . }}-reactive-console
-        release: {{ .Release.Name }}
+        run: es-console
     spec:
       containers:
-      - name: {{ .Chart.Name }}-reactive-console
-        image: "{{ .Values.reactiveConsole.image.repository }}:{{ .Values.reactiveConsole.version }}"
-        imagePullPolicy: {{ .Values.reactiveConsole.image.pullPolicy }}
+      - name: es-console
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:v0.0.1
         ports:
         - containerPort: 80
-          name: http
-        env:
-        - name: ES_PROMETHEUS_SERVICE
-          value: "{{ template "enterprise-suite.fullname" . }}-prometheus:9090"
-        - name: ES_GRAFANA_SERVICE
-          value: "{{ template "enterprise-suite.fullname" . }}-grafana:3000"
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: config-volume
+          configMap:
+            name: es-console
+
 ---
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
-  name: "{{ template "enterprise-suite.fullname" . }}-reactive-console"
-  labels:
-    app: {{ template "enterprise-suite.name" . }}-reactive-console
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: expose-es-console
+  namespace: lightbend
 spec:
-  selector:
-    app: {{ template "enterprise-suite.name" . }}-reactive-console
   ports:
-  - protocol: TCP
-    port: 80
+  - port: 80
+    protocol: TCP
     targetPort: 80
-{{ end }}
+    nodePort: 30080
+  selector:
+    run: es-console
+  type: NodePort
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: es-console
+  namespace: lightbend
+data:
+  default.conf: |-
+    server {
+      listen 80;
+      server_name localhost;
+
+      location / {
+        root  /usr/share/nginx/html;
+        index index.html index.htm;
+        try_files $uri$args $uri$args/ /index.html;
+      }
+
+      location /service/prometheus/ {
+        proxy_pass http://prometheus-server/;
+      }
+    }
