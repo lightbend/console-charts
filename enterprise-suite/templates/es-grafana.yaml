@@ -1,62 +1,222 @@
-{{ if .Values.grafana.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exporter-graphs-cm
+  namespace: lightbend
+data:
+  # default setting
+  ernie.json: |
+    []
+  akka-exporter.json: |
+    [
+      {"graphName":"Running Actors", "promQL":"akka_actor_running_actors{workload=\"$workloadId\"}"},
+      {"graphName":"Sent Messages", "promQL":"akka_actor_sent_messages{workload=\"$workloadId\"}"},
+      {"graphName":"Processed Messages", "promQL":"akka_actor_processed_messages{workload=\"$workloadId\"}"},
+      {"graphName":"Unhandled Messages", "promQL":"akka_actor_unhandled_message{workload=\"$workloadId\"}"},
+      {"graphName":"Actor Failures", "promQL":"akka_actor_actor_failure{workload=\"$workloadId\"}"},
+      {"graphName":"Dead Letters", "promQL":"akka_actor_dead_letter{workload=\"$workloadId\"}"}
+    ]
+  kafka-exporter.json: |
+    [
+        {"graphName":"Broker Messages in ", "promQL": "irate(kafka_server_brokertopicmetrics_messagesin_total[1m])"},
+        {"graphName":"Bytes In", "promQL": "irate(kafka_server_brokertopicmetrics_bytesin_total[1m])"},
+        {"graphName":"Bytes Out", "promQL": "irate(kafka_server_brokertopicmetrics_bytesout_total[1m])"},
+        {"graphName":"Log Size Growth", "promQL": "irate(kafka_log_size[1m])"},
+        {"graphName":"Produce Requests", "promQL": "irate(kafka_server_brokertopicmetrics_totalproducerequests_total[1m])"},
+        {"graphName":"Fetch Consumer Requests", "promQL": "irate(kafka_server_brokertopicmetrics_totalfetchrequests_total[1m])"},
+        {"graphName":"Fetch Follower Requests", "promQL": "irate(kafka_server_brokertopicmetrics_totalfetchrequests_total[1m])"},
+        {"graphName":"Leader Count", "promQL": "kafka_server_replicamanager_leadercount"},
+        {"graphName":"Under Replicated Partitions", "promQL": "kafka_server_replicamanager_underreplicatedpartitions"},
+        {"graphName":"Offline Partition Count", "promQL": "kafka_controller_kafkacontroller_offlinepartitionscount"},
+        {"graphName":"Active Controller Count", "promQL": "kafka_controller_kafkacontroller_activecontrollercount"},
+        {"graphName":"Leader Elections", "promQL": "kafka_controller_controllerstats_leaderelectionrateandtimems"},
+        {"graphName":"Unclean Leader Elections", "promQL": "kafka_controller_controllerstats_uncleanleaderelectionspersec"},
+        {"graphName":"Last Isr Shrink", "promQL": "kafka_server_replicamanager_isrshrinks_total"},
+        {"graphName":"Last Isr Expand", "promQL": "kafka_server_replicamanager_isrexpands_total"},
+        {"graphName":"JVM Memory Used", "promQL": "sum by (statefulset_kubernetes_io_pod_name)(jvm_memory_bytes_used{kubernetes_namespace='kafka'})"},
+        {"graphName":"JVM GC Time Young Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Young Generation'}"},
+        {"graphName":"JVM GC Time Old Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Old Generation'}"}
+    ]
+  zookeeper-exporter.json: |
+    [
+        {"graphName":"Average Latency", "promQL": "avg(zk_avg_latency)"},
+        {"graphName":"Synced Followers", "promQL": "zk_synced_followers"},
+        {"graphName":"Open File Descriptors", "promQL": "zk_open_file_descriptor_count"},
+        {"graphName":"Pending Syncs", "promQL": "zk_pending_syncs"},
+        {"graphName":"Connections", "promQL": "zk_num_alive_connections"}
+    ]
+  cassandra-exporter.json: |
+    [
+        {"graphName":"Storage", "promQL": "irate(cassandra_storage_load[1m])"},
+        {"graphName":"Reads", "promQL": "irate(cassandra_clientrequest_latency{clientrequest='Read'}[1m])"},
+        {"graphName":"Writes", "promQL": "irate(cassandra_clientrequest_latency{clientrequest='Write'}[1m])"},
+        {"graphName":"Read Latency", "promQL": "irate(cassandra_clientrequest_totallatency{clientrequest='Read'}[1m])"},
+        {"graphName":"Write Latency", "promQL": "irate(cassandra_clientrequest_totallatency{clientrequest='Write'}[1m])"}
+    ]
+  redis-exporter.json: |
+    [
+        {"graphName":"Redis Memory Used", "promQL":"redis_memory_used_bytes"},
+        {"graphName":"Commands Processed", "promQL":"irate(redis_commands_processed_total[1m])"},
+        {"graphName":"Keys Evicted", "promQL":"redis_evicted_keys_total"},
+        {"graphName":"Connections", "promQL":"redis_connected_clients"}
+    ]
+  memcached-exporter.json: |
+   [
+      {"graphName":"Miss Ratio", "promQL":"sum (memcached_commands_total{status=\"miss\"}) by (workload) / sum (memcached_commands_total) by (workload)"},
+      {"graphName":"Evictions", "promQL":"sum (irate(memcached_items_evicted_total[1m])) by (wokrload)"},
+      {"graphName":"Connections Current", "promQL":"sum (memcached_current_connections) by (wokrload)"},
+      {"graphName":"Connections Total Rate", "promQL":"sum (irate(memcached_connections_total[1m])) by (wokrload)"},
+      {"graphName":"Items Current", "promQL":"sum (memcached_current_items) by (wokrload)"},
+      {"graphName":"Cache Free", "promQL":"sum (memcached_current_bytes) by (workload) / sum (memcached_limit_bytes)  by (workload) "},
+      {"graphName":"Items Evicted", "promQL":"sum(irate(memcached_items_evicted_total[1m])) by (workload)"},
+      {"graphName":"Items Reclaimed Rate", "promQL":"sum(irate(memcached_items_reclaimed_total[1m])) by (workload)"},
+      {"graphName":"Total Commands Rate", "promQL":"sum (irate(memcached_commands_total[1m])) by (command, workload)"},
+      {"graphName":"Read Bytes Rate", "promQL":"sum(irate(memcached_read_bytes_total[1m])) by (workload)"},
+      {"graphName":"Written Bytes Rate", "promQL":"sum(irate(memcached_written_bytes_total[1m])) by (workload)"}
+   ]
+
+# Job to add data-source to grafana
+# 1. wait till grafana is up
+# 2. add prometheus data source to grafana-server.
+# Note: The IPaddress here is the address provided by minikube service list
+# this IP adress is not static, even for minikube
+# Please note, browser should be able reach this IP-Address, it cannot be some internal IP address within kubernetes.
+# like prometheus-server.lightbend will not work
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: grafana-datasource-cm
+  namespace: lightbend
+data:
+  prometheus-datasource.json: |
+      {
+        "name": "Prometheus Lightbend",
+        "type": "prometheus",
+        "url": "http://192.168.99.100:30090",
+        "access": "direct",
+        "basicAuth": false
+      }
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: add-grafana-datasource
+  namespace: lightbend
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: wait-grafana
+        image: radial/busyboxplus:curl
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'until curl -s http://grafana-server.lightbend:3000/login > /dev/null 2>&1 ; do echo waiting for grafana; sleep 2; done;']
+      containers:
+      - name: add-prometheus-datasource
+        image: radial/busyboxplus:curl
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        workingDir: /mnt/grafana/dashboards
+        args:
+          - >
+            for file in *-datasource.json ; do
+              if [ -e "$file" ] ; then
+                echo "importing $file" &&
+                curl --silent --fail --show-error \
+                  --request POST http://admin:admin@grafana-server.lightbend:3000/api/datasources \
+                  --header "Content-Type: application/json" \
+                  --header "Accept: application/json" \
+                  --data-binary "@$file" >> /tmp/datasource 2>&1  ;
+                echo "" ;
+              fi
+            done ;
+
+        volumeMounts:
+        - name: grafana-datasource
+          mountPath: /mnt/grafana/dashboards
+      restartPolicy: Never
+      volumes:
+      - name: grafana-datasource
+        configMap:
+          name: grafana-datasource-cm
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grafana
+    component: "server"
+  name: grafana-server
+  namespace: lightbend
+spec:
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app: grafana
+    component: "server"
+  type: "ClusterIP"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expose-grafana
+  namespace: lightbend
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    nodePort: 30030
+  selector:
+    app: grafana
+    component: server
+  type: NodePort
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: "{{ template "enterprise-suite.fullname" . }}-grafana"
+  name: grafana-server
+  namespace: lightbend
   labels:
-    app: {{ template "enterprise-suite.name" . }}-grafana
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app: grafana
+    component: server
 spec:
+  replicas: 1
   template:
     metadata:
       labels:
-        app: {{ template "enterprise-suite.name" . }}-grafana
-        release: {{ .Release.Name }}
+        app: grafana
+        component: server
     spec:
       containers:
-      - name: {{ .Chart.Name }}-grafana
-        image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.version }}"
-        imagePullPolicy: {{ .Values.grafana.image.pullPolicy }}
+      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.1
+        name: grafana-sever
         env:
-        - name: GF_SERVER_ROOT_URL
-          value: "%(protocol)s://%(domain)s:%(http_port)s{{ .Values.enterpriseSuite.ingressPrefix }}service/grafana"
-        - name: GF_SECURITY_SECRET_KEY
-          value: todochangemerandomgeneratefromhelm
+          # The following env variables set up basic auth with the default admin user and admin password.
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "false"
         ports:
-        - containerPort: 3000
-          name: http
+          - containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: 3000
         volumeMounts:
-          - name: config
-            mountPath: /etc/grafana
-          - name: config-data-sources
-            mountPath: /usr/share/grafana/conf/provisioning/datasources
-      terminationGracePeriodSeconds: 300
+        - name: grafana-dashboards
+          mountPath: /usr/share/grafana/public/conf
       volumes:
-        - name: config
-          configMap:
-            name: {{ template "enterprise-suite.name" . }}-grafana
-        - name: config-data-sources
-          configMap:
-            name: {{ template "enterprise-suite.name" . }}-grafana-data-sources
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: "{{ template "enterprise-suite.fullname" . }}-grafana"
-  labels:
-    app: {{ template "enterprise-suite.name" . }}-grafana
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-spec:
-  selector:
-    app: {{ template "enterprise-suite.name" . }}-grafana
-  ports:
-  - protocol: TCP
-    port: 3000
-    targetPort: 3000
-{{ end }}
-
+      - name: grafana-dashboards
+        configMap:
+          name: exporter-graphs-cm
