@@ -220,8 +220,8 @@ data:
   akka-exporter.json: |
     [
       {"graphName":"Running Actors", "promQL":"akka_actor_running_actors{workload=\"$workloadId\"}"},
-      {"graphName":"Sent Messages", "promQL":"akka_actor_sent_messages{workload=\"$workloadId\"}"},
-      {"graphName":"Processed Messages", "promQL":"akka_actor_processed_messages{workload=\"$workloadId\"}"},
+      {"graphName":"Sent Messages", "promQL":"irate(akka_actor_sent_messages{workload=\"$workloadId\"}[1m])"},
+      {"graphName":"Processed Messages", "promQL":"irate(akka_actor_processed_messages{workload=\"$workloadId\"}[1m])"},
       {"graphName":"Unhandled Messages", "promQL":"akka_actor_unhandled_message{workload=\"$workloadId\"}"},
       {"graphName":"Actor Failures", "promQL":"akka_actor_actor_failure{workload=\"$workloadId\"}"},
       {"graphName":"Dead Letters", "promQL":"akka_actor_dead_letter{workload=\"$workloadId\"}"}
