@@ -1,15 +1,9 @@
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: lightbend
-
----
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: loadrules
-  namespace: lightbend
+  # namespace: lightbend
 spec:
   template:
     spec:
@@ -44,7 +38,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus-server
-  namespace: lightbend
+  # namespace: lightbend
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -67,7 +61,7 @@ metadata:
     app: prometheus
     component: server
   name: prometheus-server
-  namespace: lightbend
+  # namespace: lightbend
 spec:
   replicas: 1
   selector:
@@ -126,7 +120,7 @@ metadata:
     app: prometheus
     component: "server"
   name: prometheus-server
-  namespace: lightbend
+  # namespace: lightbend
 spec:
   ports:
     - name: http
@@ -143,7 +137,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: expose-prometheus
-  namespace: lightbend
+  # namespace: lightbend
 spec:
   ports:
   - port: 9090
@@ -163,7 +157,7 @@ metadata:
     app: prometheus
     component: "server"
   name: prometheus-server
-  namespace: lightbend
+  # namespace: lightbend
 data:
   prometheus.yml: |-
     global:
@@ -494,7 +488,7 @@ data:
         expr: health{name="node_high_cpu",monitor_type=""} > 0
         annotations:
           summary: "cpu saturated"
-          description: "cpu on {{$labels.instance}} over 99% busy"
+          description: "cpu on {{ "{{" }}$labels.instance{{ "}}" }} over 99% busy"
       - record: model
         expr: node_memory_usable_percent{monitor_type=""} < bool 5
         labels:
@@ -509,7 +503,7 @@ data:
         expr: health{name="node_memory_pressure",monitor_type=""} > 0
         annotations:
           summary: "memory pressure"
-          description: "{{$labels.instance}} has low usable memory"
+          description: "{{ "{{" }}$labels.instance{{ "}}" }} has low usable memory"
       - record: model
         expr: predict_linear(node_filesystem_free_percent{monitor_type=""}[1h], 28800)  < bool 0
         labels:
@@ -526,7 +520,7 @@ data:
         expr: health{name="node_disk_filling",monitor_type=""} > 0
         annotations:
           summary: "disk filling"
-          description: "{{$labels.instance}} will fill disk in {{$labels.prediction}}"
+          description: "{{ "{{" }}$labels.instance{{ "}}" }} will fill disk in {{ "{{" }}$labels.prediction{{ "}}" }}"
       - record: model
         expr: node_network_errors{monitor_type=""} > bool 0
         labels:
@@ -541,7 +535,7 @@ data:
         expr: health{name="node_network_errors",monitor_type=""} > 0
         annotations:
           summary: "network errors"
-          description: "{{$labels.instance}} has network errors"
+          description: "{{ "{{" }}$labels.instance{{ "}}" }} has network errors"
       - record: model
         expr: kube_node_pressure{monitor_type=""} > bool 0
         labels:
@@ -556,7 +550,7 @@ data:
         expr: health{name="kube_node_pressure",monitor_type=""} > 0
         annotations:
           summary: "kube node pressure"
-          description: "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}"
+          description: "{{ "{{" }}$labels.node_name{{ "}}" }} is in kubernetes condition {{ "{{" }}$labels.condition{{ "}}" }}"
       - record: model
         expr: kube_pod_container_restarts{monitor_type=""} > bool 0
         labels:
@@ -571,7 +565,7 @@ data:
         expr: health{name="restarts",monitor_type=""} > 0
         annotations:
           summary: "container restarting rapidly"
-          description: "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.workload}} restarting rapidly"
+          description: "container {{ "{{" }}$labels.container{{ "}}" }} in pod {{ "{{" }}$labels.pod{{ "}}" }} of {{ "{{" }}$labels.workload{{ "}}" }} restarting rapidly"
       - record: model
         expr: kube_pod_failed{monitor_type=""} > bool 0
         labels:
@@ -586,7 +580,7 @@ data:
         expr: health{name="kube_pod_failed",monitor_type=""} > 0
         annotations:
           summary: "pod failed"
-          description: "pod {{$labels.pod}} on {{$labels.workload}} failed"
+          description: "pod {{ "{{" }}$labels.pod{{ "}}" }} on {{ "{{" }}$labels.workload{{ "}}" }} failed"
       - record: model
         expr: kube_pod_not_running{monitor_type=""} > bool 0
         labels:
@@ -601,7 +595,7 @@ data:
         expr: health{name="kube_pod_not_running",monitor_type=""} > 0
         annotations:
           summary: "pod not running"
-          description: "pod {{$labels.pod}} on {{$labels.workload}} not running"
+          description: "pod {{ "{{" }}$labels.pod{{ "}}" }} on {{ "{{" }}$labels.workload{{ "}}" }} not running"
       - record: model
         expr: kube_workload_generation_lag{monitor_type=""} > bool 0
         labels:
@@ -616,7 +610,7 @@ data:
         expr: health{name="kube_workload_generation_lag",monitor_type=""} > 0
         annotations:
           summary: "workload not updating"
-          description: "workload {{$labels.workload}} has not updated for 10 minutes"
+          description: "workload {{ "{{" }}$labels.workload{{ "}}" }} has not updated for 10 minutes"
       - record: model
         expr: deriv(kafka_consumergroup_lag{monitor_type=""}[15m]) >bool 1
         labels:
@@ -632,7 +626,7 @@ data:
         expr: health{name="kafka_consumergroup_lag",monitor_type=""} > 0
         annotations:
           summary: "consumergroup falling behind"
-          description: "{{$labels.consumergroup}} is falling behind"
+          description: "{{ "{{" }}$labels.consumergroup{{ "}}" }} is falling behind"
       - record: model
         expr: abs(scrape_duration_seconds{monitor_type=""} - avg_over_time(scrape_duration_seconds[15m])) >bool 3 * clamp_min(stddev_over_time(scrape_duration_seconds[15m]),3)
         labels:
@@ -648,7 +642,7 @@ data:
         expr: health{name="scrape_time",monitor_type=""} > 0
         annotations:
           summary: "scrape time anomalous"
-          description: "{{$labels.instance}} has anomalous scrape_duration_seconds"
+          description: "{{ "{{" }}$labels.instance{{ "}}" }} has anomalous scrape_duration_seconds"
       - record: model
         expr: deriv(akka_actor_mailbox_size{quantile="0.5",monitor_type=""}[15m]) >bool 0.1
         labels:
@@ -664,7 +658,7 @@ data:
         expr: health{name="akka_inbox_growth",monitor_type=""} > 0
         annotations:
           summary: "actor inbox growing"
-          description: "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
+          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has a growing inbox"
       - record: model
         expr: abs(akka_actor_processing_time_ns{quantile="0.5",monitor_type=""} - avg_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m])) >bool 2 * clamp_min(stddev_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m]),10)
         labels:
@@ -680,7 +674,7 @@ data:
         expr: health{name="akka_processing_time",monitor_type=""} > 0
         annotations:
           summary: "actor processing time is weird"
-          description: "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
+          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has unusual processing time"
       - record: model
         expr: prometheus_notifications_dropped{monitor_type=""} > bool 0
         labels:
@@ -725,7 +719,7 @@ data:
         expr: health{name="prometheus_rule_evaluation_failures",monitor_type=""} > 0
         annotations:
           summary: "Prometheus rule failures"
-          description: "Prometheus has {{$value}} rules failing"
+          description: "Prometheus has {{ "{{" }}$value{{ "}}" }} rules failing"
       - record: model
         expr: prometheus_target_scrapes_exceeded_sample_limit{monitor_type=""} > bool 0
         labels:
@@ -740,7 +734,7 @@ data:
         expr: health{name="prometheus_target_too_many_metrics",monitor_type=""} > 0
         annotations:
           summary: "Prometheus target over limit"
-          description: "Prometheus target at {{labels.instance}} has too many metrics"
+          description: "Prometheus target at {{ "{{" }}labels.instance{{ "}}" }} has too many metrics"
       - record: model
         expr: prometheus_tsdb_reloads_failures{monitor_type=""} >= bool 1
         labels:
@@ -755,7 +749,7 @@ data:
         expr: health{name="prometheus_tsdb_reloads_failures",monitor_type=""} > 0
         annotations:
           summary: "Prometheus tsdb reload failing"
-          description: "Prometheus had {{$value}} reload failures"
+          description: "Prometheus had {{ "{{" }}$value{{ "}}" }} reload failures"
       - record: model
         expr: up{monitor_type=""} != bool 1
         labels:
@@ -770,7 +764,7 @@ data:
         expr: health{name="prometheus_target_down",monitor_type=""} > 0
         annotations:
           summary: "metrics target down"
-          description: "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data"
+          description: "cannot connect to {{ "{{" }}$labels.instance{{ "}}" }} metrics endpoint for {{ "{{" }}$labels.job{{ "}}" }} data"
       - record: model
         expr: prometheus_config_last_reload_successful{monitor_type=""} != bool 1
         labels:
@@ -800,7 +794,7 @@ data:
         expr: health{name="prometheus_scrape_time",monitor_type=""} > 0
         annotations:
           summary: "prometheus has long scrape times"
-          description: "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}"
+          description: "prometheus is taking {{ "{{" }}$value{{ "}}" }}% of the {{ "{{" }}$labels.interval{{ "}}" }} interval to get {{ "{{" }}$labels.scrape_job{{ "}}" }} metrics from {{ "{{" }}$labels.instance{{ "}}" }}"
       - record: model
         expr: abs(akka_actor_processing_time_ns{quantile="0.5",monitor_type="slow_akka"} - avg_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m])) >bool 2 * clamp_min(stddev_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m]),10)
         labels:
@@ -816,7 +810,7 @@ data:
         expr: health{name="slow_akka_processing_time",monitor_type="slow_akka"} > 0
         annotations:
           summary: "actor processing time is weird"
-          description: "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
+          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has unusual processing time"
       - record: model
         expr: deriv(akka_actor_mailbox_size{quantile="0.5",monitor_type="slow_akka"}[15m]) >bool 0.1
         labels:
@@ -832,7 +826,7 @@ data:
         expr: health{name="slow_akka_inbox_growth",monitor_type="slow_akka"} > 0
         annotations:
           summary: "actor inbox growing"
-          description: "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
+          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has a growing inbox"
       - record: model
         expr: akka_actor_running_actors{actor="Worker",monitor_type="slow_akka"} < bool 10
         labels:
@@ -847,4 +841,4 @@ data:
         expr: health{name="slow_akka_pool",monitor_type="slow_akka"} > 0
         annotations:
           summary: "worker pool too small"
-          description: "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has not enough actors"
+          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has not enough actors"
