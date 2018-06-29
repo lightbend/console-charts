@@ -18,7 +18,16 @@ Refer to the documentation for installation instructions.
 
 ### enterprise-suite
 
-Releasing the enterprise-suite is automated. To release, see *Enterprise Suite Release Process* on Google Drive.
+1. apply updates to enterprise-suite/templates/
+
+2. set release in enterprise-suite/Chart.yaml
+
+3. run `make` to produce all the release artifacts
+
+4. run `make install-local` to try the release before pushing live
+
+5. merges to remote master will trigger GitHub Pages publication updates from docs/
+
 
 ### reactive-sandbox
 
