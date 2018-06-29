@@ -161,81 +161,707 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: static-prometheus-rules
+  labels:
+    app: prometheus
+    component: server
+  name: es-monitor-api
 data:
-  rules.yml: |-
+  bootstrap-monitors.json: |
+    {
+      "monitors": [
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "node_high_cpu",
+            "metric": "node_cpu_percent",
+            "comparator": ">=",
+            "threshold": "99",
+            "window": "2m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "cpu saturated",
+            "description": "cpu on {{$labels.instance}} over 99% busy",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "node_memory_pressure",
+            "metric": "node_memory_usable_percent",
+            "comparator": "<",
+            "threshold": "5",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "memory pressure",
+            "description": "{{$labels.instance}} has low usable memory",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "predict",
+          "parameters": {
+            "name": "node_disk_filling",
+            "metric": "node_filesystem_free_percent",
+            "period": "1h",
+            "seconds": "28800",
+            "comparator": "<",
+            "threshold": "0",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "disk filling",
+            "description": "{{$labels.instance}} will fill disk in {{$labels.prediction}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "node_network_errors",
+            "metric": "node_network_errors",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "5m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "network errors",
+            "description": "{{$labels.instance}} has network errors",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "kube_node_pressure",
+            "metric": "kube_node_pressure",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "5m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "kube node pressure",
+            "description": "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "restarts",
+            "metric": "kube_pod_container_restarts_rate",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "container restarting rapidly",
+            "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.workload}} restarting rapidly",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "kube_pod_not_ready",
+            "metric": "kube_pod_ready",
+            "comparator": "<",
+            "threshold": "1",
+            "window": "5m",
+            "confidence": "0.5",
+            "severity": "critical",
+            "summary": "pod not ready",
+            "description": "pod {{$labels.pod}} on {{$labels.workload}} not ready",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "kube_pod_not_running",
+            "metric": "kube_pod_not_running",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "0.75",
+            "severity": "warning",
+            "summary": "pod not running",
+            "description": "pod {{$labels.pod}} on {{$labels.workload}} not running",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "kube_workload_generation_lag",
+            "metric": "kube_workload_generation_lag",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "workload not updating",
+            "description": "workload {{$labels.workload}} has not updated for 10 minutes",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "growth",
+          "parameters": {
+            "name": "kafka_consumergroup_lag",
+            "metric": "kafka_consumergroup_lag",
+            "period": "15m",
+            "minslope": "1",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "consumergroup falling behind",
+            "description": "{{$labels.consumergroup}} is falling behind",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "scrape_time",
+            "metric": "scrape_duration_seconds",
+            "period": "15m",
+            "numsigma": "3",
+            "minval": "3",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "scrape time anomalous",
+            "description": "{{$labels.instance}} has anomalous scrape_duration_seconds",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "growth",
+          "parameters": {
+            "name": "akka_inbox_growth",
+            "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
+            "period": "15m",
+            "minslope": "0.1",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "actor inbox growing",
+            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "akka_processing_time",
+            "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "actor processing time is weird",
+            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_notifications_dropped",
+            "metric": "prometheus_notifications_dropped_rate",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "0.25",
+            "severity": "warning",
+            "summary": "Prometheus dropping notifications",
+            "description": "Prometheus dropping alerts sent to Alertmanager",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_notification_queue",
+            "metric": "prometheus_notification_queue_percent",
+            "comparator": ">",
+            "threshold": "50",
+            "window": "10m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "Prometheus alert queue filling",
+            "description": "Prometheus alert queue is staying over 50% full",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_rule_evaluation_failures",
+            "metric": "prometheus_rule_evaluation_failures_rate",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Prometheus rule failures",
+            "description": "Prometheus has {{$value}} rules failing",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_target_too_many_metrics",
+            "metric": "prometheus_target_scrapes_exceeded_sample_limit_rate",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Prometheus target over limit",
+            "description": "Prometheus target at {{labels.instance}} has too many metrics",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_tsdb_reloads_failures",
+            "metric": "prometheus_tsdb_reloads_failures_rate",
+            "comparator": ">=",
+            "threshold": "1",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "Prometheus tsdb reload failing",
+            "description": "Prometheus had {{$value}} reload failures",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_target_down",
+            "metric": "up",
+            "comparator": "!=",
+            "threshold": "1",
+            "window": "10m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "metrics target down",
+            "description": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_config_reload_failed",
+            "metric": "prometheus_config_last_reload_successful",
+            "comparator": "!=",
+            "threshold": "1",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "prometheus bad config",
+            "description": "current config for prometheus has errors, will prevent restarts",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "prometheus_scrape_time",
+            "metric": "prometheus_target_sync_percent",
+            "comparator": ">",
+            "threshold": "75",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "prometheus has long scrape times",
+            "description": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "zookeeper_latency",
+            "metric": "zk_avg_latency",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "Zookeeper Latency",
+            "description": "ZooKeeper latency is not normal in {{$labels.workload}} on {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "zookeeper_connections",
+            "metric": "zk_num_alive_connections",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Zookeeper live connections is not normal",
+            "description": "Zookeeper live connection in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "zookeeper_pending_syncs",
+            "metric": "zk_pending_syncs",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "Zookeeper pending-syncs is not normal",
+            "description": "Zookeeper Pending syncs in {{$labels.workload}} is greater than 0.",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "zookeeper_open_file_descriptor",
+            "metric": "zk_open_file_descriptor_count",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Zookeeper open file descriptor growth",
+            "description": "Zookeeper open file descriptors in ${{labels.workload}} is not normal in ${{labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "cassandra_write_latency",
+            "metric": "cassandra_clientrequest_write_latency",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "critical",
+            "summary": "Cassandra Write Latency",
+            "description": "Cassandra write latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "cassandra_read_latency",
+            "metric": "cassandra_clientrequest_read_latency",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "critical",
+            "summary": "Cassandra Read Latency",
+            "description": "Cassandra read latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "redis_keyspace_miss",
+            "metric": "redis_keyspace_miss_ratio",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "1",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Redis key space miss ratio growth",
+            "description": "Observing shifts in Redis key space ratio on ${{labels.workload}} in ${{labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "redis_evictions",
+            "metric": "redis_evicted_keys_total",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "1",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Redis evictions growing",
+            "description": "Redis evictions on {{$labels.workload}} are growing in {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "redis_commands_processed",
+            "metric": "redis_commands_processed_total",
+            "period": "10m",
+            "numsigma": "3",
+            "minval": "10",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Redis command processed",
+            "description": "Redis commands processed on {{$labels.workload}} is not normal in ${{labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "redis_connections",
+            "metric": "redis_connected_clients",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Redis client connections is not normal",
+            "description": "Redis client connections on {{$labels.workload}} is not normal in {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "kafka_incoming_messages",
+            "metric": "kafka_incoming_messages_rate",
+            "period": "5m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "10m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "Kafka incoming message rate is not normal",
+            "description": "Kafka incoming message rate on ${{labels.workload}} is not normal for topic ${{labels.topic}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "kafka_offline_partition",
+            "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "Kafka offline partition is not zero",
+            "description": "Kafka offline partition is high on ${{labels.workload}} in ${{labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "kafka_under_replicated_partitions",
+            "metric": "kafka_server_replicamanager_underreplicatedpartitions",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "critical",
+            "summary": "Kafka under replicated partitions is up",
+            "description": "Kafka under replicated partitions is high on ${{labels.workload}} in ${{labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "memcached_miss_ratio",
+            "metric": "memcached_miss_ratio",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Memcached miss ratio shifts",
+            "description": "Memcached miss ratio in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "memcached_current_connections",
+            "metric": "memcached_current_connections",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Memcached connections are changing",
+            "description": "Memcached connections in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "memcached_evictions",
+            "metric": "memcached_evictions_rate",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "1",
+            "window": "15m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "Memcached evictions shifts",
+            "description": "Memcached evictions in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "slow_akka_processing_time",
+            "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "10",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "actor processing time is weird",
+            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
+            "monitorType": "slow_akka"
+          }
+        },
+        {
+          "model": "growth",
+          "parameters": {
+            "name": "slow_akka_inbox_growth",
+            "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
+            "period": "15m",
+            "minslope": "0.1",
+            "window": "5m",
+            "confidence": "0.5",
+            "severity": "critical",
+            "summary": "actor inbox growing",
+            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox",
+            "monitorType": "slow_akka"
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "slow_akka_pool",
+            "metric": "akka_actor_running_actors{actor=\"Worker\"}",
+            "comparator": "<",
+            "threshold": "10",
+            "window": "5m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "worker pool too small",
+            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has not enough actors",
+            "monitorType": "slow_akka"
+          }
+        }
+      ]
+    }
+  static-rules.yml: |+
     - record: node_cpu_percent
       expr: 100 - avg by (instance) (irate(node_cpu{mode="idle"}[5m]) * 100)
-
+  
     - record: node_memory_usable_percent
       expr: avg by (instance) (node_memory_MemAvailable / node_memory_MemTotal) * 100
-
+  
     - record: node_filesystem_free_percent
       expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
-
+  
     - record: node_network_errors
       expr: sum by(instance) (node_network_transmit_errs + node_network_receive_errs + node_network_receive_drop + node_network_transmit_drop)
-
+  
     - record: kube_node_pressure
       expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
-
+  
     - record: kube_pod_ready
       expr: avg by (node_ip, node_name, namespace, pod) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(workload) kube_pod_info
-
+  
     - record: kube_pod_container_restarts_rate
       expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(workload) kube_pod_info
-
+  
     - record: container_starts_total
       expr: sum by (workload) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(workload) kube_pod_info)
-
+  
     - record: kube_pod_failed
       expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(workload) kube_pod_info
-
+  
     - record: kube_pod_not_running
       expr: kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload) kube_pod_info
-
+  
     - record: kube_workload_generation_lag
       expr: avg by (workload, namespace) (label_replace(kube_deployment_metadata_generation - kube_deployment_status_observed_generation, "workload", "$1", "deployment", "(.+)"))
-
+  
     - record: kube_workload_generation_lag
       expr: avg by (workload, namespace) (label_replace(kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready, "workload", "$1", "daemonset", "(.+)"))
-
+  
     - record: prometheus_notification_queue_percent
       expr: 100 * prometheus_notifications_queue_length / prometheus_notifications_queue_capacity
-
+  
     - record: prometheus_target_sync_percent
       expr: 100 * prometheus_target_sync_length_seconds{quantile="0.99"} / on (job,instance) group_left(interval) prometheus_target_interval_length_seconds{quantile="0.01"}
-
+  
     - record: prometheus_notifications_dropped_rate
       expr: rate(prometheus_notifications_dropped_total[10m])
-
+  
     - record: prometheus_rule_evaluation_failures_rate
       expr: rate(prometheus_rule_evaluation_failures_total[10m])
-
+  
     - record: prometheus_target_scrapes_exceeded_sample_limit_rate
       expr: rate(prometheus_target_scrapes_exceeded_sample_limit_total[10m])
-
+  
     - record: prometheus_tsdb_reloads_failures_rate
       expr: rate(prometheus_tsdb_reloads_failures_total[10m])
-
+  
     - record: akka_processing_time_seconds
       expr: akka_actor_processing_time_ns{quantile="0.5"} / 1000000000
-
+  
     - record: zk_open_file_ratio
       expr: (zk_open_file_descriptor_count/zk_max_file_descriptor_count) * 100
-
+  
     - record: redis_keyspace_miss_ratio
       expr: (redis_keyspace_misses_total/redis_keyspace_hits_total) * 100
-
+  
     - record: kafka_incoming_messages_rate
       expr: sum without (instance) (rate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
-
+  
     - record: kafka_active_controllers
       expr: sum by (workload) (kafka_controller_kafkacontroller_activecontrollercount)
-
+  
     - record: memcached_miss_ratio
       expr: (sum without(command, status) (memcached_commands_total{status="miss"})/sum without(command, status) (memcached_commands_total)) * 100
-
+  
     - record: memcached_evictions_rate
       expr: rate(memcached_items_evicted_total[5m])
 ---
@@ -245,18 +871,18 @@ kind: ConfigMap
 metadata:
   labels:
     app: prometheus
-    component: "server"
+    component: server
   name: prometheus-server
 data:
-  prometheus.yml: |-
+  prometheus.yml: |
     global:
       # dev mode
       scrape_interval: 10s
       evaluation_interval: 10s
-
+  
     rule_files:
       - /etc/rules/*.yaml
-
+  
     alerting:
       alertmanagers:
       - kubernetes_sd_configs:
@@ -265,25 +891,25 @@ data:
         - source_labels: [__meta_kubernetes_namespace,__meta_kubernetes_pod_label_app,__meta_kubernetes_pod_label_component,__meta_kubernetes_pod_container_port_number]
           regex: lightbend;prometheus;alertmanager;[0-9]+
           action: keep
-
+  
     scrape_configs:
       - job_name: prometheus
         static_configs:
           - targets:
             - localhost:9090
-
+  
       # This uses separate scrape configs for cluster components (i.e. API server, node)
       # and services to allow each to use different authentication configs.
       #
       # Kubernetes labels will be added as Prometheus labels on metrics via the
       # `labelmap` relabeling action.
-
+  
       - job_name: 'kubernetes-node-containers'
-
+  
         # Default to scraping over https. If required, just disable this or change to
         # `http`.
         scheme: https
-
+  
         # This TLS & bearer token file config is used to connect to the actual scrape
         # endpoints for cluster components. This is separate to discovery auth
         # configuration because discovery & scraping are two separate concerns in
@@ -300,10 +926,10 @@ data:
           #
           insecure_skip_verify: true
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-
+  
         kubernetes_sd_configs:
           - role: node
-
+  
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
@@ -317,7 +943,7 @@ data:
             target_label: node_name
           - source_labels: [__meta_kubernetes_node_address_InternalIP]
             target_label: node_ip
-
+  
         metric_relabel_configs:
           - source_labels: [pod_name]
             target_label: kubernetes_pod_name
@@ -339,7 +965,7 @@ data:
           - source_labels: [__name__]
             regex: container_(network_tcp_usage_total|tasks_state|cpu_usage_seconds_total|memory_failures_total|network_udp_usage_total)
             action: drop
-
+  
       # Scrape config for service endpoints.
       #
       # The relabeling allows the actual service scrape endpoint to be configured
@@ -352,10 +978,10 @@ data:
       # * `prometheus.io/port`: If the metrics are exposed on a different port to the
       # service then set this appropriately.
       - job_name: 'kubernetes-service-endpoints'
-
+  
         kubernetes_sd_configs:
           - role: endpoints
-
+  
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
@@ -387,7 +1013,7 @@ data:
           - source_labels: [__meta_kubernetes_pod_host_ip]
             action: replace
             target_label: node_ip
-
+  
         # workload labels:
         metric_relabel_configs:
           - source_labels: [created_by_kind, pod]
@@ -408,18 +1034,18 @@ data:
           - source_labels: [created_by_kind, pod]
             regex: '.none.;(.*)'
             target_label: workload
-
+  
       - job_name: 'prometheus-pushgateway'
         honor_labels: true
-
+  
         kubernetes_sd_configs:
           - role: service
-
+  
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
             action: keep
             regex: pushgateway
-
+  
       # Scrape config for probing services via the Blackbox Exporter.
       #
       # The relabeling allows the actual service scrape endpoint to be configured
@@ -427,14 +1053,14 @@ data:
       #
       # * `prometheus.io/probe`: Only probe services that have a value of `true`
       - job_name: 'kubernetes-services'
-
+  
         metrics_path: /probe
         params:
           module: [http_2xx]
-
+  
         kubernetes_sd_configs:
           - role: service
-
+  
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
             action: keep
@@ -451,7 +1077,7 @@ data:
             target_label: kubernetes_namespace
           - source_labels: [__meta_kubernetes_service_name]
             target_label: kubernetes_name
-
+  
       # Scrape config for pods
       #
       # The relabeling allows the actual pod scrape endpoint to be configured via the
@@ -461,10 +1087,10 @@ data:
       # * `prometheus.io/path`: If the metrics path is not `/metrics` override this.
       # * `prometheus.io/port`: Scrape the pod on the indicated port instead of the default of `9102`.
       - job_name: 'kubernetes-pods'
-
+  
         kubernetes_sd_configs:
           - role: pod
-
+  
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
@@ -731,6 +1357,19 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: prometheus-server
+spec:
+  ports:
+    - port: 80
+      targetPort: 9090
+  selector:
+    app: prometheus
+    component: server
+---
+# Source: enterprise-suite/templates/prometheus.yaml
+apiVersion: v1
+kind: Service
+metadata:
   name: expose-prometheus
 spec:
   ports:
@@ -742,19 +1381,6 @@ spec:
     app: prometheus
     component: server
   type: NodePort
----
-# Source: enterprise-suite/templates/prometheus.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: prometheus-server
-spec:
-  ports:
-    - port: 80
-      targetPort: 9090
-  selector:
-    app: prometheus
-    component: server
 ---
 # Source: enterprise-suite/templates/node-exporter.yaml
 apiVersion: apps/v1beta2
@@ -1010,12 +1636,13 @@ spec:
           args:
             - --rulesPath=/etc/rules/
             - --storagePath=monitor-data/
-            - --staticConfig=/etc/static/rules.yml
+            - --staticConfig=/etc/es-monitor-api/static-rules.yml
+            - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
           volumeMounts:
             - name: rules-volume
               mountPath: /etc/rules
-            - name: static-rules-volume
-              mountPath: /etc/static
+            - name: es-monitor-api-volume
+              mountPath: /etc/es-monitor-api
           ports:
             - containerPort: 8180
 
@@ -1062,9 +1689,9 @@ spec:
         - name: config-volume
           configMap:
             name: prometheus-server
-        - name: static-rules-volume
+        - name: es-monitor-api-volume
           configMap:
-            name: static-prometheus-rules
+            name: es-monitor-api
 ---
 # Source: enterprise-suite/templates/es-grafana.yaml
 apiVersion: batch/v1
@@ -1107,16 +1734,3 @@ spec:
       - name: grafana-datasource
         configMap:
           name: grafana-datasource-cm
----
-# Source: enterprise-suite/templates/prometheus.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: loadrules
-spec:
-  template:
-    spec:
-      containers:
-      - name: loadrules
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/loadrules:latest
-      restartPolicy: Never

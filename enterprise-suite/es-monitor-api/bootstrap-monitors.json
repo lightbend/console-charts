@@ -1,0 +1,622 @@
+{
+  "monitors": [
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "node_high_cpu",
+        "metric": "node_cpu_percent",
+        "comparator": ">=",
+        "threshold": "99",
+        "window": "2m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "cpu saturated",
+        "description": "cpu on {{$labels.instance}} over 99% busy",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "node_memory_pressure",
+        "metric": "node_memory_usable_percent",
+        "comparator": "<",
+        "threshold": "5",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "memory pressure",
+        "description": "{{$labels.instance}} has low usable memory",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "predict",
+      "parameters": {
+        "name": "node_disk_filling",
+        "metric": "node_filesystem_free_percent",
+        "period": "1h",
+        "seconds": "28800",
+        "comparator": "<",
+        "threshold": "0",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "disk filling",
+        "description": "{{$labels.instance}} will fill disk in {{$labels.prediction}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "node_network_errors",
+        "metric": "node_network_errors",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "5m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "network errors",
+        "description": "{{$labels.instance}} has network errors",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "kube_node_pressure",
+        "metric": "kube_node_pressure",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "5m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "kube node pressure",
+        "description": "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "restarts",
+        "metric": "kube_pod_container_restarts_rate",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "container restarting rapidly",
+        "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.workload}} restarting rapidly",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "kube_pod_not_ready",
+        "metric": "kube_pod_ready",
+        "comparator": "<",
+        "threshold": "1",
+        "window": "5m",
+        "confidence": "0.5",
+        "severity": "critical",
+        "summary": "pod not ready",
+        "description": "pod {{$labels.pod}} on {{$labels.workload}} not ready",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "kube_pod_not_running",
+        "metric": "kube_pod_not_running",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "0.75",
+        "severity": "warning",
+        "summary": "pod not running",
+        "description": "pod {{$labels.pod}} on {{$labels.workload}} not running",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "kube_workload_generation_lag",
+        "metric": "kube_workload_generation_lag",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "workload not updating",
+        "description": "workload {{$labels.workload}} has not updated for 10 minutes",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "growth",
+      "parameters": {
+        "name": "kafka_consumergroup_lag",
+        "metric": "kafka_consumergroup_lag",
+        "period": "15m",
+        "minslope": "1",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "consumergroup falling behind",
+        "description": "{{$labels.consumergroup}} is falling behind",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "scrape_time",
+        "metric": "scrape_duration_seconds",
+        "period": "15m",
+        "numsigma": "3",
+        "minval": "3",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "scrape time anomalous",
+        "description": "{{$labels.instance}} has anomalous scrape_duration_seconds",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "growth",
+      "parameters": {
+        "name": "akka_inbox_growth",
+        "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
+        "period": "15m",
+        "minslope": "0.1",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "actor inbox growing",
+        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "akka_processing_time",
+        "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "actor processing time is weird",
+        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_notifications_dropped",
+        "metric": "prometheus_notifications_dropped_rate",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "0.25",
+        "severity": "warning",
+        "summary": "Prometheus dropping notifications",
+        "description": "Prometheus dropping alerts sent to Alertmanager",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_notification_queue",
+        "metric": "prometheus_notification_queue_percent",
+        "comparator": ">",
+        "threshold": "50",
+        "window": "10m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "Prometheus alert queue filling",
+        "description": "Prometheus alert queue is staying over 50% full",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_rule_evaluation_failures",
+        "metric": "prometheus_rule_evaluation_failures_rate",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Prometheus rule failures",
+        "description": "Prometheus has {{$value}} rules failing",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_target_too_many_metrics",
+        "metric": "prometheus_target_scrapes_exceeded_sample_limit_rate",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Prometheus target over limit",
+        "description": "Prometheus target at {{labels.instance}} has too many metrics",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_tsdb_reloads_failures",
+        "metric": "prometheus_tsdb_reloads_failures_rate",
+        "comparator": ">=",
+        "threshold": "1",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "Prometheus tsdb reload failing",
+        "description": "Prometheus had {{$value}} reload failures",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_target_down",
+        "metric": "up",
+        "comparator": "!=",
+        "threshold": "1",
+        "window": "10m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "metrics target down",
+        "description": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_config_reload_failed",
+        "metric": "prometheus_config_last_reload_successful",
+        "comparator": "!=",
+        "threshold": "1",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "prometheus bad config",
+        "description": "current config for prometheus has errors, will prevent restarts",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "prometheus_scrape_time",
+        "metric": "prometheus_target_sync_percent",
+        "comparator": ">",
+        "threshold": "75",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "prometheus has long scrape times",
+        "description": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "zookeeper_latency",
+        "metric": "zk_avg_latency",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "Zookeeper Latency",
+        "description": "ZooKeeper latency is not normal in {{$labels.workload}} on {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "zookeeper_connections",
+        "metric": "zk_num_alive_connections",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Zookeeper live connections is not normal",
+        "description": "Zookeeper live connection in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "zookeeper_pending_syncs",
+        "metric": "zk_pending_syncs",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "Zookeeper pending-syncs is not normal",
+        "description": "Zookeeper Pending syncs in {{$labels.workload}} is greater than 0.",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "zookeeper_open_file_descriptor",
+        "metric": "zk_open_file_descriptor_count",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Zookeeper open file descriptor growth",
+        "description": "Zookeeper open file descriptors in ${{labels.workload}} is not normal in ${{labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "cassandra_write_latency",
+        "metric": "cassandra_clientrequest_write_latency",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "critical",
+        "summary": "Cassandra Write Latency",
+        "description": "Cassandra write latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "cassandra_read_latency",
+        "metric": "cassandra_clientrequest_read_latency",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "critical",
+        "summary": "Cassandra Read Latency",
+        "description": "Cassandra read latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "redis_keyspace_miss",
+        "metric": "redis_keyspace_miss_ratio",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "1",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Redis key space miss ratio growth",
+        "description": "Observing shifts in Redis key space ratio on ${{labels.workload}} in ${{labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "redis_evictions",
+        "metric": "redis_evicted_keys_total",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "1",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Redis evictions growing",
+        "description": "Redis evictions on {{$labels.workload}} are growing in {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "redis_commands_processed",
+        "metric": "redis_commands_processed_total",
+        "period": "10m",
+        "numsigma": "3",
+        "minval": "10",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Redis command processed",
+        "description": "Redis commands processed on {{$labels.workload}} is not normal in ${{labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "redis_connections",
+        "metric": "redis_connected_clients",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Redis client connections is not normal",
+        "description": "Redis client connections on {{$labels.workload}} is not normal in {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "kafka_incoming_messages",
+        "metric": "kafka_incoming_messages_rate",
+        "period": "5m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "10m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "Kafka incoming message rate is not normal",
+        "description": "Kafka incoming message rate on ${{labels.workload}} is not normal for topic ${{labels.topic}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "kafka_offline_partition",
+        "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "Kafka offline partition is not zero",
+        "description": "Kafka offline partition is high on ${{labels.workload}} in ${{labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "kafka_under_replicated_partitions",
+        "metric": "kafka_server_replicamanager_underreplicatedpartitions",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "critical",
+        "summary": "Kafka under replicated partitions is up",
+        "description": "Kafka under replicated partitions is high on ${{labels.workload}} in ${{labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "memcached_miss_ratio",
+        "metric": "memcached_miss_ratio",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Memcached miss ratio shifts",
+        "description": "Memcached miss ratio in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "memcached_current_connections",
+        "metric": "memcached_current_connections",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Memcached connections are changing",
+        "description": "Memcached connections in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "memcached_evictions",
+        "metric": "memcached_evictions_rate",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "1",
+        "window": "15m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "Memcached evictions shifts",
+        "description": "Memcached evictions in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "slow_akka_processing_time",
+        "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "10",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "actor processing time is weird",
+        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
+        "monitorType": "slow_akka"
+      }
+    },
+    {
+      "model": "growth",
+      "parameters": {
+        "name": "slow_akka_inbox_growth",
+        "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
+        "period": "15m",
+        "minslope": "0.1",
+        "window": "5m",
+        "confidence": "0.5",
+        "severity": "critical",
+        "summary": "actor inbox growing",
+        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox",
+        "monitorType": "slow_akka"
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "slow_akka_pool",
+        "metric": "akka_actor_running_actors{actor=\"Worker\"}",
+        "comparator": "<",
+        "threshold": "10",
+        "window": "5m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "worker pool too small",
+        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has not enough actors",
+        "monitorType": "slow_akka"
+      }
+    }
+  ]
+}
