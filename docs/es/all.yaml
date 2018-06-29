@@ -639,6 +639,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: expose-grafana
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    nodePort: 30030
+  selector:
+    app: grafana
+    component: server
+  type: NodePort
+---
+# Source: enterprise-suite/templates/es-grafana.yaml
+apiVersion: v1
+kind: Service
+metadata:
   labels:
     app: grafana
     component: "server"
@@ -653,22 +669,6 @@ spec:
     app: grafana
     component: "server"
   type: "ClusterIP"
----
-# Source: enterprise-suite/templates/es-grafana.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-grafana
-spec:
-  ports:
-  - port: 3000
-    protocol: TCP
-    targetPort: 3000
-    nodePort: 30030
-  selector:
-    app: grafana
-    component: server
-  type: NodePort
 ---
 # Source: enterprise-suite/templates/kube-state-metrics.yaml
 apiVersion: v1
@@ -718,19 +718,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus-server
-spec:
-  ports:
-    - port: 80
-      targetPort: 9090
-  selector:
-    app: prometheus
-    component: server
----
-# Source: enterprise-suite/templates/prometheus.yaml
-apiVersion: v1
-kind: Service
-metadata:
   name: es-monitor-api
 spec:
   ports:
@@ -755,6 +742,19 @@ spec:
     app: prometheus
     component: server
   type: NodePort
+---
+# Source: enterprise-suite/templates/prometheus.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-server
+spec:
+  ports:
+    - port: 80
+      targetPort: 9090
+  selector:
+    app: prometheus
+    component: server
 ---
 # Source: enterprise-suite/templates/node-exporter.yaml
 apiVersion: apps/v1beta2
@@ -882,7 +882,7 @@ spec:
     spec:
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:v0.0.1
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:latest
         ports:
         - containerPort: 80
         volumeMounts:

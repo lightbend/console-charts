@@ -2,16 +2,16 @@ apiVersion: v1
 entries:
   enterprise-suite:
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.058979659-07:00
+    created: 2018-06-29T14:31:25.514815553-07:00
     description: Lightbend Enterprise Suite
-    digest: 146890cd861b95b4c4aa6935c5a942eaaca41effb6a6775838be82027689b9dc
+    digest: a2f2cd08774724ec81d0588bddc33e9ec81fe615105d427e946ba4775399648f
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
     - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.7.tgz
     version: 0.0.7
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.058520077-07:00
+    created: 2018-06-29T14:31:25.514303663-07:00
     description: Lightbend Enterprise Suite
     digest: cd9b63d3250bc3629cc49f60a78d680aa0d8c0eab316d96fd1be432ca4599399
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
@@ -20,7 +20,7 @@ entries:
     - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.6.tgz
     version: 0.0.6
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.05765008-07:00
+    created: 2018-06-29T14:31:25.513416815-07:00
     description: Lightbend Enterprise Suite
     digest: 686a7803062c5c21dd423ab1c7fdf522bfe6df0725cccb6031764e0be5a4f85a
     name: enterprise-suite
@@ -28,7 +28,7 @@ entries:
     - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.5.tgz
     version: 0.0.5
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.056891949-07:00
+    created: 2018-06-29T14:31:25.512646274-07:00
     description: Lightbend Enterprise Suite
     digest: 781bc53b87d2fc33c3c1b9b054e2cfca5e27f7cf04378b22fb50e0af59636f5c
     name: enterprise-suite
@@ -36,7 +36,7 @@ entries:
     - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.4.tgz
     version: 0.0.4
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.056185839-07:00
+    created: 2018-06-29T14:31:25.511554637-07:00
     description: Lightbend Enterprise Suite
     digest: afa81147e4b43d83840ce394f162798e2eb413e5c0a44962703570ce6b2a69ae
     name: enterprise-suite
@@ -44,7 +44,7 @@ entries:
     - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.3.tgz
     version: 0.0.3
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.055791171-07:00
+    created: 2018-06-29T14:31:25.510903254-07:00
     description: Lightbend Enterprise Suite
     digest: b0939237f643b8e7af032141eaf79be3b9e238d2abb58553374d6e249f3c6983
     name: enterprise-suite
@@ -52,7 +52,7 @@ entries:
     - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.2.tgz
     version: 0.0.2
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.055384472-07:00
+    created: 2018-06-29T14:31:25.51042836-07:00
     description: Lightbend Enterprise Suite
     digest: 2b61ad99f7dfefb9664fa5b874571b09b288cdfdd112cc91ac4be25c18896d0c
     name: enterprise-suite
@@ -61,7 +61,7 @@ entries:
     version: 0.0.1
   reactive-sandbox:
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.059587496-07:00
+    created: 2018-06-29T14:31:25.515570397-07:00
     description: A collection of external services required to run Lightbend Reactive
       Platform applications
     digest: a3915ae16b20841da49e26b7a25080a0cf33f1af8a7a085ce40cf2159b7cbccb
@@ -70,7 +70,7 @@ entries:
     - https://lightbend.github.io/helm-charts/reactive-sandbox-0.2.0.tgz
     version: 0.2.0
   - apiVersion: v1
-    created: 2018-06-29T11:32:52.059300097-07:00
+    created: 2018-06-29T14:31:25.515161745-07:00
     description: A collection of external services required to run Lightbend Reactive
       Platform applications
     digest: a4c9f371838312c06e44851874797113ee517cde2f96f9d9f269c97ba7ff326f
@@ -78,4 +78,4 @@ entries:
     urls:
     - https://lightbend.github.io/helm-charts/reactive-sandbox-0.1.3.tgz
     version: 0.1.3
-generated: 2018-06-29T11:32:52.054533837-07:00
+generated: 2018-06-29T14:31:25.509704661-07:00
