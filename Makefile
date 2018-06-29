@@ -1,7 +1,10 @@
 
-all: docs/index.yaml
+all: docs/es/all.yaml docs/index.yaml
 
 RELEASE := $(shell awk '$$1 == "version:"{v=$$2} $$1 == "name:"{n=$$2} END {print n "-" v}' enterprise-suite/Chart.yaml )
+
+docs/es/all.yaml: docs/$(RELEASE).tgz
+	helm install $< --name=es --namespace=lightbend --dry-run --debug | sed -e '1,/^---$$/ d' > $@
 
 docs/index.yaml: docs/$(RELEASE).tgz
 	helm repo index docs --url https://lightbend.github.io/helm-charts
