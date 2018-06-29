@@ -1,8 +1,6 @@
 
 all: docs/index.yaml
 
-TEMPLATES := $(wildcard enterprise-suite/templates/*.yaml)
-
 RELEASE := $(shell awk '$$1 == "version:"{v=$$2} $$1 == "name:"{n=$$2} END {print n "-" v}' enterprise-suite/Chart.yaml )
 
 docs/index.yaml: docs/$(RELEASE).tgz
@@ -12,7 +10,6 @@ docs/$(RELEASE).tgz: enterprise-suite/Chart.yaml enterprise-suite/templates/*.ya
 	helm init -c
 	helm lint enterprise-suite
 	helm package enterprise-suite -d docs
-
 
 install-helm:
 	-kubectl create serviceaccount --namespace kube-system tiller
