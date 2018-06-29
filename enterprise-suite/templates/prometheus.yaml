@@ -1,15 +1,15 @@
+
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: loadrules
-  # namespace: lightbend
 spec:
   template:
     spec:
       containers:
       - name: loadrules
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/loadrules:v1
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/loadrules:latest
       restartPolicy: Never
 
 ---
@@ -33,12 +33,13 @@ rules:
   verbs: ["get", "list", "watch"]
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
+
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus-server
-  # namespace: lightbend
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -51,7 +52,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-server
-  namespace: lightbend
+  namespace: {{.Release.Namespace}}
 
 ---
 apiVersion: apps/v1beta2
@@ -61,7 +62,6 @@ metadata:
     app: prometheus
     component: server
   name: prometheus-server
-  # namespace: lightbend
 spec:
   replicas: 1
   selector:
@@ -76,20 +76,36 @@ spec:
     spec:
       serviceAccountName: prometheus-server
       containers:
-        - name: prometheus-server-configmap-reload
-          image: "jimmidyson/configmap-reload:v0.1"
-          imagePullPolicy: "IfNotPresent"
+        - name: es-monitor-api
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
           args:
-            - --volume-dir=/etc/config
-            - --webhook-url=http://localhost:9090/-/reload
+            - --rulesPath=/etc/rules/
+            - --storagePath=monitor-data/
+            - --staticConfig=/etc/static/rules.yml
+          volumeMounts:
+            - name: rules-volume
+              mountPath: /etc/rules
+            - name: static-rules-volume
+              mountPath: /etc/static
+          ports:
+            - containerPort: 8180
+
+        - name: prometheus-server-configmap-reload
+          image: "jimmidyson/configmap-reload:v0.2.2"
+          args:
+            - -volume-dir=/etc/config
+            - -volume-dir=/etc/rules
+            - -webhook-url=http://localhost:9090/-/reload
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
+            - name: rules-volume
+              mountPath: /etc/rules
+              readOnly: true
+
         - name: prometheus-server
-          image: "lightbend-docker-registry.bintray.io/enterprise-suite/es-prometheus:latest"
-          # image: "prom/prometheus:v2.2.1"
-          imagePullPolicy: "Always"
+          image: "prom/prometheus:v2.3.1"
           args:
             - --config.file=/etc/config/prometheus.yml
             - --web.console.libraries=/etc/prometheus/console_libraries
@@ -106,38 +122,52 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
+            - name: rules-volume
+              mountPath: /etc/rules
+              readOnly: true
+
       terminationGracePeriodSeconds: 300
       volumes:
+        - name: rules-volume
+          emptyDir: {}
         - name: config-volume
           configMap:
             name: prometheus-server
+        - name: static-rules-volume
+          configMap:
+            name: static-prometheus-rules
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app: prometheus
-    component: "server"
   name: prometheus-server
-  # namespace: lightbend
 spec:
   ports:
-    - name: http
-      port: 80
-      protocol: TCP
+    - port: 80
       targetPort: 9090
   selector:
     app: prometheus
-    component: "server"
-  type: "ClusterIP"
+    component: server
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: es-monitor-api
+spec:
+  ports:
+    - port: 80
+      targetPort: 8180
+  selector:
+    app: prometheus
+    component: server
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: expose-prometheus
-  # namespace: lightbend
 spec:
   ports:
   - port: 9090
@@ -157,7 +187,6 @@ metadata:
     app: prometheus
     component: "server"
   name: prometheus-server
-  # namespace: lightbend
 data:
   prometheus.yml: |-
     global:
@@ -166,7 +195,7 @@ data:
       evaluation_interval: 10s
 
     rule_files:
-      - /etc/config/rules
+      - /etc/rules/*.yaml
 
     alerting:
       alertmanagers:
@@ -412,433 +441,84 @@ data:
             regex: (.*)-[0-9]+
             target_label: workload
 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: static-prometheus-rules
+data:
+  rules.yml: |-
+    - record: node_cpu_percent
+      expr: 100 - avg by (instance) (irate(node_cpu{mode="idle"}[5m]) * 100)
 
-  # record and alert rules
-  # within a group, rules are evaluated on the group interval and in order
-  # groups are evaluated in parallel
-  rules: |-
-    groups:
-    - name: lightbend_rules
-      rules:
-      - record: node_cpu_percent
-        expr: 100 - avg by (instance) (irate(node_cpu{mode="idle"}[5m]) * 100)
+    - record: node_memory_usable_percent
+      expr: avg by (instance) (node_memory_MemAvailable / node_memory_MemTotal) * 100
 
-      - record: node_memory_usable_percent
-        expr: avg by (instance) (node_memory_MemAvailable / node_memory_MemTotal) * 100
+    - record: node_filesystem_free_percent
+      expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
 
-      - record: node_filesystem_free_percent
-        expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
+    - record: node_network_errors
+      expr: sum by(instance) (node_network_transmit_errs + node_network_receive_errs + node_network_receive_drop + node_network_transmit_drop)
 
-      - record: node_network_errors
-        expr: sum by(instance) (node_network_transmit_errs + node_network_receive_errs + node_network_receive_drop + node_network_transmit_drop)
+    - record: kube_node_pressure
+      expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 
-      - record: kube_node_pressure
-        expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
+    - record: kube_pod_ready
+      expr: avg by (node_ip, node_name, namespace, pod) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(workload) kube_pod_info
 
-      - record: kube_pod_ready
-        expr: avg by (node_ip, node_name, namespace, pod) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(workload) kube_pod_info
+    - record: kube_pod_container_restarts_rate
+      expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(workload) kube_pod_info
 
-      - record: akka_processing_time_seconds
-        expr: akka_actor_processing_time_ns{quantile="0.5"} / 1000000000
+    - record: container_starts_total
+      expr: sum by (workload) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(workload) kube_pod_info)
 
-      - record: kube_pod_container_restarts
-        expr: irate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(workload) kube_pod_info
+    - record: kube_pod_failed
+      expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(workload) kube_pod_info
 
-      - record: kube_pod_failed
-        expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(workload) kube_pod_info
+    - record: kube_pod_not_running
+      expr: kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload) kube_pod_info
 
-      - record: kube_pod_not_running
-        expr: kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload) kube_pod_info
+    - record: kube_workload_generation_lag
+      expr: avg by (workload, namespace) (label_replace(kube_deployment_metadata_generation - kube_deployment_status_observed_generation, "workload", "$1", "deployment", "(.+)"))
 
-      - record: kube_workload_generation_lag
-        expr: avg by (workload, namespace) (label_replace(kube_deployment_metadata_generation - kube_deployment_status_observed_generation, "workload", "$1", "deployment", "(.+)"))
+    - record: kube_workload_generation_lag
+      expr: avg by (workload, namespace) (label_replace(kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready, "workload", "$1", "daemonset", "(.+)"))
 
-      - record: kube_workload_generation_lag
-        expr: avg by (workload, namespace) (label_replace(kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready, "workload", "$1", "daemonset", "(.+)"))
+    - record: prometheus_notification_queue_percent
+      expr: 100 * prometheus_notifications_queue_length / prometheus_notifications_queue_capacity
 
-      - record: prometheus_notification_queue_percent
-        expr: 100 * prometheus_notifications_queue_length / prometheus_notifications_queue_capacity
+    - record: prometheus_target_sync_percent
+      expr: 100 * prometheus_target_sync_length_seconds{quantile="0.99"} / on (job,instance) group_left(interval) prometheus_target_interval_length_seconds{quantile="0.01"}
 
-      - record: prometheus_target_sync_percent
-        expr: 100 * prometheus_target_sync_length_seconds{quantile="0.99"} / on (job,instance) group_left(interval) prometheus_target_interval_length_seconds{quantile="0.01"}
+    - record: prometheus_notifications_dropped_rate
+      expr: rate(prometheus_notifications_dropped_total[10m])
 
-      - record: prometheus_notifications_dropped
-        expr: rate(prometheus_notifications_dropped_total[10m])
+    - record: prometheus_rule_evaluation_failures_rate
+      expr: rate(prometheus_rule_evaluation_failures_total[10m])
 
-      - record: prometheus_rule_evaluation_failures
-        expr: rate(prometheus_rule_evaluation_failures_total[10m])
+    - record: prometheus_target_scrapes_exceeded_sample_limit_rate
+      expr: rate(prometheus_target_scrapes_exceeded_sample_limit_total[10m])
 
-      - record: prometheus_target_scrapes_exceeded_sample_limit
-        expr: rate(prometheus_target_scrapes_exceeded_sample_limit_total[10m])
+    - record: prometheus_tsdb_reloads_failures_rate
+      expr: rate(prometheus_tsdb_reloads_failures_total[10m])
 
-      - record: prometheus_tsdb_reloads_failures
-        expr: rate(prometheus_tsdb_reloads_failures_total[10m])
+    - record: akka_processing_time_seconds
+      expr: akka_actor_processing_time_ns{quantile="0.5"} / 1000000000
 
-      - record: model
-        expr: node_cpu_percent{monitor_type=""} >= bool 99
-        labels:
-          name: node_high_cpu
-          threshold: 99
-      - record: health
-        expr: (avg_over_time(model{name="node_high_cpu",monitor_type=""}[2m]) >=bool 1.0) * 2
-        labels:
-          severity: warning
-          window: 2m
-      - alert: node_high_cpu
-        expr: health{name="node_high_cpu",monitor_type=""} > 0
-        annotations:
-          summary: "cpu saturated"
-          description: "cpu on {{ "{{" }}$labels.instance{{ "}}" }} over 99% busy"
-      - record: model
-        expr: node_memory_usable_percent{monitor_type=""} < bool 5
-        labels:
-          name: node_memory_pressure
-          threshold: 5
-      - record: health
-        expr: (avg_over_time(model{name="node_memory_pressure",monitor_type=""}[5m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 5m
-      - alert: node_memory_pressure
-        expr: health{name="node_memory_pressure",monitor_type=""} > 0
-        annotations:
-          summary: "memory pressure"
-          description: "{{ "{{" }}$labels.instance{{ "}}" }} has low usable memory"
-      - record: model
-        expr: predict_linear(node_filesystem_free_percent{monitor_type=""}[1h], 28800)  < bool 0
-        labels:
-          name: node_disk_filling
-          prediction: 8h
-          period: 1h
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="node_disk_filling",monitor_type=""}[15m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 15m
-      - alert: node_disk_filling
-        expr: health{name="node_disk_filling",monitor_type=""} > 0
-        annotations:
-          summary: "disk filling"
-          description: "{{ "{{" }}$labels.instance{{ "}}" }} will fill disk in {{ "{{" }}$labels.prediction{{ "}}" }}"
-      - record: model
-        expr: node_network_errors{monitor_type=""} > bool 0
-        labels:
-          name: node_network_errors
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="node_network_errors",monitor_type=""}[5m]) >=bool 0.3) * 2
-        labels:
-          severity: warning
-          window: 5m
-      - alert: node_network_errors
-        expr: health{name="node_network_errors",monitor_type=""} > 0
-        annotations:
-          summary: "network errors"
-          description: "{{ "{{" }}$labels.instance{{ "}}" }} has network errors"
-      - record: model
-        expr: kube_node_pressure{monitor_type=""} > bool 0
-        labels:
-          name: kube_node_pressure
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="kube_node_pressure",monitor_type=""}[5m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 5m
-      - alert: kube_node_pressure
-        expr: health{name="kube_node_pressure",monitor_type=""} > 0
-        annotations:
-          summary: "kube node pressure"
-          description: "{{ "{{" }}$labels.node_name{{ "}}" }} is in kubernetes condition {{ "{{" }}$labels.condition{{ "}}" }}"
-      - record: model
-        expr: kube_pod_container_restarts{monitor_type=""} > bool 0
-        labels:
-          name: restarts
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="restarts",monitor_type=""}[10m]) >=bool 0.3) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: restarts
-        expr: health{name="restarts",monitor_type=""} > 0
-        annotations:
-          summary: "container restarting rapidly"
-          description: "container {{ "{{" }}$labels.container{{ "}}" }} in pod {{ "{{" }}$labels.pod{{ "}}" }} of {{ "{{" }}$labels.workload{{ "}}" }} restarting rapidly"
-      - record: model
-        expr: kube_pod_failed{monitor_type=""} > bool 0
-        labels:
-          name: kube_pod_failed
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="kube_pod_failed",monitor_type=""}[5m]) >=bool 0.5) * 4
-        labels:
-          severity: critical
-          window: 5m
-      - alert: kube_pod_failed
-        expr: health{name="kube_pod_failed",monitor_type=""} > 0
-        annotations:
-          summary: "pod failed"
-          description: "pod {{ "{{" }}$labels.pod{{ "}}" }} on {{ "{{" }}$labels.workload{{ "}}" }} failed"
-      - record: model
-        expr: kube_pod_not_running{monitor_type=""} > bool 0
-        labels:
-          name: kube_pod_not_running
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="kube_pod_not_running",monitor_type=""}[10m]) >=bool 0.8) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: kube_pod_not_running
-        expr: health{name="kube_pod_not_running",monitor_type=""} > 0
-        annotations:
-          summary: "pod not running"
-          description: "pod {{ "{{" }}$labels.pod{{ "}}" }} on {{ "{{" }}$labels.workload{{ "}}" }} not running"
-      - record: model
-        expr: kube_workload_generation_lag{monitor_type=""} > bool 0
-        labels:
-          name: kube_workload_generation_lag
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="kube_workload_generation_lag",monitor_type=""}[10m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: kube_workload_generation_lag
-        expr: health{name="kube_workload_generation_lag",monitor_type=""} > 0
-        annotations:
-          summary: "workload not updating"
-          description: "workload {{ "{{" }}$labels.workload{{ "}}" }} has not updated for 10 minutes"
-      - record: model
-        expr: deriv(kafka_consumergroup_lag{monitor_type=""}[15m]) >bool 1
-        labels:
-          name: kafka_consumergroup_lag
-          period: 15m
-          minslope: 1
-      - record: health
-        expr: (avg_over_time(model{name="kafka_consumergroup_lag",monitor_type=""}[5m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 5m
-      - alert: kafka_consumergroup_lag
-        expr: health{name="kafka_consumergroup_lag",monitor_type=""} > 0
-        annotations:
-          summary: "consumergroup falling behind"
-          description: "{{ "{{" }}$labels.consumergroup{{ "}}" }} is falling behind"
-      - record: model
-        expr: abs(scrape_duration_seconds{monitor_type=""} - avg_over_time(scrape_duration_seconds[15m])) >bool 3 * clamp_min(stddev_over_time(scrape_duration_seconds[15m]),3)
-        labels:
-          name: scrape_time
-          period: 15m
-          sigma: 3
-      - record: health
-        expr: (avg_over_time(model{name="scrape_time",monitor_type=""}[15m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 15m
-      - alert: scrape_time
-        expr: health{name="scrape_time",monitor_type=""} > 0
-        annotations:
-          summary: "scrape time anomalous"
-          description: "{{ "{{" }}$labels.instance{{ "}}" }} has anomalous scrape_duration_seconds"
-      - record: model
-        expr: deriv(akka_actor_mailbox_size{quantile="0.5",monitor_type=""}[15m]) >bool 0.1
-        labels:
-          name: akka_inbox_growth
-          period: 15m
-          minslope: 0.1
-      - record: health
-        expr: (avg_over_time(model{name="akka_inbox_growth",monitor_type=""}[5m]) >=bool 1) * 4
-        labels:
-          severity: critical
-          window: 5m
-      - alert: akka_inbox_growth
-        expr: health{name="akka_inbox_growth",monitor_type=""} > 0
-        annotations:
-          summary: "actor inbox growing"
-          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has a growing inbox"
-      - record: model
-        expr: abs(akka_actor_processing_time_ns{quantile="0.5",monitor_type=""} - avg_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m])) >bool 2 * clamp_min(stddev_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m]),10)
-        labels:
-          name: akka_processing_time
-          period: 15m
-          sigma: 2
-      - record: health
-        expr: (avg_over_time(model{name="akka_processing_time",monitor_type=""}[15m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 15m
-      - alert: akka_processing_time
-        expr: health{name="akka_processing_time",monitor_type=""} > 0
-        annotations:
-          summary: "actor processing time is weird"
-          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has unusual processing time"
-      - record: model
-        expr: prometheus_notifications_dropped{monitor_type=""} > bool 0
-        labels:
-          name: prometheus_notifications_dropped
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_notifications_dropped",monitor_type=""}[10m]) >=bool 0.1) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: prometheus_notifications_dropped
-        expr: health{name="prometheus_notifications_dropped",monitor_type=""} > 0
-        annotations:
-          summary: "Prometheus dropping notifications"
-          description: "Prometheus dropping alerts sent to Alertmanager"
-      - record: model
-        expr: prometheus_notification_queue_percent{monitor_type=""} > bool 50
-        labels:
-          name: prometheus_notification_queue
-          threshold: 50
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_notification_queue",monitor_type=""}[10m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: prometheus_notification_queue
-        expr: health{name="prometheus_notification_queue",monitor_type=""} > 0
-        annotations:
-          summary: "Prometheus alert queue filling"
-          description: "Prometheus alert queue is staying over 50% full"
-      - record: model
-        expr: prometheus_rule_evaluation_failures{monitor_type=""} > bool 0
-        labels:
-          name: prometheus_rule_evaluation_failures
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_rule_evaluation_failures",monitor_type=""}[10m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: prometheus_rule_evaluation_failures
-        expr: health{name="prometheus_rule_evaluation_failures",monitor_type=""} > 0
-        annotations:
-          summary: "Prometheus rule failures"
-          description: "Prometheus has {{ "{{" }}$value{{ "}}" }} rules failing"
-      - record: model
-        expr: prometheus_target_scrapes_exceeded_sample_limit{monitor_type=""} > bool 0
-        labels:
-          name: prometheus_target_too_many_metrics
-          threshold: 0
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_target_too_many_metrics",monitor_type=""}[10m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: prometheus_target_too_many_metrics
-        expr: health{name="prometheus_target_too_many_metrics",monitor_type=""} > 0
-        annotations:
-          summary: "Prometheus target over limit"
-          description: "Prometheus target at {{ "{{" }}labels.instance{{ "}}" }} has too many metrics"
-      - record: model
-        expr: prometheus_tsdb_reloads_failures{monitor_type=""} >= bool 1
-        labels:
-          name: prometheus_tsdb_reloads_failures
-          threshold: 1
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_tsdb_reloads_failures",monitor_type=""}[10m]) >=bool 1) * 4
-        labels:
-          severity: critical
-          window: 10m
-      - alert: prometheus_tsdb_reloads_failures
-        expr: health{name="prometheus_tsdb_reloads_failures",monitor_type=""} > 0
-        annotations:
-          summary: "Prometheus tsdb reload failing"
-          description: "Prometheus had {{ "{{" }}$value{{ "}}" }} reload failures"
-      - record: model
-        expr: up{monitor_type=""} != bool 1
-        labels:
-          name: prometheus_target_down
-          threshold: 1
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_target_down",monitor_type=""}[10m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: prometheus_target_down
-        expr: health{name="prometheus_target_down",monitor_type=""} > 0
-        annotations:
-          summary: "metrics target down"
-          description: "cannot connect to {{ "{{" }}$labels.instance{{ "}}" }} metrics endpoint for {{ "{{" }}$labels.job{{ "}}" }} data"
-      - record: model
-        expr: prometheus_config_last_reload_successful{monitor_type=""} != bool 1
-        labels:
-          name: prometheus_config_reload_failed
-          threshold: 1
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_config_reload_failed",monitor_type=""}[10m]) >=bool 1) * 4
-        labels:
-          severity: critical
-          window: 10m
-      - alert: prometheus_config_reload_failed
-        expr: health{name="prometheus_config_reload_failed",monitor_type=""} > 0
-        annotations:
-          summary: "prometheus bad config"
-          description: "current config for prometheus has errors, will prevent restarts"
-      - record: model
-        expr: prometheus_target_sync_percent{monitor_type=""} > bool 75
-        labels:
-          name: prometheus_scrape_time
-          threshold: 75
-      - record: health
-        expr: (avg_over_time(model{name="prometheus_scrape_time",monitor_type=""}[10m]) >=bool 1) * 2
-        labels:
-          severity: warning
-          window: 10m
-      - alert: prometheus_scrape_time
-        expr: health{name="prometheus_scrape_time",monitor_type=""} > 0
-        annotations:
-          summary: "prometheus has long scrape times"
-          description: "prometheus is taking {{ "{{" }}$value{{ "}}" }}% of the {{ "{{" }}$labels.interval{{ "}}" }} interval to get {{ "{{" }}$labels.scrape_job{{ "}}" }} metrics from {{ "{{" }}$labels.instance{{ "}}" }}"
-      - record: model
-        expr: abs(akka_actor_processing_time_ns{quantile="0.5",monitor_type="slow_akka"} - avg_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m])) >bool 2 * clamp_min(stddev_over_time(akka_actor_processing_time_ns{quantile="0.5"}[15m]),10)
-        labels:
-          name: slow_akka_processing_time
-          period: 15m
-          sigma: 2
-      - record: health
-        expr: (avg_over_time(model{name="slow_akka_processing_time",monitor_type="slow_akka"}[15m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 15m
-      - alert: slow_akka_processing_time
-        expr: health{name="slow_akka_processing_time",monitor_type="slow_akka"} > 0
-        annotations:
-          summary: "actor processing time is weird"
-          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has unusual processing time"
-      - record: model
-        expr: deriv(akka_actor_mailbox_size{quantile="0.5",monitor_type="slow_akka"}[15m]) >bool 0.1
-        labels:
-          name: slow_akka_inbox_growth
-          period: 15m
-          minslope: 0.1
-      - record: health
-        expr: (avg_over_time(model{name="slow_akka_inbox_growth",monitor_type="slow_akka"}[5m]) >=bool 0.5) * 4
-        labels:
-          severity: critical
-          window: 5m
-      - alert: slow_akka_inbox_growth
-        expr: health{name="slow_akka_inbox_growth",monitor_type="slow_akka"} > 0
-        annotations:
-          summary: "actor inbox growing"
-          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has a growing inbox"
-      - record: model
-        expr: akka_actor_running_actors{actor="Worker",monitor_type="slow_akka"} < bool 10
-        labels:
-          name: slow_akka_pool
-          threshold: 10
-      - record: health
-        expr: (avg_over_time(model{name="slow_akka_pool",monitor_type="slow_akka"}[5m]) >=bool 0.5) * 2
-        labels:
-          severity: warning
-          window: 5m
-      - alert: slow_akka_pool
-        expr: health{name="slow_akka_pool",monitor_type="slow_akka"} > 0
-        annotations:
-          summary: "worker pool too small"
-          description: "actor {{ "{{" }}$labels.actor{{ "}}" }} in {{ "{{" }}$labels.app{{ "}}" }} on {{ "{{" }}$labels.instance{{ "}}" }} has not enough actors"
+    - record: zk_open_file_ratio
+      expr: (zk_open_file_descriptor_count/zk_max_file_descriptor_count) * 100
+
+    - record: redis_keyspace_miss_ratio
+      expr: (redis_keyspace_misses_total/redis_keyspace_hits_total) * 100
+
+    - record: kafka_incoming_messages_rate
+      expr: sum without (instance) (rate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
+
+    - record: kafka_active_controllers
+      expr: sum by (workload) (kafka_controller_kafkacontroller_activecontrollercount)
+
+    - record: memcached_miss_ratio
+      expr: (sum without(command, status) (memcached_commands_total{status="miss"})/sum without(command, status) (memcached_commands_total)) * 100
+
+    - record: memcached_evictions_rate
+      expr: rate(memcached_items_evicted_total[5m])

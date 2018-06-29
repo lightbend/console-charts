@@ -3,7 +3,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: exporter-graphs-cm
-  # namespace: lightbend
 data:
   # default setting
   ernie.json: |
@@ -90,7 +89,6 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: grafana-datasource-cm
-  # namespace: lightbend
 data:
   prometheus-datasource.json: |
       {
@@ -106,7 +104,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: add-grafana-datasource
-  # namespace: lightbend
 spec:
   template:
     spec:
@@ -152,7 +149,6 @@ metadata:
     app: grafana
     component: "server"
   name: grafana-server
-  # namespace: lightbend
 spec:
   ports:
     - name: http
@@ -169,7 +165,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: expose-grafana
-  # namespace: lightbend
 spec:
   ports:
   - port: 3000
@@ -186,7 +181,6 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: grafana-server
-  # namespace: lightbend
   labels:
     app: grafana
     component: server

@@ -7,7 +7,6 @@ metadata:
     app: prometheus
     component: node-exporter
   name: prometheus-node-exporter
-  # namespace: lightbend
 spec:
   updateStrategy:
     type: OnDelete
@@ -65,7 +64,6 @@ metadata:
     app: prometheus
     component: "node-exporter"
   name: prometheus-node-exporter
-  # namespace: lightbend
 spec:
   clusterIP: None
   ports:
