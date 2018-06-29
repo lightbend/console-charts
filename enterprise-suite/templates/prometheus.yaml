@@ -105,7 +105,7 @@ spec:
               readOnly: true
 
         - name: prometheus-server
-          image: "prom/prometheus:v2.3.1"
+          image: "prom/prometheus:v2.2.1"
           args:
             - --config.file=/etc/config/prometheus.yml
             - --web.console.libraries=/etc/prometheus/console_libraries
