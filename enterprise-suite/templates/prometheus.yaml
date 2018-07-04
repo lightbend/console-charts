@@ -66,7 +66,7 @@ spec:
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
           args:
             - --rulesPath=/etc/rules/
-            - --storagePath=monitor-data/
+            - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
             - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
           volumeMounts:
@@ -74,6 +74,8 @@ spec:
               mountPath: /etc/rules
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
+            - name: monitor-data-volume
+              mountPath: /monitor-data
           ports:
             - containerPort: 8180
 
@@ -123,6 +125,8 @@ spec:
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
+        - name: monitor-data-volume
+          emptyDir: {}
 
 ---
 apiVersion: v1

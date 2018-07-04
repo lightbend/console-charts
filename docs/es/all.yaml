@@ -59,6 +59,22 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  creationTimestamp: null
+  name: grafana-datasource-cm
+data:
+  prometheus-datasource.json: |
+      {
+        "name": "Prometheus Lightbend",
+        "type": "prometheus",
+        "url": "http://192.168.99.100:30090",
+        "access": "direct",
+        "basicAuth": false
+      }
+---
+# Source: enterprise-suite/templates/es-grafana.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: exporter-graphs-cm
 data:
   # default setting
@@ -140,22 +156,6 @@ data:
 # Please note, browser should be able reach this IP-Address, it cannot be some internal IP address within kubernetes.
 # like prometheus-server.lightbend will not work
 #
----
-# Source: enterprise-suite/templates/es-grafana.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  name: grafana-datasource-cm
-data:
-  prometheus-datasource.json: |
-      {
-        "name": "Prometheus Lightbend",
-        "type": "prometheus",
-        "url": "http://192.168.99.100:30090",
-        "access": "direct",
-        "basicAuth": false
-      }
 ---
 # Source: enterprise-suite/templates/prometheus.yaml
 apiVersion: v1
@@ -1360,11 +1360,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: es-monitor-api
+  name: prometheus-server
 spec:
   ports:
     - port: 80
-      targetPort: 8180
+      targetPort: 9090
   selector:
     app: prometheus
     component: server
@@ -1373,11 +1373,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus-server
+  name: es-monitor-api
 spec:
   ports:
     - port: 80
-      targetPort: 9090
+      targetPort: 8180
   selector:
     app: prometheus
     component: server
@@ -1635,7 +1635,7 @@ spec:
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
           args:
             - --rulesPath=/etc/rules/
-            - --storagePath=monitor-data/
+            - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
             - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
           volumeMounts:
@@ -1643,6 +1643,8 @@ spec:
               mountPath: /etc/rules
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
+            - name: monitor-data-volume
+              mountPath: /monitor-data
           ports:
             - containerPort: 8180
 
@@ -1692,6 +1694,8 @@ spec:
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
+        - name: monitor-data-volume
+          emptyDir: {}
 ---
 # Source: enterprise-suite/templates/es-grafana.yaml
 apiVersion: batch/v1
