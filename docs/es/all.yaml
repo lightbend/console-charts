@@ -59,22 +59,6 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
-  name: grafana-datasource-cm
-data:
-  prometheus-datasource.json: |
-      {
-        "name": "Prometheus Lightbend",
-        "type": "prometheus",
-        "url": "http://192.168.99.100:30090",
-        "access": "direct",
-        "basicAuth": false
-      }
----
-# Source: enterprise-suite/templates/es-grafana.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: exporter-graphs-cm
 data:
   # default setting
@@ -156,6 +140,22 @@ data:
 # Please note, browser should be able reach this IP-Address, it cannot be some internal IP address within kubernetes.
 # like prometheus-server.lightbend will not work
 #
+---
+# Source: enterprise-suite/templates/es-grafana.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: grafana-datasource-cm
+data:
+  prometheus-datasource.json: |
+      {
+        "name": "Prometheus Lightbend",
+        "type": "prometheus",
+        "url": "http://192.168.99.100:30090",
+        "access": "direct",
+        "basicAuth": false
+      }
 ---
 # Source: enterprise-suite/templates/prometheus.yaml
 apiVersion: v1
@@ -1344,6 +1344,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: expose-prometheus
+spec:
+  ports:
+  - port: 9090
+    protocol: TCP
+    targetPort: 9090
+    nodePort: 30090
+  selector:
+    app: prometheus
+    component: server
+  type: NodePort
+---
+# Source: enterprise-suite/templates/prometheus.yaml
+apiVersion: v1
+kind: Service
+metadata:
   name: es-monitor-api
 spec:
   ports:
@@ -1365,22 +1381,6 @@ spec:
   selector:
     app: prometheus
     component: server
----
-# Source: enterprise-suite/templates/prometheus.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-prometheus
-spec:
-  ports:
-  - port: 9090
-    protocol: TCP
-    targetPort: 9090
-    nodePort: 30090
-  selector:
-    app: prometheus
-    component: server
-  type: NodePort
 ---
 # Source: enterprise-suite/templates/node-exporter.yaml
 apiVersion: apps/v1beta2
@@ -1558,7 +1558,7 @@ spec:
         component: server
     spec:
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.1
+      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.2
         name: grafana-sever
         env:
           # The following env variables set up basic auth with the default admin user and admin password.
