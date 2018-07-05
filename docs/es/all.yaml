@@ -104,7 +104,7 @@ data:
         {"graphName":"Active Controller Count", "promQL": "kafka_controller_kafkacontroller_activecontrollercount"},
         {"graphName":"Leader Elections", "promQL": "kafka_controller_controllerstats_leaderelectionrateandtimems"},
         {"graphName":"Unclean Leader Elections", "promQL": "kafka_controller_controllerstats_uncleanleaderelectionspersec"},
-        {"graphName":"Last Isr Shrink", "promQL": "irate(kafka_server_replicamanager_isrshrinks_total"[5m])},
+        {"graphName":"Last Isr Shrink", "promQL": "irate(kafka_server_replicamanager_isrshrinks_total"[1m])},
         {"graphName":"Last Isr Expand", "promQL": ""irate(kafka_server_replicamanager_isrexpands_total[1m])"},
         {"graphName":"JVM Memory Used", "promQL": "sum by (statefulset_kubernetes_io_pod_name)(jvm_memory_bytes_used{kubernetes_namespace='kafka'})"},
         {"graphName":"JVM GC Time Young Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Young Generation'}"},
