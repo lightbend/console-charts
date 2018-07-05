@@ -10,8 +10,8 @@ data:
   akka-exporter.json: |
     [
       {"graphName":"Running Actors", "promQL":"akka_actor_running_actors{workload=\"$workloadId\"}"},
-      {"graphName":"Sent Messages", "promQL":"akka_actor_sent_messages{workload=\"$workloadId\"}"},
-      {"graphName":"Processed Messages", "promQL":"akka_actor_processed_messages{workload=\"$workloadId\"}"},
+      {"graphName":"Sent Messages", "promQL":"irate(akka_actor_sent_messages{workload=\"$workloadId\"}[1m])"},
+      {"graphName":"Processed Messages", "promQL":"irate(akka_actor_processed_messages{workload=\"$workloadId\"}[1m])"},
       {"graphName":"Unhandled Messages", "promQL":"akka_actor_unhandled_message{workload=\"$workloadId\"}"},
       {"graphName":"Actor Failures", "promQL":"akka_actor_actor_failure{workload=\"$workloadId\"}"},
       {"graphName":"Dead Letters", "promQL":"akka_actor_dead_letter{workload=\"$workloadId\"}"}
@@ -31,8 +31,8 @@ data:
         {"graphName":"Active Controller Count", "promQL": "kafka_controller_kafkacontroller_activecontrollercount"},
         {"graphName":"Leader Elections", "promQL": "kafka_controller_controllerstats_leaderelectionrateandtimems"},
         {"graphName":"Unclean Leader Elections", "promQL": "kafka_controller_controllerstats_uncleanleaderelectionspersec"},
-        {"graphName":"Last Isr Shrink", "promQL": "kafka_server_replicamanager_isrshrinks_total"},
-        {"graphName":"Last Isr Expand", "promQL": "kafka_server_replicamanager_isrexpands_total"},
+        {"graphName":"Last Isr Shrink", "promQL": "irate(kafka_server_replicamanager_isrshrinks_total[1m])"},
+        {"graphName":"Last Isr Expand", "promQL": "irate(kafka_server_replicamanager_isrexpands_total[1m])"},
         {"graphName":"JVM Memory Used", "promQL": "sum by (statefulset_kubernetes_io_pod_name)(jvm_memory_bytes_used{kubernetes_namespace='kafka'})"},
         {"graphName":"JVM GC Time Young Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Young Generation'}"},
         {"graphName":"JVM GC Time Old Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Old Generation'}"}
