@@ -1265,22 +1265,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: expose-grafana
-spec:
-  ports:
-  - port: 3000
-    protocol: TCP
-    targetPort: 3000
-    nodePort: 30030
-  selector:
-    app: grafana
-    component: server
-  type: NodePort
----
-# Source: enterprise-suite/templates/es-grafana.yaml
-apiVersion: v1
-kind: Service
-metadata:
   labels:
     app: grafana
     component: "server"
@@ -1295,6 +1279,22 @@ spec:
     app: grafana
     component: "server"
   type: "ClusterIP"
+---
+# Source: enterprise-suite/templates/es-grafana.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: expose-grafana
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    nodePort: 30030
+  selector:
+    app: grafana
+    component: server
+  type: NodePort
 ---
 # Source: enterprise-suite/templates/kube-state-metrics.yaml
 apiVersion: v1
