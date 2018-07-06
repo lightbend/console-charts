@@ -63,7 +63,7 @@ spec:
       serviceAccountName: prometheus-server
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:0.0.1
           args:
             - --rulesPath=/etc/rules/
             - --storagePath=/monitor-data/
