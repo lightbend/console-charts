@@ -59,22 +59,6 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
-  name: grafana-datasource-cm
-data:
-  prometheus-datasource.json: |
-      {
-        "name": "Prometheus Lightbend",
-        "type": "prometheus",
-        "url": "http://192.168.99.100:30090",
-        "access": "direct",
-        "basicAuth": false
-      }
----
-# Source: enterprise-suite/templates/es-grafana.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: exporter-graphs-cm
 data:
   # default setting
@@ -104,8 +88,8 @@ data:
         {"graphName":"Active Controller Count", "promQL": "kafka_controller_kafkacontroller_activecontrollercount"},
         {"graphName":"Leader Elections", "promQL": "kafka_controller_controllerstats_leaderelectionrateandtimems"},
         {"graphName":"Unclean Leader Elections", "promQL": "kafka_controller_controllerstats_uncleanleaderelectionspersec"},
-        {"graphName":"Last Isr Shrink", "promQL": "irate(kafka_server_replicamanager_isrshrinks_total"[1m])},
-        {"graphName":"Last Isr Expand", "promQL": ""irate(kafka_server_replicamanager_isrexpands_total[1m])"},
+        {"graphName":"Last Isr Shrink", "promQL": "irate(kafka_server_replicamanager_isrshrinks_total[1m])"},
+        {"graphName":"Last Isr Expand", "promQL": "irate(kafka_server_replicamanager_isrexpands_total[1m])"},
         {"graphName":"JVM Memory Used", "promQL": "sum by (statefulset_kubernetes_io_pod_name)(jvm_memory_bytes_used{kubernetes_namespace='kafka'})"},
         {"graphName":"JVM GC Time Young Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Young Generation'}"},
         {"graphName":"JVM GC Time Old Gen", "promQL": "jvm_gc_collection_seconds_sum{gc='G1 Old Generation'}"}
@@ -156,6 +140,22 @@ data:
 # Please note, browser should be able reach this IP-Address, it cannot be some internal IP address within kubernetes.
 # like prometheus-server.lightbend will not work
 #
+---
+# Source: enterprise-suite/templates/es-grafana.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: grafana-datasource-cm
+data:
+  prometheus-datasource.json: |
+      {
+        "name": "Prometheus Lightbend",
+        "type": "prometheus",
+        "url": "http://192.168.99.100:30090",
+        "access": "direct",
+        "basicAuth": false
+      }
 ---
 # Source: enterprise-suite/templates/prometheus.yaml
 apiVersion: v1
@@ -1265,6 +1265,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: expose-grafana
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    nodePort: 30030
+  selector:
+    app: grafana
+    component: server
+  type: NodePort
+---
+# Source: enterprise-suite/templates/es-grafana.yaml
+apiVersion: v1
+kind: Service
+metadata:
   labels:
     app: grafana
     component: "server"
@@ -1279,22 +1295,6 @@ spec:
     app: grafana
     component: "server"
   type: "ClusterIP"
----
-# Source: enterprise-suite/templates/es-grafana.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-grafana
-spec:
-  ports:
-  - port: 3000
-    protocol: TCP
-    targetPort: 3000
-    nodePort: 30030
-  selector:
-    app: grafana
-    component: server
-  type: NodePort
 ---
 # Source: enterprise-suite/templates/kube-state-metrics.yaml
 apiVersion: v1
@@ -1344,6 +1344,19 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: prometheus-server
+spec:
+  ports:
+    - port: 80
+      targetPort: 9090
+  selector:
+    app: prometheus
+    component: server
+---
+# Source: enterprise-suite/templates/prometheus.yaml
+apiVersion: v1
+kind: Service
+metadata:
   name: expose-prometheus
 spec:
   ports:
@@ -1355,19 +1368,6 @@ spec:
     app: prometheus
     component: server
   type: NodePort
----
-# Source: enterprise-suite/templates/prometheus.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: prometheus-server
-spec:
-  ports:
-    - port: 80
-      targetPort: 9090
-  selector:
-    app: prometheus
-    component: server
 ---
 # Source: enterprise-suite/templates/prometheus.yaml
 apiVersion: v1
@@ -1508,7 +1508,7 @@ spec:
     spec:
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:latest
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:0.0.7
         ports:
         - containerPort: 80
         volumeMounts:
@@ -1632,7 +1632,7 @@ spec:
       serviceAccountName: prometheus-server
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:0.0.1
           args:
             - --rulesPath=/etc/rules/
             - --storagePath=/monitor-data/
