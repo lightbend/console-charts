@@ -79,7 +79,7 @@ data:
 # 1. wait till grafana is up
 # 2. add prometheus data source to grafana-server.
 # Note: The IPaddress here is the address provided by minikube service list
-# this IP adress is not static, even for minikube
+# this IP address is not static, even for minikube
 # Please note, browser should be able reach this IP-Address, it cannot be some internal IP address within kubernetes.
 # like prometheus-server.lightbend will not work
 #
@@ -196,11 +196,11 @@ spec:
       - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.2
         name: grafana-sever
         env:
-          # The following env variables set up basic auth with the default admin user and admin password.
-          - name: GF_AUTH_BASIC_ENABLED
-            value: "true"
+          # The following env variables set up anonymous access to grafana with editor access.
           - name: GF_AUTH_ANONYMOUS_ENABLED
-            value: "false"
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: "Editor"
         ports:
           - containerPort: 3000
         readinessProbe:
