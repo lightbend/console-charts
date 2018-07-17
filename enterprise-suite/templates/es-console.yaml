@@ -62,4 +62,9 @@ data:
       location /service/es-monitor-api/ {
         proxy_pass http://es-monitor-api/;
       }
+
+      location /service/grafana/ {
+        proxy_pass http://grafana-server:3000/;
+      }
+
     }

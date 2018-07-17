@@ -25,7 +25,7 @@ data:
       {
         "name": "Prometheus Lightbend",
         "type": "prometheus",
-        "url": "http://192.168.99.100:30090",
+        "url": "{{ .Values.esMonitorBaseURL }}/service/prometheus/",
         "access": "direct",
         "basicAuth": false
       }
@@ -132,6 +132,10 @@ spec:
             value: "true"
           - name: GF_AUTH_ANONYMOUS_ORG_ROLE
             value: "Editor"
+          - name: GF_SERVER_ROOT_URL
+            value: "{{ .Values.esMonitorBaseURL }}/service/grafana/"
+          - name: GF_SERVER_ROUTER_LOGGING
+            value: "true"
         ports:
           - containerPort: 3000
         readinessProbe:
