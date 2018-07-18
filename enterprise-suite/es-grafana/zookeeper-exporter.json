@@ -1,0 +1,7 @@
+[
+    {"graphName":"Average Latency", "promQL": "avg(zk_avg_latency)"},
+    {"graphName":"Synced Followers", "promQL": "zk_synced_followers"},
+    {"graphName":"Open File Descriptors", "promQL": "zk_open_file_descriptor_count"},
+    {"graphName":"Pending Syncs", "promQL": "zk_pending_syncs"},
+    {"graphName":"Connections", "promQL": "zk_num_alive_connections"}
+]

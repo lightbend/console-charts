@@ -52,7 +52,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: prometheus-alertmanager
-          image: prom/alertmanager:v0.14.0
+          image: prom/alertmanager:{{ .Values.alertManagerVersion }}
           imagePullPolicy: IfNotPresent
           env:
           args:
@@ -73,7 +73,7 @@ spec:
               mountPath: /etc/config
 
         - name: prometheus-alertmanager-configmap-reload
-          image: jimmidyson/configmap-reload:v0.1
+          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
           imagePullPolicy: "IfNotPresent"
           args:
             - --volume-dir=/etc/config

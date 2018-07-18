@@ -1,0 +1,13 @@
+[
+  {"graphName":"Miss Ratio", "promQL":"sum (memcached_commands_total{status=\"miss\"}) by (workload) / sum (memcached_commands_total) by (workload)"},
+  {"graphName":"Evictions", "promQL":"sum (irate(memcached_items_evicted_total[1m])) by (wokrload)"},
+  {"graphName":"Connections Current", "promQL":"sum (memcached_current_connections) by (wokrload)"},
+  {"graphName":"Connections Total Rate", "promQL":"sum (irate(memcached_connections_total[1m])) by (wokrload)"},
+  {"graphName":"Items Current", "promQL":"sum (memcached_current_items) by (wokrload)"},
+  {"graphName":"Cache Free", "promQL":"sum (memcached_current_bytes) by (workload) / sum (memcached_limit_bytes)  by (workload) "},
+  {"graphName":"Items Evicted", "promQL":"sum(irate(memcached_items_evicted_total[1m])) by (workload)"},
+  {"graphName":"Items Reclaimed Rate", "promQL":"sum(irate(memcached_items_reclaimed_total[1m])) by (workload)"},
+  {"graphName":"Total Commands Rate", "promQL":"sum (irate(memcached_commands_total[1m])) by (command, workload)"},
+  {"graphName":"Read Bytes Rate", "promQL":"sum(irate(memcached_read_bytes_total[1m])) by (workload)"},
+  {"graphName":"Written Bytes Rate", "promQL":"sum(irate(memcached_written_bytes_total[1m])) by (workload)"}
+]
