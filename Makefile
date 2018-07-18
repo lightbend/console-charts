@@ -29,4 +29,4 @@ install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
 
 # always run these steps if in dependencies:
-.PHONY: all install-local install-helm delete-es
+.PHONY: all install-local install-helm delete-es lint
