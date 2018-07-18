@@ -9,12 +9,12 @@ data:
     []
   akka-exporter.json: |
     [
-      {"graphName":"Running Actors", "promQL":["akka_actor_running_actors{workload=\"$workloadId\"}"}],
-      {"graphName":"Sent Messages", "promQL":["irate(akka_actor_sent_messages{workload=\"$workloadId\"}[1m])"}],
-      {"graphName":"Processed Messages", "promQL":["irate(akka_actor_processed_messages{workload=\"$workloadId\"}[1m])"}],
-      {"graphName":"Unhandled Messages", "promQL":["akka_actor_unhandled_message{workload=\"$workloadId\"}"}],
-      {"graphName":"Actor Failures", "promQL":["akka_actor_actor_failure{workload=\"$workloadId\"}"}],
-      {"graphName":"Dead Letters", "promQL":["akka_actor_dead_letter{workload=\"$workloadId\"}"}],
+      {"graphName":"Running Actors", "promQL":["akka_actor_running_actors{workload=\"$workloadId\"}"]},
+      {"graphName":"Sent Messages", "promQL":["irate(akka_actor_sent_messages{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Processed Messages", "promQL":["irate(akka_actor_processed_messages{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Unhandled Messages", "promQL":["akka_actor_unhandled_message{workload=\"$workloadId\"}"]},
+      {"graphName":"Actor Failures", "promQL":["akka_actor_actor_failure{workload=\"$workloadId\"}"]},
+      {"graphName":"Dead Letters", "promQL":["akka_actor_dead_letter{workload=\"$workloadId\"}"]},
       {"graphName":"Mailbox Size", "promQL":["sum by (actor)(akka_actor_mailbox_size{workload=\"$workloadId\"})"]},
       {"graphName":"Processing Time", "promQL":["sum by (actor)(akka_actor_processing_time_ns{workload=\"$workloadId\"})"]},
       {"graphName":"Mailbox Time", "promQL":["sum by (actor)(akka_actor_mailbox_time_ns{workload=\"$workloadId\"})"]},
@@ -26,7 +26,6 @@ data:
       {"graphName":"Unhandled Messages", "promQL":["sum by (actor)(akka_actor_unhandled_message{workload=\"$workloadId\"})"]},
       {"graphName":"Actor Failures", "promQL":["sum by (actor) (akka_actor_actor_failure{workload=\"$workloadId\"})"]},
       {"graphName":"Dead Letters", "promQL":["sum by (actor) (akka_actor_dead_letter{workload=\"$workloadId\"})"]},
-
       {"graphName":"Dispatcher Queue Time", "promQL":["sum by (actor) (akka_dispatcher_queue_time_ns{workload=\"$workloadId\"})"]},
       {"graphName":"Dispatcher Processing Time", "promQL":["sum by (actor) (akka_dispatcher_processing_time_ns{workload=\"$workloadId\"})"]},
       {"graphName":"Dispatcher Queue Size", "promQL":["sum by (actor) (akka_dispatcher_queue_size{workload=\"$workloadId\"})"]},
@@ -35,61 +34,72 @@ data:
       {"graphName":"Dispatcher Active Threads", "promQL":["sum by (actor) (akka_dispatcher_active_threads{workload=\"$workloadId\"})"]},
       {"graphName":"Dispatcher Running Threads", "promQL":["sum by (actor) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]},
       {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]},
-
       {"graphName":"Routed Messages", "promQL":["sum by (actor) (akka_router_router_routed_messages{workload=\"$workloadId\"})"]},
       {"graphName":"Router Processing Time", "promQL":["sum by (actor) (akka_router_router_processing_time_ns{workload=\"$workloadId\"})"]}
     ]
   akka-http-exporter.json: |
     [
+      {"graphName":"Requests/Responses", "promQL":["irate(akka_http_http_server_requests{workload=\"$workloadId\"}[1m])",
+                                                   "irate(akka_http_http_server_responses{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Connections", "promQL":["irate(akka_http_http_server_connections{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Response Time 2XX", "promQL":["irate(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"}[1m])",
+                                                  "irate(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.95\"}[1m])",
+                                                  "irate(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.05\"}[1m])"]},
+      {"graphName":"Response Time 4XX", "promQL":["irate(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"}[1m])",
+                                                  "irate(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.95\"}[1m])",
+                                                  "irate(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.05\"}[1m])"]},
+      {"graphName":"Response Time 5XX", "promQL":["irate(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"}[1m])}",
+                                                  "irate(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.95\"}[1m])}",
+                                                  "irate(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.05\"}[1m])"]},
       {"graphName":"Response Rate", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
       {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{workload=\"$workloadId\"})"]}
     ]
   kafka-exporter.json: |
     [
-        {"graphName":"Broker Messages in ", "promQL": ["irate(kafka_server_brokertopicmetrics_messagesin_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Bytes In", "promQL": ["irate(kafka_server_brokertopicmetrics_bytesin_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Bytes Out", "promQL": ["irate(kafka_server_brokertopicmetrics_bytesout_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Log Size Growth", "promQL": ["irate(kafka_log_size{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Produce Requests", "promQL": ["irate(kafka_server_brokertopicmetrics_totalproducerequests_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Fetch Consumer Requests", "promQL": ["irate(kafka_network_requestmetrics_requests_total{request="FetchConsumer",workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Fetch Follower Requests", "promQL": ["irate(kafka_network_requestmetrics_requests_total{request="FetchFollower",workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Leader Count", "promQL": ["kafka_server_replicamanager_leadercount{workload=\"$workloadId\"}"]},
-        {"graphName":"Under Replicated Partitions", "promQL": ["kafka_server_replicamanager_underreplicatedpartitions{workload=\"$workloadId\"}"]},
-        {"graphName":"Offline Partition Count", "promQL": ["kafka_controller_kafkacontroller_offlinepartitionscount{workload=\"$workloadId\"}"]},
-        {"graphName":"Active Controller Count", "promQL": ["kafka_controller_kafkacontroller_activecontrollercount{workload=\"$workloadId\"}"]},
-        {"graphName":"Leader Elections", "promQL": ["kafka_controller_controllerstats_leaderelectionrateandtimems{workload=\"$workloadId\"}"]},
-        {"graphName":"Unclean Leader Elections", "promQL": ["kafka_controller_controllerstats_uncleanleaderelectionspersec{workload=\"$workloadId\"}"]},
-        {"graphName":"Last Isr Shrink", "promQL": ["irate(kafka_server_replicamanager_isrshrinks_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Last Isr Expand", "promQL": ["irate(kafka_server_replicamanager_isrexpands_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"JVM Memory Used", "promQL": ["sum by (statefulset_kubernetes_io_pod_name)(jvm_memory_bytes_used{kubernetes_namespace='kafka',workload=\"$workloadId\"})"]},
-        {"graphName":"JVM GC Time Young Gen", "promQL": ["jvm_gc_collection_seconds_sum{gc='G1 Young Generation',workload=\"$workloadId\"}"]},
-        {"graphName":"JVM GC Time Old Gen", "promQL": ["jvm_gc_collection_seconds_sum{gc='G1 Old Generation', workload=\"$workloadId\"}"]}
+      {"graphName":"Broker Messages in ", "promQL":["irate(kafka_server_brokertopicmetrics_messagesin_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Bytes In", "promQL":["irate(kafka_server_brokertopicmetrics_bytesin_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Bytes Out", "promQL":["irate(kafka_server_brokertopicmetrics_bytesout_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Log Size Growth", "promQL":["irate(kafka_log_size{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Produce Requests", "promQL":["irate(kafka_server_brokertopicmetrics_totalproducerequests_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Fetch Consumer Requests", "promQL":["irate(kafka_network_requestmetrics_requests_total{request="FetchConsumer", workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Fetch Follower Requests", "promQL":["irate(kafka_network_requestmetrics_requests_total{request="FetchFollower", workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Leader Count", "promQL":["kafka_server_replicamanager_leadercount{workload=\"$workloadId\"}"]},
+      {"graphName":"Under Replicated Partitions", "promQL":["kafka_server_replicamanager_underreplicatedpartitions{workload=\"$workloadId\"}"]},
+      {"graphName":"Offline Partition Count", "promQL":["kafka_controller_kafkacontroller_offlinepartitionscount{workload=\"$workloadId\"}"]},
+      {"graphName":"Active Controller Count", "promQL":["kafka_controller_kafkacontroller_activecontrollercount{workload=\"$workloadId\"}"]},
+      {"graphName":"Leader Elections", "promQL":["kafka_controller_controllerstats_leaderelectionrateandtimems{workload=\"$workloadId\"}"]},
+      {"graphName":"Unclean Leader Elections", "promQL":["kafka_controller_controllerstats_uncleanleaderelectionspersec{workload=\"$workloadId\"}"]},
+      {"graphName":"Last Isr Shrink", "promQL":["irate(kafka_server_replicamanager_isrshrinks_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Last Isr Expand", "promQL":["irate(kafka_server_replicamanager_isrexpands_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"JVM Memory Used", "promQL":["sum by (statefulset_kubernetes_io_pod_name)(jvm_memory_bytes_used{kubernetes_namespace='kafka', workload=\"$workloadId\"})"]},
+      {"graphName":"JVM GC Time Young Gen", "promQL":["jvm_gc_collection_seconds_sum{gc='G1 Young Generation', workload=\"$workloadId\"}"]},
+      {"graphName":"JVM GC Time Old Gen", "promQL":["jvm_gc_collection_seconds_sum{gc='G1 Old Generation', workload=\"$workloadId\"}"]}
     ]
   zookeeper-exporter.json: |
     [
-        {"graphName":"Average Latency", "promQL": ["avg(zk_avg_latency{workload=\"$workloadId\"})"]},
-        {"graphName":"Synced Followers", "promQL": ["zk_synced_followers{workload=\"$workloadId\"}"]},
-        {"graphName":"Open File Descriptors", "promQL": ["zk_open_file_descriptor_count{workload=\"$workloadId\"}"]},
-        {"graphName":"Pending Syncs", "promQL": ["zk_pending_syncs{workload=\"$workloadId\"}"]},
-        {"graphName":"Connections", "promQL": ["zk_num_alive_connections{workload=\"$workloadId\"}"]}
+      {"graphName":"Average Latency", "promQL":["avg(zk_avg_latency{workload=\"$workloadId\"})"]},
+      {"graphName":"Synced Followers", "promQL":["zk_synced_followers{workload=\"$workloadId\"}"]},
+      {"graphName":"Open File Descriptors", "promQL":["zk_open_file_descriptor_count{workload=\"$workloadId\"}"]},
+      {"graphName":"Pending Syncs", "promQL":["zk_pending_syncs{workload=\"$workloadId\"}"]},
+      {"graphName":"Connections", "promQL":["zk_num_alive_connections{workload=\"$workloadId\"}"]}
     ]
   cassandra-exporter.json: |
     [
-        {"graphName":"Storage", "promQL": ["irate(cassandra_storage_load{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Reads", "promQL": ["irate(cassandra_clientrequest_latency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Writes", "promQL": ["irate(cassandra_clientrequest_latency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Read Latency", "promQL": ["irate(cassandra_clientrequest_totallatency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Write Latency", "promQL": ["irate(cassandra_clientrequest_totallatency{clientrequest='Write', workload=\"$workloadId\"}[1m])"}
+      {"graphName":"Storage", "promQL":["irate(cassandra_storage_load{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Reads", "promQL":["irate(cassandra_clientrequest_latency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Writes", "promQL":["irate(cassandra_clientrequest_latency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Read Latency", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Write Latency", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]}
     ]
   redis-exporter.json: |
     [
-        {"graphName":"Redis Memory Used", "promQL":["redis_memory_used_bytes{workload=\"$workloadId\"}"]},
-        {"graphName":"Commands Processed", "promQL":["irate(redis_commands_processed_total{workload=\"$workloadId\"}[1m])"]},
-        {"graphName":"Keys Evicted", "promQL":["redis_evicted_keys_total{workload=\"$workloadId\"}"]},
-        {"graphName":"Connections", "promQL":["redis_connected_clients{workload=\"$workloadId\"}"]}
+      {"graphName":"Redis Memory Used", "promQL":["redis_memory_used_bytes{workload=\"$workloadId\"}"]},
+      {"graphName":"Commands Processed", "promQL":["irate(redis_commands_processed_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Keys Evicted", "promQL":["redis_evicted_keys_total{workload=\"$workloadId\"}"]},
+      {"graphName":"Connections", "promQL":["redis_connected_clients{workload=\"$workloadId\"}"]}
     ]
   memcached-exporter.json: |
-   [
+    [
       {"graphName":"Miss Ratio", "promQL":["memcached_commands_total{workload=\"$workloadId\", status=\"miss\"}/memcached_commands_total{workload=\"$workloadId\"}"]},
       {"graphName":"Evictions", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
       {"graphName":"Connections Current", "promQL":["memcached_current_connections{workload=\"$workloadId\"}"]},
@@ -101,34 +111,34 @@ data:
       {"graphName":"Total Commands Rate", "promQL":["sum (irate(memcached_commands_total{workload=\"$workloadId\"}[1m])) by (command)"]},
       {"graphName":"Read Bytes Rate", "promQL":["irate(memcached_read_bytes_total{workload=\"$workloadId\"}[1m])"]},
       {"graphName":"Written Bytes Rate", "promQL":["irate(memcached_written_bytes_total{workload=\"$workloadId\"}[1m])"]}
-   ]
- jvm-exporter.json: |
-  [
-      {"graphName":"Heap", "promQL": [jvm_heap_committed{workload=\"$workloadId\"},
-                                      jvm_heap_init{workload=\"$workloadId\"},
-                                      jvm_heap_max{workload=\"$workloadId\"},
-                                      jvm_heap_used{workload=\"$workloadId\"}]},
-      {"graphName":"Non Heap", "promQL": [jvm_non_heap_committed{workload=\"$workloadId\"},
-                                          jvm_non_heap_init{workload=\"$workloadId\"},
-                                          jvm_non_heap_max{workload=\"$workloadId\"},
-                                          jvm_non_heap_used{workload=\"$workloadId\"}]},
-      {"graphName":"Total Heap", "promQL": [jvm_total_heap_committed{workload=\"$workloadId\"},
-                                            jvm_total_heap_init{workload=\"$workloadId\"},
-                                            jvm_total_heap_max{workload=\"$workloadId\"},
-                                            jvm_total_heap_used{workload=\"$workloadId\"}]},
-      {"graphName":"GC Count", "promQL": [jvm_PS_MarkSweep_count{workload=\"$workloadId\"},
-                                          jvm_PS_Scavenge_count{workload=\"$workloadId\"}]},
-      {"graphName":"GC Time", "promQL": [jvm_PS_MarkSweep_time{workload=\"$workloadId\"},
-                                         jvm_PS_Scavenge_time{workload=\"$workloadId\"}]},
-      {"graphName":"Class Loading", "promQL": [jvm_loaded{workload=\"$workloadId\"},
-                                               jvm_unloaded{workload=\"$workloadId\"}]},
-      {"graphName":"Memory Pools", "promQL": [jvm_pools_Code_Cache_usage{workload=\"$workloadId\"},
-                                              jvm_pools_Compressed_Class_Space_usage{workload=\"$workloadId\"},
-                                              jvm_pools_PS_Eden_Space_usage{workload=\"$workloadId\"}, jvm_pools_PS_Eden_Space_usage{workload=\"$workloadId\"},
-                                              jvm_pools_PS_Old_Gen_usage{workload=\"$workloadId\"}, jvm_pools_PS_Eden_Space_usage{workload=\"$workloadId\"},
-                                              jvm_pools_PS_Survivor_Space_usage{workload=\"$workloadId\"}, jvm_pools_PS_Eden_Space_usage{workload=\"$workloadId\"}
-      ]},
-  ]
+    ]
+  jvm-exporter.json: |
+    [
+      {"graphName":"Heap", "promQL":["jvm_heap_committed{workload=\"$workloadId\"}",
+                                     "jvm_heap_init{workload=\"$workloadId\"}",
+                                     "jvm_heap_max{workload=\"$workloadId\"}",
+                                     "jvm_heap_used{workload=\"$workloadId\"}"]},
+      {"graphName":"Non Heap", "promQL":["jvm_non_heap_committed{workload=\"$workloadId\"}",
+                                         "jvm_non_heap_init{workload=\"$workloadId\"}",
+                                         "jvm_non_heap_max{workload=\"$workloadId\"}",
+                                         "jvm_non_heap_used{workload=\"$workloadId\"}"]},
+      {"graphName":"Total Heap", "promQL":["jvm_total_heap_committed{workload=\"$workloadId\"}",
+                                           "jvm_total_heap_init{workload=\"$workloadId\"}",
+                                           "jvm_total_heap_max{workload=\"$workloadId\"}",
+                                           "jvm_total_heap_used{workload=\"$workloadId\"}"]},
+      {"graphName":"GC Count", "promQL":["jvm_PS_MarkSweep_count{workload=\"$workloadId\"}",
+                                         "jvm_PS_Scavenge_count{workload=\"$workloadId\"}"]},
+      {"graphName":"GC Time", "promQL":["jvm_PS_MarkSweep_time{workload=\"$workloadId\"}",
+                                        "jvm_PS_Scavenge_time{workload=\"$workloadId\"}"]},
+      {"graphName":"Class Loading", "promQL":["jvm_loaded{workload=\"$workloadId\"}",
+                                              "jvm_unloaded{workload=\"$workloadId\"}"]},
+      {"graphName":"Memory Pools", "promQL":["jvm_pools_Code_Cache_usage{workload=\"$workloadId\"}",
+                                             "jvm_pools_Compressed_Class_Space_usage{workload=\"$workloadId\"}",
+                                             "jvm_pools_PS_Eden_Space_usage{workload=\"$workloadId\"}",
+                                             "jvm_pools_PS_Old_Gen_usage{workload=\"$workloadId\"}",
+                                             "jvm_pools_PS_Survivor_Space_usage{workload=\"$workloadId\"}"]}
+      ]}
+    ]
 
 # Job to add data-source to grafana
 # 1. wait till grafana is up
