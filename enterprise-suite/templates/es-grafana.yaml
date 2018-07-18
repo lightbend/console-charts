@@ -248,7 +248,7 @@ spec:
         component: server
     spec:
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.2
+      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
         name: grafana-sever
         env:
           # The following env variables set up anonymous access to grafana with editor access.

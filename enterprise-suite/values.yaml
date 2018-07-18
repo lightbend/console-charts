@@ -1,0 +1,16 @@
+# Update these versions for a release.
+
+# lightbend-docker-registry.bintray.io/enterprise-suite/es-console
+esConsoleVersion: 0.0.7
+# lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
+esMonitorVersion: 0.0.1
+# lightbend-docker-registry.bintray.io/enterprise-suite/es-demo
+esDemoVersion: v0.0.1
+# lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
+esGrafanaVersion: v0.0.2
+# prom/prometheus
+prometheusVersion: v2.2.1
+# prom/alertmanager
+alertManagerVersion: v0.14.0
+# jimmidyson/configmap-reload
+configMapReloadVersion: v0.2.2

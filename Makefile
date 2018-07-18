@@ -4,7 +4,7 @@ all: docs/es/all.yaml docs/index.yaml
 RELEASE := $(shell awk '$$1 == "version:"{v=$$2} $$1 == "name:"{n=$$2} END {print n "-" v}' enterprise-suite/Chart.yaml )
 
 docs/es/all.yaml: docs/$(RELEASE).tgz
-	helm install $< --namespace=lightbend --dry-run --debug | sed -e '1,/^---$$/ d' > $@
+	helm template $< > $@
 
 docs/index.yaml: docs/$(RELEASE).tgz
 	helm repo index docs --url https://lightbend.github.io/helm-charts
@@ -13,6 +13,9 @@ docs/$(RELEASE).tgz: enterprise-suite/Chart.yaml enterprise-suite/templates/*.ya
 	helm init -c
 	helm lint enterprise-suite
 	helm package enterprise-suite -d docs
+
+lint:
+	helm lint enterprise-suite
 
 install-helm:
 	-kubectl create serviceaccount --namespace kube-system tiller
@@ -26,4 +29,4 @@ install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
 
 # always run these steps if in dependencies:
-.PHONY: all install-local install-helm delete-es
+.PHONY: all install-local install-helm delete-es lint

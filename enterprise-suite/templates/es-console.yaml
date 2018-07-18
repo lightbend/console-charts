@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:latest
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
         ports:
         - containerPort: 80
         volumeMounts:
