@@ -56,8 +56,5 @@ delete-es:
 install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
 
-clean:
-	rm docs/es/all.yaml docs/index.yaml docs/$(RELEASE).tgz
-
 # always run these steps if in dependencies:
 .PHONY: all build install-local install-helm delete-es lint init clean
