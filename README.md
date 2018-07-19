@@ -19,12 +19,12 @@ Refer to the documentation for installation instructions.
 Make any changes to the chart and commit it. Then run:
 
     scripts/make-release.sh <version> <chart-name>
-    git push
+    git push --tags
     
 For example:
 
     scripts/make-release.sh 0.0.15 enterprise-suite
-    git push
+    git push --tags
 
 This will set the chart version, package it, and make a
 commit. Finally, `git push` will publish the release.
