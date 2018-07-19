@@ -1,4 +1,5 @@
-all: docs/es/all.yaml docs/index.yaml
+all: init lint build
+build: docs/index.yaml resources/es.yaml resources/es-latest.yaml
 
 CHART := enterprise-suite
 VERSION := $(shell scripts/export-chart-version.sh $(CHART))
@@ -10,19 +11,23 @@ define banner
 	$(info === $@)
 endef
 
-docs/es/all.yaml: docs/$(RELEASE).tgz init
+resources/es.yaml: docs/$(RELEASE).tgz
 	$(call banner)
 	helm template $< > $@
 
-docs/index.yaml: docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz init
+resources/es-latest.yaml: docs/$(RELEASE_LATEST).tgz
+	$(call banner)
+	helm template $< > $@
+
+docs/index.yaml: docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz
 	$(call banner)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
-docs/$(RELEASE).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml init lint
+docs/$(RELEASE).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 	$(call banner)
 	helm package $(CHART) -d docs
 
-docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml init lint
+docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 	$(call banner)
 	rm -rf build/$(CHART_LATEST)
 	cp -r $(CHART) build/$(CHART_LATEST)
@@ -52,4 +57,4 @@ install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
 
 # always run these steps if in dependencies:
-.PHONY: all install-local install-helm delete-es lint init clean
+.PHONY: all build install-local install-helm delete-es lint init clean
