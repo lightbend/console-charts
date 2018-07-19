@@ -16,7 +16,8 @@ Refer to the documentation for installation instructions.
 
 ## Publishing Charts
 
-Make any changes to the chart and commit it. Then run:
+Make any changes to the chart, commit it and open a PR. Once the change is merged to master,
+you can release it directly:
 
     scripts/make-release.sh <version> <chart-name>
     git push --tags
@@ -27,7 +28,7 @@ For example:
     git push --tags
 
 This will set the chart version, package it, and make a
-commit. Finally, `git push` will publish the release.
+commit. Finally, `git push --tags` will publish the release and git tag.
 
 ## Development
 
