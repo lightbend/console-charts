@@ -49,8 +49,13 @@ kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/e
 
 ## Publishing Charts
 
-Make any changes to the chart, commit it and open a PR. Once the change is merged to master,
-you can release it directly:
+Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
+
+    go get github.com/mikefarah/yq
+    # or
+    brew install yq                  
+
+Then run the release script on a clean master checkout:
 
     scripts/make-release.sh <version> <chart-name>
     git push --tags
