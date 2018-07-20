@@ -241,56 +241,27 @@ metadata:
   creationTimestamp: null
   name: grafana-datasource-cm
 data:
-  prometheus-datasource.json: |
-      {
-        "name": "Prometheus Lightbend",
-        "type": "prometheus",
-        "url": "http://192.168.99.100:30080/service/prometheus/",
-        "access": "direct",
-        "basicAuth": false
-      }
+  prometheus-server-datasource.yaml: |
+    # config file version
+    apiVersion: 1
 
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: add-grafana-datasource
-spec:
-  template:
-    spec:
-      initContainers:
-      - name: wait-grafana
-        image: radial/busyboxplus:curl
-        imagePullPolicy: IfNotPresent
-        command: ['sh', '-c', 'until curl -s http://grafana-server.lightbend:3000/login > /dev/null 2>&1 ; do echo waiting for grafana; sleep 2; done;']
-      containers:
-      - name: add-prometheus-datasource
-        image: radial/busyboxplus:curl
-        imagePullPolicy: IfNotPresent
-        command: ["/bin/sh", "-c"]
-        workingDir: /mnt/grafana/dashboards
-        args:
-          - >
-            for file in *-datasource.json ; do
-              if [ -e "$file" ] ; then
-                echo "importing $file" &&
-                curl --silent --fail --show-error \
-                  --request POST http://admin:admin@grafana-server.lightbend:3000/api/datasources \
-                  --header "Content-Type: application/json" \
-                  --header "Accept: application/json" \
-                  --data-binary "@$file" >> /tmp/datasource 2>&1  ;
-                echo "" ;
-              fi
-            done ;
-
-        volumeMounts:
-        - name: grafana-datasource
-          mountPath: /mnt/grafana/dashboards
-      restartPolicy: Never
-      volumes:
-      - name: grafana-datasource
-        configMap:
-          name: grafana-datasource-cm
+    # list of datasources to insert/update depending
+    datasources:
+      # <string, required> name of the datasource. Required
+    - name: Prometheus Lightbend
+      # <string, required> datasource type. Required
+      type: prometheus
+      # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
+      access: proxy
+      # <int> org id. will default to orgId 1 if not specified
+      orgId: 1
+      # <string> url
+      url: http://prometheus-server
+      #
+      basicAuth: false
+      #
+      isDefault: true
+      editable: true
 
 ---
 apiVersion: v1
@@ -365,10 +336,18 @@ spec:
         volumeMounts:
         - name: grafana-dashboards
           mountPath: /usr/share/grafana/public/conf
+        volumeMounts:
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources/
       volumes:
       - name: grafana-dashboards
         configMap:
           name: exporter-graphs-cm
+      volumes:
+      - name: grafana-datasources
+        configMap:
+          name: grafana-datasource-cm
+
 
 ---
 # Source: enterprise-suite/templates/kube-state-metrics.yaml
