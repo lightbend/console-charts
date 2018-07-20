@@ -96,7 +96,7 @@ spec:
     spec:
       containers:
       - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
-        name: grafana-sever
+        name: grafana-server
         env:
           # The following env variables set up anonymous access to grafana with editor access.
           - name: GF_AUTH_ANONYMOUS_ENABLED
@@ -104,7 +104,7 @@ spec:
           - name: GF_AUTH_ANONYMOUS_ORG_ROLE
             value: "Editor"
           - name: GF_SERVER_ROOT_URL
-            value: "{{ .Values.esMonitorBaseURL }}/service/grafana/"
+            value: "/service/grafana/"
           - name: GF_SERVER_ROUTER_LOGGING
             value: "true"
         ports:

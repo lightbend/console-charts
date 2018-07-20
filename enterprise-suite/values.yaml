@@ -1,8 +1,5 @@
 # Update these versions for a release.
 
-# Base URL to use for access to the cluster.
-esMonitorBaseURL: http://192.168.99.100:30080
-
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: 0.0.8
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
