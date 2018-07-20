@@ -16,12 +16,12 @@
   {"graphName":"Unhandled Messages", "promQL":["sum by (actor)(akka_actor_unhandled_message{workload=\"$workloadId\"})"]},
   {"graphName":"Actor Failures", "promQL":["sum by (actor) (akka_actor_actor_failure{workload=\"$workloadId\"})"]},
   {"graphName":"Dead Letters", "promQL":["sum by (actor) (akka_actor_dead_letter{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Queue Time", "promQL":["sum by (actor) (akka_dispatcher_queue_time_ns{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Processing Time", "promQL":["sum by (actor) (akka_dispatcher_processing_time_ns{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Queue Size", "promQL":["sum by (actor) (akka_dispatcher_queue_size{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Processing", "promQL":["sum by (actor) (akka_dispatcher_processing{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor) (akka_dispatcher_pool_size{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Active Threads", "promQL":["sum by (actor) (akka_dispatcher_active_threads{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Running Threads", "promQL":["sum by (actor) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]}
+  {"graphName":"Dispatcher Queue Time", "promQL":["sum by (actor_system) (akka_dispatcher_queue_time_ns{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Processing Time", "promQL":["sum by (actor_system) (akka_dispatcher_processing_time_ns{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Queue Size", "promQL":["sum by (actor_system) (akka_dispatcher_queue_size{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Processing", "promQL":["sum by (actor_system) (akka_dispatcher_processing{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor_system) (akka_dispatcher_pool_size{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Active Threads", "promQL":["sum by (actor_system) (akka_dispatcher_active_threads{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Running Threads", "promQL":["sum by (actor_system) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]},
+  {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor_system) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]}
 ]
