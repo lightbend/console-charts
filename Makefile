@@ -1,5 +1,5 @@
 all: init lint build
-build: docs/index.yaml docs/es/all.yaml docs/es/all-latest.yaml
+build: init docs/index.yaml docs/es/all.yaml docs/es/all-latest.yaml
 
 CHART := enterprise-suite
 VERSION := $(shell scripts/export-chart-version.sh $(CHART))
@@ -38,6 +38,7 @@ clean:
 	rm -rf build
 
 init:
+	@scripts/lib.sh
 	@helm init -c > /dev/null
 	@mkdir -p build
 

@@ -6,7 +6,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 # script
 if [ "$#" -ne 2 ]; then
-    echo "$0 <chart> <version>"
+    echo "$0 <chart-name> <version>"
     exit 1
 fi
 
