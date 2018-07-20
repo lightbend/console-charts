@@ -23,7 +23,5 @@
   {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor) (akka_dispatcher_pool_size{workload=\"$workloadId\"})"]},
   {"graphName":"Dispatcher Active Threads", "promQL":["sum by (actor) (akka_dispatcher_active_threads{workload=\"$workloadId\"})"]},
   {"graphName":"Dispatcher Running Threads", "promQL":["sum by (actor) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]},
-  {"graphName":"Routed Messages", "promQL":["sum by (actor) (akka_router_router_routed_messages{workload=\"$workloadId\"})"]},
-  {"graphName":"Router Processing Time", "promQL":["sum by (actor) (akka_router_router_processing_time_ns{workload=\"$workloadId\"})"]}
+  {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]}
 ]

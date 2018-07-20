@@ -14,3 +14,4 @@
   {"graphName":"Response Rate", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
   {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{workload=\"$workloadId\"})"]}
 ]
+e
