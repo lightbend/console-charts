@@ -18,6 +18,24 @@ helm repo update
 helm install lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
 ```
 
+By default all the helm charts use versioned images, so you are using fixed dependencies.
+There is also a special "latest" chart which uses "latest" tags for images. This is
+useful for development.
+
+```bash
+helm install lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
+```
+
+### Upgrade
+
+```
+helm repo update
+helm upgrade lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
+
+# or upgrade chart with "latest" container images
+helm upgrade lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
+```
+
 ## kubectl apply enterprise suite:
 
 ```
@@ -25,11 +43,11 @@ kubectl create namespace lightbend
 
 kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all.yaml
 
+# or use "latest" container images
+kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all-latest.yaml
 ```
 
 ## Publishing Charts
-
-_wip_
 
 Make any changes to the chart, commit it and open a PR. Once the change is merged to master,
 you can release it directly:
