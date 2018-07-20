@@ -28,7 +28,7 @@ data:
     # list of datasources to insert/update depending
     datasources:
       # <string, required> name of the datasource. Required
-    - name: Prometheus Lightbend
+    - name: Cinnamon Prometheus
       # <string, required> datasource type. Required
       type: prometheus
       # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
