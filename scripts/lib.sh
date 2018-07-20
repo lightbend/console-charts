@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
-function yq() {
-    docker run -v ${PWD}:/workdir mikefarah/yq yq $@
-}
+if ! command -v yq > /dev/null; then
+    echo "Please install yq:"
+    echo "* brew install yq"
+    echo "* go get github.com/mikefarah/yq"
+    echo "See https://github.com/mikefarah/yq for more options"
+    exit 1
+fi
