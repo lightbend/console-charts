@@ -2,19 +2,34 @@
 
 Contains public Helm charts for various Lightbend projects. This project is hosted on [GitHub Pages](https://lightbend.github.io/helm-charts/index.yaml).
 
-## Setup
+## Helm install enterprise suite:
 
 ```bash
-helm init
+kubectl create serviceaccount --namespace kube-system tiller
+
+kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+
+helm init --service-account tiller
+
 helm repo add lightbend-helm-charts https://lightbend.github.io/helm-charts
-helm update
+
+helm repo update
+
+helm install lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
 ```
 
-## Installation
+## kubectl apply enterprise suite:
 
-Refer to the documentation for installation instructions.
+```
+kubectl create namespace lightbend
+
+kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all.yaml
+
+```
 
 ## Publishing Charts
+
+_wip_
 
 Make any changes to the chart, commit it and open a PR. Once the change is merged to master,
 you can release it directly:

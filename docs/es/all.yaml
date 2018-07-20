@@ -404,7 +404,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-kube-state-metrics
-  namespace: default
+  namespace: lightbend
 
 ---
 apiVersion: v1
@@ -505,7 +505,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-server
-  namespace: default
+  namespace: lightbend
 
 ---
 apiVersion: apps/v1beta2
