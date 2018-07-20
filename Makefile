@@ -1,19 +1,48 @@
-all: docs/es/all.yaml docs/index.yaml
+all: init lint build
+build: docs/index.yaml resources/es.yaml resources/es-latest.yaml
 
-RELEASE := $(shell awk '$$1 == "version:"{v=$$2} $$1 == "name:"{n=$$2} END {print n "-" v}' enterprise-suite/Chart.yaml )
+CHART := enterprise-suite
+VERSION := $(shell scripts/export-chart-version.sh $(CHART))
+RELEASE := $(CHART)-$(VERSION)
+CHART_LATEST := $(CHART)-latest
+RELEASE_LATEST := $(CHART_LATEST)-$(VERSION)
 
-docs/es/all.yaml: docs/$(RELEASE).tgz
+define banner
+	$(info === $@)
+endef
+
+resources/es.yaml: docs/$(RELEASE).tgz
+	$(call banner)
+	helm template $< > $@
+
+resources/es-latest.yaml: docs/$(RELEASE_LATEST).tgz
+	$(call banner)
 	helm --namespace=lightbend template $< > $@
 
-docs/index.yaml: docs/$(RELEASE).tgz
+docs/index.yaml: docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz
+	$(call banner)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
-docs/$(RELEASE).tgz: enterprise-suite/Chart.yaml enterprise-suite/templates/*.yaml
-	helm init -c
-	helm lint enterprise-suite
-	helm package enterprise-suite -d docs
+docs/$(RELEASE).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
+	$(call banner)
+	helm package $(CHART) -d docs
 
-lint:
+docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
+	$(call banner)
+	rm -rf build/$(CHART_LATEST)
+	cp -r $(CHART) build/$(CHART_LATEST)
+	scripts/munge-to-latest.sh build/$(CHART_LATEST)
+	helm package build/$(CHART_LATEST) -d docs
+
+clean:
+	rm -rf build
+
+init:
+	@helm init -c > /dev/null
+	@mkdir -p build
+
+lint: init
+	$(call banner)
 	helm lint enterprise-suite
 
 install-helm:
@@ -27,8 +56,5 @@ delete-es:
 install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
 
-clean:
-	rm docs/es/all.yaml docs/index.yaml docs/$(RELEASE).tgz
-
 # always run these steps if in dependencies:
-.PHONY: all install-local install-helm delete-es lint
+.PHONY: all build install-local install-helm delete-es lint init clean
