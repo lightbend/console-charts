@@ -1,5 +1,5 @@
 ---
-# Source: enterprise-suite/templates/alertmanager.yaml
+# Source: enterprise-suite-latest/templates/alertmanager.yaml
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -106,7 +106,7 @@ spec:
   type: NodePort
 
 ---
-# Source: enterprise-suite/templates/es-grafana.yaml
+# Source: enterprise-suite-latest/templates/es-grafana.yaml
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -371,7 +371,7 @@ spec:
           name: exporter-graphs-cm
 
 ---
-# Source: enterprise-suite/templates/kube-state-metrics.yaml
+# Source: enterprise-suite-latest/templates/kube-state-metrics.yaml
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -425,7 +425,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-kube-state-metrics
-  namespace: default
+  namespace: lightbend
 
 ---
 apiVersion: v1
@@ -485,7 +485,7 @@ spec:
   type: "ClusterIP"
 
 ---
-# Source: enterprise-suite/templates/prometheus.yaml
+# Source: enterprise-suite-latest/templates/prometheus.yaml
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -526,7 +526,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-server
-  namespace: default
+  namespace: lightbend
 
 ---
 apiVersion: apps/v1beta2
@@ -551,7 +551,7 @@ spec:
       serviceAccountName: prometheus-server
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:0.0.2
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
           args:
             - --rulesPath=/etc/rules/
             - --storagePath=/monitor-data/
@@ -1632,7 +1632,7 @@ data:
   
 
 ---
-# Source: enterprise-suite/templates/node-exporter.yaml
+# Source: enterprise-suite-latest/templates/node-exporter.yaml
 
 ---
 apiVersion: apps/v1beta2
@@ -1713,7 +1713,7 @@ spec:
 
 
 ---
-# Source: enterprise-suite/templates/es-console.yaml
+# Source: enterprise-suite-latest/templates/es-console.yaml
 
 ---
 apiVersion: extensions/v1beta1
@@ -1728,7 +1728,7 @@ spec:
     spec:
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:0.0.8
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:latest
         ports:
         - containerPort: 80
         volumeMounts:
@@ -1786,7 +1786,7 @@ data:
     }
 
 ---
-# Source: enterprise-suite/templates/es-demo.yaml
+# Source: enterprise-suite-latest/templates/es-demo.yaml
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
