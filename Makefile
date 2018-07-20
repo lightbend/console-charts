@@ -1,5 +1,5 @@
 all: init lint build
-build: docs/index.yaml resources/es.yaml resources/es-latest.yaml
+build: docs/index.yaml docs/es/all.yaml docs/es/all-latest.yaml
 
 CHART := enterprise-suite
 VERSION := $(shell scripts/export-chart-version.sh $(CHART))
@@ -11,11 +11,11 @@ define banner
 	$(info === $@)
 endef
 
-resources/es.yaml: docs/$(RELEASE).tgz
+docs/es/all.yaml: docs/$(RELEASE).tgz
 	$(call banner)
 	helm template $< > $@
 
-resources/es-latest.yaml: docs/$(RELEASE_LATEST).tgz
+docs/es/all-latest.yaml: docs/$(RELEASE_LATEST).tgz
 	$(call banner)
 	helm --namespace=lightbend template $< > $@
 
