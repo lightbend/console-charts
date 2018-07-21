@@ -109,6 +109,10 @@ spec:
             value: "true"
         ports:
           - containerPort: 3000
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15 && curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
         readinessProbe:
           httpGet:
             path: /login
