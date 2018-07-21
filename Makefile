@@ -13,7 +13,7 @@ endef
 
 docs/es/all.yaml: docs/$(RELEASE).tgz
 	$(call banner)
-	helm template $< > $@
+	helm --namespace=lightbend template $< > $@
 
 docs/es/all-latest.yaml: docs/$(RELEASE_LATEST).tgz
 	$(call banner)
