@@ -2,13 +2,6 @@
 
 Contains public Helm charts for various Lightbend projects. This project is hosted on [GitHub Pages](https://lightbend.github.io/helm-charts/index.yaml).
 
-
-## How to cut a new release
-```
-change version in enterprise-suite/Chart.yaml
-make clean all
-```
-
 ## Helm install enterprise suite:
 
 ```bash
@@ -54,7 +47,7 @@ kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/e
 kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all-latest.yaml
 ```
 
-## Publishing Charts
+## Publishing Charts / Cutting a Release
 
 Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
 
