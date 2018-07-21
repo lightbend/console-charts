@@ -132,16 +132,14 @@ data:
       {"graphName":"Unhandled Messages", "promQL":["sum by (actor)(akka_actor_unhandled_message{workload=\"$workloadId\"})"]},
       {"graphName":"Actor Failures", "promQL":["sum by (actor) (akka_actor_actor_failure{workload=\"$workloadId\"})"]},
       {"graphName":"Dead Letters", "promQL":["sum by (actor) (akka_actor_dead_letter{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Queue Time", "promQL":["sum by (actor) (akka_dispatcher_queue_time_ns{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Processing Time", "promQL":["sum by (actor) (akka_dispatcher_processing_time_ns{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Queue Size", "promQL":["sum by (actor) (akka_dispatcher_queue_size{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Processing", "promQL":["sum by (actor) (akka_dispatcher_processing{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor) (akka_dispatcher_pool_size{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Active Threads", "promQL":["sum by (actor) (akka_dispatcher_active_threads{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Running Threads", "promQL":["sum by (actor) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]},
-      {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]},
-      {"graphName":"Routed Messages", "promQL":["sum by (actor) (akka_router_router_routed_messages{workload=\"$workloadId\"})"]},
-      {"graphName":"Router Processing Time", "promQL":["sum by (actor) (akka_router_router_processing_time_ns{workload=\"$workloadId\"})"]}
+      {"graphName":"Dispatcher Queue Time", "promQL":["sum by (actor_system) (akka_dispatcher_queue_time_ns{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Processing Time", "promQL":["sum by (actor_system) (akka_dispatcher_processing_time_ns{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Queue Size", "promQL":["sum by (actor_system) (akka_dispatcher_queue_size{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Processing", "promQL":["sum by (actor_system) (akka_dispatcher_processing{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor_system) (akka_dispatcher_pool_size{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Active Threads", "promQL":["sum by (actor_system) (akka_dispatcher_active_threads{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Running Threads", "promQL":["sum by (actor_system) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]},
+      {"graphName":"Dispatcher Parallelism", "promQL":["sum by (actor_system) (akka_dispatcher_parallelism{workload=\"$workloadId\"})"]}
     ]
   akka-http-exporter.json: |
     [
@@ -241,56 +239,27 @@ metadata:
   creationTimestamp: null
   name: grafana-datasource-cm
 data:
-  prometheus-datasource.json: |
-      {
-        "name": "Prometheus Lightbend",
-        "type": "prometheus",
-        "url": "http://192.168.99.100:30080/service/prometheus/",
-        "access": "direct",
-        "basicAuth": false
-      }
+  prometheus-server-datasource.yaml: |
+    # config file version
+    apiVersion: 1
 
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: add-grafana-datasource
-spec:
-  template:
-    spec:
-      initContainers:
-      - name: wait-grafana
-        image: radial/busyboxplus:curl
-        imagePullPolicy: IfNotPresent
-        command: ['sh', '-c', 'until curl -s http://grafana-server.lightbend:3000/login > /dev/null 2>&1 ; do echo waiting for grafana; sleep 2; done;']
-      containers:
-      - name: add-prometheus-datasource
-        image: radial/busyboxplus:curl
-        imagePullPolicy: IfNotPresent
-        command: ["/bin/sh", "-c"]
-        workingDir: /mnt/grafana/dashboards
-        args:
-          - >
-            for file in *-datasource.json ; do
-              if [ -e "$file" ] ; then
-                echo "importing $file" &&
-                curl --silent --fail --show-error \
-                  --request POST http://admin:admin@grafana-server.lightbend:3000/api/datasources \
-                  --header "Content-Type: application/json" \
-                  --header "Accept: application/json" \
-                  --data-binary "@$file" >> /tmp/datasource 2>&1  ;
-                echo "" ;
-              fi
-            done ;
-
-        volumeMounts:
-        - name: grafana-datasource
-          mountPath: /mnt/grafana/dashboards
-      restartPolicy: Never
-      volumes:
-      - name: grafana-datasource
-        configMap:
-          name: grafana-datasource-cm
+    # list of datasources to insert/update depending
+    datasources:
+      # <string, required> name of the datasource. Required
+    - name: Cinnamon Prometheus
+      # <string, required> datasource type. Required
+      type: prometheus
+      # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
+      access: proxy
+      # <int> org id. will default to orgId 1 if not specified
+      orgId: 1
+      # <string> url
+      url: http://prometheus-server
+      #
+      basicAuth: false
+      #
+      isDefault: true
+      editable: true
 
 ---
 apiVersion: v1
@@ -344,8 +313,8 @@ spec:
         component: server
     spec:
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.5
-        name: grafana-sever
+      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.7
+        name: grafana-server
         env:
           # The following env variables set up anonymous access to grafana with editor access.
           - name: GF_AUTH_ANONYMOUS_ENABLED
@@ -353,11 +322,15 @@ spec:
           - name: GF_AUTH_ANONYMOUS_ORG_ROLE
             value: "Editor"
           - name: GF_SERVER_ROOT_URL
-            value: "http://192.168.99.100:30080/service/grafana/"
+            value: "/service/grafana/"
           - name: GF_SERVER_ROUTER_LOGGING
             value: "true"
         ports:
           - containerPort: 3000
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15 && curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
         readinessProbe:
           httpGet:
             path: /login
@@ -365,10 +338,15 @@ spec:
         volumeMounts:
         - name: grafana-dashboards
           mountPath: /usr/share/grafana/public/conf
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources/
       volumes:
       - name: grafana-dashboards
         configMap:
           name: exporter-graphs-cm
+      - name: grafana-datasources
+        configMap:
+          name: grafana-datasource-cm
 
 ---
 # Source: enterprise-suite-latest/templates/kube-state-metrics.yaml
