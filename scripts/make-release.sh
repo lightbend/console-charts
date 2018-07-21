@@ -39,7 +39,7 @@ git add Chart.yaml
 
 echo "building release"
 cd $make_dir
-make
+make -B
 git add docs
 
 git commit -m "Release $git_tag"
