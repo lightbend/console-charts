@@ -15,7 +15,6 @@ spec:
       containers:
         - name: es-demo
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-demo:{{ .Values.esDemoVersion }}
-          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9001
               name: metrics
