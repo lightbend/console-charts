@@ -36,8 +36,6 @@ docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 
 clean:
 	rm -rf build
-	rm -f docs/es/all*
-	rm -f docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz
 
 init:
 	@scripts/lib.sh
