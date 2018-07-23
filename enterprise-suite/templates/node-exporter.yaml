@@ -24,7 +24,6 @@ spec:
       containers:
         - name: prometheus-node-exporter
           image: "prom/node-exporter:v0.15.2"
-          imagePullPolicy: "IfNotPresent"
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys

@@ -53,7 +53,6 @@ spec:
       containers:
         - name: prometheus-alertmanager
           image: prom/alertmanager:{{ .Values.alertManagerVersion }}
-          imagePullPolicy: IfNotPresent
           env:
           args:
             - --config.file=/etc/config/alertmanager.yml
@@ -74,7 +73,6 @@ spec:
 
         - name: prometheus-alertmanager-configmap-reload
           image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
-          imagePullPolicy: "IfNotPresent"
           args:
             - --volume-dir=/etc/config
             - --webhook-url=http://localhost:9093/-/reload
