@@ -1,7 +1,1 @@
-[
-   {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
-   {"graphName": "Memory Usage Percent", "promQL":["node_memory_usable_percent"]},
-   {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
-   {"graphName": "Network Bytes Received", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
-   {"graphName": "Bytes Transmitted", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
- ]
+[]
