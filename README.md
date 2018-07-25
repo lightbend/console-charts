@@ -67,16 +67,15 @@ Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
 
 Then run the release script on a clean master checkout:
 
-    scripts/make-release.sh <chart-name> <version>
+    scripts/make-release.sh enterprise-suite
     git push --tags
     
-For example:
-
-    scripts/make-release.sh enterprise-suite 0.0.15
-    git push --tags
-
-This will set the chart version, package it, and make a
+This will increment the chart version, package it, and make a
 commit. Finally, `git push --tags` will publish the release and git tag.
+
+Optionally you can specify the version to use:
+
+    scripts/make-release.sh enterprise-suite 1.0.0
 
 ## Development
 
