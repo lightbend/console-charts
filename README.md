@@ -47,7 +47,17 @@ kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/e
 kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all-latest.yaml
 ```
 
-## Publishing Charts / Cutting a Release
+## Cutting a Release / Publishing Charts
+
+### Release ES images
+
+Release the images in Jenkins:
+1. Go to <https://ci.lightbend.com/view/EntSuite/job/es-release-all/build>.
+2. Click 'Build'. This will increment the version for each image and release it.
+3. Open the console output, scroll to the bottom and you can see the versions of each image.
+4. Update [enterprise-suite/values.yml](enterprise-suite/values.yml) with the new image versions and commit the changes.
+
+### Release Charts
 
 Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
 
