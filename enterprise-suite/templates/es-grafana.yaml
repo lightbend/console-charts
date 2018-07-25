@@ -96,6 +96,7 @@ spec:
     spec:
       containers:
       - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
         env:
           # The following env variables set up anonymous access to grafana with editor access.

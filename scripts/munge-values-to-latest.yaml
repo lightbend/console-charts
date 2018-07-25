@@ -1,3 +1,4 @@
 esConsoleVersion: latest
 esMonitorVersion: latest
 esGrafanaVersion: latest
+imagePullPolicy: Always

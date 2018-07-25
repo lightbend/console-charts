@@ -14,3 +14,5 @@ prometheusVersion: v2.2.1
 alertManagerVersion: v0.14.0
 # jimmidyson/configmap-reload
 configMapReloadVersion: v0.2.2
+# default image pull  policy
+imagePullPolicy: IfNotPresent

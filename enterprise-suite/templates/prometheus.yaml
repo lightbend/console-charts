@@ -64,6 +64,7 @@ spec:
       containers:
         - name: es-monitor-api
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
             - --rulesPath=/etc/rules/
             - --storagePath=/monitor-data/
