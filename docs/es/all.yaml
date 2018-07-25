@@ -55,7 +55,6 @@ spec:
       containers:
         - name: prometheus-alertmanager
           image: prom/alertmanager:v0.14.0
-          imagePullPolicy: IfNotPresent
           env:
           args:
             - --config.file=/etc/config/alertmanager.yml
@@ -76,7 +75,6 @@ spec:
 
         - name: prometheus-alertmanager-configmap-reload
           image: jimmidyson/configmap-reload:v0.2.2
-          imagePullPolicy: "IfNotPresent"
           args:
             - --volume-dir=/etc/config
             - --webhook-url=http://localhost:9093/-/reload
@@ -192,7 +190,14 @@ data:
                                              "jvm_pools_PS_Old_Gen_usage{workload=\"$workloadId\"}",
                                              "jvm_pools_PS_Survivor_Space_usage{workload=\"$workloadId\"}"]}
     ]
-  kubernetes-exporter.json: '[]'
+  kubernetes-exporter.json: |
+    [
+       {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
+       {"graphName": "Memory Available Percent", "promQL":["node_memory_usable_percent"]},
+       {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
+       {"graphName": "Network Bytes Received", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
+       {"graphName": "Bytes Transmitted", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
+    ]
   memcached-exporter.json: |
     [
       {"graphName":"Miss Ratio", "promQL":["memcached_commands_total{workload=\"$workloadId\", status=\"miss\"}/memcached_commands_total{workload=\"$workloadId\"}"]},
@@ -313,7 +318,7 @@ spec:
         component: server
     spec:
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.7
+      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.10
         name: grafana-server
         env:
           # The following env variables set up anonymous access to grafana with editor access.
@@ -435,7 +440,6 @@ spec:
       containers:
         - name: prometheus-kube-state-metrics
           image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
-          imagePullPolicy: "IfNotPresent"
           ports:
             - name: metrics
               containerPort: 8080
@@ -529,7 +533,7 @@ spec:
       serviceAccountName: prometheus-server
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:0.0.3
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:v0.0.14
           args:
             - --rulesPath=/etc/rules/
             - --storagePath=/monitor-data/
@@ -1637,7 +1641,6 @@ spec:
       containers:
         - name: prometheus-node-exporter
           image: "prom/node-exporter:v0.15.2"
-          imagePullPolicy: "IfNotPresent"
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
@@ -1706,7 +1709,7 @@ spec:
     spec:
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:0.0.9
+        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:v0.0.11
         ports:
         - containerPort: 80
         volumeMounts:
@@ -1782,7 +1785,6 @@ spec:
       containers:
         - name: es-demo
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-demo:v0.0.1
-          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9001
               name: metrics
