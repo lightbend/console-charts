@@ -43,7 +43,7 @@ make -B
 git add docs
 
 git commit -m "Release $git_tag"
-git tag $git_tag
+git tag -a $git_tag -m "Release $git_tag"
 echo Tagged commit with $git_tag
 
 echo
