@@ -57,6 +57,8 @@ Release the images in Jenkins:
 3. Open the [console](https://ci.lightbend.com/view/EntSuite/job/es-release-all/lastBuild/console), scroll to the bottom and you can see the versions of each image.
 4. Update [enterprise-suite/values.yaml](enterprise-suite/values.yaml) with the new image versions and commit the changes.
 
+See [es-build](https://github.com/lightbend/es-build) for more details.
+
 ### Release Charts
 
 Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
