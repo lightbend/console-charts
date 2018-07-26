@@ -571,52 +571,6 @@
         "description": "Memcached evictions in {{$labels.workload}} is not normal on {{$labels.instance}}",
         "monitorType": ""
       }
-    },
-    {
-      "model": "sma",
-      "parameters": {
-        "name": "slow_akka_processing_time",
-        "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
-        "period": "15m",
-        "numsigma": "2",
-        "minval": "10",
-        "window": "15m",
-        "confidence": "0.5",
-        "severity": "warning",
-        "summary": "actor processing time is weird",
-        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
-        "monitorType": "slow_akka"
-      }
-    },
-    {
-      "model": "growth",
-      "parameters": {
-        "name": "slow_akka_inbox_growth",
-        "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
-        "period": "15m",
-        "minslope": "0.1",
-        "window": "5m",
-        "confidence": "0.5",
-        "severity": "critical",
-        "summary": "actor inbox growing",
-        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox",
-        "monitorType": "slow_akka"
-      }
-    },
-    {
-      "model": "threshold",
-      "parameters": {
-        "name": "slow_akka_pool",
-        "metric": "akka_actor_running_actors{actor=\"Worker\"}",
-        "comparator": "<",
-        "threshold": "10",
-        "window": "5m",
-        "confidence": "0.5",
-        "severity": "warning",
-        "summary": "worker pool too small",
-        "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has not enough actors",
-        "monitorType": "slow_akka"
-      }
     }
   ]
 }
