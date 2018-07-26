@@ -2,6 +2,6 @@
   {"graphName":"Storage", "promQL":["irate(cassandra_storage_load{workload=\"$workloadId\"}[1m])"]},
   {"graphName":"Reads", "promQL":["irate(cassandra_clientrequest_latency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
   {"graphName":"Writes", "promQL":["irate(cassandra_clientrequest_latency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]},
-  {"graphName":"Read Latency", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
-  {"graphName":"Write Latency", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]}
+  {"graphName":"Read Latency", "promQL":["cassandra_clientrequest_totallatency{clientrequest='Read', workload=\"$workloadId\"}"]},
+  {"graphName":"Write Latency", "promQL":["cassandra_clientrequest_totallatency{clientrequest='Write', workload=\"$workloadId\"}"]}
 ]
