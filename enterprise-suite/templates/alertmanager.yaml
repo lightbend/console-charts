@@ -62,10 +62,15 @@ spec:
             - containerPort: 9093
           readinessProbe:
             httpGet:
-              path: /#/status
+              path: /-/ready
               port: 9093
-            initialDelaySeconds: 30
             timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
 
           volumeMounts:
             - name: config-volume
