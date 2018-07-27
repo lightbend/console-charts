@@ -1,5 +1,6 @@
+#################################################
 # Update these versions for a release.
-
+#
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: v0.0.11
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
@@ -14,5 +15,11 @@ prometheusVersion: v2.2.1
 alertManagerVersion: v0.14.0
 # jimmidyson/configmap-reload
 configMapReloadVersion: v0.2.2
+
+#################################################
+# Settings
+#
 # default image pull  policy
 imagePullPolicy: IfNotPresent
+# prometheus annotation domain, e.g. `domain/scrape=true`
+prometheusDomain: prometheus.io
