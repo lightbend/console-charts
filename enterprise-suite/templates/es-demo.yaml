@@ -8,7 +8,7 @@ spec:
   template:
     metadata:
       annotations:
-        prometheus.io/scrape: "true"
+        {{ .Values.prometheusDomain }}/scrape: "true"
       labels:
         app: es-demo
     spec:

@@ -198,7 +198,7 @@ metadata:
     component: server
   name: prometheus-server
 data:
-{{ (.Files.Glob "prometheus-server/*").AsConfig | indent 2 }}
+{{ (tpl (.Files.Glob "prometheus-server/*").AsConfig .) | indent 2 }}
 
 ---
 apiVersion: v1
