@@ -79,6 +79,19 @@ spec:
               mountPath: /monitor-data
           ports:
             - containerPort: 8180
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8180
+              scheme: HTTP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8180
+              scheme: HTTP
+            initialDelaySeconds: 30
 
         - name: prometheus-server-configmap-reload
           image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
@@ -105,10 +118,15 @@ spec:
             - containerPort: 9090
           readinessProbe:
             httpGet:
-              path: /status
+              path: /-/ready
               port: 9090
-            initialDelaySeconds: 30
             timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
