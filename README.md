@@ -18,6 +18,8 @@ helm repo update
 helm install lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
 ```
 
+## "latest" internal dev release:
+
 By default all the helm charts use versioned images, so you are using fixed dependencies.
 There is also a special "latest" chart which uses "latest" tags for images. This is
 useful for development.
@@ -25,6 +27,8 @@ useful for development.
 ```bash
 helm install lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
 ```
+
+When PRs are merged to master, "latest" is updated automatically.  If you have installed the  `lightbend-helm-charts/enterprise-suite-latest` helm chart or  `es/all-latest.yaml` you should be able to simply delete the pod you want upgraded and minikube will go fetch the latest from bintray and install it for you.  You will only have to do a helm upgrade on this track if you want to pick up configuration changes in the helm chart itself.
 
 ### Upgrade
 
