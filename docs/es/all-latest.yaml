@@ -54,7 +54,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: prometheus-alertmanager
-          image: prom/alertmanager:v0.14.0
+          image: prom/alertmanager:v0.15.1
           env:
           args:
             - --config.file=/etc/config/alertmanager.yml
@@ -64,10 +64,15 @@ spec:
             - containerPort: 9093
           readinessProbe:
             httpGet:
-              path: /#/status
+              path: /-/ready
               port: 9093
-            initialDelaySeconds: 30
             timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
 
           volumeMounts:
             - name: config-volume
@@ -114,13 +119,13 @@ data:
   akka-exporter.json: "[  \n  {\"graphName\":\"Mailbox Size\", \"promQL\":[\"max by
     (actor)(akka_actor_mailbox_size{workload=\\\"$workloadId\\\"})\"]},\n  {\"graphName\":\"Mailbox
     Time\", \"promQL\":[\"max by (actor)(akka_actor_mailbox_time_ns{workload=\\\"$workloadId\\\",quantile=\\\"0.99\\\"})\"]},\n
-    \ {\"graphName\":\"Actor Failures\", \"promQL\":[\"sum by (actor) (akka_actor_actor_failure{workload=\\\"$workloadId\\\"})\"]},\n
-    \ {\"graphName\":\"Processed Messages\", \"promQL\":[\"sum by (actor)(irate(akka_actor_processed_messages{workload=\\\"$workloadId\\\"}[1m]))\"]},
+    \ {\"graphName\":\"Actor Failures Rate\", \"promQL\":[\"sum by (actor) (irate(akka_actor_actor_failure{workload=\\\"$workloadId\\\"}[1m]))\"]},\n
+    \ {\"graphName\":\"Processed Message Rate\", \"promQL\":[\"sum by (actor)(irate(akka_actor_processed_messages{workload=\\\"$workloadId\\\"}[1m]))\"]},
     \     \n  {\"graphName\":\"Processing Time\", \"promQL\":[\"max by (actor)(akka_actor_processing_time_ns{workload=\\\"$workloadId\\\",quantile=\\\"0.99\\\"})\"]},\n
-    \ {\"graphName\":\"Sent Messages\", \"promQL\":[\"sum by (actor)(irate(akka_actor_sent_messages{workload=\\\"$workloadId\\\"}[1m]))\"]},\n
+    \ {\"graphName\":\"Sent Messages Rate\", \"promQL\":[\"sum by (actor)(irate(akka_actor_sent_messages{workload=\\\"$workloadId\\\"}[1m]))\"]},\n
     \ {\"graphName\":\"Running Actors\", \"promQL\":[\"sum by (actor)(akka_actor_running_actors{workload=\\\"$workloadId\\\"})\"]},\n
-    \ {\"graphName\":\"Unhandled Messages\", \"promQL\":[\"sum by (actor)(akka_actor_unhandled_message{workload=\\\"$workloadId\\\"})\"]},\n
-    \ {\"graphName\":\"Dead Letters\", \"promQL\":[\"sum by (actor) (akka_actor_dead_letter{workload=\\\"$workloadId\\\"})\"]},\n
+    \ {\"graphName\":\"Unhandled Messages Rate\", \"promQL\":[\"sum by (actor)(irate(akka_actor_unhandled_message{workload=\\\"$workloadId\\\"}[1m]))\"]},\n
+    \ {\"graphName\":\"Dead Letters\", \"promQL\":[\"sum by (actor) (irate(akka_actor_dead_letter{workload=\\\"$workloadId\\\"}[1m]))\"]},\n
     \ {\"graphName\":\"Dispatcher Queue Size\", \"promQL\":[\"max by (actor_system)
     (akka_dispatcher_queue_size{workload=\\\"$workloadId\\\"})\"]},\n  {\"graphName\":\"Dispatcher
     Pool Size\", \"promQL\":[\"sum by (actor_system) (akka_dispatcher_pool_size{workload=\\\"$workloadId\\\"})\"]},\n
@@ -131,9 +136,9 @@ data:
       {"graphName":"Response Rate", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
       {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{workload=\"$workloadId\",quantile=~\"0.99\"})"]},
       {"graphName":"Connection Rate", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{workload=\"$workloadId\"}[1m]))"]},
-      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(irate(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"}[1m]))"]},
-      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(irate(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"}[1m]))"]},
-      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(irate(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"}[1m]))"]}
+      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]},
+      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]},
+      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]}
     ]
   cassandra-exporter.json: |-
     [
@@ -529,6 +534,19 @@ spec:
               mountPath: /monitor-data
           ports:
             - containerPort: 8180
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8180
+              scheme: HTTP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8180
+              scheme: HTTP
+            initialDelaySeconds: 30
 
         - name: prometheus-server-configmap-reload
           image: jimmidyson/configmap-reload:v0.2.2
@@ -555,10 +573,15 @@ spec:
             - containerPort: 9090
           readinessProbe:
             httpGet:
-              path: /status
+              path: /-/ready
               port: 9090
-            initialDelaySeconds: 30
             timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -631,6 +654,7 @@ metadata:
   name: prometheus-server
 data:
   prometheus.yml: |
+  
     global:
       # dev mode
       scrape_interval: 10s
