@@ -2,4 +2,4 @@ apiVersion: v1
 description: Lightbend Enterprise Suite
 name: enterprise-suite
 icon: https://lightbend.github.io/helm-charts/lightbend.svg
-version: 0.0.22
+version: 0.0.23
