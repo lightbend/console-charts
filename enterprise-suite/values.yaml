@@ -4,7 +4,7 @@
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: v0.0.12
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: 0.0.15
+esMonitorVersion: v0.0.15
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-demo
 esDemoVersion: v0.0.1
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
