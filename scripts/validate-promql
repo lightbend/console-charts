@@ -2,6 +2,8 @@
 
 set -e
 
+echo "checking promql in enterprise-suite/es-grafana/*.json"
+
 # check_expr wraps one promql expression in a mock rule file for promtool.
 # We test one expression at a time to more easily report the expression that
 # failed, as promtool will report line number problems instead of expr bugs.
@@ -29,3 +31,8 @@ for json in enterprise-suite/es-grafana/*.json; do
 done
 
 echo "validated $count promql expressions"
+
+echo "checking enterprise-suite/es-monitor-api/static-rules.yml"
+cat enterprise-suite/es-monitor-api/static-rules.yml |
+  ( printf 'groups:\n- name: group\n  rules:\n' ; sed -e 's/^/  /') |
+  promtool check rules /dev/stdin
