@@ -74,7 +74,7 @@ Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
 Then run the release script on a clean master checkout:
 
     scripts/make-release.sh enterprise-suite
-    git push --tags
+    git push --follow-tags
     
 This will increment the chart version, package it, and make a
 commit. Finally, `git push --tags` will publish the release and git tag.
