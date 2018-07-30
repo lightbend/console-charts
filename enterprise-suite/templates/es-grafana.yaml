@@ -62,6 +62,7 @@ spec:
     component: "server"
   type: "ClusterIP"
 
+{{ if .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -77,6 +78,7 @@ spec:
     app: grafana
     component: server
   type: NodePort
+{{ end }}
 
 ---
 apiVersion: extensions/v1beta1

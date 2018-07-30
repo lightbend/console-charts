@@ -173,6 +173,7 @@ spec:
     app: prometheus
     component: server
 
+{{ if .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -188,6 +189,7 @@ spec:
     app: prometheus
     component: server
   type: NodePort
+{{ end }}
 
 ---
 apiVersion: v1

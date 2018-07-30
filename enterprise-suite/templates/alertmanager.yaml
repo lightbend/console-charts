@@ -90,6 +90,7 @@ spec:
           configMap:
             name: prometheus-alertmanager
 
+{{ if .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -105,3 +106,4 @@ spec:
     app: prometheus
     component: alertmanager
   type: NodePort
+{{ end }}
