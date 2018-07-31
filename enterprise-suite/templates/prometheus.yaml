@@ -94,24 +94,10 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
-        - name: prometheus-server-configmap-reload
-          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
-          args:
-            - -volume-dir=/etc/config
-            - -volume-dir=/etc/rules
-            - -webhook-url=http://localhost:9090/-/reload
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-              readOnly: true
-            - name: rules-volume
-              mountPath: /etc/rules
-              readOnly: true
-
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
           args:
-            - --config.file=/etc/config/prometheus.yml
+            - --config.file=/etc/config/prometheus.yml    # FIXME
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
@@ -129,8 +115,6 @@ spec:
             timeoutSeconds: 30
             initialDelaySeconds: 30
           volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
             - name: rules-volume
               mountPath: /etc/rules
               readOnly: true
@@ -139,9 +123,6 @@ spec:
       volumes:
         - name: rules-volume
           emptyDir: {}
-        - name: config-volume
-          configMap:
-            name: prometheus-server
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
