@@ -70,6 +70,7 @@ spec:
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
             - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --prometheusDomain={{ .Values.prometheusDomain }}
           volumeMounts:
             - name: rules-volume
               mountPath: /etc/rules
