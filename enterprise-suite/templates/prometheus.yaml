@@ -198,17 +198,6 @@ metadata:
   labels:
     app: prometheus
     component: server
-  name: prometheus-server
-data:
-{{ (tpl (.Files.Glob "prometheus-server/*").AsConfig .) | indent 2 }}
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: server
   name: es-monitor-api
 data:
 {{ (.Files.Glob "es-monitor-api/*").AsConfig | indent 2 }}
