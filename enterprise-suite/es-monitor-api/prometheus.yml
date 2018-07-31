@@ -4,7 +4,7 @@ global:
   evaluation_interval: 10s
 
 rule_files:
-  - /etc/rules/*.yaml
+  - /etc/config/rules/*.yaml
 
 alerting:
   alertmanagers:

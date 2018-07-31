@@ -61,19 +61,36 @@ spec:
         component: server
     spec:
       serviceAccountName: prometheus-server
+
+      initContainers:
+        - name: setup
+          image: alpine
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - mkdir -p /etc/config/rules;
+              cp /etc/bare/prometheus.yml /etc/config/
+          volumeMounts:
+            - mountPath: /etc/config
+              name: config-volume
+            - mountPath: /etc/bare
+              name: bare-prometheus
+
       containers:
         - name: es-monitor-api
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
-            - --rulesPath=/etc/rules/
+            - --configPath=/etc/config/
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
             - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
           volumeMounts:
-            - name: rules-volume
-              mountPath: /etc/rules
+            - name: config-volume
+              mountPath: /etc/config
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
             - name: monitor-data-volume
@@ -97,7 +114,7 @@ spec:
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
           args:
-            - --config.file=/etc/config/prometheus.yml    # FIXME
+            - --config.file=/etc/config/prometheus.yml
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
@@ -115,13 +132,13 @@ spec:
             timeoutSeconds: 30
             initialDelaySeconds: 30
           volumeMounts:
-            - name: rules-volume
-              mountPath: /etc/rules
+            - name: config-volume
+              mountPath: /etc/config
               readOnly: true
 
       terminationGracePeriodSeconds: 300
       volumes:
-        - name: rules-volume
+        - name: config-volume
           emptyDir: {}
         - name: es-monitor-api-volume
           configMap:
@@ -172,6 +189,29 @@ spec:
     component: server
   type: NodePort
 {{ end }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: server
+  name: bare-prometheus
+data:
+  prometheus.yml: |-
+    # this is a placeholder to keep prometheus running while it waits the real config
+    global:
+      scrape_interval:     1m
+      evaluation_interval: 1m
+    scrape_configs:
+      - job_name: wait
+        static_configs:
+          - targets: ['localhost:9090']
+        metric_relabel_configs:
+        - source_labels: [__name__]
+          regex: .+
+          action: drop
 
 ---
 apiVersion: v1
