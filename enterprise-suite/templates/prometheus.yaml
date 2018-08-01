@@ -145,6 +145,9 @@ spec:
             name: es-monitor-api
         - name: monitor-data-volume
           emptyDir: {}
+        - name: bare-prometheus
+          configMap:
+            name: bare-prometheus
 
 ---
 apiVersion: v1
