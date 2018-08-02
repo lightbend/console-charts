@@ -1,12 +1,15 @@
-{{- $promDomainUnderscored := .Values.prometheusDomain | replace "." "_" }}
-
+{{/*
+   * Note to Helm devs: this is NOT a Helm template, but rather a plain go template used
+   * in es-monitor-api to generate the final prometheus.yml.
+   * dot2underscore is a function in es-monitor-api that replaces "." with "_"
+   */}}
 global:
   # dev mode
   scrape_interval: 10s
   evaluation_interval: 10s
 
 rule_files:
-  - /etc/rules/*.yaml
+  - /etc/config/rules/*.yaml
 
 alerting:
   alertmanagers:
@@ -96,11 +99,11 @@ scrape_configs:
   # The relabeling allows the actual service scrape endpoint to be configured
   # via the following annotations:
   #
-  # * `{{ .Values.prometheusDomain }}/scrape`: Only scrape services that have a value of `true`
-  # * `{{ .Values.prometheusDomain }}/scheme`: If the metrics endpoint is secured then you will need
+  # * `{{ .PrometheusDomain }}/scrape`: Only scrape services that have a value of `true`
+  # * `{{ .PrometheusDomain }}/scheme`: If the metrics endpoint is secured then you will need
   # to set this to `https` & most likely set the `tls_config` of the scrape config.
-  # * `{{ .Values.prometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-  # * `{{ .Values.prometheusDomain }}/port`: If the metrics are exposed on a different port to the
+  # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
+  # * `{{ .PrometheusDomain }}/port`: If the metrics are exposed on a different port to the
   # service then set this appropriately.
   - job_name: 'kubernetes-service-endpoints'
 
@@ -108,18 +111,18 @@ scrape_configs:
       - role: endpoints
 
     relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ $promDomainUnderscored }}_scrape]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
         action: keep
         regex: true
-      - source_labels: [__meta_kubernetes_service_annotation_{{ $promDomainUnderscored }}_scheme]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scheme]
         action: replace
         target_label: __scheme__
         regex: (https?)
-      - source_labels: [__meta_kubernetes_service_annotation_{{ $promDomainUnderscored }}_path]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_path]
         action: replace
         target_label: __metrics_path__
         regex: (.+)
-      - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ $promDomainUnderscored }}_port]
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         target_label: __address__
         regex: (.+)(?::\d+);(\d+)
@@ -159,6 +162,7 @@ scrape_configs:
       - source_labels: [created_by_kind, pod]
         regex: '.none.;(.*)'
         target_label: workload
+{{ .MonitorTypeRules | indent 6 }}
 
   - job_name: 'prometheus-pushgateway'
     honor_labels: true
@@ -167,7 +171,7 @@ scrape_configs:
       - role: service
 
     relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ $promDomainUnderscored }}_probe]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_probe]
         action: keep
         regex: pushgateway
 
@@ -176,7 +180,7 @@ scrape_configs:
   # The relabeling allows the actual service scrape endpoint to be configured
   # via the following annotations:
   #
-  # * `{{ .Values.prometheusDomain }}/probe`: Only probe services that have a value of `true`
+  # * `{{ .PrometheusDomain }}/probe`: Only probe services that have a value of `true`
   - job_name: 'kubernetes-services'
 
     metrics_path: /probe
@@ -187,7 +191,7 @@ scrape_configs:
       - role: service
 
     relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ $promDomainUnderscored }}_probe]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_probe]
         action: keep
         regex: true
       - source_labels: [__address__]
@@ -208,23 +212,23 @@ scrape_configs:
   # The relabeling allows the actual pod scrape endpoint to be configured via the
   # following annotations:
   #
-  # * `{{ .Values.prometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
-  # * `{{ .Values.prometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-  # * `{{ .Values.prometheusDomain }}/port`: Scrape the pod on the indicated port instead of the default of `9102`.
+  # * `{{ .PrometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
+  # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
+  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of the default of `9102`.
   - job_name: 'kubernetes-pods'
 
     kubernetes_sd_configs:
       - role: pod
 
     relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_{{ $promDomainUnderscored }}_scrape]
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
         action: keep
         regex: true
-      - source_labels: [__meta_kubernetes_pod_annotation_{{ $promDomainUnderscored }}_path]
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_path]
         action: replace
         target_label: __metrics_path__
         regex: (.+)
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ $promDomainUnderscored }}_port]
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         regex: (.+):(?:\d+);(\d+)
         replacement: ${1}:${2}
@@ -251,3 +255,6 @@ scrape_configs:
         action: replace
         regex: (.*)-[0-9]+
         target_label: workload
+
+    metric_relabel_configs:
+{{ .MonitorTypeRules | indent 6 }}

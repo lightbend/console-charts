@@ -61,18 +61,36 @@ spec:
         component: server
     spec:
       serviceAccountName: prometheus-server
+
+      initContainers:
+        - name: setup
+          image: alpine
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - mkdir -p /etc/config/rules;
+              cp /etc/bare/prometheus.yml /etc/config/
+          volumeMounts:
+            - mountPath: /etc/config
+              name: config-volume
+            - mountPath: /etc/bare
+              name: bare-prometheus
+
       containers:
         - name: es-monitor-api
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
-            - --rulesPath=/etc/rules/
+            - --configPath=/etc/config/
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
             - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
+            - --prometheusDomain={{ .Values.prometheusDomain }}
           volumeMounts:
-            - name: rules-volume
-              mountPath: /etc/rules
+            - name: config-volume
+              mountPath: /etc/config
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
             - name: monitor-data-volume
@@ -92,20 +110,6 @@ spec:
               port: 8180
               scheme: HTTP
             initialDelaySeconds: 30
-
-        - name: prometheus-server-configmap-reload
-          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
-          args:
-            - -volume-dir=/etc/config
-            - -volume-dir=/etc/rules
-            - -webhook-url=http://localhost:9090/-/reload
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-              readOnly: true
-            - name: rules-volume
-              mountPath: /etc/rules
-              readOnly: true
 
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
@@ -130,22 +134,20 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: rules-volume
-              mountPath: /etc/rules
               readOnly: true
 
       terminationGracePeriodSeconds: 300
       volumes:
-        - name: rules-volume
-          emptyDir: {}
         - name: config-volume
-          configMap:
-            name: prometheus-server
+          emptyDir: {}
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
         - name: monitor-data-volume
           emptyDir: {}
+        - name: bare-prometheus
+          configMap:
+            name: bare-prometheus
 
 ---
 apiVersion: v1
@@ -198,9 +200,21 @@ metadata:
   labels:
     app: prometheus
     component: server
-  name: prometheus-server
+  name: bare-prometheus
 data:
-{{ (tpl (.Files.Glob "prometheus-server/*").AsConfig .) | indent 2 }}
+  prometheus.yml: |-
+    # this is a placeholder to keep prometheus running while it waits the real config
+    global:
+      scrape_interval:     1m
+      evaluation_interval: 1m
+    scrape_configs:
+      - job_name: wait
+        static_configs:
+          - targets: ['localhost:9090']
+        metric_relabel_configs:
+        - source_labels: [__name__]
+          regex: .+
+          action: drop
 
 ---
 apiVersion: v1
