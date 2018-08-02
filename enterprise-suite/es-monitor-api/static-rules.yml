@@ -14,22 +14,22 @@
   expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 
 - record: kube_pod_ready
-  expr: avg by (node_ip, node_name, namespace, pod) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(workload) kube_pod_info
+  expr: avg by (node_ip, node_name, namespace, pod, monitor_type) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(workload, monitor_type) kube_pod_info
 
 - record: kube_pod_container_restarts_rate
-  expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(workload) kube_pod_info
+  expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(workload, monitor_type) kube_pod_info
 
 - record: container_starts_total
-  expr: sum by (workload) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(workload) kube_pod_info)
+  expr: sum by (workload) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(workload, monitor_type) kube_pod_info)
 
 - record: kube_pod_failed
-  expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(workload) kube_pod_info
+  expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(workload, monitor_type) kube_pod_info
 
 - record: kube_pod_not_running
-  expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload) kube_pod_info)
+  expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload, monitor_type) kube_pod_info)
 
 - record: kube_workload_generation_lag
-  expr: avg by (workload, namespace) (label_replace(kube_deployment_metadata_generation - kube_deployment_status_observed_generation, "workload", "$1", "deployment", "(.+)"))
+  expr: avg by (workload, namespace, monitor_type) (label_replace(kube_deployment_metadata_generation - kube_deployment_status_observed_generation, "workload", "$1", "deployment", "(.+)"))
 
 - record: kube_workload_generation_lag
   expr: avg by (workload, namespace) (label_replace(kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready, "workload", "$1", "daemonset", "(.+)"))
@@ -65,7 +65,7 @@
   expr: sum without (instance) (rate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
 
 - record: kafka_active_controllers
-  expr: sum by (workload) (kafka_controller_kafkacontroller_activecontrollercount)
+  expr: sum by (workload, monitor_type) (kafka_controller_kafkacontroller_activecontrollercount)
 
 - record: memcached_miss_ratio
   expr: (sum without(command, status) (memcached_commands_total{status="miss"})/sum without(command, status) (memcached_commands_total)) * 100
