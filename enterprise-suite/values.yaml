@@ -4,7 +4,7 @@
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: v0.0.14
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v0.0.17
+esMonitorVersion: v0.0.18
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.0.14
 # prom/prometheus
