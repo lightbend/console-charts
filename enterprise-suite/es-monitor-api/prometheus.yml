@@ -25,6 +25,10 @@ scrape_configs:
     static_configs:
       - targets:
         - localhost:9090
+    metric_relabel_configs:
+      - target_label: workload
+        replacement: prometheus-server
+{{ .MonitorTypeRules | indent 6 }}
 
   # This uses separate scrape configs for cluster components (i.e. API server, node)
   # and services to allow each to use different authentication configs.
