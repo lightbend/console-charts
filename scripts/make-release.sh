@@ -60,4 +60,4 @@ git tag -a $git_tag -m "Release $git_tag"
 
 echo Tagged commit with $git_tag
 echo
-echo When ready, do a 'git push --tags' to finish the release.
+echo When ready, do a 'git push --follow-tags' to finish the release.

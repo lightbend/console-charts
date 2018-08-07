@@ -2,13 +2,11 @@
 # Update these versions for a release.
 #
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.0.12
+esConsoleVersion: v0.0.14
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v0.0.15
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-demo
-esDemoVersion: v0.0.1
+esMonitorVersion: v0.0.18
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.0.12
+esGrafanaVersion: v0.0.14
 # prom/prometheus
 prometheusVersion: v2.2.1
 # prom/alertmanager
@@ -23,3 +21,5 @@ configMapReloadVersion: v0.2.2
 imagePullPolicy: IfNotPresent
 # prometheus annotation domain, e.g. `domain/scrape=true`
 prometheusDomain: prometheus.io
+# minikube debug resources
+minikube: true
