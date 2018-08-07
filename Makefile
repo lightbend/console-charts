@@ -37,6 +37,9 @@ docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 clean:
 	rm -rf build
 
+clean-all: clean
+	rm -rf docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz docs/es/all.yaml docs/es/all-latest.yaml
+
 init:
 	@scripts/lib.sh
 	@helm init -c > /dev/null
@@ -62,6 +65,9 @@ delete-es:
 
 install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
+
+install-local-latest: install-helm delete-es
+	helm install docs/$(RELEASE_LATEST).tgz --name=es --namespace=lightbend --debug
 
 # always run these steps if in dependencies:
 .PHONY: all build install-local install-helm delete-es lint init clean lint-json lint-promql
