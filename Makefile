@@ -35,8 +35,10 @@ docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 	helm package build/$(CHART_LATEST) -d docs
 
 clean:
-	rm -rf docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz docs/es/all.yaml docs/es/all-latest.yaml
 	rm -rf build
+
+clean-all: clean
+	rm -rf docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz docs/es/all.yaml docs/es/all-latest.yaml
 
 init:
 	@scripts/lib.sh
