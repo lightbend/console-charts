@@ -70,4 +70,4 @@ install-local-latest: docs/$(RELEASE_LATEST).tgz install-helm delete-es
 	helm install docs/$(RELEASE_LATEST).tgz --name=es --namespace=lightbend --debug
 
 # always run these steps if in dependencies:
-.PHONY: all build install-local install-helm delete-es lint init clean lint-json lint-promql latest
+.PHONY: all build install-local install-local-latest install-helm delete-es lint init clean lint-json lint-promql latest
