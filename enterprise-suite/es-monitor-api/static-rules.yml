@@ -29,10 +29,10 @@
   expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload, monitor_type) kube_pod_info)
 
 - record: kube_workload_generation_lag
-  expr: avg by (workload, namespace, monitor_type) (label_replace(kube_deployment_metadata_generation - kube_deployment_status_observed_generation, "workload", "$1", "deployment", "(.+)"))
+  expr: avg by (workload, namespace, monitor_type) (kube_deployment_metadata_generation - kube_deployment_status_observed_generation)
 
 - record: kube_workload_generation_lag
-  expr: avg by (workload, namespace, monitor_type) (label_replace(kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready, "workload", "$1", "daemonset", "(.+)"))
+  expr: avg by (workload, namespace, monitor_type) (kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready)
 
 - record: prometheus_notification_queue_percent
   expr: 100 * prometheus_notifications_queue_length / prometheus_notifications_queue_capacity
