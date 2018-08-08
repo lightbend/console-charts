@@ -34,6 +34,9 @@ docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 	scripts/munge-to-latest.sh build/$(CHART_LATEST)
 	helm package build/$(CHART_LATEST) -d docs
 
+latest: init lint docs/es/all-latest.yaml docs/$(RELEASE_LATEST).tgz
+	helm repo index docs --url https://lightbend.github.io/helm-charts
+
 clean:
 	rm -rf build
 
@@ -64,4 +67,4 @@ install-local: install-helm delete-es
 	helm install docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug
 
 # always run these steps if in dependencies:
-.PHONY: all build install-local install-helm delete-es lint init clean lint-json lint-promql
+.PHONY: all build install-local install-helm delete-es lint init clean lint-json lint-promql latest
