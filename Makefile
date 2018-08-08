@@ -23,11 +23,11 @@ docs/index.yaml: docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz
 	$(call banner)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
-docs/$(RELEASE).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
+docs/$(RELEASE).tgz: $(CHART)/* $(CHART)/*/*
 	$(call banner)
 	helm package $(CHART) -d docs
 
-docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
+docs/$(RELEASE_LATEST).tgz: $(CHART)/* $(CHART)/*/*
 	$(call banner)
 	rm -rf build/$(CHART_LATEST)
 	cp -r $(CHART) build/$(CHART_LATEST)
