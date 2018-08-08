@@ -7,7 +7,7 @@
 - record: node_filesystem_free_percent
   expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
 
-- record: node_network_error_rate
+- record: node_network_errors_rate
   expr: sum by(instance) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
 
 - record: kube_node_pressure
