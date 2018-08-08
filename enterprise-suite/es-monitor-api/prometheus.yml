@@ -28,6 +28,18 @@ scrape_configs:
     metric_relabel_configs:
       - target_label: workload
         replacement: prometheus-server
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: kubernetes_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node_name
+      - source_labels: [__meta_kubernetes_pod_host_ip]
+        action: replace
+        target_label: node_ip
 {{ .MonitorTypeRules | indent 6 }}
 
   # This uses separate scrape configs for cluster components (i.e. API server, node)
@@ -135,7 +147,7 @@ scrape_configs:
         regex: __meta_kubernetes_service_label_(.+)
       - source_labels: [__meta_kubernetes_namespace]
         action: replace
-        target_label: kubernetes_namespace
+        target_label: namespace
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
         target_label: kubernetes_name
@@ -207,7 +219,7 @@ scrape_configs:
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
       - source_labels: [__meta_kubernetes_namespace]
-        target_label: kubernetes_namespace
+        target_label: namespace
       - source_labels: [__meta_kubernetes_service_name]
         target_label: kubernetes_name
 
@@ -241,7 +253,7 @@ scrape_configs:
         regex: __meta_kubernetes_pod_label_(.+)
       - source_labels: [__meta_kubernetes_namespace]
         action: replace
-        target_label: kubernetes_namespace
+        target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: kubernetes_pod_name
