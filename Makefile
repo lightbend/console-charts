@@ -34,6 +34,7 @@ docs/$(RELEASE_LATEST).tgz: $(CHART)/Chart.yaml $(CHART)/templates/*.yaml
 	scripts/munge-to-latest.sh build/$(CHART_LATEST)
 	helm package build/$(CHART_LATEST) -d docs
 
+# duplicate method here to generate the index, to avoid pulling in RELEASE as a dependency
 latest: init lint docs/es/all-latest.yaml docs/$(RELEASE_LATEST).tgz
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
