@@ -59,6 +59,9 @@ spec:
       labels:
         app: prometheus
         component: server
+      annotations:
+        {{ .Values.prometheusDomain }}/scrape: "true"
+        {{ .Values.prometheusDomain }}/port: "9090"
     spec:
       serviceAccountName: prometheus-server
 
