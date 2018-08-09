@@ -54,6 +54,8 @@ scrape_configs:
     kubernetes_sd_configs:
       - role: node
 
+    honor_labels: true
+
     relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
@@ -105,6 +107,8 @@ scrape_configs:
 
     kubernetes_sd_configs:
       - role: endpoints
+
+    honor_labels: true
 
     relabel_configs:
       - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
@@ -222,6 +226,8 @@ scrape_configs:
 
     kubernetes_sd_configs:
       - role: pod
+
+    honor_labels: true
 
     relabel_configs:
       - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
