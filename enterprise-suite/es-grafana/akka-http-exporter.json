@@ -1,7 +1,7 @@
 [
-  {"graphName":"Response Rate", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
+  {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
   {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{workload=\"$workloadId\",quantile=~\"0.99\"})"]},
-  {"graphName":"Connection Rate", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{workload=\"$workloadId\"}[1m]))"]},
+  {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{workload=\"$workloadId\"}[1m]))"]},
   {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]},
   {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]},
   {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]}

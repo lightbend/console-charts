@@ -1,13 +1,13 @@
 [
   {"graphName":"Miss Ratio", "promQL":["memcached_commands_total{workload=\"$workloadId\", status=\"miss\"}/memcached_commands_total{workload=\"$workloadId\"}"]},
-  {"graphName":"Evictions", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
+  {"graphName":"Evictions Per Second", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
   {"graphName":"Connections Current", "promQL":["memcached_current_connections{workload=\"$workloadId\"}"]},
-  {"graphName":"Connections Total Rate", "promQL":["irate(memcached_connections_total{workload=\"$workloadId\"}[1m])"]},
+  {"graphName":"Total Connections Per Second", "promQL":["irate(memcached_connections_total{workload=\"$workloadId\"}[1m])"]},
   {"graphName":"Items Current", "promQL":["memcached_current_items{workload=\"$workloadId\"}"]},
   {"graphName":"Cache Free", "promQL":["memcached_current_bytes{workload=\"$workloadId\"}/memcached_limit_bytes{workload=\"$workloadId\"}"]},
-  {"graphName":"Items Evicted", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
-  {"graphName":"Items Reclaimed Rate", "promQL":["irate(memcached_items_reclaimed_total{workload=\"$workloadId\"}[1m])"]},
-  {"graphName":"Total Commands Rate", "promQL":["sum (irate(memcached_commands_total{workload=\"$workloadId\"}[1m])) by (command)"]},
-  {"graphName":"Read Bytes Rate", "promQL":["irate(memcached_read_bytes_total{workload=\"$workloadId\"}[1m])"]},
-  {"graphName":"Written Bytes Rate", "promQL":["irate(memcached_written_bytes_total{workload=\"$workloadId\"}[1m])"]}
+  {"graphName":"Items Evicted Per Second", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
+  {"graphName":"Items Reclaimed Per Second", "promQL":["irate(memcached_items_reclaimed_total{workload=\"$workloadId\"}[1m])"]},
+  {"graphName":"Total Commands Per Second", "promQL":["sum (irate(memcached_commands_total{workload=\"$workloadId\"}[1m])) by (command)"]},
+  {"graphName":"Bytes Read Per Second", "promQL":["irate(memcached_read_bytes_total{workload=\"$workloadId\"}[1m])"]},
+  {"graphName":"Bytes Written Per Second", "promQL":["irate(memcached_written_bytes_total{workload=\"$workloadId\"}[1m])"]}
 ]
