@@ -51,7 +51,7 @@
       "model": "threshold",
       "parameters": {
         "name": "node_network_errors",
-        "metric": "node_network_errors_rate",
+        "metric": "node_network_error_rate",
         "comparator": ">",
         "threshold": "0",
         "window": "5m",
