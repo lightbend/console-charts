@@ -89,7 +89,7 @@ A `Makefile` is provided with useful targets for development.
 
 * `make` to check the chart for errors, and update `docs` and `resources`.
 * `make install-local` to try the release in docs.
-* `make lint` if you just want to check for errors.
+* `make check` if you just want to check for errors.
 
 To specify the chart to build, set the `CHART` variable:
 

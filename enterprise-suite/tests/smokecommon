@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# Note that parts of this depend on minikube at this time.
+
+#set -x
+
+# exit on (errors,) errors in pipelines, and unset vars:
+#set -e
+set -o pipefail
+set -o nounset
+
+# error msg
+# print msg to stderr and exit with error
+error() {
+  >&2 echo "$@"
+  exit 1
+}
+
+# busy_wait cmd
+# quickly retry command til it works, up to some limit
+# idea: succeed fast, fail slow
+busy_wait() {
+  limit=30
+  until "$@"; do
+    if [[ limit -le 0 ]]; then
+      error "giving up: busy_wait $*"
+    fi
+    limit=$(( limit - 1 ))
+    sleep 1
+  done
+}
+
+TEST_SUCCESSES=0
+TEST_FAILURES=0
+
+# test runner
+# command to test &&:
+# T $? msg..
+T() {
+  res=$1
+  shift
+  msg="$*"
+  if [[ 0 -eq res ]]; then
+    echo "PASS: $msg"
+    ((++TEST_SUCCESSES))
+  else
+    echo "FAIL: $msg"
+    # make it conditional on a cli arg whether we bail or not
+    ((++TEST_FAILURES))
+    # error "test failed"
+  fi
+}
+
+# Note that this function calls exit, so should be last command in (sub)shell
+test_summary() {
+    if [ $TEST_FAILURES -eq 0 ] ; then
+        echo "All ${0##*/} tests pass.  PASS: $TEST_SUCCESSES  FAIL: 0"
+    else
+        echo "Some ${0##*/} tests failed!  PASS: $TEST_SUCCESSES  FAIL: $TEST_FAILURES"
+    fi
+
+    exit $TEST_FAILURES
+}
+
+# Get URL for NodePort assignment
+# nodeport <name>
+nodeport() {
+  minikube service --namespace=lightbend --url $1
+}
+
+# curl_query <baseURL> <URI> [<curl-opt>...]
+curl_query() {
+  FETCH_BASE=$1
+  FETCH_URI=$2
+  shift 2
+  curl -fsG "$@" "$FETCH_BASE/$FETCH_URI"
+}
+
+
+# ES console access test
+# test_es_console_responding <url> [<curl-opt>...]
+test_es_console_responding() {
+  CONSOLE_URL=$1
+  shift
+  results=$( curl_query $CONSOLE_URL "" "$@" | fgrep -q '<title>Enterprise Suite Reactive Console</title>' )
+  T $? ES2 console accessible via $CONSOLE_URL "$@"
+}
+
+# Grafana access test
+test_grafana_responding() {
+  results=$( curl_query $1 "api/org" | jq '.id' )
+  ! [[ $results -eq 0 ]]
+  T $? grafana service accessible via $1
+}
+
+# Prometheus access test
+test_prom_responding() {
+  status=$( curl_query $1 "api/v1/status/config" | jq '.status' )
+  [[ $status = '"success"' ]]
+  T $? prometheus service accessible via $1
+}
+
+# ES monitor API access test
+test_es_monitor_API_responding() {
+  status=$( curl_query $1 "status" | jq '.status' )
+  [[ $status = '"success"' ]]
+  T $? es-monitor-api service accessible via $1
+}
+
+# Alertmanager access test
+test_alertmanager_responding() {
+  results=$( curl_query $1 "" | fgrep -q '<title>Alertmanager</title>' )
+  T $? alertmanager accessible via $1
+}

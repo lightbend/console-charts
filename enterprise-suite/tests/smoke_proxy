@@ -1,0 +1,79 @@
+#!/bin/bash
+
+## Test access to the console over kubectl proxy setup
+
+source smokecommon
+
+#set -x
+
+KUBECTL_PID=
+export TMPPIPE=$(mktemp -t pipe.XXX)
+
+cleanup() {
+    if [ -n "$KUBECTL_PID" ] ; then
+        kill $KUBECTL_PID
+    fi
+    if [ -n "$TMPPIPE" ] ; then
+        rm -f $TMPPIPE
+    fi
+}
+
+# Make sure we kill the proxy when we're done
+trap cleanup 0
+
+# Make sure the services are ready
+CONSOLE_NODE_BASE=$( busy_wait nodeport expose-es-console )
+PROM_NODE_BASE=$( busy_wait nodeport expose-prometheus )
+GRAFANA_NODE_BASE=$( busy_wait nodeport expose-grafana )
+ALERTMGR_NODE_BASE=$( busy_wait nodeport expose-alertmanager )
+
+# Get port for service in kubernetes.  $1 is service
+getport() {
+    kubectl get -n lightbend services $1 -o json | jq '.spec.ports[0].port'
+}
+
+# returns base URL to access service $1 at port $2 via the proxy
+getproxyUrl() {
+    echo "http://127.0.0.1:$PROXY_PORT/api/v1/namespaces/lightbend/services/$1:$2/proxy"
+}
+
+# Fire up the proxy
+(
+    # Proxying to an ephemeral port to avoid collisions
+    kubectl proxy --port=0 1>$TMPPIPE &
+    KUBECTL_PID=$!
+    # This eliminates the annoying message from the outer shell when killing the process
+    wait $KUBECTL_PID 2>/dev/null 1>&2
+) &
+
+PGID=$( ps -o pgid= -p $$ )
+KUBECTL_PID=$( ps -o pid=,pgid=,command= | sed -n "s/^ *\([0-9][0-9]*\) *$PGID kubectl proxy.*/\1/p" )
+
+# Need this so the proxy has a chance to get setup
+sleep 1
+
+# proxy spits out something like: "Starting to serve on 127.0.0.1:57333"
+PROXY_PORT=$( sed -n -e '1s/^.*:\(.*\)/\1/p' -e '1q' <$TMPPIPE )
+
+## Test access
+
+# Get ports for services
+CONSOLE_REMOTE_PORT=$( getport expose-es-console )
+PROMETHEUS_REMOTE_PORT=$( getport expose-prometheus )
+GRAFANA_REMOTE_PORT=$( getport expose-grafana )
+ALERTMGR_REMOTE_PORT=$( getport expose-alertmanager )
+
+# Base URLs for access via kubectl proxy
+ESMONITOR_VIA_PROXY=$( getproxyUrl es-monitor-api $CONSOLE_REMOTE_PORT )
+PROMETHEUS_VIA_PROXY=$( getproxyUrl expose-prometheus $PROMETHEUS_REMOTE_PORT )
+GRAFANA_VIA_PROXY=$( getproxyUrl expose-grafana $GRAFANA_REMOTE_PORT )
+ALERTMGR_VIA_PROXY=$( getproxyUrl expose-alertmanager $ALERTMGR_REMOTE_PORT )
+
+# Now run our tests
+test_es_monitor_API_responding $ESMONITOR_VIA_PROXY
+test_prom_responding $PROMETHEUS_VIA_PROXY
+test_grafana_responding $GRAFANA_VIA_PROXY
+test_alertmanager_responding $ALERTMGR_VIA_PROXY
+
+# ...and dump the summary
+test_summary
