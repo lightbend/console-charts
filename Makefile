@@ -35,7 +35,7 @@ docs/$(RELEASE_LATEST).tgz: $(CHART)/* $(CHART)/*/*
 	helm package build/$(CHART_LATEST) -d docs
 
 # duplicate method here to generate the index, to avoid pulling in RELEASE as a dependency
-latest: init lint docs/es/all-latest.yaml docs/$(RELEASE_LATEST).tgz
+latest: init test docs/es/all-latest.yaml docs/$(RELEASE_LATEST).tgz
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
 release:
@@ -71,5 +71,5 @@ install-local-latest: docs/$(RELEASE_LATEST).tgz install-helm delete-local
 	$(MAKE) -C $(CHART) $@
 
 # always run these steps if in dependencies:
-.PHONY: all build latest release clean lint test minikube-test init install-helm \
+.PHONY: all build latest release clean test minikube-test init install-helm \
 	delete-local install-local install-local-latest
