@@ -15,15 +15,17 @@ jobs:
   - stage: test
     name: "Quick Tests"
     script: make test CHART=$CHART_TO_BUILD
+
   - name: "Minikube Tests"
     install:
     - scripts/setup-tools-for-ubuntu.sh
     - scripts/setup-minikube-for-linux.sh
     script: make minikube-test CHART=$CHART_TO_BUILD
     if: env(CHART_TO_BUILD) = enterprise-suite
+
   - stage: release
     script: make release CHART=$CHART_TO_BUILD
-    # Only build release if we're on master and its tagged, e.g. enterprise-suite-0.0.18.
+    # Only build release if we're on master and it's tagged with CHART_TO_BUILD, e.g. enterprise-suite-0.0.18.
     if: (branch = master) AND (tag =~ concat(^,env(CHART),-.*)
 
 notifications:
