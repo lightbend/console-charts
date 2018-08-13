@@ -89,7 +89,8 @@ A `Makefile` is provided with useful targets for development.
 
 * `make` to check the chart for errors, and update `docs` and `resources`.
 * `make install-local` to try the release in docs.
-* `make check` if you just want to check for errors.
+* `make test` if you just want to check for errors.
+* `make minikube-test` to run end to end tests against a local minikube. This requires minikube and helm clients are installed.
 
 To specify the chart to build, set the `CHART` variable:
 
