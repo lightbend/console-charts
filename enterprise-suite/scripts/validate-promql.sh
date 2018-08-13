@@ -2,6 +2,18 @@
 
 set -e
 
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+if ! command -v promtool > /dev/null; then
+    echo "please install promtool"
+    exit 1
+fi
+
+if ! command -v jq > /dev/null; then
+    echo "please install jq"
+    exit 1
+fi
+
 echo "checking promql in enterprise-suite/es-grafana/*.json"
 
 # check_expr wraps one promql expression in a mock rule file for promtool.
@@ -18,7 +30,7 @@ prom_lines() {
 }
 
 count=0
-for json in enterprise-suite/es-grafana/*.json; do
+for json in ${script_dir}/../es-grafana/*.json; do
   prom_lines "$json" | while read -r promql; do
     out=$( check_expr "$promql" ) || {
       echo "error in $json"
@@ -33,6 +45,6 @@ done
 echo "validated $count promql expressions"
 
 echo "checking enterprise-suite/es-monitor-api/static-rules.yml"
-cat enterprise-suite/es-monitor-api/static-rules.yml |
+cat ${script_dir}/../es-monitor-api/static-rules.yml |
   ( printf 'groups:\n- name: group\n  rules:\n' ; sed -e 's/^/  /') |
   promtool check rules /dev/stdin

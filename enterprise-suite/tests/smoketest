@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Run all smoke tests with a filename of smoke_*.
+# Exit code indicates overall number of test failures.
+
+#set -x
+
+FAILURES=0
+
+for smoketest in smoke_*; do
+	echo ==== Running $smoketest
+	./$smoketest
+	((FAILURES+=$?))
+done
+
+echo "All tests completed with $FAILURES failures"
+
+exit $FAILURES

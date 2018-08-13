@@ -1,0 +1,57 @@
+#!/bin/bash
+
+## Test access to the console over an ingress setup
+
+#set -x
+
+source smokecommon
+
+TMPPIPE=$(mktemp -t pipe.XXX)
+
+cleanup() {
+    if [ -n "$TMPPIPE" ] ; then
+        kubectl delete -f $TMPPIPE > /dev/null
+        rm -f $TMPPIPE
+    fi
+}
+
+# Make sure we delete the ingress resource
+trap cleanup 0
+
+# Allows us to know when the ingress changes are ready to go
+# When ready, the describe ends with something like:
+# Events:
+#   Type    Reason  Age   From                      Message
+#   ----    ------  ----  ----                      -------
+#   Normal  CREATE  48s   nginx-ingress-controller  Ingress lightbend/ingress-test
+#   Normal  UPDATE  3s    nginx-ingress-controller  Ingress lightbend/ingress-test
+#
+ingress_ready() {
+    # Debug
+    # kubectl describe ing/ingress-test -n lightbend
+    # ingress can take up to 1m to get ready
+    sleep 2
+    kubectl describe ing/ingress-test -n lightbend | awk 'END { exit !( $1 == "Normal"  &&  $2 == "UPDATE" ) }'
+}
+
+# Makes sure expose-es-console is ready
+CONSOLE_NODE_BASE=$( busy_wait nodeport expose-es-console )
+
+CONSOLE_REMOTE_PORT=$( kubectl get -n lightbend services expose-es-console -o json | jq '.spec.ports[0].port' )
+
+# Setup ingress
+# ...probably a cool way to do this with -o go-template or with yq
+sed -e "s/{{PORT}}/$CONSOLE_REMOTE_PORT/g" <resources/ingress-test.template.yaml >$TMPPIPE
+kubectl apply -f $TMPPIPE > /dev/null
+
+# Wait until the changes have been applied
+busy_wait ingress_ready
+
+# The more traditional way to do this would be to tweak DNS or /etc/hosts to point 'minikube.ingress.test' to
+# your minikup ip.  We don't want to mess with such things for this test so use the curl -H flag to achieve
+# the equivalent.
+
+# Test access
+test_es_console_responding http://$( minikube ip )/es-console -H 'Host: minikube.ingress.test'
+
+test_summary

@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-test
+  namespace: lightbend
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  backend:
+    serviceName: default-http-backend
+    servicePort: {{PORT}}
+  rules:
+  - host: minikube.ingress.test
+    http:
+      paths:
+      - path: /es-console
+        backend:
+          serviceName: expose-es-console
+          servicePort: {{PORT}}
