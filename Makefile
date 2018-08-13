@@ -1,4 +1,4 @@
-all: init lint build
+all: init test build
 build: init docs/index.yaml docs/es/all.yaml docs/es/all-latest.yaml
 
 CHART := enterprise-suite
