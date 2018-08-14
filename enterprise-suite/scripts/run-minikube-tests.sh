@@ -2,14 +2,24 @@
 
 set -exu
 
+USE_LATEST_IMAGES=${USE_LATEST_IMAGES:-false}
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-# Install helm chart
-echo "Installing ES from helm charts"
+# setup
+echo "Installing ES from helm charts, [USE_LATEST_IMAGES=$USE_LATEST_IMAGES]"
 cd $script_dir/../../
-CHART=enterprise-suite make install-local-latest
 
-# run our tests
+make build CHART=enterprise-suite
+
+if [ "$USE_LATEST_IMAGES" == "true" ]; then
+    target=install-local-latest
+else
+    target=install-local
+fi
+make $target CHART=enterprise-suite
+
+# run tests
 echo "Running tests"
 cd $script_dir/../tests
 ./smoketest
