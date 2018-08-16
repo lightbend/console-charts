@@ -135,20 +135,20 @@ data:
     by (actor_system) (akka_dispatcher_running_threads{workload=\\\"$workloadId\\\"})\"]}\n]\n"
   akka-http-exporter.json: |
     [
-      {"graphName":"Response Rate", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
+      {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{workload=\"$workloadId\"}[1m]))"]},
       {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{workload=\"$workloadId\",quantile=~\"0.99\"})"]},
-      {"graphName":"Connection Rate", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{workload=\"$workloadId\"}[1m]))"]},
+      {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{workload=\"$workloadId\"}[1m]))"]},
       {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]},
       {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]},
       {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{workload=\"$workloadId\", quantile=~\"0.99\"})"]}
     ]
-  cassandra-exporter.json: |-
+  cassandra-exporter.json: |
     [
-      {"graphName":"Storage", "promQL":["irate(cassandra_storage_load{workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Reads", "promQL":["irate(cassandra_clientrequest_latency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Writes", "promQL":["irate(cassandra_clientrequest_latency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Read Latency", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Write Latency", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]}
+      {"graphName":"Storage", "promQL":["cassandra_storage_load{workload=\"$workloadId\"}"]},
+      {"graphName":"Read Latency", "promQL":["cassandra_clientrequest_latency{clientrequest='Read', workload=\"$workloadId\"}"]},
+      {"graphName":"Write Latency", "promQL":["cassandra_clientrequest_latency{clientrequest='Write', workload=\"$workloadId\"}"]},
+      {"graphName":"Total Read Latency Per Second", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Read', workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Total Write Latency Per Second", "promQL":["irate(cassandra_clientrequest_totallatency{clientrequest='Write', workload=\"$workloadId\"}[1m])"]}
     ]
   jvm-exporter.json: |
     [
@@ -181,28 +181,29 @@ data:
        {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
        {"graphName": "Memory Available Percent", "promQL":["node_memory_usable_percent"]},
        {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
-       {"graphName": "Network Bytes Received", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
-       {"graphName": "Bytes Transmitted", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
+       {"graphName": "Bytes Received Per Second", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
+       {"graphName": "Bytes Transmitted Per Second", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
     ]
   memcached-exporter.json: |
     [
       {"graphName":"Miss Ratio", "promQL":["memcached_commands_total{workload=\"$workloadId\", status=\"miss\"}/memcached_commands_total{workload=\"$workloadId\"}"]},
-      {"graphName":"Evictions", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Evictions Per Second", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
       {"graphName":"Connections Current", "promQL":["memcached_current_connections{workload=\"$workloadId\"}"]},
-      {"graphName":"Connections Total Rate", "promQL":["irate(memcached_connections_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Total Connections Per Second", "promQL":["irate(memcached_connections_total{workload=\"$workloadId\"}[1m])"]},
       {"graphName":"Items Current", "promQL":["memcached_current_items{workload=\"$workloadId\"}"]},
       {"graphName":"Cache Free", "promQL":["memcached_current_bytes{workload=\"$workloadId\"}/memcached_limit_bytes{workload=\"$workloadId\"}"]},
-      {"graphName":"Items Evicted", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Items Reclaimed Rate", "promQL":["irate(memcached_items_reclaimed_total{workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Total Commands Rate", "promQL":["sum (irate(memcached_commands_total{workload=\"$workloadId\"}[1m])) by (command)"]},
-      {"graphName":"Read Bytes Rate", "promQL":["irate(memcached_read_bytes_total{workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Written Bytes Rate", "promQL":["irate(memcached_written_bytes_total{workload=\"$workloadId\"}[1m])"]}
+      {"graphName":"Items Evicted Per Second", "promQL":["irate(memcached_items_evicted_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Items Reclaimed Per Second", "promQL":["irate(memcached_items_reclaimed_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Total Commands Per Second", "promQL":["sum (irate(memcached_commands_total{workload=\"$workloadId\"}[1m])) by (command)"]},
+      {"graphName":"Bytes Read Per Second", "promQL":["irate(memcached_read_bytes_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Bytes Written Per Second", "promQL":["irate(memcached_written_bytes_total{workload=\"$workloadId\"}[1m])"]}
     ]
   redis-exporter.json: |
     [
       {"graphName":"Redis Memory Used", "promQL":["redis_memory_used_bytes{workload=\"$workloadId\"}"]},
-      {"graphName":"Commands Processed", "promQL":["irate(redis_commands_processed_total{workload=\"$workloadId\"}[1m])"]},
-      {"graphName":"Keys Evicted", "promQL":["redis_evicted_keys_total{workload=\"$workloadId\"}"]},
+      {"graphName":"Commands Processed Per Second", "promQL":["irate(redis_commands_processed_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Keys Evicted Per Second", "promQL":["irate(redis_evicted_keys_total{workload=\"$workloadId\"}[1m])"]},
+      {"graphName":"Keys Evicted Per Second", "promQL":["irate(redis_evicted_keys_total{workload=\"$workloadId\"}[1m])"]},
       {"graphName":"Connections", "promQL":["redis_connected_clients{workload=\"$workloadId\"}"]}
     ]
   zookeeper-exporter.json: |
@@ -741,7 +742,7 @@ data:
           "model": "threshold",
           "parameters": {
             "name": "node_network_errors",
-            "metric": "node_network_errors",
+            "metric": "node_network_error_rate",
             "comparator": ">",
             "threshold": "0",
             "window": "5m",
@@ -1543,8 +1544,8 @@ data:
     - record: node_filesystem_free_percent
       expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
   
-    - record: node_network_errors
-      expr: sum by(instance) (node_network_transmit_errs + node_network_receive_errs + node_network_receive_drop + node_network_transmit_drop)
+    - record: node_network_error_rate
+      expr: sum by(instance) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
   
     - record: kube_node_pressure
       expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
