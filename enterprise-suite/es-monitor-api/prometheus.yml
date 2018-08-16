@@ -145,6 +145,14 @@ scrape_configs:
 
     # workload labels:
     metric_relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name]
+        action: replace
+        regex: '[^;]+;(.*)-[^-]+-[^-]+'
+        target_label: workload
+      - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name]
+        action: replace
+        regex: (.*)-[0-9]+
+        target_label: workload
       - source_labels: [created_by_kind, pod, workload]
         regex: 'ReplicaSet;(.+)-[^-]+-[^-]+;'
         target_label: workload
