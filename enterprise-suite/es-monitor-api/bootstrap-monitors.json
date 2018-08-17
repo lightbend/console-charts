@@ -190,7 +190,7 @@
         "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
         "period": "15m",
         "numsigma": "2",
-        "minval": "10",
+        "minval": "100000000",
         "window": "15m",
         "confidence": "0.5",
         "severity": "warning",
