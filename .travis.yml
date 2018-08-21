@@ -24,6 +24,10 @@ jobs:
     - make minikube-test
     env: USE_LATEST_IMAGES=true
 
+branches:
+  only:
+  - master
+
 notifications:
   email: false
   slack:
