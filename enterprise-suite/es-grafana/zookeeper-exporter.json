@@ -1,7 +1,7 @@
 [
-  {"graphName":"Average Latency", "promQL":["avg(zk_avg_latency{workload=\"$workloadId\"})"]},
-  {"graphName":"Synced Followers", "promQL":["zk_synced_followers{workload=\"$workloadId\"}"]},
-  {"graphName":"Open File Descriptors", "promQL":["zk_open_file_descriptor_count{workload=\"$workloadId\"}"]},
-  {"graphName":"Pending Syncs", "promQL":["zk_pending_syncs{workload=\"$workloadId\"}"]},
-  {"graphName":"Connections", "promQL":["zk_num_alive_connections{workload=\"$workloadId\"}"]}
+  {"graphName":"Average Latency", "promQL":["avg(zk_avg_latency{ContextTags})"]},
+  {"graphName":"Synced Followers", "promQL":["zk_synced_followers{ContextTags}"]},
+  {"graphName":"Open File Descriptors", "promQL":["zk_open_file_descriptor_count{ContextTags}"]},
+  {"graphName":"Pending Syncs", "promQL":["zk_pending_syncs{ContextTags}"]},
+  {"graphName":"Connections", "promQL":["zk_num_alive_connections{ContextTags}"]}
 ]
