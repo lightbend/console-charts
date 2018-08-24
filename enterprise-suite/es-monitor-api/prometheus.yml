@@ -22,32 +22,12 @@ alerting:
 
 scrape_configs:
 
-  # This uses separate scrape configs for cluster components (i.e. API server, node)
-  # and services to allow each to use different authentication configs.
-  #
-  # Kubernetes labels will be added as Prometheus labels on metrics via the
-  # `labelmap` relabeling action.
+  # Container metrics from kubelet cadvisor endpoint
 
-  - job_name: 'kubernetes-node-containers'
-
-    # Default to scraping over https. If required, just disable this or change to
-    # `http`.
+  - job_name: 'kubernetes-cadvisor'
     scheme: https
-
-    # This TLS & bearer token file config is used to connect to the actual scrape
-    # endpoints for cluster components. This is separate to discovery auth
-    # configuration because discovery & scraping are two separate concerns in
-    # Prometheus. The discovery auth config is automatic if Prometheus runs inside
-    # the cluster. Otherwise, more config options have to be provided within the
-    # <kubernetes_sd_config>.
     tls_config:
       ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-      # If your node certificates are self-signed or use a different CA to the
-      # master CA, then disable certificate verification below. Note that
-      # certificate verification is an integral part of a secure infrastructure
-      # so this should only be disabled in a controlled environment. You can
-      # disable certificate verification by uncommenting the line below.
-      #
       insecure_skip_verify: true
     bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
 
@@ -92,18 +72,9 @@ scrape_configs:
         regex: container_(network_tcp_usage_total|tasks_state|cpu_usage_seconds_total|memory_failures_total|network_udp_usage_total)
         action: drop
 
-  # Scrape config for service endpoints.
-  #
-  # The relabeling allows the actual service scrape endpoint to be configured
-  # via the following annotations:
-  #
-  # * `{{ .PrometheusDomain }}/scrape`: Only scrape services that have a value of `true`
-  # * `{{ .PrometheusDomain }}/scheme`: If the metrics endpoint is secured then you will need
-  # to set this to `https` & most likely set the `tls_config` of the scrape config.
-  # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-  # * `{{ .PrometheusDomain }}/port`: If the metrics are exposed on a different port to the
-  # service then set this appropriately.
-  - job_name: 'kubernetes-service-endpoints'
+  # kube-state-metrics
+
+  - job_name: 'kube-state-metrics'
 
     kubernetes_sd_configs:
       - role: endpoints
@@ -111,22 +82,9 @@ scrape_configs:
     honor_labels: true
 
     relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        regex: prometheus-kube-state-metrics
         action: keep
-        regex: true
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scheme]
-        action: replace
-        target_label: __scheme__
-        regex: (https?)
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_path]
-        action: replace
-        target_label: __metrics_path__
-        regex: (.+)
-      - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
-        action: replace
-        target_label: __address__
-        regex: (.+)(?::\d+);(\d+)
-        replacement: $1:$2
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
       - source_labels: [__meta_kubernetes_namespace]
@@ -171,48 +129,109 @@ scrape_configs:
         target_label: workload
 {{ .MonitorTypeRules | indent 6 }}
 
-  - job_name: 'prometheus-pushgateway'
+
+  - job_name: 'node-exporter'
+    kubernetes_sd_configs:
+      - role: endpoints
+
     honor_labels: true
 
-    kubernetes_sd_configs:
-      - role: service
-
     relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_probe]
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        regex: prometheus-node-exporter
         action: keep
-        regex: pushgateway
-
-  # Scrape config for probing services via the Blackbox Exporter.
-  #
-  # The relabeling allows the actual service scrape endpoint to be configured
-  # via the following annotations:
-  #
-  # * `{{ .PrometheusDomain }}/probe`: Only probe services that have a value of `true`
-  - job_name: 'kubernetes-services'
-
-    metrics_path: /probe
-    params:
-      module: [http_2xx]
-
-    kubernetes_sd_configs:
-      - role: service
-
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_probe]
-        action: keep
-        regex: true
-      - source_labels: [__address__]
-        target_label: __param_target
-      - target_label: __address__
-        replacement: blackbox
-      - source_labels: [__param_target]
-        target_label: instance
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
       - source_labels: [__meta_kubernetes_namespace]
         target_label: namespace
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
       - source_labels: [__meta_kubernetes_service_name]
+        action: replace
         target_label: kubernetes_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node_name
+      - source_labels: [__meta_kubernetes_pod_host_ip]
+        action: replace
+        target_label: node_ip
+
+  # Scrape config for service endpoints.
+  #
+  # The relabeling allows the actual service scrape endpoint to be configured
+  # via the following annotations:
+  #
+  # * `{{ .PrometheusDomain }}/scrape`: Only scrape services that have a value of `true`
+  # * `{{ .PrometheusDomain }}/scheme`: If the metrics endpoint is secured then you will need
+  # to set this to `https` & most likely set the `tls_config` of the scrape config.
+  # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
+  # * `{{ .PrometheusDomain }}/port`: If the metrics are exposed on a different port to the
+  # service then set this appropriately.
+
+  - job_name: 'kubernetes-services'
+    kubernetes_sd_configs:
+      - role: endpoints
+
+    honor_labels: true
+
+    relabel_configs:
+      # these have dedicated scrape sections:
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        regex: prometheus-node-exporter
+        action: drop
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        regex:  prometheus-kube-state-metrics
+        action: drop
+      # _scrape _scheme _path _port annotation triggers:
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+        action: replace
+        target_label: __address__
+        regex: (.+)(?::\d+);(\d+)
+        replacement: $1:$2
+      # metadata labels
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: kubernetes_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node_name
+      - source_labels: [__meta_kubernetes_pod_host_ip]
+        action: replace
+        target_label: node_ip
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, workload]
+        action: replace
+        regex: '[^;]+;(.*)-[^-]+-[^-]+;'
+        target_label: workload
+      - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, workload]
+        action: replace
+        regex: '(.*)-[0-9]+;'
+        target_label: workload
+
+    metric_relabel_configs:
+{{ .MonitorTypeRules | indent 6 }}
+
 
   # Scrape config for pods
   #
