@@ -72,52 +72,6 @@ scrape_configs:
         regex: container_(network_tcp_usage_total|tasks_state|cpu_usage_seconds_total|memory_failures_total|network_udp_usage_total)
         action: drop
 
-  # pushgateway
-
-  - job_name: 'pushgateway-exporter'
-    honor_labels: true
-
-    kubernetes_sd_configs:
-      - role: service
-
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_probe]
-        action: keep
-        regex: pushgateway
-
-  # Scrape config for probing services via the Blackbox Exporter.
-  #
-  # The relabeling allows the actual service scrape endpoint to be configured
-  # via the following annotations:
-  #
-  # * `{{ .PrometheusDomain }}/probe`: Only probe services that have a value of `true`
-
-  - job_name: 'prometheus-blackbox'
-
-    metrics_path: /probe
-    params:
-      module: [http_2xx]
-
-    kubernetes_sd_configs:
-      - role: service
-
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_probe]
-        action: keep
-        regex: true
-      - source_labels: [__address__]
-        target_label: __param_target
-      - target_label: __address__
-        replacement: blackbox
-      - source_labels: [__param_target]
-        target_label: instance
-      - action: labelmap
-        regex: __meta_kubernetes_service_label_(.+)
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_service_name]
-        target_label: kubernetes_name
-
   # kube-state-metrics
 
   - job_name: 'kube-state-metrics'
