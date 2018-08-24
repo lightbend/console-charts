@@ -64,6 +64,22 @@ prom_three_scrapes() {
 busy_wait prom_three_scrapes
 T $? Prometheus has at least three scrapes
 
+#
+# launch test apps
+#
+
+for app in resources/app*.yaml; do
+  kubectl apply -f "$app"
+done
+
+app_instances='count( sum by (instance) (akka_actor_running_actors{workload="es-demo", namespace="default"}) )  == 2'
+app_data() {
+  results=$( prom_query "$app_instances" | jq '.data.result | length' )
+  ! [[ results -eq 0 ]]
+}
+busy_wait app_data
+
+prom_has_data "$app_instances"
 
 #
 # prometheus
@@ -208,5 +224,11 @@ T $? 'node-exporter "warn" logs'
 
 ! echo "$NODE_EXPORTER_LOGS" | grep -qi err
 T $? 'node-exporter "err" logs'
+
+# clean up apps
+
+for app in resources/app*.yaml; do
+  kubectl delete -f "$app"
+done
 
 test_summary
