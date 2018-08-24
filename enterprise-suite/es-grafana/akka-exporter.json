@@ -1,14 +1,14 @@
-[  
-  {"graphName":"Mailbox Size", "promQL":["max by (actor)(akka_actor_mailbox_size{workload=\"$workloadId\"})"]},
-  {"graphName":"Mailbox Time", "promQL":["max by (actor)(akka_actor_mailbox_time_ns{workload=\"$workloadId\",quantile=\"0.99\"})"]},
-  {"graphName":"Actor Failures Rate", "promQL":["sum by (actor) (irate(akka_actor_actor_failure{workload=\"$workloadId\"}[1m]))"]},
-  {"graphName":"Processed Message Rate", "promQL":["sum by (actor)(irate(akka_actor_processed_messages{workload=\"$workloadId\"}[1m]))"]},      
-  {"graphName":"Processing Time", "promQL":["max by (actor)(akka_actor_processing_time_ns{workload=\"$workloadId\",quantile=\"0.99\"})"]},
-  {"graphName":"Sent Messages Rate", "promQL":["sum by (actor)(irate(akka_actor_sent_messages{workload=\"$workloadId\"}[1m]))"]},
-  {"graphName":"Running Actors", "promQL":["sum by (actor)(akka_actor_running_actors{workload=\"$workloadId\"})"]},
-  {"graphName":"Unhandled Messages Rate", "promQL":["sum by (actor)(irate(akka_actor_unhandled_message{workload=\"$workloadId\"}[1m]))"]},
-  {"graphName":"Dead Letters Rate", "promQL":["sum by (actor) (irate(akka_actor_dead_letter{workload=\"$workloadId\"}[1m]))"]},
-  {"graphName":"Dispatcher Queue Size", "promQL":["max by (actor_system) (akka_dispatcher_queue_size{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor_system) (akka_dispatcher_pool_size{workload=\"$workloadId\"})"]},
-  {"graphName":"Dispatcher Threads", "promQL":["sum by (actor_system) (akka_dispatcher_active_threads{workload=\"$workloadId\"})","sum by (actor_system) (akka_dispatcher_running_threads{workload=\"$workloadId\"})"]}
+[
+  {"graphName":"Mailbox Size", "promQL":["max by (actor)(akka_actor_mailbox_size{ContextTags})"]},
+  {"graphName":"Mailbox Time", "promQL":["max by (actor)(akka_actor_mailbox_time_ns{ContextTags,quantile=\"0.99\"})"]},
+  {"graphName":"Actor Failures Rate", "promQL":["sum by (actor) (irate(akka_actor_actor_failure{ContextTags}[1m]))"]},
+  {"graphName":"Processed Message Rate", "promQL":["sum by (actor)(irate(akka_actor_processed_messages{ContextTags}[1m]))"]},
+  {"graphName":"Processing Time", "promQL":["max by (actor)(akka_actor_processing_time_ns{ContextTags,quantile=\"0.99\"})"]},
+  {"graphName":"Sent Messages Rate", "promQL":["sum by (actor)(irate(akka_actor_sent_messages{ContextTags}[1m]))"]},
+  {"graphName":"Running Actors", "promQL":["sum by (actor)(akka_actor_running_actors{ContextTags})"]},
+  {"graphName":"Unhandled Messages Rate", "promQL":["sum by (actor)(irate(akka_actor_unhandled_message{ContextTags}[1m]))"]},
+  {"graphName":"Dead Letters Rate", "promQL":["sum by (actor) (irate(akka_actor_dead_letter{ContextTags}[1m]))"]},
+  {"graphName":"Dispatcher Queue Size", "promQL":["max by (actor_system) (akka_dispatcher_queue_size{ContextTags})"]},
+  {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor_system) (akka_dispatcher_pool_size{ContextTags})"]},
+  {"graphName":"Dispatcher Threads", "promQL":["sum by (actor_system) (akka_dispatcher_active_threads{ContextTags})","sum by (actor_system) (akka_dispatcher_running_threads{ContextTags})"]}
 ]

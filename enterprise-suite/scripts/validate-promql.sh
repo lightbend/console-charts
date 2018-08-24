@@ -26,7 +26,7 @@ check_expr() {
 
 # extract our grafana plugin expressions as a virtual file, one row per expr
 prom_lines() {
-  jq -r '.[].promQL[]' "$1"
+  jq -r '.[].promQL[]' "$1" | sed -e 's/ContextTags[,]*//g'
 }
 
 count=0
