@@ -1,75 +1,27 @@
-all: init test build
-build: init docs/index.yaml docs/es/all.yaml docs/es/all-latest.yaml
+# Top-level Makefile for working on all helm-charts projects at once.
 
-CHART := enterprise-suite
-export VERSION := $(shell scripts/export-chart-version.sh $(CHART))
-export RELEASE := $(CHART)-$(VERSION)
-CHART_LATEST := $(CHART)-latest
-export RELEASE_LATEST := $(CHART_LATEST)-$(VERSION)
+# Collection of charts to process.
+# These are subdirectories of helm-charts.  Add to the list as required.
+#
+# This setting is the default.  To build a subset (at this level), just define a
+# value on the command line.  e.g. "make CHARTS=sample-project"
+#
+CHARTS = enterprise-suite enterprise-suite-latest reactive-sandbox #sample-project
 
-define banner
-	$(info === $@)
-endef
 
-docs/es/all.yaml: docs/$(RELEASE).tgz
-	$(call banner)
-	helm --namespace=lightbend template $< > $@
+TOPTARGETS := all build clean test lint-helm minikube-test
 
-docs/es/all-latest.yaml: docs/$(RELEASE_LATEST).tgz
-	$(call banner)
-	helm --namespace=lightbend template $< > $@
+$(TOPTARGETS): $(CHARTS)
 
-docs/index.yaml: docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz
-	$(call banner)
+$(CHARTS):
+	$(MAKE) -C $@ $(MAKECMDGOALS)
+
+build-index: docs/index.yaml
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
-docs/$(RELEASE).tgz: $(CHART)/* $(CHART)/*/*
-	$(call banner)
-	helm package $(CHART) -d docs
-
-docs/$(RELEASE_LATEST).tgz: $(CHART)/* $(CHART)/*/*
-	$(call banner)
-	rm -rf build/$(CHART_LATEST)
-	cp -r $(CHART) build/$(CHART_LATEST)
-	scripts/munge-to-latest.sh build/$(CHART_LATEST)
-	helm package build/$(CHART_LATEST) -d docs
-
-# duplicate method here to generate the index, to avoid pulling in RELEASE as a dependency
-latest: init test docs/es/all-latest.yaml docs/$(RELEASE_LATEST).tgz
-	helm repo index docs --url https://lightbend.github.io/helm-charts
-
-release:
-	$(call banner)
-	echo "stub: release"
+docs/index.yaml: $(wildcard docs/*.tgz)
 
 clean:
-	rm -rf build
+	rm docs/index.yaml
 
-test:
-	$(MAKE) -C $(CHART) $@
-
-minikube-test:
-	$(MAKE) -C $(CHART) $@
-
-init:
-	@scripts/lib.sh
-	@helm init -c > /dev/null
-	@mkdir -p build
-
-install-helm:
-	-kubectl create serviceaccount --namespace kube-system tiller
-	-kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-	-helm init --wait --service-account tiller
-
-delete-local:
-	$(MAKE) -C $(CHART) $@
-
-install-local: install-helm delete-local
-	$(MAKE) -C $(CHART) $@
-
-install-local-latest: docs/$(RELEASE_LATEST).tgz install-helm delete-local
-	$(MAKE) -C $(CHART) $@
-
-# always run these steps if in dependencies:
-.PHONY: all build latest release clean test minikube-test init install-helm \
-	delete-local install-local install-local-latest
+.PHONY: $(TOPTARGETS) $(CHARTS) build-index clean

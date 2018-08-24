@@ -17,12 +17,6 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make minikube-test
-    env: USE_LATEST_IMAGES=false
-  - name: Minikube - Latest
-    script:
-    - scripts/setup-minikube-for-linux.sh
-    - make minikube-test
-    env: USE_LATEST_IMAGES=true
 
 branches:
   only:
