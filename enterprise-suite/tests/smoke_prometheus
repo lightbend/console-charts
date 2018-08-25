@@ -5,6 +5,14 @@
 source smokecommon
 
 #
+# launch test apps
+#
+
+for app in resources/app*.yaml; do
+  kubectl apply -f "$app"
+done
+
+#
 # prometheus fetchers
 #
 
@@ -63,14 +71,6 @@ prom_three_scrapes() {
 }
 busy_wait prom_three_scrapes
 T $? Prometheus has at least three scrapes
-
-#
-# launch test apps
-#
-
-for app in resources/app*.yaml; do
-  kubectl apply -f "$app"
-done
 
 #
 # prometheus
