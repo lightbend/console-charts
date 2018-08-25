@@ -6,10 +6,16 @@
 #set -x
 
 FAILURES=0
+pids=()
 
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
-	./$smoketest
+	./$smoketest &
+	pids+=($!)
+done
+
+for pid in "${pids[@]}"; do
+	wait "$pid"
 	((FAILURES+=$?))
 done
 
