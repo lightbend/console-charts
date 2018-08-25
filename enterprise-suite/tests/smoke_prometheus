@@ -218,7 +218,7 @@ T $? 'node-exporter "err" logs'
 
 # app tests
 
-app_instances='count( sum by (instance) (akka_actor_running_actors{workload="es-demo", namespace="default"}) )  == 2'
+app_instances='count( count by (instance) (ohai{workload="es-test", namespace="default"}) ) == 2'
 app_data() {
   results=$( prom_query "$app_instances" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
