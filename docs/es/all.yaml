@@ -315,7 +315,7 @@ spec:
         component: server
     spec:
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.16
+      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.0.14
         imagePullPolicy: IfNotPresent
         name: grafana-server
         env:
