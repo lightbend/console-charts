@@ -23,3 +23,5 @@ imagePullPolicy: IfNotPresent
 prometheusDomain: prometheus.io
 # minikube debug resources
 minikube: true
+# expose-es-console
+exposeConsoleService: false

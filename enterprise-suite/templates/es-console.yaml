@@ -24,7 +24,8 @@ spec:
           configMap:
             name: es-console
 
-{{ if .Values.minikube }}
+{{ if or .Values.minikube .Values.exposeConsoleService }}
+
 ---
 apiVersion: v1
 kind: Service
@@ -39,8 +40,29 @@ spec:
   selector:
     run: es-console
   type: NodePort
-{{ end }}
 
+{{ else }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: es-console
+    component: "server"
+  name: es-console-server
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: es-console
+    component: "server"
+  type: "ClusterIP"
+
+{{ end }}
 ---
 apiVersion: v1
 kind: ConfigMap
