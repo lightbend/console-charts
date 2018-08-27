@@ -16,11 +16,19 @@ error() {
   exit 1
 }
 
+context=minikube
+
 # busy_wait cmd
 # quickly retry command til it works, up to some limit
 # idea: succeed fast, fail slow
 busy_wait() {
-  limit=90
+  if [[ $1 == limit=* ]]; then
+   limit="${1#*=}"
+   shift
+  else
+    limit=30
+  fi
+
   until "$@"; do
     if [[ limit -le 0 ]]; then
       error "giving up: busy_wait $*"
@@ -62,10 +70,20 @@ test_summary() {
     exit $TEST_FAILURES
 }
 
+# Source GKE for GKE commands
+if [[ $(kubectl config current-context) == gke_* ]] ; then
+    echo "Changing context to GKE "
+    context=GKE
+fi
+
 # Get URL for NodePort assignment
 # nodeport <name>
 nodeport() {
-  minikube service --namespace=lightbend --url $1
+  if [[ $context == "minikube" ]]; then
+    minikube service --namespace=lightbend --url $1
+  elif [[ $context == "GKE" ]]; then
+    get_ing_ip $1-ing
+  fi
 }
 
 # curl_query <baseURL> <URI> [<curl-opt>...]
@@ -112,3 +130,39 @@ test_alertmanager_responding() {
   results=$( curl_query $1 "" | fgrep -q '<title>Alertmanager</title>' )
   T $? alertmanager accessible via $1
 }
+
+# Create services-name-ing ingress if not present
+createIngress() {
+
+  if ! kubectl get ing -n lightbend "$1-ing"  > /dev/null 2>&1 ; then
+    sed -e "s/{{INGRESS_NAME}}/$1-ing/g;s/{{SERVICE_NAME}}/$1/g;s/{{SERVICE_PORT}}/$2/g" \
+            < resources/gke-ingress-test.template.yaml | kubectl create -n lightbend -f -
+    echo "create $1-ing for service $1 at port $2"
+  fi
+
+}
+
+# Get ingress IP
+# Return http://[[public-ip]]
+get_ing_ip() {
+  kubectl get ing  $1 -o json  | jq -e '.status.loadBalancer.ingress[0].ip' | tr -d '"'| awk '$1 != "null" {print "http://"$1}'
+}
+
+#
+# Note when ES2 installed make sure we installed expose-services
+# Create ingress for each exposed service
+#
+if [[ $context == "GKE" ]]; then
+    createIngress expose-es-console 80
+    createIngress expose-prometheus 9090
+    createIngress expose-grafana 3000
+    createIngress expose-alertmanager 9093
+
+    #  It took between 60 and 90 seconds for the IP address to show up
+    busy_wait limit=180 get_ing_ip expose-es-console-ing
+    busy_wait limit=180 get_ing_ip expose-prometheus-ing
+    busy_wait limit=180 get_ing_ip expose-grafana-ing
+    busy_wait limit=180 get_ing_ip expose-alertmanager-ing
+
+fi
+

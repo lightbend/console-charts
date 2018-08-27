@@ -1,0 +1,8 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{INGRESS_NAME}}
+spec:
+  backend:
+    serviceName: {{SERVICE_NAME}}
+    servicePort: {{SERVICE_PORT}}

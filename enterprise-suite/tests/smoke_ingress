@@ -6,6 +6,8 @@
 
 source smokecommon
 
+if [[ "$context" == "GKE" ]]; then exit 0; fi
+
 TMPPIPE=$(mktemp -t pipe.XXX)
 
 cleanup() {
