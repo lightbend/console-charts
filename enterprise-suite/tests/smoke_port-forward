@@ -36,12 +36,39 @@ export CONSOLE_REMOTE_PORT=$( kubectl get -n lightbend services expose-es-consol
 ) &
 
 PGID=$( ps -o pgid= -p $$ )
-KUBECTL_PID=$( ps -o pid=,pgid=,command= | sed -n "s/^ *\([0-9][0-9]*\) *$PGID kubectl port-forward.*/\1/p" )
 
-# Need this so the port forwarding has a chance to get setup
-sleep 1
+#
+# wait for kubectl port-forward process
+#
+KUBECTL_PID=
+port_forward_started() {
+    KUBECTL_PID=$( ps -o pid=,pgid=,command= | sed -n "s/^ *\([0-9][0-9]*\) *$PGID kubectl port-forward.*/\1/p" )
+    [[ ! -z "$KUBECTL_PID" ]]
+}
+busy_wait port_forward_started
 
-CONSOLE_LOCAL_PORT=$( sed -n -e "1s/^.*:\(.*\) ->.*/\1/p" -e "1q" <$TMPPIPE )
+[[ ! -z "$KUBECTL_PID" ]]
+T $? kubectl port-forward started
+
+#
+# wait for kubectl port-forward output
+#
+CONSOLE_LOCAL_PORT=
+port_forward_listening() {
+    CONSOLE_LOCAL_PORT=$( sed -n -e "1s/^.*:\(.*\) ->.*/\1/p" -e "1q" <$TMPPIPE )
+    [[ ! -z "$CONSOLE_LOCAL_PORT" ]]
+}
+busy_wait port_forward_listening
+[[ ! -z "$CONSOLE_LOCAL_PORT" ]]
+T $? kubectl port-forward listening
+
+#
+# wait for console to respond
+#
+console_running() {
+    curl_query $1 "" "" | fgrep -q '<title>Enterprise Suite Reactive Console</title>'
+}
+busy_wait console_running http://127.0.0.1:$CONSOLE_LOCAL_PORT
 
 # Test access
 test_es_console_responding http://127.0.0.1:$CONSOLE_LOCAL_PORT
