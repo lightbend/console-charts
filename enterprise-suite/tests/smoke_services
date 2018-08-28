@@ -2,7 +2,9 @@
 
 ## Test access to services via NodePort and nginx location directives.
 
-source smokecommon
+if [[ ! $context  ]]; then
+  source smokecommon
+fi
 
 #set -x
 

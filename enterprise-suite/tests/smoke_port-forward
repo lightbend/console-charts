@@ -4,7 +4,9 @@
 
 #set -x
 
-source smokecommon
+if [[ ! $context  ]]; then
+  source smokecommon
+fi
 
 KUBECTL_PID=
 export TMPPIPE=$(mktemp -t pipe.XXX)

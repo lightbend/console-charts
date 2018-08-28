@@ -2,7 +2,9 @@
 
 # A collection of prometheus-related smoke tests
 
-source smokecommon
+if [[ ! $context ]]; then
+  source smokecommon
+fi
 
 #
 # launch test apps
@@ -16,10 +18,7 @@ done
 # prometheus fetchers
 #
 
-prom() {
-  minikube service --namespace=lightbend --url expose-prometheus
-}
-PROM=$( busy_wait prom )
+PROM=$( busy_wait nodeport expose-prometheus )
 
 prom_query() {
   curl -fsG "$PROM/api/v1/query" --data-urlencode "query=$*"
