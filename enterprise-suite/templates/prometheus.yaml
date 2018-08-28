@@ -164,6 +164,7 @@ spec:
   selector:
     app: prometheus
     component: server
+  type: {{ .Values.esServiceType }}
 
 ---
 apiVersion: v1
@@ -177,6 +178,7 @@ spec:
   selector:
     app: prometheus
     component: server
+  type: {{ .Values.esServiceType }}
 
 {{ if .Values.minikube }}
 ---

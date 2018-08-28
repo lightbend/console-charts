@@ -60,7 +60,7 @@ spec:
   selector:
     app: grafana
     component: "server"
-  type: "ClusterIP"
+  type: {{ .Values.esServiceType }}
 
 {{ if .Values.minikube }}
 ---

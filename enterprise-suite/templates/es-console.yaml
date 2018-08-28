@@ -43,6 +43,19 @@ spec:
 
 ---
 apiVersion: v1
+kind: Service
+metadata:
+  name: console-server
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    run: es-console
+  type: {{ .Values.esServiceType }}
+
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: es-console
