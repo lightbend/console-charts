@@ -30,7 +30,7 @@ busy_wait() {
    limit="${1#*=}"
    shift
   else
-    limit=30
+    limit=90
   fi
 
   until "$@"; do

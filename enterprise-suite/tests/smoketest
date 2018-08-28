@@ -1,29 +1,19 @@
 #!/bin/bash
 
 # Run all smoke tests with a filename of smoke_*.
-# * Exit code indicates overall number of test failures.
-# * Each test is piped to "sponge" to print output all at once
-#   when the test run is finished, for better reports.
+# Exit code indicates overall number of test failures.
+
+#set -x
+source smokecommon
 
 FAILURES=0
-pids=()
-
-source smokecommon
 
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
-
-	./$smoketest > >(sponge /dev/stdout) &
-	pids+=($!)
-done
-
-for pid in "${pids[@]}"; do
-	wait "$pid"
+	./$smoketest
 	((FAILURES+=$?))
 done
 
-# wait for all the sponge output..
-wait
 echo "All tests completed with $FAILURES failures"
 
 exit $FAILURES
