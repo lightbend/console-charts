@@ -5,6 +5,14 @@
 source smokecommon
 
 #
+# launch test apps
+#
+
+for app in resources/app*.yaml; do
+  kubectl apply -f "$app"
+done
+
+#
 # prometheus fetchers
 #
 
@@ -52,25 +60,21 @@ node_exporter_logs() {
 # }
 # PROM_INTERVAL=$( busy_wait prom_interval )
 
-#
-# busy_wait three_scrapes   should wait until prometheus has had three scrapes
-#                         after this we should expect good data for everything
-#
+# prom_three_scrapes  waits until we've seen three scrapes of given metric
+#  two scrapes is needed to compute a rate, then three is needed for rate of rate
 
 prom_three_scrapes() {
-  results=$( prom_query "sum_over_time(up[10m]) > 2" | jq '.data.result | length' )
+  results=$( prom_query "count_over_time($1[10m]) > 2" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
 }
-busy_wait prom_three_scrapes
-T $? Prometheus has at least three scrapes
 
-#
-# launch test apps
-#
+busy_wait prom_three_scrapes kube_pod_info
+T $? Prometheus kube-state-metrics has at least three scrapes
 
-for app in resources/app*.yaml; do
-  kubectl apply -f "$app"
-done
+busy_wait prom_three_scrapes node_cpu_percent
+T $? Prometheus node-exporter has at least three scrapes
+
+
 
 #
 # prometheus
@@ -139,6 +143,7 @@ prom_has_no_data 'kube_pod_info{workload=""}'
 
 # grep kube_ rules.json | jq -r '.parameters.metric'
 kube_state_metrics=(
+  kube_pod_info
   kube_node_pressure
   kube_pod_ready
   kube_pod_container_restarts_rate

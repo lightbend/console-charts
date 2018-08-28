@@ -31,15 +31,15 @@ trap cleanup 0
 # Events:
 #   Type    Reason  Age   From                      Message
 #   ----    ------  ----  ----                      -------
-#   Normal  CREATE  48s   nginx-ingress-controller  Ingress lightbend/ingress-test
-#   Normal  UPDATE  3s    nginx-ingress-controller  Ingress lightbend/ingress-test
+#   Normal  CREATE  48s   nginx-ingress-controller  Ingress lightbend/ingress-test-tls
+#   Normal  UPDATE  3s    nginx-ingress-controller  Ingress lightbend/ingress-test-tls
 #
 ingress_ready() {
     # debug output
-    #kubectl describe ing/ingress-test -n lightbend
+    #kubectl describe ing/ingress-test-tls -n lightbend
     # ingress can take up to 1m to get ready
     sleep 2
-    kubectl describe ing/ingress-test -n lightbend | awk 'END { exit !( $1 == "Normal"  &&  $2 == "UPDATE" ) }'
+    kubectl describe ing/ingress-test-tls -n lightbend | awk 'END { exit !( $1 == "Normal"  &&  $2 == "UPDATE" ) }'
 }
 
 # Makes sure expose-es-console is ready
