@@ -16,11 +16,23 @@ error() {
   exit 1
 }
 
+context=minikube
+if [[ $(kubectl config current-context) == gke_* ]] ; then
+  context="GKE"
+fi
+
+
 # busy_wait cmd
 # quickly retry command til it works, up to some limit
 # idea: succeed fast, fail slow
 busy_wait() {
-  limit=90
+  if [[ $1 == limit=* ]]; then
+   limit="${1#*=}"
+   shift
+  else
+    limit=90
+  fi
+
   until "$@"; do
     if [[ limit -le 0 ]]; then
       error "giving up: busy_wait $*"
@@ -62,10 +74,15 @@ test_summary() {
     exit $TEST_FAILURES
 }
 
+
 # Get URL for NodePort assignment
 # nodeport <name>
 nodeport() {
-  minikube service --namespace=lightbend --url $1
+  if [[ $context == "minikube" ]]; then
+    minikube service --namespace=lightbend --url $1
+  elif [[ $context == "GKE" ]]; then
+    get_ing_ip $1-ing
+  fi
 }
 
 # curl_query <baseURL> <URI> [<curl-opt>...]
@@ -112,3 +129,40 @@ test_alertmanager_responding() {
   results=$( curl_query $1 "" | fgrep -q '<title>Alertmanager</title>' )
   T $? alertmanager accessible via $1
 }
+
+# Create services-name-ing ingress if not present
+createIngress() {
+  if ! kubectl get ing -n lightbend "$1-ing"  > /dev/null 2>&1 ; then
+    sed -e "s/{{INGRESS_NAME}}/$1-ing/g;s/{{SERVICE_NAME}}/$1/g;s/{{SERVICE_PORT}}/$2/g" \
+            < resources/gke-ingress-test.template.yaml | kubectl apply -n lightbend -f -
+    echo "create $1-ing for service $1 at port $2"
+    busy_wait limit=180 get_ing_ip "$1-ing"
+  fi
+}
+
+# Get ingress IP
+# Return http://[[public-ip]]
+get_ing_ip() {
+  kubectl get ing "$1" -n lightbend -o json | jq -e '.status.loadBalancer.ingress[0].ip' | tr -d '"'| awk '$1 != "null" {print "http://"$1}'
+}
+
+if [[ $context == "GKE" ]]; then
+  ing_pids=()
+  declare -a servicePorts=("expose-es-console:80" "expose-grafana:3000" "expose-alertmanager:9093" \
+    "expose-prometheus:9090")
+  ## now loop through the above array
+  for service in "${servicePorts[@]}" ; do
+    service_name=$(echo $service | awk -F ':' '{print $1}')
+    service_port=$(echo $service | awk -F ':' '{print $2}')
+    createIngress $service_name $service_port &
+    ing_pids+=($!)
+  done
+
+  for pid in "${ing_pids[@]}"; do
+    wait "$pid"
+  done
+  wait
+fi
+
+
+

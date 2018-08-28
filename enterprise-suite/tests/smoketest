@@ -4,6 +4,7 @@
 # Exit code indicates overall number of test failures.
 
 #set -x
+source smokecommon
 
 FAILURES=0
 
