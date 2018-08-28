@@ -8,6 +8,8 @@
 FAILURES=0
 pids=()
 
+source smokecommon
+
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
 

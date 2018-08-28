@@ -4,9 +4,11 @@
 
 #set -x
 
-source smokecommon
+if [[ ! $context  ]]; then
+  source smokecommon
+fi
 
-if [[ "$context" == "GKE" ]]; then exit 0; fi
+if [[ $context == "GKE" ]]; then exit 0; fi
 
 TMPPIPE=$(mktemp -t pipe.XXX)
 

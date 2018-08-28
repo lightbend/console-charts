@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: {{INGRESS_NAME}}
+  namespace: lightbend
 spec:
   backend:
     serviceName: {{SERVICE_NAME}}

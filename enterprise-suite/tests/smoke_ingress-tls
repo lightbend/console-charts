@@ -11,9 +11,11 @@
 
 # need to deal with the secrets too
 
-source smokecommon
+if [[ ! $context  ]]; then
+  source smokecommon
+fi
 
-if [[ "$context" == "GKE" ]]; then exit 0; fi
+if [[ $context == "GKE" ]]; then exit 0; fi
 
 TMPFILE=$(mktemp -t pipe.XXX)
 

@@ -2,8 +2,9 @@
 
 ## Test access to the console over kubectl proxy setup
 
-source smokecommon
-
+if [[ ! $context  ]]; then
+  source smokecommon
+fi
 #set -x
 
 KUBECTL_PID=
