@@ -194,7 +194,7 @@
         "window": "15m",
         "confidence": "0.5",
         "severity": "warning",
-        "summary": "actor processing time is weird",
+        "summary": "actor processing time is anomalous",
         "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
         "monitorType": ""
       }
@@ -571,6 +571,70 @@
         "description": "Memcached evictions in {{$labels.workload}} is not normal on {{$labels.instance}}",
         "monitorType": ""
       }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "akka_http_server_response_time",
+        "metric": "akka_http_http_server_response_time_ns{quantile=\"0.5\"}",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "100000000",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "HTTP server response time is anomalous",
+        "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "akka_http_client_response_time",
+        "metric": "akka_http_http_client_http_client_service_response_time_ns{quantile=\"0.5\"}",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "100000000",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "HTTP client response time is anomalous",
+        "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "akka_http_server_5xx",
+        "metric": "akka_http_http_server_responses_5xx",
+        "comparator": ">",
+        "threshold": "0",
+        "window": "5m",
+        "confidence": "1",
+        "severity": "warning",
+        "summary": "HTTP 5xx errors",
+        "description": "HTTP server at {{labels.instance}} has 5xx errors",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "sma",
+      "parameters": {
+        "name": "play_http_client_response_time",
+        "metric": "play_http_client_play_client_service_response_time_ns{quantile=\"0.5\"}",
+        "period": "15m",
+        "numsigma": "2",
+        "minval": "100000000",
+        "window": "15m",
+        "confidence": "0.5",
+        "severity": "warning",
+        "summary": "HTTP client response time is anomalous",
+        "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+        "monitorType": ""
+      }
     }
+
   ]
 }
