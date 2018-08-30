@@ -3,6 +3,7 @@
 ## Test access to services via NodePort and nginx location directives.
 
 source smokecommon
+if [[ $context == "GKE" ]]; then init_gke_ingress ; fi
 
 #set -x
 

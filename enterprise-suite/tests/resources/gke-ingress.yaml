@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: expose-es-console-ing
+spec:
+  backend:
+    serviceName: expose-es-console
+    servicePort: 80
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: expose-prometheus-ing
+spec:
+  backend:
+    serviceName: expose-prometheus
+    servicePort: 9090
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: expose-grafana-ing
+spec:
+  backend:
+    serviceName: expose-grafana
+    servicePort: 3000
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: expose-alertmanager-ing
+spec:
+  backend:
+    serviceName: expose-alertmanager
+    servicePort: 9093
