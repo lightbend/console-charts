@@ -23,6 +23,3 @@ imagePullPolicy: IfNotPresent
 prometheusDomain: prometheus.io
 # minikube debug resources
 minikube: true
-# console server type
-esServiceType: ClusterIP
-
