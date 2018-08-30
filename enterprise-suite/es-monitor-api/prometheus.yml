@@ -101,32 +101,32 @@ scrape_configs:
         action: replace
         target_label: node_ip
 
-    # workload labels:
+    # es_workload labels:
     metric_relabel_configs:
-      - source_labels: [created_by_kind, pod, workload]
+      - source_labels: [created_by_kind, pod, es_workload]
         regex: 'ReplicaSet;(.+)-[^-]+-[^-]+;'
-        target_label: workload
-      - source_labels: [created_by_kind, pod, workload]
+        target_label: es_workload
+      - source_labels: [created_by_kind, pod, es_workload]
         regex: 'StatefulSet;(.+)-[^-]+;'
-        target_label: workload
-      - source_labels: [created_by_kind, pod, workload]
+        target_label: es_workload
+      - source_labels: [created_by_kind, pod, es_workload]
         regex: 'DaemonSet;(.+)-[^-]+;'
-        target_label: workload
-      - source_labels: [created_by_kind, pod, workload]
+        target_label: es_workload
+      - source_labels: [created_by_kind, pod, es_workload]
         regex: 'Job;(.+)-[^-]+;'
-        target_label: workload
-      - source_labels: [created_by_kind, pod, workload]
+        target_label: es_workload
+      - source_labels: [created_by_kind, pod, es_workload]
         regex: 'ReplicationController;(.+)-[^-]+;'
-        target_label: workload
-      - source_labels: [created_by_kind, pod, workload]
+        target_label: es_workload
+      - source_labels: [created_by_kind, pod, es_workload]
         regex: '.none.;(.+);'
-        target_label: workload
-      - source_labels: [deployment, workload]
+        target_label: es_workload
+      - source_labels: [deployment, es_workload]
         regex: '(.+);'
-        target_label: workload
-      - source_labels: [daemonset, workload]
+        target_label: es_workload
+      - source_labels: [daemonset, es_workload]
         regex: '(.+);'
-        target_label: workload
+        target_label: es_workload
 {{ .MonitorTypeRules | indent 6 }}
 
 
@@ -220,14 +220,14 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: kubernetes_pod_name
-      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, workload]
+      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
         action: replace
         regex: '[^;]+;(.*)-[^-]+-[^-]+;'
-        target_label: workload
-      - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, workload]
+        target_label: es_workload
+      - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
         action: replace
         regex: '(.*)-[0-9]+;'
-        target_label: workload
+        target_label: es_workload
 
     metric_relabel_configs:
 {{ .MonitorTypeRules | indent 6 }}
@@ -274,14 +274,14 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_host_ip]
         action: replace
         target_label: node_ip
-      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, workload]
+      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
         action: replace
         regex: '[^;]+;(.*)-[^-]+-[^-]+;'
-        target_label: workload
-      - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, workload]
+        target_label: es_workload
+      - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
         action: replace
         regex: '(.*)-[0-9]+;'
-        target_label: workload
+        target_label: es_workload
 
     metric_relabel_configs:
 {{ .MonitorTypeRules | indent 6 }}

@@ -88,7 +88,7 @@
         "confidence": "0.5",
         "severity": "warning",
         "summary": "container restarting rapidly",
-        "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.workload}} restarting rapidly",
+        "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly",
         "monitorType": ""
       }
     },
@@ -103,7 +103,7 @@
         "confidence": "0.5",
         "severity": "critical",
         "summary": "pod not ready",
-        "description": "pod {{$labels.pod}} on {{$labels.workload}} not ready",
+        "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready",
         "monitorType": ""
       }
     },
@@ -118,7 +118,7 @@
         "confidence": "0.75",
         "severity": "warning",
         "summary": "pod not running",
-        "description": "pod {{$labels.pod}} on {{$labels.workload}} not running",
+        "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not running",
         "monitorType": ""
       }
     },
@@ -132,8 +132,8 @@
         "window": "10m",
         "confidence": "1",
         "severity": "warning",
-        "summary": "workload not updating",
-        "description": "workload {{$labels.workload}} has not updated for 10 minutes",
+        "summary": "es_workload not updating",
+        "description": "es_workload {{$labels.es_workload}} has not updated for 10 minutes",
         "monitorType": ""
       }
     },
@@ -331,7 +331,7 @@
         "confidence": "0.5",
         "severity": "warning",
         "summary": "Zookeeper Latency",
-        "description": "ZooKeeper latency is not normal in {{$labels.workload}} on {{$labels.instance}}",
+        "description": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -347,7 +347,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Zookeeper live connections is not normal",
-        "description": "Zookeeper live connection in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "description": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -362,7 +362,7 @@
         "confidence": "1",
         "severity": "critical",
         "summary": "Zookeeper pending-syncs is not normal",
-        "description": "Zookeeper Pending syncs in {{$labels.workload}} is greater than 0.",
+        "description": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0.",
         "monitorType": ""
       }
     },
@@ -378,7 +378,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Zookeeper open file descriptor growth",
-        "description": "Zookeeper open file descriptors in ${{labels.workload}} is not normal in ${{labels.instance}}",
+        "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}",
         "monitorType": ""
       }
     },
@@ -394,7 +394,7 @@
         "confidence": "0.5",
         "severity": "critical",
         "summary": "Cassandra Write Latency",
-        "description": "Cassandra write latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+        "description": "Cassandra write latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -410,7 +410,7 @@
         "confidence": "0.5",
         "severity": "critical",
         "summary": "Cassandra Read Latency",
-        "description": "Cassandra read latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+        "description": "Cassandra read latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -426,7 +426,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Redis key space miss ratio growth",
-        "description": "Observing shifts in Redis key space ratio on ${{labels.workload}} in ${{labels.instance}}",
+        "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}",
         "monitorType": ""
       }
     },
@@ -442,7 +442,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Redis evictions growing",
-        "description": "Redis evictions on {{$labels.workload}} are growing in {{$labels.instance}}",
+        "description": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -458,7 +458,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Redis command processed",
-        "description": "Redis commands processed on {{$labels.workload}} is not normal in ${{labels.instance}}",
+        "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}",
         "monitorType": ""
       }
     },
@@ -474,7 +474,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Redis client connections is not normal",
-        "description": "Redis client connections on {{$labels.workload}} is not normal in {{$labels.instance}}",
+        "description": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -490,7 +490,7 @@
         "confidence": "1",
         "severity": "critical",
         "summary": "Kafka incoming message rate is not normal",
-        "description": "Kafka incoming message rate on ${{labels.workload}} is not normal for topic ${{labels.topic}}",
+        "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}",
         "monitorType": ""
       }
     },
@@ -505,7 +505,7 @@
         "confidence": "1",
         "severity": "critical",
         "summary": "Kafka offline partition is not zero",
-        "description": "Kafka offline partition is high on ${{labels.workload}} in ${{labels.instance}}",
+        "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}",
         "monitorType": ""
       }
     },
@@ -520,7 +520,7 @@
         "confidence": "1",
         "severity": "critical",
         "summary": "Kafka under replicated partitions is up",
-        "description": "Kafka under replicated partitions is high on ${{labels.workload}} in ${{labels.instance}}",
+        "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}",
         "monitorType": ""
       }
     },
@@ -536,7 +536,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Memcached miss ratio shifts",
-        "description": "Memcached miss ratio in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "description": "Memcached miss ratio in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -552,7 +552,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Memcached connections are changing",
-        "description": "Memcached connections in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "description": "Memcached connections in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
         "monitorType": ""
       }
     },
@@ -568,7 +568,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "Memcached evictions shifts",
-        "description": "Memcached evictions in {{$labels.workload}} is not normal on {{$labels.instance}}",
+        "description": "Memcached evictions in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
         "monitorType": ""
       }
     },
