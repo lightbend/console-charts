@@ -2,9 +2,10 @@
 
 ## Test access to the console over kubectl proxy setup
 
-if [[ ! $context  ]]; then
-  source smokecommon
-fi
+
+source smokecommon
+if [[ $context == "GKE" ]]; then init_gke_ingress ; fi
+
 #set -x
 
 KUBECTL_PID=

@@ -4,7 +4,6 @@
 # Exit code indicates overall number of test failures.
 
 #set -x
-source smokecommon
 # * Exit code indicates overall number of test failures.
 # * Each test is piped to "sponge" to print output all at once
 #   when the test run is finished, for better reports.

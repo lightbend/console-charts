@@ -18,9 +18,8 @@ error() {
 
 context=minikube
 if [[ $(kubectl config current-context) == gke_* ]] ; then
-  context="GKE"
+  context=GKE
 fi
-
 
 # busy_wait cmd
 # quickly retry command til it works, up to some limit
@@ -146,7 +145,17 @@ get_ing_ip() {
   kubectl get ing "$1" -n lightbend -o json | jq -e '.status.loadBalancer.ingress[0].ip' | tr -d '"'| awk '$1 != "null" {print "http://"$1}'
 }
 
-if [[ $context == "GKE" ]]; then
+init_gke_ingress() {
+  if [[ $context == "GKE" ]]; then
+    set -x
+    kubectl apply -f resources/gke-ingress.yaml
+    ES_CONSOLE_IP=$(busy_wait limit=180 get_ing_ip expose-es-console-ing)
+    busy_wait limit=180 test_es_console_responding $ES_CONSOLE_IP
+    unset -x
+  fi
+}
+
+if [[ $context == "GKE2" ]]; then
   ing_pids=()
   declare -a servicePorts=("expose-es-console:80" "expose-grafana:3000" "expose-alertmanager:9093" \
     "expose-prometheus:9090")

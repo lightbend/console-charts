@@ -2,10 +2,8 @@
 
 # A collection of prometheus-related smoke tests
 
-if [[ ! $context ]]; then
-  source smokecommon
-fi
-
+source smokecommon
+if [[ $context == "GKE" ]]; then init_gke_ingress ; fi
 #
 # launch test apps
 #

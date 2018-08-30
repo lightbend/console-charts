@@ -4,9 +4,7 @@
 
 #set -x
 
-if [[ ! $context  ]]; then
-  source smokecommon
-fi
+source smokecommon
 
 if [[ $context == "GKE" ]]; then exit 0; fi
 

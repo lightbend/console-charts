@@ -4,9 +4,8 @@
 
 #set -x
 
-if [[ ! $context  ]]; then
-  source smokecommon
-fi
+source smokecommon
+if [[ $context == "GKE" ]]; then init_gke_ingress ; fi
 
 KUBECTL_PID=
 export TMPPIPE=$(mktemp -t pipe.XXX)
