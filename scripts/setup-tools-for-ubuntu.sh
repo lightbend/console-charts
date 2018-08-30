@@ -10,6 +10,9 @@ sudo apt install -y yq
 # jq
 sudo apt install -y jq
 
+# sponge
+sudo apt install -y moreutils
+
 # promtool
 mkdir -p build
 cd build

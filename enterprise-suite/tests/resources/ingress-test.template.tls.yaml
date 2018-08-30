@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: ingress-test
+  name: ingress-test-tls
   namespace: lightbend
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
