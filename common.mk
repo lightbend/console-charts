@@ -35,7 +35,7 @@ endef
 COMPONENTS := $(wildcard */.)
 SUBCOMPONENTS := $(wildcard */*/.)
 
-HELM_CHARTS_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+HELM_CHARTS_DIR := ..
 SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
 
 #####
@@ -44,18 +44,12 @@ SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
 VERSION ?= $(shell $(SCRIPTS_DIR)/export-chart-version.sh $(CHART))
 RELEASE = $(CHART)-$(VERSION)
 CHART_DIR = .
-ALL_YAML ?= all.yaml
 #####
 
 
 all: test build  ## Test then build chart
-build: init $(HELM_CHARTS_DIR)/docs/index.yaml $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build chart
+build: init $(HELM_CHARTS_DIR)/docs/index.yaml  ## Build chart
 
-
-$(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
-	$(call banner)
-	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< > $@
 
 $(HELM_CHARTS_DIR)/docs/index.yaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
@@ -86,8 +80,7 @@ delete-local:  ## Delete chart from cluster with helm
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
 	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait
 
-clean::  ## Clean up.  (Removes all.yaml file)
-	rm -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
+clean::  ## Clean up
 
 minikube-test:
 
