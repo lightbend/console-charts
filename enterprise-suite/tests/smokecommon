@@ -147,11 +147,9 @@ get_ing_ip() {
 
 init_gke_ingress() {
   if [[ $context == "GKE" ]]; then
-    set -x
     kubectl apply -f resources/gke-ingress.yaml
     ES_CONSOLE_IP=$(busy_wait limit=180 get_ing_ip expose-es-console-ing)
     busy_wait limit=180 test_es_console_responding $ES_CONSOLE_IP
-    unset -x
   fi
 }
 
