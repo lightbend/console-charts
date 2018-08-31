@@ -100,6 +100,10 @@ spec:
       - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
+        resources:
+          requests:
+            cpu: {{ default .Values.defaultCPURequest .Values.esGrafanaCPURequest }}
+            memory: {{ default .Values.defaultMemoryRequest .Values.esGrafanaMemoryRequest }}
         env:
           # The following env variables set up anonymous access to grafana with editor access.
           - name: GF_AUTH_ANONYMOUS_ENABLED

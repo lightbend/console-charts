@@ -68,6 +68,10 @@ spec:
       initContainers:
         - name: setup
           image: alpine
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest }}
           command:
             - /bin/sh
             - -c
@@ -84,6 +88,10 @@ spec:
         - name: es-monitor-api
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.esMonitorCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.esMonitorMemoryRequest }}
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
@@ -116,6 +124,10 @@ spec:
 
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.prometheusCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.prometheusMemoryRequest }}
           args:
             - --config.file=/etc/config/prometheus.yml
             - --web.console.libraries=/etc/prometheus/console_libraries
