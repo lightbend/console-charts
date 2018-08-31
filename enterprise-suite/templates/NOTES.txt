@@ -1,0 +1,11 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get {{ .Release.Name }}
+
+If you want to run {{ .Release.Name }} with exposed services, appropriate only for a minikube environment, reinstall the chart, specifying minikube=true.  e.g.
+  $ helm install .../{{ .Chart.Name }}.tgz --name=es --namespace=lightbend --debug --wait --set minikube=true

@@ -4,6 +4,9 @@ CHART ?= enterprise-suite
 RELEASE_NAME = es
 NAMESPACE = lightbend
 
+# Install minikube-related services.  These are disabled by default.
+MINIKUBE=true
+
 define banner
 	$(info === $@)
 endef
@@ -84,7 +87,7 @@ delete-local:  ## Delete chart from cluster with helm
 	-helm delete --purge $(RELEASE_NAME)
 
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
-	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait
+	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait --set minikube=$(MINIKUBE)
 
 #
 ##
