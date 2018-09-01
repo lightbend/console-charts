@@ -53,6 +53,10 @@ spec:
       containers:
         - name: prometheus-alertmanager
           image: prom/alertmanager:{{ .Values.alertManagerVersion }}
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.alertManagerCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.alertManagerMemoryRequest }}
           env:
           args:
             - --config.file=/etc/config/alertmanager.yml
@@ -78,6 +82,10 @@ spec:
 
         - name: prometheus-alertmanager-configmap-reload
           image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
             - --volume-dir=/etc/config
             - --webhook-url=http://localhost:9093/-/reload
