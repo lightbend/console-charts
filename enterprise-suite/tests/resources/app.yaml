@@ -2,13 +2,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: es-test-via-service
+  name: es-test
 spec:
   replicas: 2
   template:
     metadata:
       labels:
         app: es-test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
     spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
@@ -18,16 +21,3 @@ spec:
           ports:
             - containerPort: 8080
               name: metrics
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: es-test-via-service
-  annotations:
-    prometheus.io/scrape: "true"
-spec:
-  ports:
-    - port: 80
-      targetPort: 8080
-  selector:
-    app: es-test
