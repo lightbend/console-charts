@@ -35,4 +35,6 @@ minikube: true
 # default container resource requests for CPU (0.1)
 defaultCPURequest: 100m
 # default container resource requests for memory
-defaultMemoryRequest: 256Mi
+defaultMemoryRequest: 50Mi
+# Prometheus resource request for memory
+prometheusMemoryRequest: 250Mi
