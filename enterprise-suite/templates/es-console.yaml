@@ -14,6 +14,10 @@ spec:
       - name: es-console
         image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        resources:
+          requests:
+            cpu: {{ default .Values.defaultCPURequest .Values.esConsoleCPURequest }}
+            memory: {{ default .Values.defaultMemoryRequest .Values.esConsoleMemoryRequest }}
         ports:
         - containerPort: 80
         volumeMounts:

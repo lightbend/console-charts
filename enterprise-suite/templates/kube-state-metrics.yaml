@@ -82,7 +82,11 @@ spec:
       serviceAccountName: prometheus-kube-state-metrics
       containers:
         - name: prometheus-kube-state-metrics
-          image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
+          image: "gcr.io/google_containers/kube-state-metrics:{{ .Values.kubeStateMetricsVersion }}"
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.kubeStateMetricsCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.kubeStateMetricsMemoryRequest }}
           ports:
             - name: metrics
               containerPort: 8080
