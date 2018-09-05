@@ -10,17 +10,14 @@ install: scripts/setup-tools-for-ubuntu.sh
 jobs:
   include:
   - stage: Tests
-    name: Validate
-    script:
-    - make test
-  - name: Minikube
+    name: Minikube
     script:
     - scripts/setup-minikube-for-linux.sh
-    - make minikube-test CHARTS=enterprise-suite
+    - make test CHARTS=enterprise-suite
   - name: Minikube - Latest
     script:
     - scripts/setup-minikube-for-linux.sh
-    - make minikube-test CHARTS=enterprise-suite-latest
+    - make test CHARTS=enterprise-suite-latest
 
 branches:
   only:

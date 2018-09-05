@@ -1,6 +1,11 @@
 # Patterns to ignore when building packages.
 # This supports shell glob matching, relative path matching, and
 # negation (prefixed with !). Only one pattern per line.
+#
+# Normal files we don't want in packages
+.helmignore
+Makefile
+README.md
 .DS_Store
 # Common VCS dirs
 .git/
@@ -19,3 +24,4 @@
 .project
 .idea/
 *.tmproj
+*~

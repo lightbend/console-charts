@@ -26,7 +26,10 @@ ALL_YAML ?= all.yaml
 
 
 all: lint build  ## lint then build chart
-build: init $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build chart package (and all.yaml)
+build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build chart package (and all.yaml)
+
+# This target required by top-level helm-charts Makefile.  Will create and copy chart tarball
+package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
 test:
@@ -38,7 +41,7 @@ test:
 #
 # $(HELM_CHARTS_DIR)/docs/index.yaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 # 	$(call banner)
-# 	( cd .. ; $(MAKE) -C $(HELM_CHARTS_DIR) docs/index.yaml ; )
+# 	$(MAKE) -C $(HELM_CHARTS_DIR) docs/index.yaml
 
 init:
 	@$(SCRIPTS_DIR)/lib.sh
@@ -62,7 +65,7 @@ lint-helm:  ## Run helm lint on chart files
 lint-json:  ## Test json files are well-formed
 	find $(CHART_DIR) -name \*.json | xargs -tn 1 jq . >/dev/null
 
-lint-promql:  ## Test promql bits ar4e well-formed
+lint-promql:  ## Test promql bits are well-formed
 	$(CHART_DIR)/scripts/validate-promql.sh
 
 clean::  ## Delete make artifacts
@@ -82,10 +85,11 @@ delete-local:  ## Delete chart from cluster with helm
 
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
 	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait
+
 #
 ##
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all build test init lint lint-helm lint-json lint-promql clean install-helm delete-local install-local help
+.PHONY: all build package test init lint lint-helm lint-json lint-promql clean install-helm delete-local install-local help
