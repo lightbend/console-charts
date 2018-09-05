@@ -4,9 +4,6 @@ CHART ?= enterprise-suite
 RELEASE_NAME = es
 NAMESPACE = lightbend
 
-# Install minikube-related services.  These are disabled by default.
-MINIKUBE=true
-
 define banner
 	$(info === $@)
 endef
@@ -50,11 +47,6 @@ init:
 	@$(SCRIPTS_DIR)/lib.sh
 	@helm init -c > /dev/null
 
-$(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
-	$(call banner)
-	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< > $@
-
 # Note: This works for enterprise-suite and allows us to define a latest-specific version in enterprise-suite-latest
 $(HELM_CHARTS_DIR)/docs/$(filter-out %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
 	$(call banner)
@@ -77,6 +69,15 @@ clean::  ## Delete make artifacts
 
 ## These targets used for dev work
 #
+
+# Install minikube-related services.  These are disabled by default but we enable for debugging purposes.
+# (If desired, you can override with "make <target> MINIKUBE=false")
+MINIKUBE=true
+
+$(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
+	$(call banner)
+	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
+	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE) > $@
 
 install-helm:  ## Install required helm components into cluster
 	-kubectl create serviceaccount --namespace kube-system tiller

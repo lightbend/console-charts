@@ -26,7 +26,7 @@ nodeExporterVersion: v0.15.2
 imagePullPolicy: IfNotPresent
 # prometheus annotation domain, e.g. `domain/scrape=true`
 prometheusDomain: prometheus.io
-# include minikube debug resources
+# include minikube debug resources?
 minikube: false
 
 #################################################
