@@ -9,20 +9,20 @@ CHART = enterprise-suite-latest
 #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-BASE_CHART = enterprise-suite
-HELM_CHARTS_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ES_CHART = enterprise-suite
+HELM_CHARTS_DIR := ..
 SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
 
 # Defines before include to tweak behavior as required
-VERSION = $(shell $(SCRIPTS_DIR)/export-chart-version.sh $(BASE_CHART))
+VERSION = $(shell $(SCRIPTS_DIR)/export-chart-version.sh $(ES_CHART))
 ALL_YAML = all-latest.yaml
 
-include ../$(BASE_CHART)/Makefile
+include ../$(ES_CHART)/Makefile
 
 # post-include overrides
-CHART_DIR = ../$(BASE_CHART)
-COMPONENTS := $(wildcard ../$(BASE_CHART)/*/.)
-SUBCOMPONENTS := $(wildcard ../$(BASE_CHART)/*/*/.)
+CHART_DIR = ../$(ES_CHART)
+COMPONENTS := $(wildcard ../$(ES_CHART)/*/.)
+SUBCOMPONENTS := $(wildcard ../$(ES_CHART)/*/*/.)
 
 
 # Special rule to build 'latest' chart
@@ -30,7 +30,7 @@ $(HELM_CHARTS_DIR)/docs/$(filter %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS
 	$(call banner)
 	rm -rf $(HELM_CHARTS_DIR)/build/$(CHART)
 	mkdir -p $(HELM_CHARTS_DIR)/build
-	cp -r ../$(BASE_CHART) $(HELM_CHARTS_DIR)/build/$(CHART)
+	cp -r ../$(ES_CHART) $(HELM_CHARTS_DIR)/build/$(CHART)
 	./scripts/munge-to-latest.sh $(HELM_CHARTS_DIR)/build/$(CHART)
 	helm package -d $(HELM_CHARTS_DIR)/docs $(HELM_CHARTS_DIR)/build/$(CHART)
 

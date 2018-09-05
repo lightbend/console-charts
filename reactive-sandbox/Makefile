@@ -1,4 +1,2 @@
-CHART = reactive-sandbox
-RELEASE_NAME = reactive-sandbox
-
-include ../common.mk
+# Empty test target.  Required by helm-charts Makefile
+test: ;

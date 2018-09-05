@@ -1,4 +1,11 @@
-# Top-level Makefile for working on all helm-charts projects at once.
+# Top-level Makefile for creating the index of helm charts.
+
+# ALL CHARTS MUST:
+# - Have a Makefile with a recipe for a 'test' target.  This target is run by Travis
+#   to test the release.
+#   That could be as simple as (the non-testing) Makefile:
+#      test: ;
+# - Be responsible for putting their chart package files in the docs directory
 
 # Collection of charts to process.
 # These are subdirectories of helm-charts.  Add to the list as required.
@@ -9,19 +16,20 @@
 CHARTS = enterprise-suite enterprise-suite-latest reactive-sandbox #sample-project
 
 
-TOPTARGETS := all build clean test lint-helm minikube-test
-
-$(TOPTARGETS): $(CHARTS)
-
-$(CHARTS):
-	$(MAKE) -C $@ $(MAKECMDGOALS)
-
-build-index: docs/index.yaml
+docs/index.yaml: init $(wildcard docs/*.tgz)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
-docs/index.yaml: $(wildcard docs/*.tgz)
+init:
+	@helm init -c > /dev/null
+
+test: $(CHARTS)
+
+# All charts must implement the test target
+$(CHARTS):
+	$(info *** making $(MAKECMDGOALS) on $@)
+	$(MAKE) -C $@ $(MAKECMDGOALS)
 
 clean:
 	rm docs/index.yaml
 
-.PHONY: $(TOPTARGETS) $(CHARTS) build-index clean
+.PHONY: $(CHARTS) init test clean

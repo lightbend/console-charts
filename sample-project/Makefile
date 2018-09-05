@@ -1,4 +1,2 @@
-CHART = sample-project
-RELEASE_NAME = sample
-
-include ../common.mk
+# Empty test target.  Required by helm-charts Makefile
+test: ;
