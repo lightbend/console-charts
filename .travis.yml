@@ -10,7 +10,10 @@ install: scripts/setup-tools-for-ubuntu.sh
 jobs:
   include:
   - stage: Tests
-    name: Minikube
+    name: Validate
+    script:
+    - make lint
+  - name: Minikube
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite
@@ -18,6 +21,9 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
+  - name: Reactive-sandbox test
+    script:
+    - make test CHARTS=reactive-sandbox
 
 branches:
   only:

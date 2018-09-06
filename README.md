@@ -12,18 +12,20 @@ If there are files that you don't want included in the chart, add them to a `.he
 
 ## Project Makefile
 
-All projects must have a `Makefile` that implements two targets:
+All projects must have a `Makefile` that implements the targets:
 
-- `package`:  This target should create the chart tarball and push it up to the `helm-charts/docs` directory.
-- `test`:  This target is run by Travis to test the release.
+- `lint`:  Should do preliminary checks to confirm the project is ready for packaging.
+- `package`:  Should create the chart tarball and push it up to the `helm-charts/docs` directory.
+- `test`:  Typically run by Travis to test the release.
 
 A default `common.mk` file is included that can be used for this purpose, although a project is free to implement these targets as they see fit.
 
 ## Helm-charts Makefile
 
-The default target of the top-level Makefile builds the `index.yaml` file based on the tarballs.
+The default target of the top-level Makefile packages all the charts
+and then builds the `index.yaml` file based on the tarballs.
 
-If either of the `package` or `test` targets are invoked, they are recursively invoked on each of the projects.  To run over a particular subset of projects just define a value on the command line.  e.g. `make package CHARTS=sample-project`
+If any of the `lint`, `package`, or `test` targets are invoked, they are recursively invoked on each of the projects.  To run over a particular subset of projects just define a value on the command line.  e.g. `make package CHARTS=sample-project`
 
 ## Helm install a project:
 

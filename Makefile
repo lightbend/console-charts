@@ -2,13 +2,14 @@
 
 # ALL CHARTS MUST:
 # - Have a file layout as described at https://docs.helm.sh/developing_charts/
-# - Have a Makefile with a recipe for a 'package' target.  This target should create
-#   the chart tarball and push it up to the helm-charts/docs directory.
-# - Have a Makefile with a recipe for a 'test' target.  This target is run by Travis
-#   to test the release.  That could be as simple as (the non-testing) Makefile:
-#      test: ;
+# - Have a Makefile with recipes for at least the three targets:
+#     - 'lint':  Should do preliminary checks to confirm the project is ready for packaging.
+#     - 'package':  Should create the chart tarball and push it up
+#        to the helm-charts/docs directory.
+#     - 'test':  Typically run by Travis to test the release.  That could be as simple
+#        doing nothing, to firing up minikube and installing/running the package.
 # 
-# The 'common.mk' file can be used to implement these targets if desired.
+# The 'common.mk' file can be used to provide these targets if desired.
 
 # Collection of charts to process.
 # These are subdirectories of helm-charts.  Add to the list as required.
@@ -19,9 +20,12 @@ CHARTS = enterprise-suite enterprise-suite-latest reactive-sandbox #sample-proje
 
 
 # These targets must be implemented by the individual chart Makefiles
-COMMONTARGETS = package test
+COMMONTARGETS = lint package test
 
-# Build the index.yaml file.  Default target.
+
+all: package docs/index.yaml
+
+# Build the index.yaml file.
 docs/index.yaml: init $(wildcard docs/*.tgz)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
@@ -37,4 +41,4 @@ $(CHARTS):
 clean:
 	rm docs/index.yaml
 
-.PHONY: $(CHARTS) test package init clean
+.PHONY: $(CHARTS) all lint test package init clean
