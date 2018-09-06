@@ -1,27 +1,95 @@
-test: lint
+# Using ?= cuz enterprise-suite-latest overrides this
+CHART ?= enterprise-suite
 
-lint: lint-helm lint-json lint-promql
+RELEASE_NAME = es
+NAMESPACE = lightbend
 
-lint-helm:
-	helm lint .
+define banner
+	$(info === $@)
+endef
 
-lint-json:
-	find . -name \*.json | xargs -tn 1 jq . >/dev/null
+# Note: We may want to require explicit lists.  As implemented, we may end
+# up with random cruft in the packages...
+COMPONENTS := $(wildcard */.)
+SUBCOMPONENTS := $(wildcard */*/.)
 
-lint-promql:
-	scripts/validate-promql.sh
+HELM_CHARTS_DIR := ..
+SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
 
-minikube-test:
-	scripts/run-minikube-tests.sh
+#####
+# Note:  These are tweaked by the hacky enterprise-suite-latest Makefile...
+VERSION ?= $(shell $(SCRIPTS_DIR)/export-chart-version.sh $(CHART))
+RELEASE = $(CHART)-$(VERSION)
+CHART_DIR = .
+ALL_YAML ?= all.yaml
+#####
 
-delete-local:
-	-helm delete --purge es
 
-install-local:
-	helm install ../docs/$(RELEASE).tgz --name=es --namespace=lightbend --debug --wait
+all: lint build  ## lint then build chart
+build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build chart package (and all.yaml)
 
-install-local-latest:
-	helm install ../docs/$(RELEASE_LATEST).tgz --name=es --namespace=lightbend --debug --wait
+# This target required by top-level helm-charts Makefile.  Will create and copy chart tarball
+package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
-.PHONY: test lint lint-helm lint-json lint-promql minikube-test \
-	delete-local install-local install-local-latest
+# This target required by top-level helm-charts Makefile.  Tests release on Travis
+test:
+	$(CHART_DIR)/scripts/run-minikube-tests.sh
+
+# We no longer need a target to build the index.yaml file since that's up to the
+# helm-charts Makefile.  Could include this though...
+# build: $(HELM_CHARTS_DIR)/docs/index.yaml
+#
+# $(HELM_CHARTS_DIR)/docs/index.yaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
+# 	$(call banner)
+# 	$(MAKE) -C $(HELM_CHARTS_DIR) docs/index.yaml
+
+init:
+	@$(SCRIPTS_DIR)/lib.sh
+	@helm init -c > /dev/null
+
+$(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
+	$(call banner)
+	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
+	helm --namespace=$(NAMESPACE) template $< > $@
+
+# Note: This works for enterprise-suite and allows us to define a latest-specific version in enterprise-suite-latest
+$(HELM_CHARTS_DIR)/docs/$(filter-out %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
+	$(call banner)
+	helm package -d $(HELM_CHARTS_DIR)/docs $(CHART_DIR)
+
+lint: lint-helm lint-json lint-promql  ## Run all lint tests on chart files
+
+lint-helm:  ## Run helm lint on chart files
+	helm lint $(CHART_DIR)
+
+lint-json:  ## Test json files are well-formed
+	find $(CHART_DIR) -name \*.json | xargs -tn 1 jq . >/dev/null
+
+lint-promql:  ## Test promql bits are well-formed
+	$(CHART_DIR)/scripts/validate-promql.sh
+
+clean::  ## Delete make artifacts
+	rm -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
+
+
+## These targets used for dev work
+#
+
+install-helm:  ## Install required helm components into cluster
+	-kubectl create serviceaccount --namespace kube-system tiller
+	-kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+	-helm init --wait --service-account tiller
+
+delete-local:  ## Delete chart from cluster with helm
+	-helm delete --purge $(RELEASE_NAME)
+
+install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
+	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait
+
+#
+##
+
+help:  ## Print help for targets
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: all build package test init lint lint-helm lint-json lint-promql clean install-helm delete-local install-local help

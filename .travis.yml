@@ -12,17 +12,18 @@ jobs:
   - stage: Tests
     name: Validate
     script:
-    - make test
+    - make lint
   - name: Minikube
     script:
     - scripts/setup-minikube-for-linux.sh
-    - make minikube-test
-    env: USE_LATEST_IMAGES=false
+    - make test CHARTS=enterprise-suite
   - name: Minikube - Latest
     script:
     - scripts/setup-minikube-for-linux.sh
-    - make minikube-test
-    env: USE_LATEST_IMAGES=true
+    - make test CHARTS=enterprise-suite-latest
+  - name: Reactive-sandbox test
+    script:
+    - make test CHARTS=reactive-sandbox
 
 branches:
   only:
