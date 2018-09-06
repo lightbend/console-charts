@@ -240,7 +240,7 @@ scrape_configs:
   #
   # * `{{ .PrometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
   # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of the default of `9102`.
+  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all ports by default.
   - job_name: 'kubernetes-pods'
 
     kubernetes_sd_configs:
@@ -249,35 +249,60 @@ scrape_configs:
     honor_labels: true
 
     relabel_configs:
+
+      # Only scrape pods with prometheus.io/scrape=true.
       - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
         action: keep
         regex: true
+
+      # Set scrape path from prometheus.io/path.
       - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_path]
         action: replace
         target_label: __metrics_path__
         regex: (.+)
+
+      # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: ^(.+;.*)|(;.*metrics)$
+
+      # Set port from prometheus.io/port.
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         regex: (.+):(?:\d+);(\d+)
         replacement: ${1}:${2}
         target_label: __address__
+
+      # Copy all labels from the pod to the scraped metrics.
       - action: labelmap
         regex: __meta_kubernetes_pod_label_(.+)
+
+      # Set the namespace label from metadata.
       - source_labels: [__meta_kubernetes_namespace]
         target_label: namespace
+
+      # Set the kubernetes_pod_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: kubernetes_pod_name
+
+      # Set the node_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_node_name]
         action: replace
         target_label: node_name
+
+      # Set the node_ip label from metadata.
       - source_labels: [__meta_kubernetes_pod_host_ip]
         action: replace
         target_label: node_ip
+
+      # Set the workload label from pod name.
       - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
         action: replace
         regex: '[^;]+;(.*)-[^-]+-[^-]+;'
         target_label: es_workload
+
+      # Set the workload label from statefulset if pod name was unable to set it.
       - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
         action: replace
         regex: '(.*)-[0-9]+;'
