@@ -1,4 +1,17 @@
 ---
+# Source: enterprise-suite-latest/templates/resourcelimits.yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: lightbend-namespace-defaults
+spec:
+  limits:
+  - defaultRequest:
+      cpu: 100m
+      memory: 50Mi
+    type: Container
+
+---
 # Source: enterprise-suite-latest/templates/alertmanager.yaml
 ---
 apiVersion: v1
@@ -21,7 +34,7 @@ data:
 
     route:
       receiver: default
-      group_by: [workload]
+      group_by: [es_workload]
 
     # don't alert on warnings if the same alert is already critical
     inhibit_rules:
@@ -55,6 +68,10 @@ spec:
       containers:
         - name: prometheus-alertmanager
           image: prom/alertmanager:v0.15.1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
           env:
           args:
             - --config.file=/etc/config/alertmanager.yml
@@ -80,6 +97,10 @@ spec:
 
         - name: prometheus-alertmanager-configmap-reload
           image: jimmidyson/configmap-reload:v0.2.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
           args:
             - --volume-dir=/etc/config
             - --webhook-url=http://localhost:9093/-/reload
@@ -136,11 +157,11 @@ data:
   akka-http-exporter.json: |
     [
       {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{ContextTags}[1m]))"]},
-      {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=~\"0.99\"})"]},
+      {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"]},
       {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{ContextTags}[1m]))"]},
-      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=~\"0.99\"})"]},
-      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=~\"0.99\"})"]},
-      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=~\"0.99\"})"]}
+      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"})"]},
+      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"})"]},
+      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"})"]}
     ]
   cassandra-exporter.json: |
     [
@@ -205,6 +226,17 @@ data:
       {"graphName":"Total Commands Per Second", "promQL":["sum (irate(memcached_commands_total{ContextTags}[1m])) by (command)"]},
       {"graphName":"Bytes Read Per Second", "promQL":["irate(memcached_read_bytes_total{ContextTags}[1m])"]},
       {"graphName":"Bytes Written Per Second", "promQL":["irate(memcached_written_bytes_total{ContextTags}[1m])"]}
+    ]
+  play-exporter.json: |
+    [
+      {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{ContextTags}[1m]))"]},
+      {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"]},
+      {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{ContextTags}[1m]))"]},
+      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"})"]},
+      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"})"]},
+      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"})"]},
+      {"graphName":"Play Client Requests Per Second", "promQL":["sum by (http_client)(irate(play_http_client_play_client_requests{ContextTags}[1m]))"]},
+      {"graphName":"Play Client Response Time", "promQL":["max by (http_client)(play_http_client_play_client_service_response_time_ns{ContextTags, quantile=\"0.99\"})"]}
     ]
   redis-exporter.json: |
     [
@@ -318,6 +350,10 @@ spec:
       - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:latest
         imagePullPolicy: Always
         name: grafana-server
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
         env:
           # The following env variables set up anonymous access to grafana with editor access.
           - name: GF_AUTH_ANONYMOUS_ENABLED
@@ -438,6 +474,10 @@ spec:
       containers:
         - name: prometheus-kube-state-metrics
           image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
           ports:
             - name: metrics
               containerPort: 8080
@@ -536,6 +576,10 @@ spec:
       initContainers:
         - name: setup
           image: alpine
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
           command:
             - /bin/sh
             - -c
@@ -552,6 +596,10 @@ spec:
         - name: es-monitor-api
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:latest
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
@@ -584,6 +632,10 @@ spec:
 
         - name: prometheus-server
           image: prom/prometheus:v2.2.1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 250Mi
           args:
             - --config.file=/etc/config/prometheus.yml
             - --web.console.libraries=/etc/prometheus/console_libraries
@@ -787,7 +839,7 @@ data:
             "confidence": "0.5",
             "severity": "warning",
             "summary": "container restarting rapidly",
-            "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.workload}} restarting rapidly",
+            "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly",
             "monitorType": ""
           }
         },
@@ -802,7 +854,7 @@ data:
             "confidence": "0.5",
             "severity": "critical",
             "summary": "pod not ready",
-            "description": "pod {{$labels.pod}} on {{$labels.workload}} not ready",
+            "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready",
             "monitorType": ""
           }
         },
@@ -817,7 +869,7 @@ data:
             "confidence": "0.75",
             "severity": "warning",
             "summary": "pod not running",
-            "description": "pod {{$labels.pod}} on {{$labels.workload}} not running",
+            "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not running",
             "monitorType": ""
           }
         },
@@ -831,8 +883,8 @@ data:
             "window": "10m",
             "confidence": "1",
             "severity": "warning",
-            "summary": "workload not updating",
-            "description": "workload {{$labels.workload}} has not updated for 10 minutes",
+            "summary": "es_workload not updating",
+            "description": "es_workload {{$labels.es_workload}} has not updated for 10 minutes",
             "monitorType": ""
           }
         },
@@ -893,7 +945,7 @@ data:
             "window": "15m",
             "confidence": "0.5",
             "severity": "warning",
-            "summary": "actor processing time is weird",
+            "summary": "actor processing time is anomalous",
             "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
             "monitorType": ""
           }
@@ -1030,7 +1082,7 @@ data:
             "confidence": "0.5",
             "severity": "warning",
             "summary": "Zookeeper Latency",
-            "description": "ZooKeeper latency is not normal in {{$labels.workload}} on {{$labels.instance}}",
+            "description": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1046,7 +1098,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Zookeeper live connections is not normal",
-            "description": "Zookeeper live connection in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "description": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1061,7 +1113,7 @@ data:
             "confidence": "1",
             "severity": "critical",
             "summary": "Zookeeper pending-syncs is not normal",
-            "description": "Zookeeper Pending syncs in {{$labels.workload}} is greater than 0.",
+            "description": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0.",
             "monitorType": ""
           }
         },
@@ -1077,7 +1129,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Zookeeper open file descriptor growth",
-            "description": "Zookeeper open file descriptors in ${{labels.workload}} is not normal in ${{labels.instance}}",
+            "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1093,7 +1145,7 @@ data:
             "confidence": "0.5",
             "severity": "critical",
             "summary": "Cassandra Write Latency",
-            "description": "Cassandra write latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+            "description": "Cassandra write latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1109,7 +1161,7 @@ data:
             "confidence": "0.5",
             "severity": "critical",
             "summary": "Cassandra Read Latency",
-            "description": "Cassandra read latency is not normal on {{$labels.workload}} in {{$labels.instance}}",
+            "description": "Cassandra read latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1125,7 +1177,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Redis key space miss ratio growth",
-            "description": "Observing shifts in Redis key space ratio on ${{labels.workload}} in ${{labels.instance}}",
+            "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1141,7 +1193,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Redis evictions growing",
-            "description": "Redis evictions on {{$labels.workload}} are growing in {{$labels.instance}}",
+            "description": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1157,7 +1209,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Redis command processed",
-            "description": "Redis commands processed on {{$labels.workload}} is not normal in ${{labels.instance}}",
+            "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1173,7 +1225,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Redis client connections is not normal",
-            "description": "Redis client connections on {{$labels.workload}} is not normal in {{$labels.instance}}",
+            "description": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1189,7 +1241,7 @@ data:
             "confidence": "1",
             "severity": "critical",
             "summary": "Kafka incoming message rate is not normal",
-            "description": "Kafka incoming message rate on ${{labels.workload}} is not normal for topic ${{labels.topic}}",
+            "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}",
             "monitorType": ""
           }
         },
@@ -1204,7 +1256,7 @@ data:
             "confidence": "1",
             "severity": "critical",
             "summary": "Kafka offline partition is not zero",
-            "description": "Kafka offline partition is high on ${{labels.workload}} in ${{labels.instance}}",
+            "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1219,7 +1271,7 @@ data:
             "confidence": "1",
             "severity": "critical",
             "summary": "Kafka under replicated partitions is up",
-            "description": "Kafka under replicated partitions is high on ${{labels.workload}} in ${{labels.instance}}",
+            "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1235,7 +1287,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Memcached miss ratio shifts",
-            "description": "Memcached miss ratio in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "description": "Memcached miss ratio in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1251,7 +1303,7 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Memcached connections are changing",
-            "description": "Memcached connections in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "description": "Memcached connections in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
             "monitorType": ""
           }
         },
@@ -1267,7 +1319,70 @@ data:
             "confidence": "1",
             "severity": "warning",
             "summary": "Memcached evictions shifts",
-            "description": "Memcached evictions in {{$labels.workload}} is not normal on {{$labels.instance}}",
+            "description": "Memcached evictions in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "akka_http_server_response_time",
+            "metric": "akka_http_http_server_response_time_ns{quantile=\"0.5\"}",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "100000000",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "HTTP server response time is anomalous",
+            "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "akka_http_client_response_time",
+            "metric": "akka_http_http_client_http_client_service_response_time_ns{quantile=\"0.5\"}",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "100000000",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "HTTP client response time is anomalous",
+            "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "akka_http_server_5xx",
+            "metric": "akka_http_http_server_responses_5xx",
+            "comparator": ">",
+            "threshold": "0",
+            "window": "5m",
+            "confidence": "1",
+            "severity": "warning",
+            "summary": "HTTP 5xx errors",
+            "description": "HTTP server at {{labels.instance}} has 5xx errors",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "sma",
+          "parameters": {
+            "name": "play_http_client_response_time",
+            "metric": "play_http_client_play_client_service_response_time_ns{quantile=\"0.5\"}",
+            "period": "15m",
+            "numsigma": "2",
+            "minval": "100000000",
+            "window": "15m",
+            "confidence": "0.5",
+            "severity": "warning",
+            "summary": "HTTP client response time is anomalous",
+            "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
             "monitorType": ""
           }
         }
@@ -1377,32 +1492,32 @@ data:
             action: replace
             target_label: node_ip
   
-        # workload labels:
+        # es_workload labels:
         metric_relabel_configs:
-          - source_labels: [created_by_kind, pod, workload]
+          - source_labels: [created_by_kind, pod, es_workload]
             regex: 'ReplicaSet;(.+)-[^-]+-[^-]+;'
-            target_label: workload
-          - source_labels: [created_by_kind, pod, workload]
+            target_label: es_workload
+          - source_labels: [created_by_kind, pod, es_workload]
             regex: 'StatefulSet;(.+)-[^-]+;'
-            target_label: workload
-          - source_labels: [created_by_kind, pod, workload]
+            target_label: es_workload
+          - source_labels: [created_by_kind, pod, es_workload]
             regex: 'DaemonSet;(.+)-[^-]+;'
-            target_label: workload
-          - source_labels: [created_by_kind, pod, workload]
+            target_label: es_workload
+          - source_labels: [created_by_kind, pod, es_workload]
             regex: 'Job;(.+)-[^-]+;'
-            target_label: workload
-          - source_labels: [created_by_kind, pod, workload]
+            target_label: es_workload
+          - source_labels: [created_by_kind, pod, es_workload]
             regex: 'ReplicationController;(.+)-[^-]+;'
-            target_label: workload
-          - source_labels: [created_by_kind, pod, workload]
+            target_label: es_workload
+          - source_labels: [created_by_kind, pod, es_workload]
             regex: '.none.;(.+);'
-            target_label: workload
-          - source_labels: [deployment, workload]
+            target_label: es_workload
+          - source_labels: [deployment, es_workload]
             regex: '(.+);'
-            target_label: workload
-          - source_labels: [daemonset, workload]
+            target_label: es_workload
+          - source_labels: [daemonset, es_workload]
             regex: '(.+);'
-            target_label: workload
+            target_label: es_workload
     {{ .MonitorTypeRules | indent 6 }}
   
   
@@ -1496,14 +1611,14 @@ data:
           - source_labels: [__meta_kubernetes_pod_name]
             action: replace
             target_label: kubernetes_pod_name
-          - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, workload]
+          - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
             action: replace
             regex: '[^;]+;(.*)-[^-]+-[^-]+;'
-            target_label: workload
-          - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, workload]
+            target_label: es_workload
+          - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
             action: replace
             regex: '(.*)-[0-9]+;'
-            target_label: workload
+            target_label: es_workload
   
         metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
@@ -1550,14 +1665,14 @@ data:
           - source_labels: [__meta_kubernetes_pod_host_ip]
             action: replace
             target_label: node_ip
-          - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, workload]
+          - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
             action: replace
             regex: '[^;]+;(.*)-[^-]+-[^-]+;'
-            target_label: workload
-          - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, workload]
+            target_label: es_workload
+          - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
             action: replace
             regex: '(.*)-[0-9]+;'
-            target_label: workload
+            target_label: es_workload
   
         metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
@@ -1578,25 +1693,25 @@ data:
       expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
   
     - record: kube_pod_ready
-      expr: avg by (node_ip, node_name, namespace, pod, monitor_type) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(workload, monitor_type) kube_pod_info
+      expr: avg by (node_ip, node_name, namespace, pod, es_monitor_type) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
   
     - record: kube_pod_container_restarts_rate
-      expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(workload, monitor_type) kube_pod_info
+      expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
   
     - record: container_starts_total
-      expr: sum by (workload, namespace, monitor_type) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(workload, monitor_type) kube_pod_info)
+      expr: sum by (es_workload, namespace, es_monitor_type) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info)
   
     - record: kube_pod_failed
-      expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(workload, monitor_type) kube_pod_info
+      expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
   
     - record: kube_pod_not_running
-      expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(workload, monitor_type) kube_pod_info)
+      expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info)
   
     - record: kube_workload_generation_lag
-      expr: avg by (workload, namespace, monitor_type) (kube_deployment_metadata_generation - kube_deployment_status_observed_generation)
+      expr: avg by (es_workload, namespace, es_monitor_type) (kube_deployment_metadata_generation - kube_deployment_status_observed_generation)
   
     - record: kube_workload_generation_lag
-      expr: avg by (workload, namespace, monitor_type) (kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready)
+      expr: avg by (es_workload, namespace, es_monitor_type) (kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_ready)
   
     - record: prometheus_notification_queue_percent
       expr: 100 * prometheus_notifications_queue_length / prometheus_notifications_queue_capacity
@@ -1629,7 +1744,7 @@ data:
       expr: sum without (instance) (rate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
   
     - record: kafka_active_controllers
-      expr: sum by (namespace, workload, monitor_type) (kafka_controller_kafkacontroller_activecontrollercount)
+      expr: sum by (namespace, es_workload, es_monitor_type) (kafka_controller_kafkacontroller_activecontrollercount)
   
     - record: memcached_miss_ratio
       expr: (sum without(command, status) (memcached_commands_total{status="miss"})/sum without(command, status) (memcached_commands_total)) * 100
@@ -1667,6 +1782,10 @@ spec:
       containers:
         - name: prometheus-node-exporter
           image: "prom/node-exporter:v0.15.2"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
@@ -1737,6 +1856,10 @@ spec:
       - name: es-console
         image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:latest
         imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
         ports:
         - containerPort: 80
         volumeMounts:
