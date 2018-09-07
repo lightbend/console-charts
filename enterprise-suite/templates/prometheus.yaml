@@ -89,9 +89,12 @@ spec:
             - mountPath: /etc/bare
               name: bare-prometheus
 
+      imagePullSecrets:
+        - name: commercial-credentials
+
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
+          image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           resources:
             requests:
