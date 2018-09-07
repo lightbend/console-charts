@@ -6,16 +6,33 @@ Helm chart setup for the Enterprise Suite project.
 
 ## Helm install enterprise suite:
 
-See ../README.md for instruction on how to install Enterprise Suite.
+See ../README.md for general instructions for installing chart as these are applicable to the installation of Enterprise Suite as well.
+In the normal case use
+
+```bash
+helm install lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
+```
+
+To run Enterprise Suite in a minikube environment, instead use
+
+```bash
+helm install lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug --set minikube=true
+```
 
 ## "latest" internal dev release:
 
 By default all the helm charts use versioned images, so you are using fixed dependencies.
-There is also a special "latest" chart which uses "latest" tags for images. This is
+Enterprise Suite also has a special "latest" chart which uses "latest" tags for images. This is
 useful for development.
 
 ```bash
 helm install lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
+```
+
+To work with minikube, instead install with:
+
+```bash
+helm install lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug --set minikube=true
 ```
 
 When PRs are merged to master, "latest" is updated automatically.  If you have installed the  `lightbend-helm-charts/enterprise-suite-latest` helm chart or  `es/all-latest.yaml` you should be able to simply delete the pod you want upgraded and minikube will go fetch the latest from bintray and install it for you.  You will only have to do a helm upgrade on this track if you want to pick up configuration changes in the helm chart itself.
@@ -30,7 +47,14 @@ helm upgrade lightbend-helm-charts/enterprise-suite --name=es --namespace=lightb
 helm upgrade lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
 ```
 
+If using minikube, include the following option in the `upgrade` command:
+```
+set minikube=true
+```
+
 ## kubectl apply enterprise suite:
+
+_This option will likely disappear in the future._
 
 ```
 kubectl create namespace lightbend
@@ -40,6 +64,8 @@ kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/e
 # or use "latest" container images
 kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all-latest.yaml
 ```
+
+These assume you're using minikube.
 
 ## Cutting a Release / Publishing Charts
 
