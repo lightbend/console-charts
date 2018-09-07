@@ -1,75 +1,44 @@
-all: init test build
-build: init docs/index.yaml docs/es/all.yaml docs/es/all-latest.yaml
+# Top-level Makefile for creating the index of helm charts.
 
-CHART := enterprise-suite
-export VERSION := $(shell scripts/export-chart-version.sh $(CHART))
-export RELEASE := $(CHART)-$(VERSION)
-CHART_LATEST := $(CHART)-latest
-export RELEASE_LATEST := $(CHART_LATEST)-$(VERSION)
+# ALL CHARTS MUST:
+# - Have a file layout as described at https://docs.helm.sh/developing_charts/
+# - Have a Makefile with recipes for at least the three targets:
+#     - 'lint':  Should do preliminary checks to confirm the project is ready for packaging.
+#     - 'package':  Should create the chart tarball and push it up
+#        to the helm-charts/docs directory.
+#     - 'test':  Typically run by Travis to test the release.  That could be as simple
+#        doing nothing, to firing up minikube and installing/running the package.
+# 
+# The 'common.mk' file can be used to provide these targets if desired.
 
-define banner
-	$(info === $@)
-endef
+# Collection of charts to process.
+# These are subdirectories of helm-charts.  Add to the list as required.
+#
+# To package/test a subset, just define a value on the command line.
+#    e.g. "make package CHARTS=sample-project"
+CHARTS = enterprise-suite enterprise-suite-latest reactive-sandbox #sample-project
 
-docs/es/all.yaml: docs/$(RELEASE).tgz
-	$(call banner)
-	helm --namespace=lightbend template $< > $@
 
-docs/es/all-latest.yaml: docs/$(RELEASE_LATEST).tgz
-	$(call banner)
-	helm --namespace=lightbend template $< > $@
+# These targets must be implemented by the individual chart Makefiles
+COMMONTARGETS = lint package test
 
-docs/index.yaml: docs/$(RELEASE).tgz docs/$(RELEASE_LATEST).tgz
-	$(call banner)
+
+all: package docs/index.yaml
+
+# Build the index.yaml file.
+docs/index.yaml: init $(wildcard docs/*.tgz)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
-
-docs/$(RELEASE).tgz: $(CHART)/* $(CHART)/*/*
-	$(call banner)
-	helm package $(CHART) -d docs
-
-docs/$(RELEASE_LATEST).tgz: $(CHART)/* $(CHART)/*/*
-	$(call banner)
-	rm -rf build/$(CHART_LATEST)
-	cp -r $(CHART) build/$(CHART_LATEST)
-	scripts/munge-to-latest.sh build/$(CHART_LATEST)
-	helm package build/$(CHART_LATEST) -d docs
-
-# duplicate method here to generate the index, to avoid pulling in RELEASE as a dependency
-latest: init test docs/es/all-latest.yaml docs/$(RELEASE_LATEST).tgz
-	helm repo index docs --url https://lightbend.github.io/helm-charts
-
-release:
-	$(call banner)
-	echo "stub: release"
-
-clean:
-	rm -rf build
-
-test:
-	$(MAKE) -C $(CHART) $@
-
-minikube-test:
-	$(MAKE) -C $(CHART) $@
 
 init:
-	@scripts/lib.sh
 	@helm init -c > /dev/null
-	@mkdir -p build
 
-install-helm:
-	-kubectl create serviceaccount --namespace kube-system tiller
-	-kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-	-helm init --wait --service-account tiller
+$(COMMONTARGETS): $(CHARTS)
 
-delete-local:
-	$(MAKE) -C $(CHART) $@
+$(CHARTS):
+	$(info *** making $(MAKECMDGOALS) on $@)
+	$(MAKE) -C $@ $(MAKECMDGOALS)
 
-install-local: install-helm delete-local
-	$(MAKE) -C $(CHART) $@
+clean:
+	rm docs/index.yaml
 
-install-local-latest: docs/$(RELEASE_LATEST).tgz install-helm delete-local
-	$(MAKE) -C $(CHART) $@
-
-# always run these steps if in dependencies:
-.PHONY: all build latest release clean test minikube-test init install-helm \
-	delete-local install-local install-local-latest
+.PHONY: $(CHARTS) all lint test package init clean

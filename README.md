@@ -4,7 +4,32 @@
 
 Contains public Helm charts for various Lightbend projects. This project is hosted on [GitHub Pages](https://lightbend.github.io/helm-charts/index.yaml).
 
-## Helm install enterprise suite:
+## Project layout
+
+All projects must conform to the [Helm chart layout](https://docs.helm.sh/developing_charts/).
+
+If there are files that you don't want included in the chart, add them to a `.helmignore` file in your project directory.
+
+## Project Makefile
+
+All projects must have a `Makefile` that implements the targets:
+
+- `lint`:  Should do preliminary checks to confirm the project is ready for packaging.
+- `package`:  Should create the chart tarball and push it up to the `helm-charts/docs` directory.
+- `test`:  Typically run by Travis to test the release.
+
+A default `common.mk` file is included that can be used for this purpose, although a project is free to implement these targets as they see fit.
+
+## Helm-charts Makefile
+
+The default target of the top-level Makefile packages all the charts
+and then builds the `index.yaml` file based on the tarballs.
+
+If any of the `lint`, `package`, or `test` targets are invoked, they are recursively invoked on each of the projects.  To run over a particular subset of projects just define a value on the command line.  e.g. `make package CHARTS=sample-project`
+
+## Helm install a project:
+
+To install the Helm chart for a particular project...
 
 ```bash
 kubectl create serviceaccount --namespace kube-system tiller
@@ -17,43 +42,19 @@ helm repo add lightbend-helm-charts https://lightbend.github.io/helm-charts
 
 helm repo update
 
-helm install lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
+helm install lightbend-helm-charts/<chart-name> --name=<release-name> --namespace=lightbend --debug
 ```
-
-## "latest" internal dev release:
-
-By default all the helm charts use versioned images, so you are using fixed dependencies.
-There is also a special "latest" chart which uses "latest" tags for images. This is
-useful for development.
-
-```bash
-helm install lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
-```
-
-When PRs are merged to master, "latest" is updated automatically.  If you have installed the  `lightbend-helm-charts/enterprise-suite-latest` helm chart or  `es/all-latest.yaml` you should be able to simply delete the pod you want upgraded and minikube will go fetch the latest from bintray and install it for you.  You will only have to do a helm upgrade on this track if you want to pick up configuration changes in the helm chart itself.
 
 ### Upgrade
 
 ```
 helm repo update
-helm upgrade lightbend-helm-charts/enterprise-suite --name=es --namespace=lightbend --debug
-
-# or upgrade chart with "latest" container images
-helm upgrade lightbend-helm-charts/enterprise-suite-latest --name=es --namespace=lightbend --debug
-```
-
-## kubectl apply enterprise suite:
-
-```
-kubectl create namespace lightbend
-
-kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all.yaml
-
-# or use "latest" container images
-kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all-latest.yaml
+helm upgrade lightbend-helm-charts/<chart-name> --name=<release-name> --namespace=lightbend --debug
 ```
 
 ## Cutting a Release / Publishing Charts
+
+_This needs updating..._
 
 ### Release ES images
 
@@ -85,29 +86,13 @@ Optionally you can specify the version to use:
 
     scripts/make-release.sh enterprise-suite 1.0.0
 
-## Development
-
-A `Makefile` is provided with useful targets for development.
-
-* `make` to check the chart for errors, and update `docs` and `resources`.
-* `make install-local` to try the release in docs.
-* `make test` if you just want to check for errors.
-* `make minikube-test` to run end to end tests against a local minikube. This requires minikube and helm clients are installed.
-
-To specify the chart to build, set the `CHART` variable:
-
-    make CHART=reactive-suite
-    make CHART=enterprise-suite
-    
-By default `CHART=enterprise-suite`.
-
 ## Maintenance
 
 Enterprise Suite Team <es-all@lightbend.com>
 
 ## License
 
-Copyright (C) 2017 Lightbend Inc. (https://www.lightbend.com).
+Copyright (C) 2018 Lightbend Inc. (https://www.lightbend.com).
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
 

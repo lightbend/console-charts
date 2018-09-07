@@ -2,32 +2,31 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: es-test-via-service
+  name: es-test-with-multiple-ports
 spec:
   replicas: 2
   template:
     metadata:
       labels:
         app: es-test
+      annotations:
+        prometheus.io/scrape: "true"
     spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
-        - name: es-test
+        - name: es-test-1
           image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               name: metrics
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: es-test-via-service
-  annotations:
-    prometheus.io/scrape: "true"
-spec:
-  ports:
-    - port: 80
-      targetPort: 8080
-  selector:
-    app: es-test
+
+        - name: es-test-2
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
+          command:
+            - /app
+            - -listen-address=:8081
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: second-metrics

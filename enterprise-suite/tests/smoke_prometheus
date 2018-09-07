@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -u
 
 # A collection of prometheus-related smoke tests
 
@@ -8,9 +8,11 @@ source smokecommon
 # launch test apps
 #
 
+set -e
 for app in resources/app*.yaml; do
   kubectl apply -f "$app"
 done
+set +e
 
 #
 # prometheus fetchers
@@ -129,13 +131,13 @@ for m in "${prom_health[@]}"; do
 done
 
 # coherency tests
-# data with "workload" should also have a "namespace" label
-prom_has_no_data 'count({workload=~".+", namespace=""})'
-# health should have a "workload" label, with a few known exceptions
-prom_has_no_data 'health{workload="",name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
-# kube_pod_info must have workload labels
-prom_has_data 'kube_pod_info{workload=~".+"}'
-prom_has_no_data 'kube_pod_info{workload=""}'
+# data with "es_workload" should also have a "namespace" label
+prom_has_no_data 'count({es_workload=~".+", namespace=""})'
+# health should have a "es_workload" label, with a few known exceptions
+prom_has_no_data 'health{es_workload="",name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
+# kube_pod_info must have es_workload labels
+prom_has_data 'kube_pod_info{es_workload=~".+"}'
+prom_has_no_data 'kube_pod_info{es_workload=""}'
 
 #
 # kube-state-metrics
@@ -223,7 +225,8 @@ T $? 'node-exporter "err" logs'
 
 # app tests
 
-app_instances='count( count by (instance) (ohai{workload="es-test", namespace="default"}) ) == 2'
+# app via 'Pod' service discovery
+app_instances='count( count by (instance) (ohai{es_workload="es-test", namespace="default"}) ) == 2'
 app_data() {
   results=$( prom_query "$app_instances" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
@@ -231,6 +234,26 @@ app_data() {
 busy_wait app_data
 
 prom_has_data "$app_instances"
+
+# app via 'Pod' service discovery with multiple metric ports
+app_instances_with_multiple_ports='count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="default"}) ) == 4'
+app_data_with_multiple_ports() {
+  results=$( prom_query "$app_instances_with_multiple_ports" | jq '.data.result | length' )
+  ! [[ results -eq 0 ]]
+}
+busy_wait app_data_with_multiple_ports
+
+prom_has_data "$app_instances_with_multiple_ports"
+
+# app via 'Service' service discovery
+app_instances_via_service='count( count by (instance) (ohai{es_workload="es-test-via-service", namespace="default"}) ) == 2'
+app_data_via_service() {
+  results=$( prom_query "$app_instances_via_service" | jq '.data.result | length' )
+  ! [[ results -eq 0 ]]
+}
+busy_wait app_data_via_service
+
+prom_has_data "$app_instances_via_service"
 
 # clean up apps
 

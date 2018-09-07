@@ -19,7 +19,7 @@ data:
 
     route:
       receiver: default
-      group_by: [workload]
+      group_by: [es_workload]
 
     # don't alert on warnings if the same alert is already critical
     inhibit_rules:
