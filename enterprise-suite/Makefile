@@ -79,10 +79,13 @@ $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(R
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
 	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE) > $@
 
+TILLER_NAMESPACE := kube-system
+
 install-helm:  ## Install required helm components into cluster
-	-kubectl create serviceaccount --namespace kube-system tiller
-	-kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-	-helm init --wait --service-account tiller
+	-kubectl create namespace $(TILLER_NAMESPACE)
+	-kubectl create serviceaccount --namespace $(TILLER_NAMESPACE) tiller
+	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin --serviceaccount=$(TILLER_NAMESPACE):tiller
+	-helm init --wait --service-account tiller --tiller-namespace=$(TILLER_NAMESPACE)
 
 delete-local:  ## Delete chart from cluster with helm
 	-helm delete --purge $(RELEASE_NAME)
