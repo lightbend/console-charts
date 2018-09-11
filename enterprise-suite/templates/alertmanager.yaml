@@ -79,6 +79,8 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
+            - name: data-volume
+              mountPath: /data
 
         - name: prometheus-alertmanager-configmap-reload
           image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
@@ -93,10 +95,13 @@ spec:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
+
       volumes:
         - name: config-volume
           configMap:
             name: prometheus-alertmanager
+        - name: data-volume
+          emptydir: {}
 
 {{ if .Values.minikube }}
 ---
