@@ -23,10 +23,13 @@ CHARTS = enterprise-suite enterprise-suite-latest reactive-sandbox #sample-proje
 COMMONTARGETS = lint package test
 
 
-all: package docs/index.yaml
+# By default we package up the CHARTS and recreate the index
+all: package index
 
 # Build the index.yaml file.
-docs/index.yaml: init $(wildcard docs/*.tgz)
+index: init docs/index.yaml
+
+docs/index.yaml: $(wildcard docs/*.tgz)
 	helm repo index docs --url https://lightbend.github.io/helm-charts
 
 init:
@@ -41,4 +44,4 @@ $(CHARTS):
 clean:
 	rm docs/index.yaml
 
-.PHONY: $(CHARTS) all lint test package init clean
+.PHONY: $(CHARTS) all index lint test package init clean

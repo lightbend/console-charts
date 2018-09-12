@@ -28,7 +28,7 @@ ALL_YAML ?= all.yaml
 all: lint build  ## lint then build chart
 build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build chart package (and all.yaml)
 
-# This target required by top-level helm-charts Makefile.  Will create and copy chart tarball
+# This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
@@ -41,7 +41,7 @@ test:
 #
 # $(HELM_CHARTS_DIR)/docs/index.yaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 # 	$(call banner)
-# 	$(MAKE) -C $(HELM_CHARTS_DIR) docs/index.yaml
+# 	$(MAKE) -C $(HELM_CHARTS_DIR) index
 
 init:
 	@$(SCRIPTS_DIR)/lib.sh
