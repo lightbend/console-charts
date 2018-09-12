@@ -5,6 +5,7 @@
 #set -x
 
 source smokecommon
+if [[ $CURRENT_CONTEXT == "minishift" ]]; then exit 0; fi
 
 TMPPIPE=$(mktemp -t pipe.XXX)
 

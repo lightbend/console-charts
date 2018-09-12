@@ -9,6 +9,8 @@
 set -o pipefail
 set -o nounset
 
+: "${CURRENT_CONTEXT:=minikube}"
+
 # error msg
 # print msg to stderr and exit with error
 error() {
@@ -65,7 +67,11 @@ test_summary() {
 # Get URL for NodePort assignment
 # nodeport <name>
 nodeport() {
-  minikube service --namespace=lightbend --url $1
+  if [[ $CURRENT_CONTEXT == "minishift" ]]; then
+    oc get route -o json  | jq ".items[]|select(.metadata.name==\"$1\")|.spec.host" | tr -d '"'
+  else
+    minikube service --namespace=lightbend --url $1
+  fi
 }
 
 # curl_query <baseURL> <URI> [<curl-opt>...]
