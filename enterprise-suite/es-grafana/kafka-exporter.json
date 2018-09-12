@@ -1,7 +1,7 @@
 [
   {"graphName":"Brokers Online", "promQL":["count(kafka_server_replicamanager_leadercount{ContextTags})"]},
   {"graphName":"Active Controllers", "promQL":["sum(kafka_controller_kafkacontroller_activecontrollercount{ContextTags})"]},
-  {"graphName":"Unclean Leader Election Rate", "promQL":["sum(rate(kafka_controller_controllerstats_uncleanleaderelections_total{ContextTags}[5m]))"]},
+  {"graphName":"Unclean Leader Election Rate", "promQL":["sum(irate(kafka_controller_controllerstats_uncleanleaderelections_total{ContextTags}[5m]))"]},
   {"graphName":"Online Partitions", "promQL":["sum(kafka_server_replicamanager_partitioncount{ContextTags})"]},
   {"graphName":"Under Replicated Partitions", "promQL":["sum(kafka_server_replicamanager_underreplicatedpartitions{ContextTags})"]},
   {"graphName":"Offline Partitions Count", "promQL":["sum(kafka_controller_kafkacontroller_offlinepartitionscount{ContextTags})"]},

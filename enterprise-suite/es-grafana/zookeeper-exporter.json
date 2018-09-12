@@ -1,5 +1,5 @@
 [
-  {"graphName":"Quorum Size", "promQL":["avg(zookeeper_quorumsize{ContextTags})"]},
+  {"graphName":"Quorum Size", "promQL":["max(zookeeper_quorumsize{ContextTags})"]},
   {"graphName":"Alive Connections", "promQL":["sum(zookeeper_numaliveconnections{ContextTags})"]},
   {"graphName":"Number of ZNodes", "promQL":["avg(zookeeper_inmemorydatatree_nodecount{ContextTags})"]},
   {"graphName":"Number of Watchers", "promQL":["sum(zookeeper_inmemorydatatree_watchcount{ContextTags})"]},
