@@ -1,11 +1,45 @@
+# maybe change language to minimal?
 language: go
 sudo: required
 dist: xenial
 
+cache:
+  directories:
+  # We cache the Google Cloud SDK so we don't have to download it again on subsequent builds.
+  - $HOME/google-cloud-sdk
+
 services:
 - docker
 
+env:
+  global:
+  # Do not prompt for user input when using any Google Cloud SDK methods.
+  - CLOUDSDK_CORE_DISABLE_PROMPTS=1 
+
+# The install script errors if this directory already exists,
+# but Travis already creates it when we mark it as cached.
+# The install script is overly verbose, which sometimes causes
+# problems on Travis, so ignore stdout.
+before_install:
+- if [ ! -d $HOME/google-cloud-sdk/bin ]; then
+    rm -rf $HOME/google-cloud-sdk;
+    curl https://sdk.cloud.google.com | bash > /dev/null;
+  fi
+# This line is critical. We setup the SDK to take precedence in our
+# environment over the old SDK that is already on the machine.
+- source $HOME/google-cloud-sdk/path.bash.inc
+#- gcloud components update kubectl
+- gcloud version
+
 install: scripts/setup-tools-for-ubuntu.sh
+
+# Should be able to do this but doesn't work for PR builds
+# deploy:
+#   provider: gcs
+#   access_key_id: "GCS Interoperable Access Key ID"
+#   secret_access_key: "GCS Interoperable Access Secret"
+#   bucket: "marcoderama-test"
+#   skip_cleanup: true
 
 jobs:
   include:
@@ -13,17 +47,21 @@ jobs:
     name: Validate
     script:
     - make lint
-  - name: Minikube
+  # - name: Minikube
+  #   script:
+  #   - scripts/setup-minikube-for-linux.sh
+  #   - make test CHARTS=enterprise-suite
+  # - name: Minikube - Latest
+  #   script:
+  #   - scripts/setup-minikube-for-linux.sh
+  #   - make test CHARTS=enterprise-suite-latest
+  # - name: Reactive-sandbox test
+  #   script:
+  #   - make test CHARTS=reactive-sandbox
+  - stage: deploy
+    name: "Deploy to GCS"
     script:
-    - scripts/setup-minikube-for-linux.sh
-    - make test CHARTS=enterprise-suite
-  - name: Minikube - Latest
-    script:
-    - scripts/setup-minikube-for-linux.sh
-    - make test CHARTS=enterprise-suite-latest
-  - name: Reactive-sandbox test
-    script:
-    - make test CHARTS=reactive-sandbox
+    - scripts/deploy-to-gcs.sh
 
 branches:
   only:
