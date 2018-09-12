@@ -12,6 +12,7 @@
 # need to deal with the secrets too
 
 source smokecommon
+if [[ $CURRENT_CONTEXT == "minishift" ]]; then exit 0; fi
 
 TMPFILE=$(mktemp -t pipe.XXX)
 
