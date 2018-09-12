@@ -49,6 +49,10 @@ spec:
         app: prometheus
         component: alertmanager
     spec:
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
       serviceAccountName: default
       containers:
         - name: prometheus-alertmanager

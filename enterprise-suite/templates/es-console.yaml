@@ -10,6 +10,10 @@ spec:
       labels:
         run: es-console
     spec:
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
       containers:
       - name: es-console
         image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}

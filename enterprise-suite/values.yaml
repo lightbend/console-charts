@@ -28,6 +28,8 @@ imagePullPolicy: IfNotPresent
 prometheusDomain: prometheus.io
 # include minikube debug resources?
 minikube: false
+# Run pods as the given UID. There is no sensible default for this, so customers need to provide it.
+podUID:
 
 #################################################
 # ResourceRequests

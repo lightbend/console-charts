@@ -90,8 +90,9 @@ install-helm:  ## Install required helm components into cluster
 delete-local:  ## Delete chart from cluster with helm
 	-helm delete --purge $(RELEASE_NAME)
 
-install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
-	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait --set minikube=$(MINIKUBE)
+install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart, used by smoketests.
+	# We set a podUID here for test purposes to ensure everything works as non-root.
+	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait --set minikube=$(MINIKUBE),podUID=10001
 
 #
 ##

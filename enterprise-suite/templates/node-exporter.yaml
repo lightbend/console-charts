@@ -21,6 +21,10 @@ spec:
         component: node-exporter
     spec:
       serviceAccountName: "default"
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
       containers:
         - name: prometheus-node-exporter
           image: "prom/node-exporter:{{ .Values.nodeExporterVersion }}"
