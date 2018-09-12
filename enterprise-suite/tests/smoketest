@@ -8,6 +8,19 @@
 FAILURES=0
 pids=()
 
+func print_debug() {
+    echo
+    echo "========================================"
+    echo "Describe pods:"
+    echo
+    kubectl describe pods -n lightbend
+    echo
+    echo "========================================"
+    echo
+}
+
+print_debug
+
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
 
@@ -16,5 +29,9 @@ for smoketest in smoke_*; do
 done
 
 echo "All tests completed with $FAILURES failures"
+
+if [ "$FAILURES" != "0" ]; then
+    print_debug
+fi
 
 exit $FAILURES
