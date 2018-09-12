@@ -83,6 +83,9 @@ spec:
       containers:
         - name: prometheus-kube-state-metrics
           image: "gcr.io/google_containers/kube-state-metrics:{{ .Values.kubeStateMetricsVersion }}"
+          args:
+            - --port=8080
+            - --telemetry-port=8081
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.kubeStateMetricsCPURequest }}
