@@ -7,7 +7,7 @@ function docvar() {
     local detail=$2
     eval echo "$envvar=\$${envvar}"
     if [ -n "$detail" ]; then
-        echo -e "\t $detail"
+        echo -e "\\t $detail"
     fi
     echo
 }
@@ -28,8 +28,8 @@ function usage() {
     exit 1
 }
 
-function export_credentials() {
-    # Exported variables.
+function import_credentials() {
+    # Credential variables to set.
     repo_username=
     repo_password=
 
@@ -37,17 +37,18 @@ function export_credentials() {
     if [[ -n "$LIGHTBEND_COMMERCIAL_USERNAME" && -n "$LIGHTBEND_COMMERCIAL_PASSWORD" ]]; then
         repo_username=$LIGHTBEND_COMMERCIAL_USERNAME
         repo_password=$LIGHTBEND_COMMERCIAL_PASSWORD
-    elif [ -e $LIGHTBEND_COMMERCIAL_CREDENTIALS ]; then
+    elif [ -e "$LIGHTBEND_COMMERCIAL_CREDENTIALS" ]; then
         while IFS='=' read -r key value; do
-            local trimmed_key=$(echo -e "$key" | tr -d '[:space:]')
-            local trimmed_value=$(echo -e "$value" | tr -d '[:space:]')
+            local trimmed_key
+            trimmed_key=$(echo -e "$key" | tr -d '[:space:]')
+            local trimmed_value
+            trimmed_value=$(echo -e "$value" | tr -d '[:space:]')
             if [ "$trimmed_key" == "user" ]; then
                 repo_username=$trimmed_value
-            fi
-            if [ "$trimmed_key" == "password" ]; then
+            elif [ "$trimmed_key" == "password" ]; then
                 repo_password=$trimmed_value
             fi
-        done < $LIGHTBEND_COMMERCIAL_CREDENTIALS
+        done < "$LIGHTBEND_COMMERCIAL_CREDENTIALS"
     fi
 
     if [[ -z "$repo_username" || -z "$repo_password" ]]; then
@@ -76,14 +77,14 @@ if [ "${1-:}" == "-h" ]; then
 fi
 
 # Get credentials
-export_credentials
+import_credentials
 
 # Setup and install helm chart
 if [ -n "$ES_LOCAL_CHART" ]; then
     # Install from a local chart tarball if ES_LOCAL_CHART is set.
     chart_ref=$ES_LOCAL_CHART
 else
-    helm repo add es-repo $ES_REPO
+    helm repo add es-repo "$ES_REPO"
     helm repo update
     chart_ref=es-repo/$ES_CHART
 fi
@@ -95,9 +96,9 @@ else
 fi
 
 if [ "true" == "$ES_UPGRADE" ]; then
-    helm upgrade es $chart_ref --debug --wait $chart_version \
-        --set minikube=$ES_MINIKUBE,imageCredentials.username=${repo_username},imageCredentials.password=${repo_password}
+    helm upgrade es "$chart_ref" --debug --wait "$chart_version" \
+        --set minikube="$ES_MINIKUBE",imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
 else
-    helm install $chart_ref --name=es --namespace=$ES_NAMESPACE --debug --wait $chart_version \
-        --set minikube=$ES_MINIKUBE,imageCredentials.username=${repo_username},imageCredentials.password=${repo_password}
+    helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" --debug --wait "$chart_version" \
+        --set minikube="$ES_MINIKUBE",imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
 fi
