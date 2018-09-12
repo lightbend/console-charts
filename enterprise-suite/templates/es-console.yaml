@@ -19,7 +19,7 @@ spec:
             cpu: {{ default .Values.defaultCPURequest .Values.esConsoleCPURequest }}
             memory: {{ default .Values.defaultMemoryRequest .Values.esConsoleMemoryRequest }}
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         volumeMounts:
           - name: config-volume
             mountPath: /etc/nginx/conf.d
@@ -38,7 +38,7 @@ spec:
   ports:
   - port: 80
     protocol: TCP
-    targetPort: 80
+    targetPort: 8080
     nodePort: 30080
   selector:
     run: es-console
@@ -53,7 +53,7 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8080
   selector:
     run: es-console
   type: ClusterIP
@@ -66,7 +66,7 @@ metadata:
 data:
   default.conf: |-
     server {
-      listen 80;
+      listen 8080;
       server_name localhost;
 
       location / {
@@ -86,5 +86,4 @@ data:
       location /service/grafana/ {
         proxy_pass http://grafana-server:3000/;
       }
-
     }
