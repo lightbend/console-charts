@@ -32,10 +32,10 @@ build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Buil
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
 shell-tests:
-	tests/lib/bats/bats tests
+	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
 
 minikube-tests:
-	scripts/run-minikube-tests.sh
+	$(CHART_DIR)/scripts/run-minikube-tests.sh
 
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
 test: shell-tests minikube-tests
