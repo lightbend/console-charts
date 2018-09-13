@@ -40,7 +40,7 @@ print_debug
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
 
-	./$smoketest > /tmp/log-$smoketest &
+	./$smoketest 2>&1 > /tmp/log-$smoketest &
 	pids+=($!)
 	smoketests+=($smoketest)
 done
