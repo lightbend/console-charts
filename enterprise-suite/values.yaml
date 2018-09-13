@@ -2,7 +2,7 @@
 # Update these versions for a release.
 #
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.0
+esConsoleVersion: v0.1.1
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
 esMonitorVersion: v0.1.0
 # lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
