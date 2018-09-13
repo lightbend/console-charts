@@ -31,9 +31,14 @@ build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Buil
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
+shell-tests:
+	tests/lib/bats/bats tests
+
+minikube-tests:
+	scripts/run-minikube-tests.sh
+
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
-test:
-	$(CHART_DIR)/scripts/run-minikube-tests.sh
+test: shell-tests minikube-tests
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...
@@ -97,4 +102,5 @@ install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all build package test init lint lint-helm lint-json lint-promql clean install-helm delete-local install-local help
+.PHONY: all build package shell-tests minikube-tests test init lint lint-helm lint-json lint-promql clean \
+		install-helm delete-local install-local help

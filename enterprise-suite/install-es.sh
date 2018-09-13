@@ -70,10 +70,17 @@ ES_MINIKUBE=${ES_MINIKUBE:-false}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_UPGRADE=${ES_UPGRADE:-false}
 ES_VERSION=${ES_VERSION:-}
+DRY_RUN=${DRY_RUN:-false}
 
 # Help
 if [ "${1-:}" == "-h" ]; then
     usage
+fi
+
+# Setup dry-run
+debug=
+if [ "$DRY_RUN" == "true" ]; then
+    debug=echo
 fi
 
 # Get credentials
@@ -84,8 +91,8 @@ if [ -n "$ES_LOCAL_CHART" ]; then
     # Install from a local chart tarball if ES_LOCAL_CHART is set.
     chart_ref=$ES_LOCAL_CHART
 else
-    helm repo add es-repo "$ES_REPO"
-    helm repo update
+    $debug helm repo add es-repo "$ES_REPO"
+    $debug helm repo update
     chart_ref=es-repo/$ES_CHART
 fi
 
@@ -96,9 +103,9 @@ else
 fi
 
 if [ "true" == "$ES_UPGRADE" ]; then
-    helm upgrade es "$chart_ref" --debug --wait "$chart_version" \
+    $debug helm upgrade es "$chart_ref" --debug --wait $chart_version \
         --set minikube="$ES_MINIKUBE",imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
 else
-    helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" --debug --wait "$chart_version" \
+    $debug helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" --debug --wait $chart_version \
         --set minikube="$ES_MINIKUBE",imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
 fi
