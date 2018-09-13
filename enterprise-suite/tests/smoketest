@@ -9,11 +9,26 @@ FAILURES=0
 pids=()
 
 function print_debug() {
+    local pods=$(kubectl -n lightbend get pod --no-headers -o go-template='{{range .items}}{{.metadata.name}} {{end}}')
     echo
     echo "========================================"
-    echo "Describe pods:"
+    echo "Deployment details:"
     echo
-    kubectl describe pods -n lightbend
+    for pod in $pods; do
+        echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        echo "Describe $pod:"
+        echo
+        kubectl -n lightbend describe pod "$pod"
+        echo
+        echo "Previous logs for $pod:"
+        echo
+        kubectl -n lightbend logs -p --all-containers "$pod"
+        echo
+        echo "Logs for $pod:"
+        echo
+        kubectl -n lightbend logs --all-containers "$pod"
+        echo
+    done
     echo
     echo "========================================"
     echo
