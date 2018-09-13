@@ -24,6 +24,7 @@ function print_debug() {
         echo
         kubectl -n lightbend logs -p --all-containers "$pod"
         echo
+        echo
         echo "Logs for $pod:"
         echo
         kubectl -n lightbend logs --all-containers "$pod"
