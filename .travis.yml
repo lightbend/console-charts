@@ -2,11 +2,6 @@ language: go
 sudo: required
 dist: xenial
 
-cache:
-  directories:
-  # We cache the Google Cloud SDK so we don't have to download it again on subsequent builds.
-  - $HOME/google-cloud-sdk
-
 services:
 - docker
 
@@ -41,6 +36,7 @@ jobs:
   - stage: deploy
     name: Deploy to GCS
     script:
+    # Decrypt credentials for GCS system account helmchart@es-repo.iam.gserviceaccount.com
     - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out resources/es-repo-7c1fefe17951.json -d
     - scripts/deploy-to-gcs.sh
 

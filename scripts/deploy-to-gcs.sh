@@ -6,18 +6,13 @@ set -eu
 # Do not prompt for user input when using any Google Cloud SDK methods.
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
-# The sdk install script errors if this directory already exists,
-# but Travis already created it when we marked it as cached.
-if [ ! -d $HOME/google-cloud-sdk/bin ]; then
-    rm -rf $HOME/google-cloud-sdk;
-    curl -sSL https://sdk.cloud.google.com | bash > /dev/null;
-	echo "PATH=${PATH}"
-fi
-${HOME}/google-cloud-sdk/bin/gcloud --quiet components update
+rm -rf "${HOME}/google-cloud-sdk"
+curl -sSL https://sdk.cloud.google.com | bash > /dev/null
+"${HOME}/google-cloud-sdk/bin/gcloud" --quiet components update
 
 # This line is critical. We setup the SDK to take precedence in our
 # environment over the old SDK that may? already be on the machine.
-. ${HOME}/google-cloud-sdk/path.bash.inc
+. "${HOME}/google-cloud-sdk/path.bash.inc"
 
 gcloud version
 
@@ -29,7 +24,7 @@ gcloud auth activate-service-account --key-file resources/es-repo-7c1fefe17951.j
 #: ${PROJECT_NAME:?"PROJECT_NAME environment variable is not set"}
 PROJECT_NAME=es-repo
 
-${HOME}/google-cloud-sdk/bin/gcloud config set project "${PROJECT_NAME}"
+"${HOME}/google-cloud-sdk/bin/gcloud" config set project "${PROJECT_NAME}"
 
 #  gsutil rsync -d -n $1 gs://$2
 gsutil -m rsync -d -n -x "all.*\.yaml|\.nojekyll" docs gs://marcoderama-test
