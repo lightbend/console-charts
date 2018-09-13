@@ -10,6 +10,14 @@ export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 #"${HOME}/google-cloud-sdk/bin/gcloud" --quiet components update
 #/usr/lib/google-cloud-sdk/bin/gcloud --quiet components update
 
+
+# Instructions from https://cloud.google.com/sdk/docs/downloads-apt-get
+export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
+echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | \
+    sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-get update && sudo apt-get install google-cloud-sdk
+
 # This line is critical. We setup the SDK to take precedence in our
 # environment over the old SDK that may? already be on the machine.
 #. "${HOME}/google-cloud-sdk/path.bash.inc"
