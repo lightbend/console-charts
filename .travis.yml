@@ -10,31 +10,23 @@ cache:
 services:
 - docker
 
-env:
-  global:
-  # Do not prompt for user input when using any Google Cloud SDK methods.
-  - CLOUDSDK_CORE_DISABLE_PROMPTS=1
-
-before_install:
-- openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out resources/es-repo-7c1fefe17951.json -d
-- scripts/deploy-to-gcs.sh
-
 install: scripts/setup-tools-for-ubuntu.sh
 
-# Should be able to do this but doesn't work for PR builds
+# Should be able to do something along these lines but deploy  doesn't work for PR builds
 # deploy:
 #   provider: gcs
 #   access_key_id: "GCS Interoperable Access Key ID"
 #   secret_access_key: "GCS Interoperable Access Secret"
 #   bucket: "marcoderama-test"
 #   skip_cleanup: true
+#   local-dir: docs
 
 jobs:
   include:
-  - stage: Tests
-    name: Validate
-    script:
-    - make lint
+  # - stage: Tests
+  #   name: Validate
+  #   script:
+  #   - make lint
   # - name: Minikube
   #   script:
   #   - scripts/setup-minikube-for-linux.sh
@@ -49,6 +41,7 @@ jobs:
   - stage: deploy
     name: Deploy to GCS
     script:
+    - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out resources/es-repo-7c1fefe17951.json -d
     - scripts/deploy-to-gcs.sh
 
 branches:
