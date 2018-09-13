@@ -8,7 +8,7 @@
 FAILURES=0
 pids=()
 
-func print_debug() {
+function print_debug() {
     echo
     echo "========================================"
     echo "Describe pods:"
@@ -24,9 +24,27 @@ print_debug
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
 
-	./$smoketest
-	((FAILURES+=$?))
+	./$smoketest > /tmp/log-$smoketest &
+	pids+=($!)
+	smoketests+=($smoketest)
 done
+
+for (( n=0; n<${#pids[@]}; n++ )); do
+    pid="${pids[$n]}"
+    smoketest="${smoketests[$n]}"
+
+    echo -n "Waiting for $smoketest to finish... "
+    wait "$pid"
+    r=$?
+	((FAILURES+=$r))
+	if [ "$r" == "0" ]; then
+	    echo "done"
+	else
+	    echo "failed"
+	    cat /tmp/log-$smoketest
+	fi
+done
+echo
 
 echo "All tests completed with $FAILURES failures"
 

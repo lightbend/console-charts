@@ -92,10 +92,7 @@ delete-local:  ## Delete chart from cluster with helm
 
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart, used by smoketests.
 	# We set a podUID here for test purposes to ensure everything works as non-root.
-	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --debug --wait --set minikube=$(MINIKUBE),podUID=10001
-
-#
-##
+	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --wait --set minikube=$(MINIKUBE),podUID=10001
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
