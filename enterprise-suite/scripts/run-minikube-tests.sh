@@ -2,6 +2,8 @@
 
 set -exu
 
+TARGET=$1
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 # setup
@@ -11,6 +13,11 @@ make build
 make install-local
 
 # run tests
-echo "Running tests"
-cd $script_dir/../tests
-./smoketest
+echo "Running $TARGET"
+if [ "$TARGET" == "smoketest" ]; then
+  cd $script_dir/../tests
+  ./smoketest
+elif [ "$TARGET" == "browser_e2e" ]; then
+  cd $script_dir
+  ./run-browser-e2e-tests.sh 
+fi
