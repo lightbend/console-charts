@@ -96,6 +96,10 @@ spec:
         app: grafana
         component: server
     spec:
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
       containers:
       - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}

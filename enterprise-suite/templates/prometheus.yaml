@@ -65,6 +65,11 @@ spec:
     spec:
       serviceAccountName: prometheus-server
 
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
+
       initContainers:
         - name: setup
           image: alpine

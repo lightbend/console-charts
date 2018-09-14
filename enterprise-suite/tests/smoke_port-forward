@@ -21,10 +21,8 @@ cleanup() {
 # Make sure we kill the port-forward when we are done
 trap cleanup 0
 
-# Makes sure expose-es-console is ready
-CONSOLE_NODE_BASE=$( busy_wait nodeport expose-es-console )
-
-export CONSOLE_REMOTE_PORT=$( kubectl get -n lightbend services expose-es-console -o json | jq '.spec.ports[0].port' )
+export CONSOLE_REMOTE_PORT=$(kubectl get -n lightbend deployment/es-console \
+    -o go-template='{{ (index (index .spec.template.spec.containers 0).ports 0).containerPort }}')
 
 # Fire up the port forwarding
 (

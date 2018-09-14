@@ -79,6 +79,10 @@ spec:
         app: prometheus
         component: kube-state-metrics
     spec:
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
       serviceAccountName: prometheus-kube-state-metrics
       containers:
         - name: prometheus-kube-state-metrics
