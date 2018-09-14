@@ -27,11 +27,6 @@ function setup {
     assert_output --partial "imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
-@test "sets minikube flag" {
-    run $install_es
-    assert_output --partial "minikube=false"
-}
-
 @test "adds and updates helm repo if using a published chart" {
     run $install_es
     assert_output --partial "helm repo add es-repo https://lightbend.github.io/helm-charts"
@@ -53,17 +48,23 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --partial "helm install es-repo/enterprise-suite --name=es --namespace=lightbend --debug --wait --set minikube=false,imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --partial "helm install es-repo/enterprise-suite --name=es --namespace=lightbend --debug --wait --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "helm upgrade command" {
     ES_UPGRADE=true \
         run $install_es
-    assert_output --partial "helm upgrade es es-repo/enterprise-suite --debug --wait --set minikube=false,imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --partial "helm upgrade es es-repo/enterprise-suite --debug --wait --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "can set namespace" {
     ES_NAMESPACE=mycoolnamespace \
         run $install_es
     assert_output --partial "--namespace=mycoolnamespace"
+}
+
+@test "can pass helm values" {
+    ES_VALUES="minikube=true,podUID=100001" \
+        run $install_es
+    assert_output --partial "--set minikube=true,podUID=100001,imageCredentials"
 }

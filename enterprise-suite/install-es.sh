@@ -66,7 +66,7 @@ LIGHTBEND_COMMERCIAL_CREDENTIALS=${LIGHTBEND_COMMERCIAL_CREDENTIALS:-$HOME/.ligh
 ES_REPO=${ES_REPO:-https://lightbend.github.io/helm-charts}
 ES_CHART=${ES_CHART:-enterprise-suite}
 ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
-ES_MINIKUBE=${ES_MINIKUBE:-false}
+ES_VALUES=${ES_VALUES:-}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_UPGRADE=${ES_UPGRADE:-false}
 ES_VERSION=${ES_VERSION:-}
@@ -102,10 +102,16 @@ else
     chart_version=
 fi
 
+if [ -n "$ES_VALUES" ]; then
+    chart_values="$ES_VALUES,"
+else
+    chart_values=
+fi
+
 if [ "true" == "$ES_UPGRADE" ]; then
     $debug helm upgrade es "$chart_ref" --debug --wait $chart_version \
-        --set minikube="$ES_MINIKUBE",imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
+        --set ${chart_values}imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
 else
     $debug helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" --debug --wait $chart_version \
-        --set minikube="$ES_MINIKUBE",imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
+        --set ${chart_values}imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
 fi
