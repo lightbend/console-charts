@@ -13,17 +13,21 @@ jobs:
     name: Validate
     script:
     - make lint
-  - name: Minikube
+  - name: Borwser E2E
     script:
     - scripts/setup-minikube-for-linux.sh
-    - make test CHARTS=enterprise-suite
-  - name: Minikube - Latest
-    script:
-    - scripts/setup-minikube-for-linux.sh
-    - make test CHARTS=enterprise-suite-latest
-  - name: Reactive-sandbox test
-    script:
-    - make test CHARTS=reactive-sandbox
+    - make test CHARTS=enterprise-suite TEST=browser_e2e
+#  - name: Minikube
+#    script:
+#    - scripts/setup-minikube-for-linux.sh
+#    - make test CHARTS=enterprise-suite
+#  - name: Minikube - Latest
+#    script:
+#    - scripts/setup-minikube-for-linux.sh
+#    - make test CHARTS=enterprise-suite-latest
+#  - name: Reactive-sandbox test
+#    script:
+#    - make test CHARTS=reactive-sandbox
 
 branches:
   only:

@@ -1,5 +1,6 @@
 # Using ?= cuz enterprise-suite-latest overrides this
 CHART ?= enterprise-suite
+TEST ?= smoketest
 
 RELEASE_NAME = es
 NAMESPACE = lightbend
@@ -33,7 +34,7 @@ package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
 test:
-	$(CHART_DIR)/scripts/run-minikube-tests.sh
+	$(CHART_DIR)/scripts/run-minikube-tests.sh $(TEST)
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...
