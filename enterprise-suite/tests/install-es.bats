@@ -40,21 +40,15 @@ function setup {
     refute_output --partial "helm repo"
 }
 
-@test "allows specifying the version" {
-    ES_VERSION="v1.2.3" \
-        run $install_es
-    assert_output --partial "--version=v1.2.3"
-}
-
 @test "helm install command" {
     run $install_es
-    assert_output --partial "helm install es-repo/enterprise-suite --name=es --namespace=lightbend --debug --wait --set imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --partial "helm install es-repo/enterprise-suite --name=es --namespace=lightbend --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "helm upgrade command" {
     ES_UPGRADE=true \
         run $install_es
-    assert_output --partial "helm upgrade es es-repo/enterprise-suite --debug --wait --set imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --partial "helm upgrade es es-repo/enterprise-suite --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "can set namespace" {
@@ -63,8 +57,7 @@ function setup {
     assert_output --partial "--namespace=mycoolnamespace"
 }
 
-@test "can pass helm values" {
-    ES_VALUES="minikube=true,podUID=100001" \
-        run $install_es
-    assert_output --partial "--set minikube=true,podUID=100001,imageCredentials"
+@test "can pass helm args" {
+    run $install_es --version v10.0.20 --set minikube=true,podUID=100001
+    assert_output --partial "--version v10.0.20 --set minikube=true,podUID=100001"
 }

@@ -13,7 +13,10 @@ function docvar() {
 }
 
 function usage() {
-    echo "$0 [-h]"
+    echo "$0 [-h] [HELM_ARGS]"
+    echo
+    echo "-h: prints help"
+    echo "HELM_ARGS: will get passed directly to helm"
     echo
     echo "Environment variables that can be set:"
     echo
@@ -21,10 +24,9 @@ function usage() {
     docvar ES_REPO "Helm chart repository"
     docvar ES_CHART "Chart name to install from the repository"
     docvar ES_NAMESPACE "Namespace to install ES-Console into"
-    docvar ES_MINIKUBE "Set to true to enable minikube specific options"
     docvar ES_LOCAL_CHART "Set to location of local chart tarball"
     docvar ES_UPGRADE "Set to true to perform a helm upgrade instead of an install"
-    docvar ES_VERSION "Set to non-empty to install a specific version"
+    docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
 }
 
@@ -66,10 +68,8 @@ LIGHTBEND_COMMERCIAL_CREDENTIALS=${LIGHTBEND_COMMERCIAL_CREDENTIALS:-$HOME/.ligh
 ES_REPO=${ES_REPO:-https://lightbend.github.io/helm-charts}
 ES_CHART=${ES_CHART:-enterprise-suite}
 ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
-ES_VALUES=${ES_VALUES:-}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_UPGRADE=${ES_UPGRADE:-false}
-ES_VERSION=${ES_VERSION:-}
 DRY_RUN=${DRY_RUN:-false}
 
 # Help
@@ -96,22 +96,12 @@ else
     chart_ref=es-repo/$ES_CHART
 fi
 
-if [ -n "$ES_VERSION" ]; then
-    chart_version="--version=$ES_VERSION"
-else
-    chart_version=
-fi
-
-if [ -n "$ES_VALUES" ]; then
-    chart_values="$ES_VALUES,"
-else
-    chart_values=
-fi
-
 if [ "true" == "$ES_UPGRADE" ]; then
-    $debug helm upgrade es "$chart_ref" --debug --wait $chart_version \
-        --set ${chart_values}imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
+    $debug helm upgrade es "$chart_ref" \
+        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        $@
 else
-    $debug helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" --debug --wait $chart_version \
-        --set ${chart_values}imageCredentials.username="$repo_username",imageCredentials.password="$repo_password"
+    $debug helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" \
+        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        $@
 fi
