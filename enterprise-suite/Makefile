@@ -31,9 +31,14 @@ build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Buil
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 
-# This target required by top-level helm-charts Makefile.  Tests release on Travis
-test:
+shell-tests:
+	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
+
+minikube-tests:
 	$(CHART_DIR)/scripts/run-minikube-tests.sh
+
+# This target required by top-level helm-charts Makefile.  Tests release on Travis
+test: shell-tests minikube-tests
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...
@@ -77,7 +82,7 @@ MINIKUBE=true
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE) > $@
+	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE),internalEnableCredentialsSecret=false > $@
 
 TILLER_NAMESPACE := kube-system
 
@@ -90,11 +95,13 @@ install-helm:  ## Install required helm components into cluster
 delete-local:  ## Delete chart from cluster with helm
 	-helm delete --purge $(RELEASE_NAME)
 
-install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart, used by smoketests.
+install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
 	# We set a podUID here for test purposes to ensure everything works as non-root.
-	helm install $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz --name=$(RELEASE_NAME) --namespace=$(NAMESPACE) --wait --set minikube=$(MINIKUBE),podUID=10001
+	ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
+		$(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all build package test init lint lint-helm lint-json lint-promql clean install-helm delete-local install-local help
+.PHONY: all build package shell-tests minikube-tests test init lint lint-helm lint-json lint-promql clean \
+		install-helm delete-local install-local help
