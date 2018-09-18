@@ -53,6 +53,6 @@ busy_wait ingress_ready
 # the equivalent.
 
 # Test access
-test_es_console_responding http://$( minikube ip )/es-console -H 'Host: minikube.ingress.test'
+busy_wait test_es_console_responding http://$( minikube ip )/es-console -H 'Host: minikube.ingress.test'
 
 test_summary
