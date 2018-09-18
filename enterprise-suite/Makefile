@@ -102,7 +102,6 @@ install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local 
 		$(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
 
 install-dev: install-helm delete-local  ## Install content of enterprise-suite/ folder
-	# set podUID as nobody user to disallow login
 	ES_LOCAL_CHART=$(CHART_DIR) $(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE)
 
 help:  ## Print help for targets
