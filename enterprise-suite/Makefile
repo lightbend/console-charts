@@ -95,10 +95,9 @@ install-helm:  ## Install required helm components into cluster
 delete-local:  ## Delete chart from cluster with helm
 	-helm delete --purge $(RELEASE_NAME)
 
-install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local chart
+install-local: install-helm delete-local  ## Install local chart
 	# We set a podUID here for test purposes to ensure everything works as non-root.
-	ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
-		$(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
+	ES_LOCAL_CHART=$(CHART_DIR) $(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
