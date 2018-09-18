@@ -74,10 +74,10 @@ Optionally you can specify the version to use:
 
     scripts/make-release.sh enterprise-suite 1.0.0
 
-### ES
+### Enterprise Suite Console
 
 See [ES Build and Release](https://docs.google.com/document/d/14L3Zdwc-MkCDR1-7fWQYQT3k53vLc4cehAKEuOnwhxs/edit)
-for details on the release process.
+for details on the overall release process.
 
 ## Maintenance
 
