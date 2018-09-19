@@ -1,5 +1,3 @@
-
----
 apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
@@ -20,7 +18,7 @@ spec:
         app: prometheus
         component: node-exporter
     spec:
-      serviceAccountName: "default"
+      serviceAccountName: "prometheus-kube-state-metrics"
       {{ if .Values.podUID }}
       securityContext:
         runAsUser: {{ .Values.podUID }}
