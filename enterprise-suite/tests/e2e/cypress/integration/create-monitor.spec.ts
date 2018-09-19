@@ -12,7 +12,7 @@ describe('Create Monitor Test', () => {
   });
 
 
-  // NOTE: group by actor is flacky due to the following two issues
+  // NOTE: group by actor is flaky due to the following two issues
   // ISSUE: lightbend/console-home#322 - drop down with super long wait in edit mode
   // ISSUE/FLAKY: lightbend/console-home#323 - sometimes drop down data is incorrect
   it.skip('validate created threshold monitor w/ group by actor', () => {
