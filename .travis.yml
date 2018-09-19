@@ -21,6 +21,10 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
+  - name: Minikube - Frontend
+    script:
+    - scripts/setup-minikube-for-linux.sh
+    - make test CHARTS=enterprise-suite-latest ES_TEST=frontend
   - name: Reactive-sandbox test
     script:
     - make test CHARTS=reactive-sandbox
