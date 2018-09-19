@@ -1,6 +1,7 @@
 language: go
 sudo: required
 dist: xenial
+node_js: 9.4.0
 
 services:
 - docker
@@ -22,6 +23,7 @@ jobs:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
   - name: Minikube - Frontend
+    node_js: 9.4.0
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest ES_TEST=frontend
