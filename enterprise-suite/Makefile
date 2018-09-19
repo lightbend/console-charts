@@ -37,8 +37,11 @@ shell-tests:
 minikube-tests:
 	$(CHART_DIR)/scripts/run-minikube-tests.sh
 
+e2e-tests:
+	$(CHART_DIR)/scripts/run-e2e-tests.sh
+
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
-test: shell-tests minikube-tests
+test: shell-tests minikube-tests e2e-tests
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...
