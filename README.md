@@ -54,18 +54,6 @@ helm upgrade lightbend-helm-charts/<chart-name> --name=<release-name> --namespac
 
 ## Cutting a Release / Publishing Charts
 
-_This needs updating..._
-
-### Release ES images
-
-Release the images in Jenkins:
-1. Go to <https://ci.lightbend.com/view/EntSuite/job/es-release-all/build>.
-2. Click 'Build'. This will increment the version for each image and release it.
-3. Open the [console](https://ci.lightbend.com/view/EntSuite/job/es-release-all/lastBuild/console), scroll to the bottom and you can see the versions of each image.
-4. Update [enterprise-suite/values.yaml](enterprise-suite/values.yaml) with the new image versions and commit the changes.
-
-See [es-build](https://github.com/lightbend/es-build) for more details.
-
 ### Release Charts
 
 Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
@@ -85,6 +73,11 @@ commit. Finally, `git push --tags` will publish the release and git tag.
 Optionally you can specify the version to use:
 
     scripts/make-release.sh enterprise-suite 1.0.0
+
+### Enterprise Suite Console
+
+See [ES Build and Release](https://docs.google.com/document/d/14L3Zdwc-MkCDR1-7fWQYQT3k53vLc4cehAKEuOnwhxs/edit)
+for details on the overall release process.
 
 ## Maintenance
 
