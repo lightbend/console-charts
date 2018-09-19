@@ -1,0 +1,3 @@
+[
+  {"graphName":"Circuit Breaker Failures Per Second", "promQL":["sum by (circuit_breaker)(irate (lagom_circuit_breaker_failure{ContextTags}[1m]}))"]}
+]

@@ -634,6 +634,21 @@
         "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
         "monitorType": ""
       }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "lagom_circuit_breaker_state",
+        "metric": "lagom_circuit_breaker_state",
+        "comparator": "<",
+        "threshold": "3",
+        "window": "1m",
+        "confidence": "0.0",
+        "severity": "critical",
+        "summary": "Circuit breaker tripped",
+        "description": "Circuit breaker tripped between Lagom services in the last minute",
+        "monitorType": ""
+      }
     }
   ]
 }
