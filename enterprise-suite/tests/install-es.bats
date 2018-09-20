@@ -6,7 +6,7 @@ load 'lib/bats-support/load'
 load 'lib/bats-assert/load'
 
 export DRY_RUN=true
-install_es=$BATS_TEST_DIRNAME/../install-es.sh
+install_es=$BATS_TEST_DIRNAME/../scripts/install-es.sh
 
 function setup {
     unset LIGHTBEND_COMMERCIAL_CREDENTIALS
@@ -31,7 +31,7 @@ function setup {
 
 @test "adds and updates helm repo if using a published chart" {
     run $install_es
-    assert_output --partial "helm repo add es-repo https://lightbend.github.io/helm-charts"
+    assert_output --partial "helm repo add es-repo https://repo.lightbend.com/helm-charts"
     assert_output --partial "helm repo update"
 }
 
