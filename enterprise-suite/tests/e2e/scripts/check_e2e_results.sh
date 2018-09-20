@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # check the e2e result file
-# the pass count should not less then $EXPECTED_PASS
-# the fail count should not greater then $EXPECTED_FAIL
+# the pass count should not be less then $EXPECTED_PASS
+# the fail count should not be greater then $EXPECTED_FAIL
 
 E2E_RESULT_FILE=results.txt
 
@@ -29,12 +29,12 @@ echo ""
 
 if [[ "$PASS" -lt "$EXPECTED_PASS" ]]
 then
-  echo "pass count $PASS should not less then $EXPECTED_PASS"
+  echo "pass count $PASS should not be less then $EXPECTED_PASS"
   exit -1
 fi
 
 if [[ "$FAIL" -gt "$EXPECTED_FAIL" ]]
 then
-  echo "fail count $FAIL should not greater then $EXPECTED_FAIL"
+  echo "fail count $FAIL should not be greater then $EXPECTED_FAIL"
   exit -1
 fi
