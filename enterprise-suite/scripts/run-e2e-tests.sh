@@ -18,4 +18,6 @@ cd $script_dir/../tests/e2e
 sudo apt -y install libgconf2-4
 npm install
 npm run e2e:demo-app-setup
+npm run e2e:patch-minikube-ip
+npm run e2e:wait-es-services
 npm run e2e:travis-prs

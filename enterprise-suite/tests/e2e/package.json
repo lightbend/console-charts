@@ -12,6 +12,7 @@
     "e2e:travis-prs:result": "NO_COLOR=1 cypress run --env configFile=minikube,skipKnownError=true | tee results.txt",
     "e2e:check-results": "./scripts/check_e2e_results.sh",
     "e2e:patch-minikube-ip": "./scripts/patch-minikube-ip.sh",
+    "e2e:wait-es-services": "./scripts/wait_es_services.sh",
     "e2e:travis": "cypress run --env configFile=minikube,skipKnownError=true",
     "e2e:demo-app-setup": "kubectl apply -f ./config/es-demo.yaml",
     "cypress:open": "cypress open",
