@@ -643,7 +643,7 @@
         "comparator": "<",
         "threshold": "3",
         "window": "1m",
-        "confidence": "0.5",
+        "confidence": "5e-324",
         "severity": "critical",
         "summary": "Circuit breaker tripped",
         "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}",
