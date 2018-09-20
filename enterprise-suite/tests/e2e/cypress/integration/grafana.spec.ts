@@ -1,5 +1,6 @@
 import { Util } from '../support/util';
 import { Environment } from '../support/environment';
+import { Navigation } from '../support/navigation';
 
 describe('Grafana Test', () => {
   const grafanaUrl = Environment.getEnv().grafanaUrl +
@@ -8,6 +9,11 @@ describe('Grafana Test', () => {
     'promQL=max without (es_monitor_type) (akka_actor_processing_time_ns{quantile="0.5",es_workload="es-demo"})';
 
   it('open grafana url in monitor page', () => {
+    // make sure monitor is ready
+    Navigation.goWorkloadPageByClick('es-demo');
+    Navigation.clickMonitor('akka_processing_time');
+
+    // start test
     cy.visit('/workloads/es-demo/monitors/akka_processing_time', {
       onBeforeLoad(win) {
         cy.stub(win, 'open').as('windowOpen'); // stub window.open event
