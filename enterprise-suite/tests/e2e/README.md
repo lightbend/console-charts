@@ -2,15 +2,18 @@
 
 Assume that es-console is running in http://192.168.99.100:30080/
 
+
+If your es-console is running in different url, please modify file `cypress/config/minikube.json`
+
 To test it with cypress
 
 ```
-# use node.js v10.8.0
-nvm install v10.8.0
-nvm use v10.8.0
+# use node.js v9.4.0  (NOTE: the same version as es-console-spa to avoid install two different versions)
+nvm install v9.4.0
+nvm use v9.4.0
 
 # install npm package
-npm ci   # "npm ci" is equivalent to "npm install" but much faster
+npm install
 
 # set up demo app
 npm run e2e:demo-app-setup
