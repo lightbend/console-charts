@@ -82,7 +82,7 @@ function chart_installed() {
 LIGHTBEND_COMMERCIAL_USERNAME=${LIGHTBEND_COMMERCIAL_USERNAME:-}
 LIGHTBEND_COMMERCIAL_PASSWORD=${LIGHTBEND_COMMERCIAL_PASSWORD:-}
 LIGHTBEND_COMMERCIAL_CREDENTIALS=${LIGHTBEND_COMMERCIAL_CREDENTIALS:-$HOME/.lightbend/commercial.credentials}
-ES_REPO=${ES_REPO:-https://lightbend.github.io/helm-charts}
+ES_REPO=${ES_REPO:-https://repo.lightbend.com/helm-charts}
 ES_CHART=${ES_CHART:-enterprise-suite}
 ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
