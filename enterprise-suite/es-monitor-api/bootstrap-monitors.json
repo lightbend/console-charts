@@ -152,8 +152,8 @@
               "threshold": "0"
             }
           },
-          "summary": "es_workload not updating",
-          "description": "es_workload {{$labels.es_workload}} has not updated for 10 minutes"
+          "summary": "workload not updating",
+          "description": "workload {{$labels.es_workload}} has not updated for 10 minutes"
         }
       },
       {
