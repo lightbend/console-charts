@@ -1,8 +1,7 @@
 {
   "monitors": {
-    "_": [
-      {
-        "name": "node_high_cpu",
+    "_": {
+      "node_high_cpu": {
         "model": "threshold",
         "parameters": {
           "metric": "node_cpu_percent",
@@ -18,8 +17,7 @@
           "description": "cpu on {{$labels.instance}} over 99% busy"
         }
       },
-      {
-        "name": "node_memory_pressure",
+      "node_memory_pressure": {
         "model": "threshold",
         "parameters": {
           "metric": "node_memory_usable_percent",
@@ -35,8 +33,7 @@
           "description": "{{$labels.instance}} has low usable memory"
         }
       },
-      {
-        "name": "node_disk_filling",
+      "node_disk_filling": {
         "model": "predict",
         "parameters": {
           "metric": "node_filesystem_free_percent",
@@ -54,8 +51,7 @@
           "description": "{{$labels.instance}} will fill disk in {{$labels.prediction}}"
         }
       },
-      {
-        "name": "node_network_errors",
+      "node_network_errors": {
         "model": "threshold",
         "parameters": {
           "metric": "node_network_error_rate",
@@ -71,8 +67,7 @@
           "description": "{{$labels.instance}} has network errors"
         }
       },
-      {
-        "name": "kube_node_pressure",
+      "kube_node_pressure": {
         "model": "threshold",
         "parameters": {
           "metric": "kube_node_pressure",
@@ -88,9 +83,7 @@
           "description": "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}"
         }
       },
-      {
-        "name": "restarts",
-        "model": "threshold",
+      {restarts",: "model": "threshold",
         "parameters": {
           "metric": "kube_pod_container_restarts_rate",
           "window": "5m",
@@ -105,8 +98,7 @@
           "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly"
         }
       },
-      {
-        "name": "kube_pod_not_ready",
+      "kube_pod_not_ready": {
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_ready",
@@ -122,8 +114,7 @@
           "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready"
         }
       },
-      {
-        "name": "kube_pod_not_running",
+      "kube_pod_not_running": {
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_not_running",
@@ -139,8 +130,7 @@
           "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not running"
         }
       },
-      {
-        "name": "kube_workload_generation_lag",
+      "kube_workload_generation_lag": {
         "model": "threshold",
         "parameters": {
           "metric": "kube_workload_generation_lag",
@@ -156,8 +146,7 @@
           "description": "workload {{$labels.es_workload}} has not updated for 10 minutes"
         }
       },
-      {
-        "name": "kafka_consumergroup_lag",
+      "kafka_consumergroup_lag": {
         "model": "growth",
         "parameters": {
           "metric": "kafka_consumergroup_lag",
@@ -173,9 +162,7 @@
           "description": "{{$labels.consumergroup}} is falling behind"
         }
       },
-      {
-        "name": "scrape_time",
-        "model": "sma",
+      {scrape_time",: "model": "sma",
         "parameters": {
           "metric": "scrape_duration_seconds",
           "period": "15m",
@@ -191,8 +178,7 @@
           "description": "{{$labels.instance}} has anomalous scrape_duration_seconds"
         }
       },
-      {
-        "name": "akka_inbox_growth",
+      "akka_inbox_growth": {
         "model": "growth",
         "parameters": {
           "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
@@ -208,8 +194,7 @@
           "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
         }
       },
-      {
-        "name": "akka_processing_time",
+      "akka_processing_time": {
         "model": "sma",
         "parameters": {
           "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
@@ -226,8 +211,7 @@
           "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
         }
       },
-      {
-        "name": "prometheus_notifications_dropped",
+      "prometheus_notifications_dropped": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_notifications_dropped_rate",
@@ -243,8 +227,7 @@
           "description": "Prometheus dropping alerts sent to Alertmanager"
         }
       },
-      {
-        "name": "prometheus_notification_queue",
+      "prometheus_notification_queue": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_notification_queue_percent",
@@ -260,8 +243,7 @@
           "description": "Prometheus alert queue is staying over 50% full"
         }
       },
-      {
-        "name": "prometheus_rule_evaluation_failures",
+      "prometheus_rule_evaluation_failures": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_rule_evaluation_failures_rate",
@@ -277,8 +259,7 @@
           "description": "Prometheus has {{$value}} rules failing"
         }
       },
-      {
-        "name": "prometheus_target_too_many_metrics",
+      "prometheus_target_too_many_metrics": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_target_scrapes_exceeded_sample_limit_rate",
@@ -294,8 +275,7 @@
           "description": "Prometheus target at {{labels.instance}} has too many metrics"
         }
       },
-      {
-        "name": "prometheus_tsdb_reloads_failures",
+      "prometheus_tsdb_reloads_failures": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_tsdb_reloads_failures_rate",
@@ -311,8 +291,7 @@
           "description": "Prometheus had {{$value}} reload failures"
         }
       },
-      {
-        "name": "prometheus_target_down",
+      "prometheus_target_down": {
         "model": "threshold",
         "parameters": {
           "metric": "up",
@@ -328,8 +307,7 @@
           "description": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data"
         }
       },
-      {
-        "name": "prometheus_config_reload_failed",
+      "prometheus_config_reload_failed": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_config_last_reload_successful",
@@ -345,8 +323,7 @@
           "description": "current config for prometheus has errors, will prevent restarts"
         }
       },
-      {
-        "name": "prometheus_scrape_time",
+      "prometheus_scrape_time": {
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_target_sync_percent",
@@ -362,8 +339,7 @@
           "description": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}"
         }
       },
-      {
-        "name": "zookeeper_latency",
+      "zookeeper_latency": {
         "model": "sma",
         "parameters": {
           "metric": "zk_avg_latency",
@@ -380,8 +356,7 @@
           "description": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}"
         }
       },
-      {
-        "name": "zookeeper_connections",
+      "zookeeper_connections": {
         "model": "sma",
         "parameters": {
           "metric": "zk_num_alive_connections",
@@ -398,8 +373,7 @@
           "description": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
         }
       },
-      {
-        "name": "zookeeper_pending_syncs",
+      "zookeeper_pending_syncs": {
         "model": "threshold",
         "parameters": {
           "metric": "zk_pending_syncs",
@@ -415,8 +389,7 @@
           "description": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0."
         }
       },
-      {
-        "name": "zookeeper_open_file_descriptor",
+      "zookeeper_open_file_descriptor": {
         "model": "sma",
         "parameters": {
           "metric": "zk_open_file_descriptor_count",
@@ -433,8 +406,7 @@
           "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}"
         }
       },
-      {
-        "name": "cassandra_write_latency",
+      "cassandra_write_latency": {
         "model": "sma",
         "parameters": {
           "metric": "cassandra_clientrequest_write_latency",
@@ -451,8 +423,7 @@
           "description": "Cassandra write latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}"
         }
       },
-      {
-        "name": "cassandra_read_latency",
+      "cassandra_read_latency": {
         "model": "sma",
         "parameters": {
           "metric": "cassandra_clientrequest_read_latency",
@@ -469,8 +440,7 @@
           "description": "Cassandra read latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}"
         }
       },
-      {
-        "name": "redis_keyspace_miss",
+      "redis_keyspace_miss": {
         "model": "sma",
         "parameters": {
           "metric": "redis_keyspace_miss_ratio",
@@ -487,8 +457,7 @@
           "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}"
         }
       },
-      {
-        "name": "redis_evictions",
+      "redis_evictions": {
         "model": "sma",
         "parameters": {
           "metric": "redis_evicted_keys_total",
@@ -505,8 +474,7 @@
           "description": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}"
         }
       },
-      {
-        "name": "redis_commands_processed",
+      "redis_commands_processed": {
         "model": "sma",
         "parameters": {
           "metric": "redis_commands_processed_total",
@@ -523,8 +491,7 @@
           "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}"
         }
       },
-      {
-        "name": "redis_connections",
+      "redis_connections": {
         "model": "sma",
         "parameters": {
           "metric": "redis_connected_clients",
@@ -541,8 +508,7 @@
           "description": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
         }
       },
-      {
-        "name": "kafka_incoming_messages",
+      "kafka_incoming_messages": {
         "model": "sma",
         "parameters": {
           "metric": "kafka_incoming_messages_rate",
@@ -559,8 +525,7 @@
           "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}"
         }
       },
-      {
-        "name": "kafka_offline_partition",
+      "kafka_offline_partition": {
         "model": "threshold",
         "parameters": {
           "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
@@ -576,8 +541,7 @@
           "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}"
         }
       },
-      {
-        "name": "kafka_under_replicated_partitions",
+      "kafka_under_replicated_partitions": {
         "model": "threshold",
         "parameters": {
           "metric": "kafka_server_replicamanager_underreplicatedpartitions",
@@ -593,8 +557,7 @@
           "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}"
         }
       },
-      {
-        "name": "memcached_miss_ratio",
+      "memcached_miss_ratio": {
         "model": "sma",
         "parameters": {
           "metric": "memcached_miss_ratio",
@@ -611,8 +574,7 @@
           "description": "Memcached miss ratio in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
         }
       },
-      {
-        "name": "memcached_current_connections",
+      "memcached_current_connections": {
         "model": "sma",
         "parameters": {
           "metric": "memcached_current_connections",
@@ -629,8 +591,7 @@
           "description": "Memcached connections in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
         }
       },
-      {
-        "name": "memcached_evictions",
+      "memcached_evictions": {
         "model": "sma",
         "parameters": {
           "metric": "memcached_evictions_rate",
@@ -647,8 +608,7 @@
           "description": "Memcached evictions in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
         }
       },
-      {
-        "name": "akka_http_server_response_time",
+      "akka_http_server_response_time": {
         "model": "sma",
         "parameters": {
           "metric": "akka_http_http_server_response_time_ns{quantile=\"0.5\"}",
@@ -665,8 +625,7 @@
           "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
         }
       },
-      {
-        "name": "akka_http_client_response_time",
+      "akka_http_client_response_time": {
         "model": "sma",
         "parameters": {
           "metric": "akka_http_http_client_http_client_service_response_time_ns{quantile=\"0.5\"}",
@@ -683,8 +642,7 @@
           "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
         }
       },
-      {
-        "name": "akka_http_server_5xx",
+      "akka_http_server_5xx": {
         "model": "threshold",
         "parameters": {
           "metric": "akka_http_http_server_responses_5xx",
@@ -700,8 +658,7 @@
           "description": "HTTP server at {{labels.instance}} has 5xx errors"
         }
       },
-      {
-        "name": "play_http_client_response_time",
+      "play_http_client_response_time": {
         "model": "sma",
         "parameters": {
           "metric": "play_http_client_play_client_service_response_time_ns{quantile=\"0.5\"}",
@@ -718,6 +675,6 @@
           "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
         }
       }
-    ]
+    }
   }
 }
