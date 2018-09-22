@@ -83,7 +83,8 @@
           "description": "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}"
         }
       },
-      {restarts",: "model": "threshold",
+      "kube_container_restarts": {
+        "model": "threshold",
         "parameters": {
           "metric": "kube_pod_container_restarts_rate",
           "window": "5m",
@@ -162,7 +163,8 @@
           "description": "{{$labels.consumergroup}} is falling behind"
         }
       },
-      {scrape_time",: "model": "sma",
+      "scrape_time": {
+        "model": "sma",
         "parameters": {
           "metric": "scrape_duration_seconds",
           "period": "15m",
