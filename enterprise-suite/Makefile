@@ -92,17 +92,15 @@ install-helm:  ## Install required helm components into cluster
 	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin --serviceaccount=$(TILLER_NAMESPACE):tiller
 	-helm init --wait --service-account tiller --tiller-namespace=$(TILLER_NAMESPACE)
 
-delete-local:  ## Delete chart from cluster with helm
-	-helm delete --purge $(RELEASE_NAME)
-
 # called from shell script for travis job:
-install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm delete-local  ## Install local tarball
+install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install local tarball
 	# We set a podUID here for test purposes to ensure everything works as non-root.
-	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
-		$(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
+	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz ES_FORCE_INSTALL=true \
+	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
 
-install-dev: install-helm delete-local  ## Install content of enterprise-suite/ folder
-	ES_LOCAL_CHART=$(CHART_DIR) $(CHART_DIR)/install-es.sh --wait --set minikube=$(MINIKUBE)
+install-dev: install-helm ## Install content of enterprise-suite/ folder
+	ES_LOCAL_CHART=$(CHART_DIR) ES_FORCE_INSTALL=true \
+	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE)
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
