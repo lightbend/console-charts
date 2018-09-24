@@ -5,7 +5,7 @@ export class Navigation {
     }
 
     static clickWorkload(workloadId: string) {
-        cy.get('rc-workload-table').contains(workloadId).click();
+        cy.get(`rc-workload-table .workload-row[workloadname="${workloadId}"]`, {timeout: 10000}).click();
         cy.url().should('include', `/workloads/${workloadId}`);
     }
 
@@ -15,7 +15,7 @@ export class Navigation {
     }
 
     static clickMonitor(monId: string) {
-        cy.get('.monitor-list').contains(monId).click();
+        cy.get(`.monitor-list .monitor-name[title="${monId}"]`, {timeout: 12000}).click();
     }
 
     static goMonitorPage(workloadId: string, monitorId: string) {
