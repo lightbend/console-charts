@@ -608,11 +608,11 @@
       "model": "threshold",
       "parameters": {
         "name": "akka_http_server_5xx",
-        "metric": "akka_http_http_server_responses_5xx",
+        "metric": "akka_http_http_server_responses_5xx_rate",
         "comparator": ">",
         "threshold": "0",
         "window": "5m",
-        "confidence": "1",
+        "confidence": "0.25",
         "severity": "warning",
         "summary": "HTTP 5xx errors",
         "description": "HTTP server at {{labels.instance}} has 5xx errors",
