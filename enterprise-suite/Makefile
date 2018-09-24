@@ -37,8 +37,21 @@ shell-tests:
 minikube-tests:
 	$(CHART_DIR)/scripts/run-minikube-tests.sh
 
+backend-tests: shell-tests minikube-tests
+
+frontend-tests:
+	$(CHART_DIR)/scripts/run-e2e-tests.sh
+
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
-test: shell-tests minikube-tests
+#
+# The conditional bit is so we can control which set of tests are run given we're only
+# allowed a single 'test' target.
+test:
+ifneq ($(ES_TEST),frontend)
+	$(MAKE) backend-tests
+else
+	$(MAKE) frontend-tests
+endif
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...

@@ -21,6 +21,25 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
+  - name: Minikube - Frontend
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    script:
+    - scripts/setup-minikube-for-linux.sh
+    - make test CHARTS=enterprise-suite ES_TEST=frontend
+  - name: Minikube - Frontend (Latest)
+    if: type in (cron)
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    script:
+    - scripts/setup-minikube-for-linux.sh
+    - make test CHARTS=enterprise-suite-latest ES_TEST=frontend
   - name: Reactive-sandbox test
     script:
     - make test CHARTS=reactive-sandbox

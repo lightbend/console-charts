@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="13.939" tests="2" failures="0">
+  <testsuite name="Root Suite" timestamp="2018-09-05T18:24:14" tests="0" failures="0" time="0">
+  </testsuite>
+  <testsuite name="Workload Page Test" timestamp="2018-09-05T18:24:14" tests="2" failures="0" time="13.939">
+    <testcase name="Workload Page Test validate detail panels" time="5.52" classname="validate detail panels">
+    </testcase>
+    <testcase name="Workload Page Test validate control icons" time="8.419" classname="validate control icons">
+    </testcase>
+  </testsuite>
+</testsuites>
