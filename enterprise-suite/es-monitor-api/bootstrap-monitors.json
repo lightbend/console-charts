@@ -612,7 +612,7 @@
         "comparator": ">",
         "threshold": "0",
         "window": "5m",
-        "confidence": "0.25",
+        "confidence": "1.0",
         "severity": "warning",
         "summary": "HTTP 5xx errors",
         "description": "HTTP server at {{labels.instance}} has 5xx errors",
