@@ -2,6 +2,7 @@
   "monitors": {
     "_": {
       "node_high_cpu": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "node_cpu_percent",
@@ -18,6 +19,7 @@
         }
       },
       "node_memory_pressure": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "node_memory_usable_percent",
@@ -34,17 +36,18 @@
         }
       },
       "node_disk_filling": {
+        "monitorVersion": "1",
         "model": "predict",
         "parameters": {
           "metric": "node_filesystem_free_percent",
           "period": "1h",
-          "seconds": "28800",
+          "comparator": "<",
+          "threshold": "0",
           "window": "15m",
           "confidence": "1",
           "severity": {
             "warning": {
-              "comparator": "<",
-              "threshold": "0"
+              "seconds": "28800"
             }
           },
           "summary": "disk filling",
@@ -52,6 +55,7 @@
         }
       },
       "node_network_errors": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "node_network_error_rate",
@@ -68,6 +72,7 @@
         }
       },
       "kube_node_pressure": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kube_node_pressure",
@@ -84,6 +89,7 @@
         }
       },
       "kube_container_restarts": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_container_restarts_rate",
@@ -100,6 +106,7 @@
         }
       },
       "kube_pod_not_ready": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_ready",
@@ -116,6 +123,7 @@
         }
       },
       "kube_pod_not_running": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_not_running",
@@ -132,6 +140,7 @@
         }
       },
       "kube_workload_generation_lag": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kube_workload_generation_lag",
@@ -148,6 +157,7 @@
         }
       },
       "kafka_consumergroup_lag": {
+        "monitorVersion": "1",
         "model": "growth",
         "parameters": {
           "metric": "kafka_consumergroup_lag",
@@ -164,6 +174,7 @@
         }
       },
       "scrape_time": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "scrape_duration_seconds",
@@ -181,9 +192,13 @@
         }
       },
       "akka_inbox_growth": {
+        "monitorVersion": "1",
         "model": "growth",
         "parameters": {
-          "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
+          "metric": "akka_actor_mailbox_size",
+          "filters": {
+            "quantile": "0.5"
+          },
           "period": "15m",
           "minslope": "0.1",
           "confidence": "1",
@@ -197,9 +212,13 @@
         }
       },
       "akka_processing_time": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
-          "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
+          "metric": "akka_actor_processing_time_ns",
+          "filters": {
+            "quantile": "0.5"
+          },
           "period": "15m",
           "minval": "100000000",
           "window": "15m",
@@ -214,6 +233,7 @@
         }
       },
       "prometheus_notifications_dropped": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_notifications_dropped_rate",
@@ -230,6 +250,7 @@
         }
       },
       "prometheus_notification_queue": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_notification_queue_percent",
@@ -246,6 +267,7 @@
         }
       },
       "prometheus_rule_evaluation_failures": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_rule_evaluation_failures_rate",
@@ -262,6 +284,7 @@
         }
       },
       "prometheus_target_too_many_metrics": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_target_scrapes_exceeded_sample_limit_rate",
@@ -278,6 +301,7 @@
         }
       },
       "prometheus_tsdb_reloads_failures": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_tsdb_reloads_failures_rate",
@@ -294,6 +318,7 @@
         }
       },
       "prometheus_target_down": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "up",
@@ -310,6 +335,7 @@
         }
       },
       "prometheus_config_reload_failed": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_config_last_reload_successful",
@@ -326,6 +352,7 @@
         }
       },
       "prometheus_scrape_time": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "prometheus_target_sync_percent",
@@ -342,6 +369,7 @@
         }
       },
       "zookeeper_latency": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "zk_avg_latency",
@@ -359,6 +387,7 @@
         }
       },
       "zookeeper_connections": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "zk_num_alive_connections",
@@ -376,6 +405,7 @@
         }
       },
       "zookeeper_pending_syncs": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "zk_pending_syncs",
@@ -392,6 +422,7 @@
         }
       },
       "zookeeper_open_file_descriptor": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "zk_open_file_descriptor_count",
@@ -409,6 +440,7 @@
         }
       },
       "cassandra_write_latency": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "cassandra_clientrequest_write_latency",
@@ -426,6 +458,7 @@
         }
       },
       "cassandra_read_latency": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "cassandra_clientrequest_read_latency",
@@ -443,6 +476,7 @@
         }
       },
       "redis_keyspace_miss": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "redis_keyspace_miss_ratio",
@@ -460,6 +494,7 @@
         }
       },
       "redis_evictions": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "redis_evicted_keys_total",
@@ -477,6 +512,7 @@
         }
       },
       "redis_commands_processed": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "redis_commands_processed_total",
@@ -494,6 +530,7 @@
         }
       },
       "redis_connections": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "redis_connected_clients",
@@ -511,6 +548,7 @@
         }
       },
       "kafka_incoming_messages": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "kafka_incoming_messages_rate",
@@ -528,6 +566,7 @@
         }
       },
       "kafka_offline_partition": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
@@ -544,6 +583,7 @@
         }
       },
       "kafka_under_replicated_partitions": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "kafka_server_replicamanager_underreplicatedpartitions",
@@ -560,6 +600,7 @@
         }
       },
       "memcached_miss_ratio": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "memcached_miss_ratio",
@@ -577,6 +618,7 @@
         }
       },
       "memcached_current_connections": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "memcached_current_connections",
@@ -594,6 +636,7 @@
         }
       },
       "memcached_evictions": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
           "metric": "memcached_evictions_rate",
@@ -611,9 +654,13 @@
         }
       },
       "akka_http_server_response_time": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
-          "metric": "akka_http_http_server_response_time_ns{quantile=\"0.5\"}",
+          "metric": "akka_http_http_server_response_time_ns",
+          "filters": {
+            "quantile": "0.5"
+          },
           "period": "15m",
           "minval": "100000000",
           "window": "15m",
@@ -628,9 +675,13 @@
         }
       },
       "akka_http_client_response_time": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
-          "metric": "akka_http_http_client_http_client_service_response_time_ns{quantile=\"0.5\"}",
+          "metric": "akka_http_http_client_http_client_service_response_time_ns",
+          "filters": {
+            "quantile": "0.5"
+          },
           "period": "15m",
           "minval": "100000000",
           "window": "15m",
@@ -645,6 +696,7 @@
         }
       },
       "akka_http_server_5xx": {
+        "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
           "metric": "akka_http_http_server_responses_5xx",
@@ -661,9 +713,13 @@
         }
       },
       "play_http_client_response_time": {
+        "monitorVersion": "1",
         "model": "sma",
         "parameters": {
-          "metric": "play_http_client_play_client_service_response_time_ns{quantile=\"0.5\"}",
+          "metric": "play_http_client_play_client_service_response_time_ns",
+          "filters": {
+            "quantile": "0.5"
+          },
           "period": "15m",
           "minval": "100000000",
           "window": "15m",
