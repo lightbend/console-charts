@@ -31,6 +31,7 @@ jobs:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite ES_TEST=frontend
   - name: Minikube - Frontend (Latest)
+    if: type in (cron)
     cache:
       directories:
         - ~/.npm
