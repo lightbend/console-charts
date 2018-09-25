@@ -7,17 +7,28 @@
 source smokecommon
 if [[ $CURRENT_CONTEXT == "minishift" ]]; then exit 0; fi
 
-TMPPIPE=$(mktemp -t pipe.XXX)
+TMPDIR=$(mktemp -d)
+INGRESS_YAML=$TMPDIR/ingress.yaml
 
 cleanup() {
-    if [ -n "$TMPPIPE" ] ; then
-        kubectl delete -f $TMPPIPE > /dev/null
-        rm -f $TMPPIPE
+    if [ -n "$TMPDIR" ] ; then
+        rm -rf $TMPDIR
     fi
+    kubectl delete -n lightbend ingress ingress-test
+    # Put things back
+    ( cd .. ; make install-local )
 }
 
-# Make sure we delete the ingress resource
+# Make sure we delete the ingress resource and put the Console back the way it was
 trap cleanup 0
+
+# Path component used by ingress and configured into console bits.  Note it needs the trailing /
+PATH_PREFIX=/ingress/path/
+
+# Reinstall the Console with modified template values for the ingress setup.
+VALUES_FILE=$TMPDIR/values.yaml
+command -p echo "baseUrl: $PATH_PREFIX" >$VALUES_FILE
+( cd .. ; HELM_VALUES_FILE=$VALUES_FILE make install-local )
 
 # Allows us to know when the ingress changes are ready to go
 # When ready, the describe ends with something like:
@@ -42,17 +53,17 @@ CONSOLE_REMOTE_PORT=$( kubectl get -n lightbend services expose-es-console -o js
 
 # Setup ingress
 # ...probably a cool way to do this with -o go-template or with yq
-sed -e "s/{{PORT}}/$CONSOLE_REMOTE_PORT/g" <resources/ingress-test.template.yaml >$TMPPIPE
-kubectl apply -f $TMPPIPE > /dev/null
+sed -e "s/{{PORT}}/$CONSOLE_REMOTE_PORT/g" -e "s|{{PATH}}|$PATH_PREFIX|g" <resources/ingress-test.template.yaml >$INGRESS_YAML
+kubectl apply -f $INGRESS_YAML > /dev/null
 
 # Wait until the changes have been applied
 busy_wait ingress_ready
 
 # The more traditional way to do this would be to tweak DNS or /etc/hosts to point 'minikube.ingress.test' to
-# your minikup ip.  We don't want to mess with such things for this test so use the curl -H flag to achieve
+# your minikube ip.  We don't want to mess with such things for this test so use the curl -H flag to achieve
 # the equivalent.
 
 # Test access
-busy_wait test_es_console_responding http://$( minikube ip )/es-console -H 'Host: minikube.ingress.test'
+busy_wait test_es_console_responding http://$( minikube ip )${PATH_PREFIX}service/es-console -H 'Host: minikube.ingress.test'
 
 test_summary

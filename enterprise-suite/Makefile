@@ -108,8 +108,8 @@ install-helm:  ## Install required helm components into cluster
 	-helm init --wait --service-account tiller --tiller-namespace=$(TILLER_NAMESPACE)
 
 # helm settings for installing locally
-# If set, DEV_HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
-HELM_VALUES_FLAG = $(if $(DEV_HELM_VALUES_FILE), --values $(DEV_HELM_VALUES_FILE))
+# If set, HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
+HELM_VALUES_FLAG=$(if $(HELM_VALUES_FILE),--values $(HELM_VALUES_FILE))
 
 # called from shell script for travis job:
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install local tarball

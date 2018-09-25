@@ -2,8 +2,8 @@
 
 # Run all smoke tests with a filename of smoke_*.
 # * Exit code indicates overall number of test failures.
-# * Each test is piped to "sponge" to print output all at once
-#   when the test run is finished, for better reports.
+# * Output is stored in separate logs, then only displayed on failures (in order)
+
 
 FAILURES=0
 pids=()
