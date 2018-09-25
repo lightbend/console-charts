@@ -37,8 +37,21 @@ shell-tests:
 minikube-tests:
 	$(CHART_DIR)/scripts/run-minikube-tests.sh
 
+backend-tests: shell-tests minikube-tests
+
+frontend-tests:
+	$(CHART_DIR)/scripts/run-e2e-tests.sh
+
 # This target required by top-level helm-charts Makefile.  Tests release on Travis
-test: shell-tests minikube-tests
+#
+# The conditional bit is so we can control which set of tests are run given we're only
+# allowed a single 'test' target.
+test:
+ifneq ($(ES_TEST),frontend)
+	$(MAKE) backend-tests
+else
+	$(MAKE) frontend-tests
+endif
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...
@@ -98,9 +111,13 @@ install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install l
 	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz ES_FORCE_INSTALL=true \
 	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
 
+# helm settings for installing from local files
+# If set, DEV_HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
+DEV_HELM_VALUES_FLAG = $(if $(DEV_HELM_VALUES_FILE), --values $(DEV_HELM_VALUES_FILE))
+
 install-dev: install-helm ## Install content of enterprise-suite/ folder
 	ES_LOCAL_CHART=$(CHART_DIR) ES_FORCE_INSTALL=true \
-	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE)
+	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE) $(DEV_HELM_VALUES_FLAG)
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
