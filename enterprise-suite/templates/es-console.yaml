@@ -16,7 +16,7 @@ spec:
       {{ end }}
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
+        image: l{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         resources:
           requests:
