@@ -115,7 +115,7 @@ spec:
           - name: GF_AUTH_ANONYMOUS_ORG_ROLE
             value: "Editor"
           - name: GF_SERVER_ROOT_URL
-            value: "/service/grafana/"
+            value: "{{ .Values.baseUrl }}service/grafana/"
           - name: GF_SERVER_ROUTER_LOGGING
             value: "true"
         ports:

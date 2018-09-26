@@ -10,7 +10,7 @@ spec:
   - host: minikube.ingress.test
     http:
       paths:
-      - path: /es-console
+      - path: {{PATH}}
         backend:
           serviceName: expose-es-console
           servicePort: {{PORT}}

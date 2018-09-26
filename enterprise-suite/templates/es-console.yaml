@@ -74,6 +74,7 @@ data:
       server_name localhost;
 
       location / {
+        sub_filter  '<base href="/">'  '<base href="{{ .Values.baseUrl }}">';
         root  /usr/share/nginx/html;
         index index.html index.htm;
         try_files $uri$args $uri$args/ /index.html;

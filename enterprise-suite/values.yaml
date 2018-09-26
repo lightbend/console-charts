@@ -28,6 +28,9 @@ imagePullPolicy: IfNotPresent
 prometheusDomain: prometheus.io
 # minikube debug resources
 minikube: false
+# base URL for the console.  Set, for example, if accessing the console through a
+# proxy or ingress that changes the base path.
+baseUrl: /
 # Run pods as the given UID. There is no sensible default for this, so customers need to provide it.
 podUID:
 # Commercial image credentials - username and password are required.
