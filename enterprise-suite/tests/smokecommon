@@ -94,23 +94,29 @@ test_es_console_responding() {
 
 # Grafana access test
 test_grafana_responding() {
-  results=$( curl_query $1 "api/org" | jq '.id' )
+  GRAFANA_URL=$1
+  shift
+  results=$( curl_query $GRAFANA_URL "api/org" "$@" | jq '.id' )
   ! [[ $results -eq 0 ]]
-  T $? grafana service accessible via $1
+  T $? grafana service accessible via $GRAFANA_URL $@
 }
 
 # Prometheus access test
 test_prom_responding() {
-  status=$( curl_query $1 "api/v1/status/config" | jq '.status' )
+  PROM_URL=$1
+  shift
+  status=$( curl_query $PROM_URL "api/v1/status/config" "$@" | jq '.status' )
   [[ $status = '"success"' ]]
-  T $? prometheus service accessible via $1
+  T $? prometheus service accessible via $PROM_URL "$@"
 }
 
 # ES monitor API access test
 test_es_monitor_API_responding() {
-  status=$( curl_query $1 "status" | jq '.status' )
+  ESMAPI_URL=$1
+  shift
+  status=$( curl_query $ESMAPI_URL "status" "$@" | jq '.status' )
   [[ $status = '"success"' ]]
-  T $? es-monitor-api service accessible via $1
+  T $? es-monitor-api service accessible via $ESMAPI_URL "$@"
 }
 
 # Alertmanager access test

@@ -64,6 +64,18 @@ busy_wait ingress_ready
 # the equivalent.
 
 # Test access
-busy_wait test_es_console_responding http://$( minikube ip )${PATH_PREFIX}service/es-console -H 'Host: minikube.ingress.test'
+CONSOLE_BASE=http://$( minikube ip )${PATH_PREFIX}
+
+busy_wait test_es_console_responding ${CONSOLE_BASE}service/es-console -H 'Host: minikube.ingress.test'
+
+# Base URLs for access to services via console through ingress
+GRAFANA_VIA_CONSOLE=${CONSOLE_BASE}service/grafana
+PROMETHEUS_VIA_CONSOLE=${CONSOLE_BASE}service/prometheus
+ESMONITOR_VIA_CONSOLE=${CONSOLE_BASE}service/es-monitor-api
+
+FLAGS=(-H "Host: minikube.ingress.test")
+test_grafana_responding $GRAFANA_VIA_CONSOLE "${FLAGS[@]}"
+test_prom_responding $PROMETHEUS_VIA_CONSOLE "${FLAGS[@]}"
+test_es_monitor_API_responding $ESMONITOR_VIA_CONSOLE "${FLAGS[@]}"
 
 test_summary
