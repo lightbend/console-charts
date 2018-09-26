@@ -2,7 +2,7 @@
 
 # helm-charts
 
-Contains public Helm charts for various Lightbend projects. This project is hosted on [GitHub Pages](https://lightbend.github.io/helm-charts/index.yaml).
+Contains public Helm charts for various Lightbend projects. The helm repo is available at `https://repo.lightbend.com/helm-charts`.
 
 ## Project layout
 
@@ -38,7 +38,7 @@ kubectl create clusterrolebinding tiller-cluster-admin --clusterrole=cluster-adm
 
 helm init --service-account tiller
 
-helm repo add lightbend-helm-charts https://lightbend.github.io/helm-charts
+helm repo add lightbend-helm-charts https://repo.lightbend.com/helm-charts
 
 helm repo update
 
