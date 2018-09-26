@@ -69,12 +69,6 @@ smoke_finished() {
     fi
 }
 
-# This test has to be run on its own
-smoketest=smoke_ingress
-echo ==== Running $smoketest
-./$smoketest 2>&1 > /tmp/log-$smoketest
-smoke_finished $?
-
 # The rest we run in parallel
 for smoketest in smoke_*; do
     if [ "$smoketest" = "smoke_ingress" ] ; then
@@ -96,8 +90,14 @@ for (( n=0; n<${#pids[@]}; n++ )); do
     wait "$pid"
     smoke_finished $?
 done
-echo
 
+# This test has to be run on its own
+smoketest=smoke_ingress
+echo ==== Running $smoketest
+./$smoketest 2>&1 > /tmp/log-$smoketest
+smoke_finished $?
+
+echo
 echo "All tests completed with $FAILURES failures"
 
 if [ "$FAILURES" != "0" ]; then
