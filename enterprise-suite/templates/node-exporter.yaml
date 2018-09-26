@@ -1,4 +1,7 @@
-
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-node-exporter
 ---
 apiVersion: apps/v1beta2
 kind: DaemonSet
@@ -20,7 +23,7 @@ spec:
         app: prometheus
         component: node-exporter
     spec:
-      serviceAccountName: "default"
+      serviceAccountName: "prometheus-node-exporter"
       {{ if .Values.podUID }}
       securityContext:
         runAsUser: {{ .Values.podUID }}
