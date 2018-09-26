@@ -73,3 +73,5 @@
 - record: memcached_evictions_rate
   expr: rate(memcached_items_evicted_total[5m])
 
+- record: akka_http_http_server_responses_5xx_rate
+  expr: rate(akka_http_http_server_responses_5xx[5m])

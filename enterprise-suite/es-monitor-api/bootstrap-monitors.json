@@ -608,14 +608,14 @@
       "model": "threshold",
       "parameters": {
         "name": "akka_http_server_5xx",
-        "metric": "akka_http_http_server_responses_5xx",
+        "metric": "akka_http_http_server_responses_5xx_rate",
         "comparator": ">",
         "threshold": "0",
         "window": "5m",
-        "confidence": "1",
+        "confidence": "1.0",
         "severity": "warning",
         "summary": "HTTP 5xx errors",
-        "description": "HTTP server at {{labels.instance}} has 5xx errors",
+        "description": "HTTP server at {{$labels.instance}} has 5xx errors",
         "monitorType": ""
       }
     },
@@ -632,6 +632,21 @@
         "severity": "warning",
         "summary": "HTTP client response time is anomalous",
         "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+        "monitorType": ""
+      }
+    },
+    {
+      "model": "threshold",
+      "parameters": {
+        "name": "lagom_circuit_breaker_state",
+        "metric": "lagom_circuit_breaker_state",
+        "comparator": "<",
+        "threshold": "3",
+        "window": "1m",
+        "confidence": "5e-324",
+        "severity": "critical",
+        "summary": "Circuit breaker tripped",
+        "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}",
         "monitorType": ""
       }
     }
