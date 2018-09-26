@@ -34,8 +34,10 @@ package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 shell-tests:
 	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
 
-minikube-tests:
-	$(CHART_DIR)/scripts/run-minikube-tests.sh
+minikube-tests: build install-local
+	@echo Installed Console from helm charts: $(CHART)
+	@echo Running tests
+	( cd $(CHART_DIR)/tests ; ./smoketest ; )
 
 backend-tests: shell-tests minikube-tests
 
