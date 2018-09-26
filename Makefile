@@ -30,7 +30,7 @@ all: package index
 index: init docs/index.yaml
 
 docs/index.yaml: $(wildcard docs/*.tgz)
-	helm repo index docs --url https://lightbend.github.io/helm-charts
+	helm repo index docs --url https://repo.lightbend.com/helm-charts
 
 init:
 	@helm init -c > /dev/null
