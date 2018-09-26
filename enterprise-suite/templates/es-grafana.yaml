@@ -50,7 +50,7 @@ metadata:
   labels:
     app: grafana
     component: "server"
-  name: grafana-server
+  name: grafana
 spec:
   ports:
     - name: http
@@ -84,7 +84,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: grafana-server
+  name: grafana
   labels:
     app: grafana
     component: server
