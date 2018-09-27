@@ -89,8 +89,19 @@ data:
       set $monitorapi "es-monitor-api";
       set $grafana "grafana-server";
 
+      # nginx config primer:
+      # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
+      #   nginx uses longest path match to decide which location handler to use
+      #   the result of a location handler can then match and enter another location handler
+      # proxy_pass http://$variable triggers re-resolve mode, otherwise would have fixed IP
+      # proxy_redirect 'match' 'replace'
+      #   magic 'replace' value ' $1/' with a space prefix tells nginx to not add server and port
+      # sub_filter 'match' 'replace'
+      #   rewrites backend content, which we use for inserting the base path
+      # proxie_cookie_path 'match' 'replace'
+      #   fixes session cookie Path attribute, for Grafana
+
       # proxy_pass backends with dynamic base url
-      # (redirects to ' $1/' with a space prefix tells nginx to not add server and port)
 
       sub_filter_once off;
 
