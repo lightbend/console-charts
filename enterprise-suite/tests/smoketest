@@ -10,7 +10,7 @@ pids=()
 
 function print_debug() {
     [[ $TRAVIS ]] || return
-    echo -e "travis_fold:start:$1\033[33;1m$2\033[0m"
+    echo -e "travis_fold:start:debug.logs\033[33;1mDebug Logs\033[0m"
     local pods=$(kubectl -n lightbend get pod --no-headers -o go-template='{{range .items}}{{.metadata.name}} {{end}}')
     echo
     echo "========================================"
@@ -35,7 +35,7 @@ function print_debug() {
     echo
     echo "========================================"
     echo
-    echo -e "\ntravis_fold:end:$1\r"
+    echo -e "\ntravis_fold:end:debug.logs\r"
 }
 
 print_debug
