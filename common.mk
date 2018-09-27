@@ -6,13 +6,13 @@
 
 HELM_CHARTS_DIR = ..
 
-lint: init
-	helm lint .
-
 # Package up the chart files and move the tarball to the helm-charts repository.
 # Include a .helmignore file in your directory to specify files to omit from the package.
 package: init
 	helm package -d $(HELM_CHARTS_DIR)/docs .
+
+lint: init
+	helm lint .
 
 # This satifies the need for a test target but does nothing.
 test:

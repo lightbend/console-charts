@@ -67,17 +67,26 @@ Then run the release script on a clean master checkout:
     scripts/make-release.sh enterprise-suite
     git push --follow-tags
     
-This will increment the chart version, package it, and make a
+The `make-release.sh` script will create the chart tarball, push it to the `docs`
+directory, rebuild the `index.yaml` file, and then make a
 commit. Finally, `git push --tags` will publish the release and git tag.
 
-Optionally you can specify the version to use:
+By default, the build uses the version specified in the `Chart.yaml`
+file.  The version number will be auto-incremented for the next build.
+Optionally, you can specify the version to use:
 
     scripts/make-release.sh enterprise-suite 1.0.0
+
+This is useful if you want to increment the major or minor version
+number.  In the example above, the build would use v1.0.0 and `Chart.yaml` would then
+be setup for the next build with version 1.0.1.
 
 ### Enterprise Suite Console
 
 See [ES Build and Release](https://docs.google.com/document/d/14L3Zdwc-MkCDR1-7fWQYQT3k53vLc4cehAKEuOnwhxs/edit)
-for details on the overall release process.
+for details on the overall release process.  (Note that for the
+`enterprise-suite` project, we automatically build and publish the
+`enterprise-suite-latest` project at the same time.)
 
 ## Maintenance
 
