@@ -9,6 +9,7 @@ FAILURES=0
 pids=()
 
 function print_debug() {
+    [[ $TRAVIS ]] || return
     local pods=$(kubectl -n lightbend get pod --no-headers -o go-template='{{range .items}}{{.metadata.name}} {{end}}')
     echo
     echo "========================================"
@@ -44,6 +45,9 @@ for smoketest in smoke_*; do
 	pids+=($!)
 	smoketests+=($smoketest)
 done
+
+# terminate all child processes if hit ctrl-c:
+trap "kill 0; exit 1" INT
 
 for (( n=0; n<${#pids[@]}; n++ )); do
     pid="${pids[$n]}"
