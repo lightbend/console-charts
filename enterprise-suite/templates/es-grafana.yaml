@@ -101,7 +101,7 @@ spec:
         runAsUser: {{ .Values.podUID }}
       {{ end }}
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
+      - image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
         resources:
