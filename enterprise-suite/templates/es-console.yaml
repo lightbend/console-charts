@@ -85,9 +85,9 @@ data:
 
       resolver 127.0.0.1:5353 ipv6=off valid=30s;
 
-      set $prometheus "prometheus-server.{{.Release.Namespace}}.svc.cluster.local.";
-      set $monitorapi "es-monitor-api.{{.Release.Namespace}}.svc.cluster.local.";
-      set $grafana "grafana-server.{{.Release.Namespace}}.svc.cluster.local.";
+      set $prometheus "prometheus-server";
+      set $monitorapi "es-monitor-api";
+      set $grafana "grafana-server";
 
       # proxy_pass backends with dynamic base url
       # (redirects to ' $1/' with a space prefix tells nginx to not add server and port)
