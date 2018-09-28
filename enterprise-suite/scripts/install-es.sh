@@ -72,11 +72,8 @@ function import_credentials() {
         usage
     fi
 
-	# write creds to file for use by helm
-    cat <<EOF >$CREDS
-imageCredentials.username: $repo_username
-imageCredentials.password: $repo_password
-EOF
+    # write creds to file for use by helm
+    printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
 
 }
 
