@@ -2,6 +2,17 @@
 
 set -eu
 
+CREDS=$(mktemp -t creds.XXXX)
+
+cleanup() {
+    if [ -f "$CREDS" ] ; then
+        rm -f $CREDS
+    fi
+}
+
+# Make sure we delete the credentials file
+trap cleanup 0
+
 function docvar() {
     envvar=$1
     local detail=$2
@@ -60,6 +71,13 @@ function import_credentials() {
         echo
         usage
     fi
+
+	# write creds to file for use by helm
+    cat <<EOF >$CREDS
+imageCredentials.username: $repo_username
+imageCredentials.password: $repo_password
+EOF
+
 }
 
 function debug() {
@@ -129,10 +147,10 @@ fi
 
 if [ "true" == "$should_upgrade" ]; then
     debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        --values $CREDS \
         $@
 else
     debug helm install "$chart_ref" --name="$ES_HELM_NAME" --namespace="$ES_NAMESPACE" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        --values $CREDS \
         $@
 fi
