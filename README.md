@@ -75,7 +75,7 @@ By default, the build uses the version specified in the `Chart.yaml`
 file.  The version number will be auto-incremented for the next build.
 Optionally, you can specify the version to use:
 
-    scripts/make-release.sh enterprise-suite 1.0.0
+    ./scripts/make-release.sh enterprise-suite 1.0.0
 
 This is useful if you want to increment the major or minor version
 number.  In the example above, the build would use v1.0.0 and `Chart.yaml` would then
