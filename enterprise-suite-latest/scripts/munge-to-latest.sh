@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eu
 esl_dir="$( cd "$( dirname $( dirname "${BASH_SOURCE[0]}" ) )" >/dev/null && pwd )"
 
 helm_script_dir=$esl_dir/../scripts

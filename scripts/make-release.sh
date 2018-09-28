@@ -54,12 +54,12 @@ git add Chart.yaml
 
 echo "Building release"
 cd $make_dir
-CHARTS=$chart
+CHARTS=($chart)
 if [ "$chart" = "enterprise-suite" ] ; then
     # We build both enterprise-suite and enterprise-suite-latest at the same time...
     CHARTS+=" ${chart}-latest"
 fi
-make -B CHARTS="$CHARTS"
+make -B CHARTS="${CHARTS[@]}"
 git add docs
 
 git commit -m "Release $git_tag"
