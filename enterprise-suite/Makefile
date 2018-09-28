@@ -97,7 +97,7 @@ MINIKUBE=true
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE),internalEnableCredentialsSecret=false > $@
+	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE) > $@
 
 TILLER_NAMESPACE := kube-system
 
