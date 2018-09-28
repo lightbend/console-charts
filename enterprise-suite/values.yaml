@@ -1,12 +1,12 @@
 #################################################
 # Update these versions for a release.
 #
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.2
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
+esConsoleVersion: v0.1.3
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
 esMonitorVersion: v0.1.0
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.1.0
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
+esGrafanaVersion: v0.1.1
 # prom/prometheus
 prometheusVersion: v2.2.1
 # prom/alertmanager

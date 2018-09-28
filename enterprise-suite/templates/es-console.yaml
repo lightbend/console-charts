@@ -14,9 +14,13 @@ spec:
       securityContext:
         runAsUser: {{ .Values.podUID }}
       {{ end }}
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
       containers:
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
+        image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         resources:
           requests:
