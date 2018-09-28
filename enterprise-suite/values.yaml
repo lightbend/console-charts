@@ -1,12 +1,12 @@
 #################################################
 # Update these versions for a release.
 #
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.2
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
+esConsoleVersion: v0.1.3
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
 esMonitorVersion: v0.1.0
-# lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.1.0
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
+esGrafanaVersion: v0.1.1
 # prom/prometheus
 prometheusVersion: v2.2.1
 # prom/alertmanager
@@ -30,11 +30,13 @@ prometheusDomain: prometheus.io
 minikube: false
 # Run pods as the given UID. There is no sensible default for this, so customers need to provide it.
 podUID:
-# Commercial image credentials - username and password are required.
+# Commercial image credentials - set `username` and `password` to install as Kubernetes Secret.
 imageCredentials:
   registry: lightbend-docker-commercial-registry.bintray.io
-  username: setme
-  password: setme
+#  username: setme
+#  password: setme
+# Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
+alertManagerConfigMap: alertmanager-default
 
 #################################################
 # ResourceRequests
@@ -45,9 +47,3 @@ defaultCPURequest: 100m
 defaultMemoryRequest: 50Mi
 # Prometheus resource request for memory
 prometheusMemoryRequest: 250Mi
-
-##################################################
-# Internal variables - should not be set by users.
-#
-# Enable credentials secret generation, disabled for all.yaml generation.
-internalEnableCredentialsSecret: true

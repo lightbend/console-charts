@@ -97,7 +97,7 @@ MINIKUBE=true
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE),internalEnableCredentialsSecret=false > $@
+	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE) > $@
 
 TILLER_NAMESPACE := kube-system
 
@@ -105,12 +105,12 @@ install-helm:  ## Install required helm components into cluster
 	-kubectl create namespace $(TILLER_NAMESPACE)
 	-kubectl create serviceaccount --namespace $(TILLER_NAMESPACE) tiller
 	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin --serviceaccount=$(TILLER_NAMESPACE):tiller
-	-helm init --wait --service-account tiller --tiller-namespace=$(TILLER_NAMESPACE)
+	-helm init --wait --service-account tiller --upgrade --tiller-namespace=$(TILLER_NAMESPACE)
 
 # called from shell script for travis job:
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install local tarball
 	# We set a podUID here for test purposes to ensure everything works as non-root.
-	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz ES_FORCE_INSTALL=true \
+	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
 	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001
 
 # helm settings for installing from local files
@@ -118,7 +118,7 @@ install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install l
 DEV_HELM_VALUES_FLAG = $(if $(DEV_HELM_VALUES_FILE), --values $(DEV_HELM_VALUES_FILE))
 
 install-dev: install-helm ## Install content of enterprise-suite/ folder
-	ES_LOCAL_CHART=$(CHART_DIR) ES_FORCE_INSTALL=true \
+	ES_LOCAL_CHART=$(CHART_DIR) \
 	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE) $(DEV_HELM_VALUES_FLAG)
 
 help:  ## Print help for targets

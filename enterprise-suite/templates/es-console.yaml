@@ -14,6 +14,10 @@ spec:
       securityContext:
         runAsUser: {{ .Values.podUID }}
       {{ end }}
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
       containers:
       - name: dnsmasq
         image: "janeczku/go-dnsmasq:release-1.0.7"
@@ -23,7 +27,7 @@ spec:
           - --verbose
           - --enable-search
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
+        image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         resources:
           requests:
@@ -32,12 +36,13 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-          - name: config-volume
-            mountPath: /etc/nginx/conf.d
-      volumes:
         - name: config-volume
-          configMap:
-            name: es-console
+          mountPath: /etc/nginx/conf.d
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: es-console
 
 {{ if .Values.minikube }}
 ---
@@ -88,6 +93,7 @@ data:
       set $prometheus "prometheus-server";
       set $monitorapi "es-monitor-api";
       set $grafana "grafana-server";
+      set $alertmanager "alertmanager";
 
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
@@ -124,6 +130,11 @@ data:
         sub_filter_types *;
         sub_filter '/service/grafana' '$1';
         proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
+      }
+
+      location ~ (.*/service/alertmanager)(/.*) {
+        proxy_pass http://$alertmanager:9093$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
 
