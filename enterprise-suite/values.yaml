@@ -35,6 +35,8 @@ imageCredentials:
   registry: lightbend-docker-commercial-registry.bintray.io
   username: setme
   password: setme
+# Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
+alertManagerConfigMap: alertmanager-default
 
 #################################################
 # ResourceRequests

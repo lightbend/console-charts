@@ -29,12 +29,13 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-          - name: config-volume
-            mountPath: /etc/nginx/conf.d
-      volumes:
         - name: config-volume
-          configMap:
-            name: es-console
+          mountPath: /etc/nginx/conf.d
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: es-console
 
 {{ if .Values.minikube }}
 ---
@@ -93,5 +94,9 @@ data:
 
       location /service/grafana/ {
         proxy_pass http://grafana-server:3000/;
+      }
+
+      location /service/alertmanager/ {
+        proxy_pass http://alertmanager/;
       }
     }

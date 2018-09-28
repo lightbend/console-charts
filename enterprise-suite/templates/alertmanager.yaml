@@ -1,35 +1,4 @@
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: prometheus-alertmanager
-data:
-  alertmanager.yml: |-
-    global:
-      # ref:  https://typesafe.slack.com/apps/new/incoming-webhooks
-
-    receivers:
-      - name: default
-      #  slack_configs:
-      #  - channel: '#es-alert'
-      #    send_resolved: true
-
-    route:
-      receiver: default
-      group_by: [es_workload]
-
-    # don't alert on warnings if the same alert is already critical
-    inhibit_rules:
-    - source_match:
-        severity: critical
-      target_match:
-        severity: warning
-      equal: [alertname]
-
----
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -103,7 +72,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: prometheus-alertmanager
+            name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
           emptydir: {}
 
@@ -124,3 +93,28 @@ spec:
     component: alertmanager
   type: NodePort
 {{ end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+spec:
+  ports:
+  - port: 9093
+    targetPort: 9093
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: alertmanager-default
+data:
+{{ (.Files.Glob "alertmanager/*").AsConfig | indent 2}}
