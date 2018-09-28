@@ -1,0 +1,11 @@
+#!/bin/bash
+
+source smokecommon
+
+CONSOLE=$( busy_wait nodeport expose-es-console)
+
+BASEPATH="${CONSOLE}/fee/fie/fou/fum"
+
+test_es_console_responding "$BASEPATH/"
+test_grafana_responding "$BASEPATH/service/grafana/"
+test_prom_responding "$BASEPATH/service/prometheus/"
