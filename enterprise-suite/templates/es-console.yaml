@@ -105,6 +105,8 @@ data:
 
       sub_filter_once off;
 
+      set $nocache 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+
       location ~ (.*/service/prometheus)(/.*) {
         proxy_pass http://$prometheus$2$is_args$args;
         sub_filter '="/' '="$1/';
@@ -134,7 +136,7 @@ data:
         proxy_redirect '/' ' $1/';
         # no-cache
         add_header Last-Modified $date_gmt;
-        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+        add_header Cache-Control $nocache;
         if_modified_since off;
         expires off;
         etag off;
@@ -153,7 +155,7 @@ data:
         sub_filter 'base href="/"' 'base href="$1"';
         # no-cache
         add_header Last-Modified $date_gmt;
-        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+        add_header Cache-Control $nocache;
         if_modified_since off;
         expires off;
         etag off;
@@ -168,7 +170,7 @@ data:
         sub_filter 'base href="/"' 'base href="$1"';
         # kill cache
         add_header Last-Modified $date_gmt;
-        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+        add_header Cache-Control $nocache;
         if_modified_since off;
         expires off;
         etag off;
