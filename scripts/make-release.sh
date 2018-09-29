@@ -37,20 +37,12 @@ if [ -z "$version" ]; then
 fi
 echo "using version: $version"
 
-semver=(${version//./ })
-((semver[2]++))
-next_version="${semver[0]}.${semver[1]}.${semver[2]}"
-echo "setting next version to $next_version"
-
 # Check we haven't already tagged with this version.
 git_tag=$chart-$version
 if git rev-parse $git_tag &> /dev/null; then
     echo "$git_tag already exists, check 'git tag'"
     exit 1
 fi
-
-yq w -i Chart.yaml version $next_version
-git add Chart.yaml
 
 echo "Building release"
 cd $make_dir
@@ -61,6 +53,15 @@ if [ "$chart" = "enterprise-suite" ] ; then
 fi
 make -B CHARTS="${CHARTS[@]}"
 git add docs
+
+# Update version for next build
+cd $chart_dir
+semver=(${version//./ })
+((semver[2]++))
+next_version="${semver[0]}.${semver[1]}.${semver[2]}"
+echo "setting next version to $next_version"
+yq w -i Chart.yaml version $next_version
+git add Chart.yaml
 
 git commit -m "Release $git_tag"
 git tag -a $git_tag -m "Release $git_tag"
