@@ -8,13 +8,13 @@
     {
         "graphName": "Memory Available Percent",
         "promQL": [
-            "sum without(container_name,id,image,name)(100-((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100))"
+            "100 - sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
         ]
     },
     {
         "graphName": "File System Free Percent",
         "promQL": [
-            "sum without(container_name, id, image, name)(100-(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100))"
+            "100 - sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)"
         ]
     },
     {
