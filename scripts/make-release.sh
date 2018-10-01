@@ -54,18 +54,20 @@ fi
 make -B CHARTS="${CHARTS[@]}"
 git add docs
 
+git commit -m "Release $git_tag"
+git tag -a $git_tag -m "Release $git_tag"
+echo Tagged release with $git_tag
+
 # Update version for next build
 cd $chart_dir
 semver=(${version//./ })
 ((semver[2]++))
 next_version="${semver[0]}.${semver[1]}.${semver[2]}"
+echo
 echo "setting next version to $next_version"
 yq w -i Chart.yaml version $next_version
 git add Chart.yaml
+git commit -m "Incremented version for next release to $next_version"
 
-git commit -m "Release $git_tag"
-git tag -a $git_tag -m "Release $git_tag"
-
-echo Tagged commit with $git_tag
 echo
 echo When ready, do a 'git push --follow-tags' to finish the release.

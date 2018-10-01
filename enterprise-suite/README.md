@@ -71,10 +71,6 @@ These assume you're using minikube.
 
 ### Release ES images
 
-See the Releases section of the
-[Enterprise Suite Build and Release Process](https://github.com/lightbend/helm-charts/tree/master/enterprise-suite)
-documentation.
-
 ### Release Charts
 
 Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
