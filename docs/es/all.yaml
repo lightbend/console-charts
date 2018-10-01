@@ -1,137 +1,4 @@
 ---
-# Source: enterprise-suite/templates/resourcelimits.yaml
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: lightbend-namespace-defaults
-spec:
-  limits:
-  - defaultRequest:
-      cpu: 100m
-      memory: 50Mi
-    type: Container
-
----
-# Source: enterprise-suite/templates/alertmanager.yaml
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: prometheus-alertmanager
-data:
-  alertmanager.yml: |-
-    global:
-      # ref:  https://typesafe.slack.com/apps/new/incoming-webhooks
-
-    receivers:
-      - name: default
-      #  slack_configs:
-      #  - channel: '#es-alert'
-      #    send_resolved: true
-
-    route:
-      receiver: default
-      group_by: [es_workload]
-
-    # don't alert on warnings if the same alert is already critical
-    inhibit_rules:
-    - source_match:
-        severity: critical
-      target_match:
-        severity: warning
-      equal: [alertname]
-
----
-apiVersion: apps/v1beta2
-kind: Deployment
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: prometheus-alertmanager
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prometheus
-      component: alertmanager
-  template:
-    metadata:
-      labels:
-        app: prometheus
-        component: alertmanager
-    spec:
-      serviceAccountName: default
-      containers:
-        - name: prometheus-alertmanager
-          image: prom/alertmanager:v0.15.1
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          env:
-          args:
-            - --config.file=/etc/config/alertmanager.yml
-            - --storage.path=/data
-
-          ports:
-            - containerPort: 9093
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 9093
-            timeoutSeconds: 30
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9093
-            timeoutSeconds: 30
-            initialDelaySeconds: 30
-
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-
-        - name: prometheus-alertmanager-configmap-reload
-          image: jimmidyson/configmap-reload:v0.2.2
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          args:
-            - --volume-dir=/etc/config
-            - --webhook-url=http://localhost:9093/-/reload
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-              readOnly: true
-      volumes:
-        - name: config-volume
-          configMap:
-            name: prometheus-alertmanager
-
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-alertmanager
-spec:
-  ports:
-  - port: 9093
-    protocol: TCP
-    targetPort: 9093
-    nodePort: 30093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: NodePort
-
-
----
 # Source: enterprise-suite/templates/es-grafana.yaml
 ---
 apiVersion: v1
@@ -159,9 +26,9 @@ data:
       {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{ContextTags}[1m]))"]},
       {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"]},
       {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{ContextTags}[1m]))"]},
-      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"})"]},
-      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"})"]},
-      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"})"]}
+      {"graphName":"Response Time 2XX 99% (ms)", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]},
+      {"graphName":"Response Time 4XX 99% (ms)", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]},
+      {"graphName":"Response Time 5XX 99% (ms)", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]}
     ]
   cassandra-exporter.json: |
     [
@@ -205,6 +72,30 @@ data:
                                              "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
                                              "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})"]}
     ]
+  kafka-exporter.json: |
+    [
+      {"graphName":"Brokers Online", "promQL":["count(kafka_server_replicamanager_leadercount{ContextTags})"]},
+      {"graphName":"Active Controllers", "promQL":["sum(kafka_controller_kafkacontroller_activecontrollercount{ContextTags})"]},
+      {"graphName":"Unclean Leader Election Rate", "promQL":["sum(irate(kafka_controller_controllerstats_uncleanleaderelections_total{ContextTags}[5m]))"]},
+      {"graphName":"Online Partitions", "promQL":["sum(kafka_server_replicamanager_partitioncount{ContextTags})"]},
+      {"graphName":"Under Replicated Partitions", "promQL":["sum(kafka_server_replicamanager_underreplicatedpartitions{ContextTags})"]},
+      {"graphName":"Offline Partitions Count", "promQL":["sum(kafka_controller_kafkacontroller_offlinepartitionscount{ContextTags})"]},
+      {"graphName":"Bytes Rate (In & Out)", "promQL":[
+        "sum(irate(kafka_server_brokertopicmetrics_bytesin_total{ContextTags,topic=\"\"}[1m]))",
+        "sum(irate(kafka_server_brokertopicmetrics_bytesout_total{ContextTags,topic=\"\"}[1m]))"
+      ]},
+      {"graphName":"Total Messages In", "promQL":["sum(irate(kafka_server_brokertopicmetrics_messagesin_total{ContextTags,topic=\"\"}[1m]))"]},
+      {"graphName":"Produce Request Rate (Total & Failed)", "promQL":[
+        "sum(irate(kafka_server_brokertopicmetrics_totalproducerequests_total{ContextTags,topic=\"\"}[1m]))",
+        "sum(irate(kafka_server_brokertopicmetrics_failedproducerequests_total{ContextTags,topic=\"\"}[1m]))"
+      ]},
+      {"graphName":"Fetch Request Rate (Total & Failed)", "promQL":[
+        "sum(irate(kafka_server_brokertopicmetrics_totalfetchrequests_total{ContextTags,topic=\"\"}[1m]))",
+        "sum(irate(kafka_server_brokertopicmetrics_failedfetchrequests_total{ContextTags,topic=\"\"}[1m]))"
+      ]},
+      {"graphName":"Network Processor Avg Idle Percent", "promQL":["kafka_network_socketserver_networkprocessoravgidle_percent{ContextTags}*100"]},
+      {"graphName":"Request Handler Avg Idle Percent", "promQL":["kafka_server_kafkarequesthandlerpool_requesthandleravgidle_percent{ContextTags}*100"]}
+    ]
   kubernetes-exporter.json: |
     [
        {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
@@ -212,6 +103,13 @@ data:
        {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
        {"graphName": "Bytes Received Per Second", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
        {"graphName": "Bytes Transmitted Per Second", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
+    ]
+  lagom-exporter.json: |
+    [
+      {"graphName":"Circuit Breaker State", "promQL":["min by (instance,circuit_breaker) (lagom_circuit_breaker_state{ContextTags})"]},
+      {"graphName":"Circuit Breaker Failures Per Second", "promQL":["sum by (instance,circuit_breaker)(irate (lagom_circuit_breaker_failure{ContextTags}[1m]))"]},
+      {"graphName":"Circuit Breaker Latency 99% (ms)", "promQL":["max by (instance,circuit_breaker) (lagom_circuit_breaker_latency_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]},
+      {"graphName":"Circuit Breaker Throughput Per Second", "promQL":["sum by (instance,circuit_breaker)(irate (lagom_circuit_breaker_throughput{ContextTags}[1m]))"]}
     ]
   memcached-exporter.json: |
     [
@@ -229,12 +127,6 @@ data:
     ]
   play-exporter.json: |
     [
-      {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{ContextTags}[1m]))"]},
-      {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"]},
-      {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{ContextTags}[1m]))"]},
-      {"graphName":"Response Time 2XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"})"]},
-      {"graphName":"Response Time 4XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"})"]},
-      {"graphName":"Response Time 5XX", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"})"]},
       {"graphName":"Play Client Requests Per Second", "promQL":["sum by (http_client)(irate(play_http_client_play_client_requests{ContextTags}[1m]))"]},
       {"graphName":"Play Client Response Time", "promQL":["max by (http_client)(play_http_client_play_client_service_response_time_ns{ContextTags, quantile=\"0.99\"})"]}
     ]
@@ -248,11 +140,17 @@ data:
     ]
   zookeeper-exporter.json: |
     [
-      {"graphName":"Average Latency", "promQL":["avg(zk_avg_latency{ContextTags})"]},
+      {"graphName":"Quorum Size", "promQL":["max(zookeeper_quorumsize{ContextTags})"]},
+      {"graphName":"Alive Connections", "promQL":["sum(zookeeper_numaliveconnections{ContextTags})"]},
+      {"graphName":"Number of ZNodes", "promQL":["avg(zookeeper_inmemorydatatree_nodecount{ContextTags})"]},
+      {"graphName":"Number of Watchers", "promQL":["sum(zookeeper_inmemorydatatree_watchcount{ContextTags})"]},
+      {"graphName":"Outstanding Requests", "promQL":["zookeeper_outstandingrequests{ContextTags}"]},
+      {"graphName":"Request Latency - Minimum", "promQL":["zookeeper_minrequestlatency{ContextTags}"]},
+      {"graphName":"Request Latency - Average", "promQL":["zookeeper_avgrequestlatency{ContextTags}"]},
+      {"graphName":"Request Latency - Maximum", "promQL":["zookeeper_maxrequestlatency{ContextTags}"]},
       {"graphName":"Synced Followers", "promQL":["zk_synced_followers{ContextTags}"]},
       {"graphName":"Open File Descriptors", "promQL":["zk_open_file_descriptor_count{ContextTags}"]},
-      {"graphName":"Pending Syncs", "promQL":["zk_pending_syncs{ContextTags}"]},
-      {"graphName":"Connections", "promQL":["zk_num_alive_connections{ContextTags}"]}
+      {"graphName":"Pending Syncs", "promQL":["zk_pending_syncs{ContextTags}"]}
     ]
   
 
@@ -346,8 +244,13 @@ spec:
         app: grafana
         component: server
     spec:
+      
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:v0.1.0
+      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:v0.1.1
         imagePullPolicy: IfNotPresent
         name: grafana-server
         resources:
@@ -386,6 +289,94 @@ spec:
       - name: grafana-datasources
         configMap:
           name: grafana-datasource-cm
+
+---
+# Source: enterprise-suite/templates/node-exporter.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-node-exporter
+---
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  labels:
+    app: prometheus
+    component: node-exporter
+  name: prometheus-node-exporter
+spec:
+  updateStrategy:
+    type: OnDelete
+  selector:
+    matchLabels:
+      app: prometheus
+      component: node-exporter
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: node-exporter
+    spec:
+      serviceAccountName: "prometheus-node-exporter"
+      
+      containers:
+        - name: prometheus-node-exporter
+          image: "prom/node-exporter:v0.15.2"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --collector.netdev.ignored-devices=^veth.*
+            - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|host|var)($|/)
+            - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
+            - --no-collector.netstat
+            - --no-collector.vmstat
+          ports:
+            - name: metrics
+              containerPort: 9100
+              hostPort: 9100
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly:  true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+      hostNetwork: true
+      hostPID: true
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:
+    app: prometheus
+    component: "node-exporter"
+  name: prometheus-node-exporter
+spec:
+  clusterIP: None
+  ports:
+    - name: metrics
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+  selector:
+    app: prometheus
+    component: "node-exporter"
+  type: "ClusterIP"
+
 
 ---
 # Source: enterprise-suite/templates/kube-state-metrics.yaml
@@ -470,10 +461,14 @@ spec:
         app: prometheus
         component: kube-state-metrics
     spec:
+      
       serviceAccountName: prometheus-kube-state-metrics
       containers:
         - name: prometheus-kube-state-metrics
           image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
+          args:
+            - --port=8080
+            - --telemetry-port=8081
           resources:
             requests:
               cpu: 100m
@@ -573,6 +568,8 @@ spec:
     spec:
       serviceAccountName: prometheus-server
 
+      
+
       initContainers:
         - name: setup
           image: alpine
@@ -592,9 +589,12 @@ spec:
             - mountPath: /etc/bare
               name: bare-prometheus
 
+      imagePullSecrets:
+        - name: commercial-credentials
+
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-monitor-api:v0.1.0
+          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api:v0.1.1
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -638,6 +638,7 @@ spec:
               memory: 250Mi
           args:
             - --config.file=/etc/config/prometheus.yml
+            - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
@@ -658,6 +659,8 @@ spec:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
+            - name: prometheus-data-volume
+              mountPath: /data
 
       terminationGracePeriodSeconds: 300
       volumes:
@@ -667,6 +670,8 @@ spec:
           configMap:
             name: es-monitor-api
         - name: monitor-data-volume
+          emptyDir: {}
+        - name: prometheus-data-volume
           emptyDir: {}
         - name: bare-prometheus
           configMap:
@@ -1359,14 +1364,14 @@ data:
           "model": "threshold",
           "parameters": {
             "name": "akka_http_server_5xx",
-            "metric": "akka_http_http_server_responses_5xx",
+            "metric": "akka_http_http_server_responses_5xx_rate",
             "comparator": ">",
             "threshold": "0",
             "window": "5m",
-            "confidence": "1",
+            "confidence": "1.0",
             "severity": "warning",
             "summary": "HTTP 5xx errors",
-            "description": "HTTP server at {{labels.instance}} has 5xx errors",
+            "description": "HTTP server at {{$labels.instance}} has 5xx errors",
             "monitorType": ""
           }
         },
@@ -1383,6 +1388,21 @@ data:
             "severity": "warning",
             "summary": "HTTP client response time is anomalous",
             "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+            "monitorType": ""
+          }
+        },
+        {
+          "model": "threshold",
+          "parameters": {
+            "name": "lagom_circuit_breaker_state",
+            "metric": "lagom_circuit_breaker_state",
+            "comparator": "<",
+            "threshold": "3",
+            "window": "1m",
+            "confidence": "5e-324",
+            "severity": "critical",
+            "summary": "Circuit breaker tripped",
+            "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}",
             "monitorType": ""
           }
         }
@@ -1701,7 +1721,7 @@ data:
   
         metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
-  static-rules.yml: |+
+  static-rules.yml: |
     - record: node_cpu_percent
       expr: 100 - avg by (instance) (irate(node_cpu{mode="idle"}[5m]) * 100)
   
@@ -1777,91 +1797,190 @@ data:
     - record: memcached_evictions_rate
       expr: rate(memcached_items_evicted_total[5m])
   
+    - record: akka_http_http_server_responses_5xx_rate
+      expr: rate(akka_http_http_server_responses_5xx[5m])
   
 
 ---
-# Source: enterprise-suite/templates/node-exporter.yaml
-
+# Source: enterprise-suite/templates/alertmanager.yaml
 ---
 apiVersion: apps/v1beta2
-kind: DaemonSet
+kind: Deployment
 metadata:
   labels:
     app: prometheus
-    component: node-exporter
-  name: prometheus-node-exporter
+    component: alertmanager
+  name: prometheus-alertmanager
 spec:
-  updateStrategy:
-    type: OnDelete
+  replicas: 1
   selector:
     matchLabels:
       app: prometheus
-      component: node-exporter
+      component: alertmanager
   template:
     metadata:
       labels:
         app: prometheus
-        component: node-exporter
+        component: alertmanager
     spec:
-      serviceAccountName: "default"
+      
+      serviceAccountName: default
       containers:
-        - name: prometheus-node-exporter
-          image: "prom/node-exporter:v0.15.2"
+        - name: prometheus-alertmanager
+          image: prom/alertmanager:v0.15.1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          env:
+          args:
+            - --config.file=/etc/config/alertmanager.yml
+            - --storage.path=/data
+
+          ports:
+            - containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
+
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: data-volume
+              mountPath: /data
+
+        - name: prometheus-alertmanager-configmap-reload
+          image: jimmidyson/configmap-reload:v0.2.2
           resources:
             requests:
               cpu: 100m
               memory: 50Mi
           args:
-            - --path.procfs=/host/proc
-            - --path.sysfs=/host/sys
-            - --collector.netdev.ignored-devices=^veth.*
-            - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|host|var)($|/)
-            - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
-            - --no-collector.netstat
-            - --no-collector.vmstat
-          ports:
-            - name: metrics
-              containerPort: 9100
-              hostPort: 9100
+            - --volume-dir=/etc/config
+            - --webhook-url=http://localhost:9093/-/reload
           volumeMounts:
-            - name: proc
-              mountPath: /host/proc
-              readOnly:  true
-            - name: sys
-              mountPath: /host/sys
+            - name: config-volume
+              mountPath: /etc/config
               readOnly: true
-      hostNetwork: true
-      hostPID: true
+
       volumes:
-        - name: proc
-          hostPath:
-            path: /proc
-        - name: sys
-          hostPath:
-            path: /sys
+        - name: config-volume
+          configMap:
+            name: alertmanager-default
+        - name: data-volume
+          emptydir: {}
+
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    prometheus.io/scrape: "true"
-  labels:
-    app: prometheus
-    component: "node-exporter"
-  name: prometheus-node-exporter
+  name: expose-alertmanager
 spec:
-  clusterIP: None
   ports:
-    - name: metrics
-      port: 9100
-      protocol: TCP
-      targetPort: 9100
+  - port: 9093
+    protocol: TCP
+    targetPort: 9093
+    nodePort: 30093
   selector:
     app: prometheus
-    component: "node-exporter"
-  type: "ClusterIP"
+    component: alertmanager
+  type: NodePort
 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+spec:
+  ports:
+  - port: 9093
+    targetPort: 9093
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: alertmanager-default
+data:
+  alertmanager.yml: |
+    # Example Lightbend Console Alertmanager config.
+  
+    global:
+  
+    # Routing rules.
+    route:
+      receiver: slack
+      # Resend unresolved alerts at this interval.
+      repeat_interval: 4h
+      # Wait for any other alerts in the same group before sending.
+      group_wait: 30s
+      # Wait before sending a new alert for a group.
+      group_interval: 5m
+      # Group alerts by namespace and workload.
+      group_by: [namespace, es_workload]
+      routes:
+      - match:
+          severity: warning
+        receiver: slack
+      - match:
+          severity: critical
+        receiver: slack
+        continue: true
+      - match:
+          severity: critical
+        receiver: pagerduty
+  
+    # Don't alert on warnings if the same alert is already critical.
+    inhibit_rules:
+    - source_match:
+        severity: critical
+      target_match:
+        severity: warning
+      equal: [alertname]
+  
+    templates:
+    # Slack notification templates.
+    - '/etc/config/slack.tmpl'
+  
+    # Receivers.
+    receivers:
+    - name: slack
+      slack_configs:
+      # Use Slack integrations to find the webhook.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#my-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  
+    - name: pagerduty
+      pagerduty_configs:
+      - url: https://pagerduty.localhost/api
+        routing_key: my_secret_routing_key
+        service_key: my_secret_service_key
+  slack.tmpl: |
+    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
+    {{ define "text.slack" }}{{ range $index, $element := .Alerts }}_{{ .Annotations.summary }}_
+        {{ .Annotations.description }}
+    {{ end }}{{- end -}}
+  
 
 ---
 # Source: enterprise-suite/templates/es-console.yaml
@@ -1877,23 +1996,36 @@ spec:
       labels:
         run: es-console
     spec:
+      
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
       containers:
+      - name: dnsmasq
+        image: "janeczku/go-dnsmasq:release-1.0.7"
+        args:
+          - --listen
+          - "127.0.0.1:5353"
+          - --verbose
+          - --enable-search
       - name: es-console
-        image: lightbend-docker-registry.bintray.io/enterprise-suite/es-console:v0.1.0
+        image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console:v0.1.4
         imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 100m
             memory: 50Mi
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         volumeMounts:
-          - name: config-volume
-            mountPath: /etc/nginx/conf.d
-      volumes:
         - name: config-volume
-          configMap:
-            name: es-console
+          mountPath: /etc/nginx/conf.d
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: es-console
 
 
 ---
@@ -1905,12 +2037,25 @@ spec:
   ports:
   - port: 80
     protocol: TCP
-    targetPort: 80
+    targetPort: 8080
     nodePort: 30080
   selector:
     run: es-console
   type: NodePort
 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: console-server
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    run: es-console
+  type: ClusterIP
 
 ---
 apiVersion: v1
@@ -1920,26 +2065,133 @@ metadata:
 data:
   default.conf: |-
     server {
-      listen 80;
+      listen 8080;
       server_name localhost;
+      set $base /usr/share/nginx/html;
 
-      location / {
-        root  /usr/share/nginx/html;
-        index index.html index.htm;
-        try_files $uri$args $uri$args/ /index.html;
+      # use external resolver to lookup backends, cache for 30 seconds
+
+      resolver 127.0.0.1:5353 ipv6=off valid=30s;
+
+      set $prometheus "prometheus-server";
+      set $monitorapi "es-monitor-api";
+      set $grafana "grafana-server";
+      set $alertmanager "alertmanager";
+
+      # nginx config primer:
+      # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
+      #   nginx uses longest path match to decide which location handler to use
+      #   the result of a location handler can then match and enter another location handler
+      # proxy_pass http://$variable triggers re-resolve mode, otherwise would have fixed IP
+      # proxy_redirect 'match' 'replace'
+      #   magic 'replace' value ' $1/' with a space prefix tells nginx to not add server and port
+      # sub_filter 'match' 'replace'
+      #   rewrites backend content, which we use for inserting the base path
+      # proxie_cookie_path 'match' 'replace'
+      #   fixes session cookie Path attribute, for Grafana
+
+      # proxy_pass backends with dynamic base url
+
+      sub_filter_once off;
+
+      set $nocache 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+
+      location ~ (.*/service/prometheus)(/.*) {
+        proxy_pass http://$prometheus$2$is_args$args;
+        sub_filter '="/' '="$1/';
+        sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = "$1"';
+        proxy_redirect '/' ' $1/';
       }
 
-      location /service/prometheus/ {
-        proxy_pass http://prometheus-server/;
+      location ~ (.*/service/es-monitor-api)(/.*) {
+        proxy_pass http://$monitorapi$2$is_args$args;
+        proxy_redirect '/' ' $1/';
       }
 
-      location /service/es-monitor-api/ {
-        proxy_pass http://es-monitor-api/;
+      location ~ (.*/service/grafana)(/.*) {
+        proxy_pass http://$grafana:3000$2$is_args$args;
+        sub_filter_types *;
+        sub_filter '/service/grafana' '$1';
+        proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
       }
 
-      location /service/grafana/ {
-        proxy_pass http://grafana-server:3000/;
+      location ~ (.*/service/alertmanager)(/.*) {
+        proxy_pass http://$alertmanager:9093$2$is_args$args;
+        proxy_redirect '/' ' $1/';
+      }
+
+      # our injected plugin should never cache...
+      location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
+        proxy_pass http://$grafana:3000$2$is_args$args;
+        sub_filter_types *;
+        sub_filter '/service/grafana' '$1';
+        proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+      # redirect /service/prometheus -> /service/prometheus/
+
+      location ~ (.*/service/(prometheus|grafana))$ {
+        return 301 ' $1/';
+      }
+
+      # console entry point
+
+      location ~ (.*/)index.html {
+        alias $base/index.html;
+        sub_filter 'base href="/"' 'base href="$1"';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+      # bookmarks / reloads in the /workloads/ path
+      # (for our single page app, these should reload index.html but keep the path)
+
+      location ~ (.*/)(workloads/.*) {
+        alias $base/index.html;
+        default_type text/html;
+        sub_filter 'base href="/"' 'base href="$1"';
+        # kill cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+      # static files
+
+      location ~ (.*)(/assets/.*) {
+        alias $base$2;
+      }
+
+      location ~ (.*)(/.*) {
+        root $base;
+        index index.html;
+        try_files $2 $1/index.html;
       }
 
     }
+
+---
+# Source: enterprise-suite/templates/commercial-credentials.yaml
+
+# Credentials generation was disabled.
+# Use:
+# kubectl -n lightbend create secret docker-registry \
+#      commercial-credentials \
+#      --docker-server=lightbend-docker-commercial-registry.bintray.io \
+#      --docker-username=mybintrayuser \
+#      --docker-password=mybintraytoken
 
