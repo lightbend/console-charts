@@ -77,8 +77,10 @@ function import_credentials() {
     fi
 
     # write creds to file for use by helm
-    printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
+#    printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
+    printf '%s\n' "imageCredentials.username: username" "imageCredentials.password: password" >$CREDS
 	echo "CREDS post-write: $( ls -l $CREDS )"
+	cat $CREDS
 
 }
 
