@@ -64,7 +64,7 @@ Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
 
 Then run the release script on a clean master checkout:
 
-    scripts/make-release.sh enterprise-suite
+    ./scripts/make-release.sh enterprise-suite
     git push --follow-tags
     
 The `make-release.sh` script will create the chart tarball, push it to the `docs`
