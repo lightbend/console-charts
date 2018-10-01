@@ -76,11 +76,14 @@ function import_credentials() {
         usage
     fi
 
+    # hack to see if variables are expanding correctly
+	repo_username=username
+    repo_password=password
     # write creds to file for use by helm
-#    printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
-    printf '%s\n' "imageCredentials.username: username" "imageCredentials.password: password" >$CREDS
+    printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
 	echo "CREDS post-write: $( ls -l $CREDS )"
 	cat $CREDS
+	#sed -n '1p' $CREDS
 
 }
 
