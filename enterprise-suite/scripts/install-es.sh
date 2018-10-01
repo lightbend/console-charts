@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
+#set -x
+
 set -eu
 
 CREDS=$(mktemp -t creds.XXXX)
+echo "CREDS post-create: $( ls -l $CREDS )"
 
 cleanup() {
     if [ -f "$CREDS" ] ; then
@@ -74,6 +77,7 @@ function import_credentials() {
 
     # write creds to file for use by helm
     printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
+	echo "CREDS post-write: $( ls -l $CREDS )"
 
 }
 
@@ -142,6 +146,7 @@ else
     should_upgrade=false
 fi
 
+echo "CREDS pre-use: $( ls -l $CREDS )"
 if [ "true" == "$should_upgrade" ]; then
     debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
         --values $CREDS \
