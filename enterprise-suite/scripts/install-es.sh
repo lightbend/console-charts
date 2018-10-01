@@ -4,7 +4,8 @@
 
 set -eu
 
-CREDS=$(mktemp -t creds.XXXX)
+CREDS=$(mktemp -t creds.XXXXXX)
+chmod go+r $CREDS
 echo "CREDS post-create: $( ls -l $CREDS )"
 
 cleanup() {
