@@ -6,15 +6,21 @@
         ]
     },
     {
-        "graphName": "Memory Available Percent",
+        "graphName": "Active Memory Used Percent",
         "promQL": [
-            "100 - sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+            "sum without(container_name,id,image,name)((container_memory_working_set_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_working_set_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
         ]
     },
     {
-        "graphName": "File System Free Percent",
+        "graphName": "Total Memory Used Percent",
         "promQL": [
-            "100 - sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)"
+            "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+        ]
+    },
+    {
+        "graphName": "File System Used Percent",
+        "promQL": [
+            "sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)"
         ]
     },
     {
