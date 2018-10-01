@@ -2,450 +2,504 @@ apiVersion: v1
 entries:
   enterprise-suite:
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.91826819-07:00
+    created: 2018-10-01T11:45:15.188998338-07:00
+    description: Lightbend Enterprise Suite
+    digest: db0d65b8e8e5a90ce353495ffa1f768b884e7edb0f9fc69e5f52ef1b193945e1
+    icon: https://repo.lightbend.com/helm-charts/lightbend.svg
+    name: enterprise-suite
+    urls:
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.10.3.tgz
+    version: 0.10.3
+  - apiVersion: v1
+    created: 2018-10-01T11:45:15.187998518-07:00
+    description: Lightbend Enterprise Suite
+    digest: 48bc5719adb20f055ba965cd6f6769b2fccf50c1c50625f28c639747e835ec9e
+    icon: https://repo.lightbend.com/helm-charts/lightbend.svg
+    name: enterprise-suite
+    urls:
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.10.2.tgz
+    version: 0.10.2
+  - apiVersion: v1
+    created: 2018-10-01T11:45:15.176618576-07:00
+    description: Lightbend Enterprise Suite
+    digest: 8efb94ab6000943d07a670021eee00ef7bbdb93f1876aa737ef1c7bda961291f
+    icon: https://repo.lightbend.com/helm-charts/lightbend.svg
+    name: enterprise-suite
+    urls:
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.10.1.tgz
+    version: 0.10.1
+  - apiVersion: v1
+    created: 2018-10-01T11:45:15.204436143-07:00
     description: Lightbend Enterprise Suite
     digest: 929645c8e0e7a877a2bc511f879910ebb800057ca8f75f87f86c842428cbc3b5
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.9.1.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.9.1.tgz
     version: 0.9.1
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.917192953-07:00
+    created: 2018-10-01T11:45:15.202410005-07:00
     description: Lightbend Enterprise Suite
     digest: 4061cbc09054b1434c16d75b1fb5fb26af33f654331608854bf58b89065d8d80
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.7.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.7.tgz
     version: 0.8.7
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.914684026-07:00
+    created: 2018-10-01T11:45:15.200734386-07:00
     description: Lightbend Enterprise Suite
     digest: 825ab524aa55aa515500fee3fd9aefd2e64ced75e89cd0775fb2f867b75df7fe
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.6.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.6.tgz
     version: 0.8.6
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.912863057-07:00
+    created: 2018-10-01T11:45:15.198629083-07:00
     description: Lightbend Enterprise Suite
     digest: 2e0aa0648deae40190b774434da5f2bbace30ceafc485effd4679af7bbd15744
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.5.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.5.tgz
     version: 0.8.5
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.911000712-07:00
+    created: 2018-10-01T11:45:15.196867477-07:00
     description: Lightbend Enterprise Suite
     digest: 5becd7f583c45c4f2ed0d981504077fc8ff95797013f27f6ff2818b45308774e
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.4.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.4.tgz
     version: 0.8.4
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.909277308-07:00
+    created: 2018-10-01T11:45:15.194537344-07:00
     description: Lightbend Enterprise Suite
     digest: e5449a9c972b9683a74a4526ca238cb468b956155936b4c7190da96962cd1a27
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.2.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.2.tgz
     version: 0.8.2
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.908088547-07:00
+    created: 2018-10-01T11:45:15.192971974-07:00
     description: Lightbend Enterprise Suite
     digest: daaf1271998dd9b0497d7b7bf36524976764250da16f76894d4bb84427e06be1
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.1.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.1.tgz
     version: 0.8.1
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.906984292-07:00
+    created: 2018-10-01T11:45:15.190998349-07:00
     description: Lightbend Enterprise Suite
     digest: 0519c915f98bb0200c9062236537cd3614a6c661487f428323d22b51cacf1da7
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.8.0.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.8.0.tgz
     version: 0.8.0
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.899264574-07:00
+    created: 2018-10-01T11:45:15.158983899-07:00
     description: Lightbend Enterprise Suite
     digest: b6d639d93f3bfcab1c578b014c91dbf6a90e35125461be5d43ddb8dc4890a0e0
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.23.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.23.tgz
     version: 0.0.23
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.898080618-07:00
+    created: 2018-10-01T11:45:15.157640712-07:00
     description: Lightbend Enterprise Suite
     digest: 5c3fcf96c5079f2e77538bd0ff1815b0bbd83046a82e4e63a0f38db855787752
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.22.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.22.tgz
     version: 0.0.22
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.896997939-07:00
+    created: 2018-10-01T11:45:15.156260577-07:00
     description: Lightbend Enterprise Suite
     digest: f222ea2b0cb92df3a454648f6df3c41f813627cb1afb9232be750373dd3eac16
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.21.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.21.tgz
     version: 0.0.21
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.895897301-07:00
+    created: 2018-10-01T11:45:15.154952452-07:00
     description: Lightbend Enterprise Suite
     digest: b28cc6e813907c25e9c703b93fb1d0c162f10d0dcbf455ff3390c753a81844b5
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.20.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.20.tgz
     version: 0.0.20
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.894135498-07:00
+    created: 2018-10-01T11:45:15.153221883-07:00
     description: Lightbend Enterprise Suite
     digest: 57c56c48636f274942f64d1315366ed07413bcd21b789a09153dc35b94bee863
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.19.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.19.tgz
     version: 0.0.19
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.89256265-07:00
+    created: 2018-10-01T11:45:15.151968658-07:00
     description: Lightbend Enterprise Suite
     digest: 034401d3bc7f8e0639c44d5a795cceefd261a7f3574992111a9e8a7fe5e7dda1
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.18.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.18.tgz
     version: 0.0.18
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.890509874-07:00
+    created: 2018-10-01T11:45:15.150983928-07:00
     description: Lightbend Enterprise Suite
     digest: c1896714079eedbc01ebd1c6a5b263a7de68447a9733d2d24ce791df30e6a773
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.17.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.17.tgz
     version: 0.0.17
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.889210131-07:00
+    created: 2018-10-01T11:45:15.149856836-07:00
     description: Lightbend Enterprise Suite
     digest: 38da3136c612bebe1ece75e61c6112a445f245706316e8406861b44ecd833791
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.16.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.16.tgz
     version: 0.0.16
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.887949466-07:00
+    created: 2018-10-01T11:45:15.148644247-07:00
     description: Lightbend Enterprise Suite
     digest: b80c659ed2ff7100133af549b885eea0a8da4ab72896852ff24d3b037fbb39e1
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.15.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.15.tgz
     version: 0.0.15
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.886328581-07:00
+    created: 2018-10-01T11:45:15.146941559-07:00
     description: Lightbend Enterprise Suite
     digest: 393ca7b90b9a21bb10cba0ae7e28da6737ffabbbcf0d8c2604c2e23c91e3870e
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.14.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.14.tgz
     version: 0.0.14
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.885353481-07:00
+    created: 2018-10-01T11:45:15.145671176-07:00
     description: Lightbend Enterprise Suite
     digest: e1b3ffffa0cebc43e35b41c5caf5d50d1dddea4c32d54bf814e7edd8723ccbdc
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.13.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.13.tgz
     version: 0.0.13
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.88456481-07:00
+    created: 2018-10-01T11:45:15.144228668-07:00
     description: Lightbend Enterprise Suite
     digest: fae40b2490503192694b1137a1415a07d19f8211e4be2bdca723687d0401fcaa
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.12.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.12.tgz
     version: 0.0.12
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.883784173-07:00
+    created: 2018-10-01T11:45:15.142923076-07:00
     description: Lightbend Enterprise Suite
     digest: 2dfa3eee31da1f8a727a63ad3f05683fb7066e32c758e475e09bbd0e5e2c48f0
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.11.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.11.tgz
     version: 0.0.11
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.882788562-07:00
+    created: 2018-10-01T11:45:15.14089634-07:00
     description: Lightbend Enterprise Suite
     digest: c299a2c996d991f4bac47ae9cca435defec856961232d5b2458ba37cf96a618e
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.10.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.10.tgz
     version: 0.0.10
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.905853933-07:00
+    created: 2018-10-01T11:45:15.166719914-07:00
     description: Lightbend Enterprise Suite
     digest: 1fd69a9585d9a052289f4180fa4ef41cd30a68d2d104b170fb9fe0f6cea12f69
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.9.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.9.tgz
     version: 0.0.9
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.904764574-07:00
+    created: 2018-10-01T11:45:15.165711233-07:00
     description: Lightbend Enterprise Suite
     digest: 1b50ebcd4e4c6c5a3a99707811cf1ed757a5bfde079d83d27943ea427aa7f801
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.8.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.8.tgz
     version: 0.0.8
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.903682771-07:00
+    created: 2018-10-01T11:45:15.164602687-07:00
     description: Lightbend Enterprise Suite
     digest: a2f2cd08774724ec81d0588bddc33e9ec81fe615105d427e946ba4775399648f
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.7.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.7.tgz
     version: 0.0.7
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.902733936-07:00
+    created: 2018-10-01T11:45:15.163195833-07:00
     description: Lightbend Enterprise Suite
     digest: cd9b63d3250bc3629cc49f60a78d680aa0d8c0eab316d96fd1be432ca4599399
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.6.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.6.tgz
     version: 0.0.6
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.901655684-07:00
+    created: 2018-10-01T11:45:15.161536131-07:00
     description: Lightbend Enterprise Suite
     digest: 686a7803062c5c21dd423ab1c7fdf522bfe6df0725cccb6031764e0be5a4f85a
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.5.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.5.tgz
     version: 0.0.5
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.90072883-07:00
+    created: 2018-10-01T11:45:15.160505101-07:00
     description: Lightbend Enterprise Suite
     digest: 781bc53b87d2fc33c3c1b9b054e2cfca5e27f7cf04378b22fb50e0af59636f5c
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.4.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.4.tgz
     version: 0.0.4
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.899856556-07:00
+    created: 2018-10-01T11:45:15.159509012-07:00
     description: Lightbend Enterprise Suite
     digest: afa81147e4b43d83840ce394f162798e2eb413e5c0a44962703570ce6b2a69ae
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.3.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.3.tgz
     version: 0.0.3
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.89474775-07:00
+    created: 2018-10-01T11:45:15.153751853-07:00
     description: Lightbend Enterprise Suite
     digest: b0939237f643b8e7af032141eaf79be3b9e238d2abb58553374d6e249f3c6983
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.2.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.2.tgz
     version: 0.0.2
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.881726432-07:00
+    created: 2018-10-01T11:45:15.138749145-07:00
     description: Lightbend Enterprise Suite
     digest: 2b61ad99f7dfefb9664fa5b874571b09b288cdfdd112cc91ac4be25c18896d0c
     name: enterprise-suite
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-0.0.1.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-0.0.1.tgz
     version: 0.0.1
   enterprise-suite-latest:
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.94002407-07:00
+    created: 2018-10-01T11:45:15.238874185-07:00
+    description: Lightbend Enterprise Suite
+    digest: 4da30748a51a7d594e64ebfe023690c08bab51fec85737052b617b960a227afa
+    icon: https://repo.lightbend.com/helm-charts/lightbend.svg
+    name: enterprise-suite-latest
+    urls:
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.10.3.tgz
+    version: 0.10.3
+  - apiVersion: v1
+    created: 2018-10-01T11:45:15.237834029-07:00
+    description: Lightbend Enterprise Suite
+    digest: c37807c35ff165183352dc697cedefc7387505c2a42df51f4c9c6ac602084944
+    icon: https://repo.lightbend.com/helm-charts/lightbend.svg
+    name: enterprise-suite-latest
+    urls:
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.10.2.tgz
+    version: 0.10.2
+  - apiVersion: v1
+    created: 2018-10-01T11:45:15.226054113-07:00
+    description: Lightbend Enterprise Suite
+    digest: ec6171ae8ecb06f4ad148c73d7f4712e6b19cbb86fa2eb1ba0996d084e540d46
+    icon: https://repo.lightbend.com/helm-charts/lightbend.svg
+    name: enterprise-suite-latest
+    urls:
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.10.1.tgz
+    version: 0.10.1
+  - apiVersion: v1
+    created: 2018-10-01T11:45:15.25610942-07:00
     description: Lightbend Enterprise Suite
     digest: 47dab616fab9a36a6d6dbc6311b0967fc9f58fcb6ec1f1842f5eaa1b57c0cfe0
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.9.1.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.9.1.tgz
     version: 0.9.1
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.93901056-07:00
+    created: 2018-10-01T11:45:15.254123153-07:00
     description: Lightbend Enterprise Suite
     digest: b49be0393158bd7625df67eaf9c4927578b37e6843717aff6457557b017ceee4
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.9.0.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.9.0.tgz
     version: 0.9.0
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.937427215-07:00
+    created: 2018-10-01T11:45:15.252084482-07:00
     description: Lightbend Enterprise Suite
     digest: 39a441f8e5632c1fa37fe81f673c0ad54326663ca9d333b9b7d3e05fee1704bd
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.7.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.7.tgz
     version: 0.8.7
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.935819581-07:00
+    created: 2018-10-01T11:45:15.250429854-07:00
     description: Lightbend Enterprise Suite
     digest: b4059b511aef683baebd95fdf3e71f5cbb0d538c734344c251d9e256f10fe77c
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.6.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.6.tgz
     version: 0.8.6
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.934120395-07:00
+    created: 2018-10-01T11:45:15.248629143-07:00
     description: Lightbend Enterprise Suite
     digest: 5e46049bf53bd92534f8078d967fde600972341c8906fddf71362915647606fe
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.5.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.5.tgz
     version: 0.8.5
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.932528308-07:00
+    created: 2018-10-01T11:45:15.246455773-07:00
     description: Lightbend Enterprise Suite
     digest: ef1d95e65403d9b5551fb5d3ae94cbf55b3ac67b02f2d08ed9f98dc53f6a04cb
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.4.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.4.tgz
     version: 0.8.4
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.930874132-07:00
+    created: 2018-10-01T11:45:15.24430356-07:00
     description: Lightbend Enterprise Suite
     digest: f064420f5821142e98c590ae761bb254ea1f7ebdd382e26fb8b6224b09df557f
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.3.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.3.tgz
     version: 0.8.3
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.929703188-07:00
+    created: 2018-10-01T11:45:15.243004843-07:00
     description: Lightbend Enterprise Suite
     digest: 4d91f88c83eb8b85b720e654eb1eece60860008f655cbb861750294a9814fe06
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.2.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.2.tgz
     version: 0.8.2
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.928599011-07:00
+    created: 2018-10-01T11:45:15.241715793-07:00
     description: Lightbend Enterprise Suite
     digest: ba9cd95ac2683d760233fcb9f20f6a55a5089a505bf666c548f194c634d6c52c
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.1.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.1.tgz
     version: 0.8.1
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.927447876-07:00
+    created: 2018-10-01T11:45:15.240406613-07:00
     description: Lightbend Enterprise Suite
     digest: 46bccef0a3bddcd857e0f6334026930cb261cbc6e9a27b52674fb63f6502bbc5
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.8.0.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.8.0.tgz
     version: 0.8.0
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.926260712-07:00
+    created: 2018-10-01T11:45:15.215413845-07:00
     description: Lightbend Enterprise Suite
     digest: 219d62aed0d839f9e80265d81c3151405f38ab22b5681ba2a6f5ca7f8cd9ef96
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.23.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.23.tgz
     version: 0.0.23
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.925020614-07:00
+    created: 2018-10-01T11:45:15.214127582-07:00
     description: Lightbend Enterprise Suite
     digest: 087eae340bea60056866d7d464938f8e725c756d6de79b76d5d13189a24c2c37
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.22.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.22.tgz
     version: 0.0.22
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.923872003-07:00
+    created: 2018-10-01T11:45:15.212437018-07:00
     description: Lightbend Enterprise Suite
     digest: 7a50fd886241915da964fc2b12e03d9c480bb1bde4f35d6ef04a6a164d7b2875
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.21.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.21.tgz
     version: 0.0.21
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.922824624-07:00
+    created: 2018-10-01T11:45:15.20986389-07:00
     description: Lightbend Enterprise Suite
     digest: 7c1150b390a546e0579696c76b9c8d03b129049bec977f4c005cb98440dde050
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.20.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.20.tgz
     version: 0.0.20
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.921675302-07:00
+    created: 2018-10-01T11:45:15.208237251-07:00
     description: Lightbend Enterprise Suite
     digest: 68545a7096e017634e1ad30dc6c5bbd41d6adc8e6c8b5c12a0d43dff2cf4e3d2
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.19.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.19.tgz
     version: 0.0.19
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.920605422-07:00
+    created: 2018-10-01T11:45:15.20665194-07:00
     description: Lightbend Enterprise Suite
     digest: 6d250c54f51d0f9c4a051f7bf806431985f15e366208ddc4eb99f24b969e80de
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.18.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.18.tgz
     version: 0.0.18
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.919485843-07:00
+    created: 2018-10-01T11:45:15.205561795-07:00
     description: Lightbend Enterprise Suite
     digest: f595adfb9e3952a5dec35d086d603efb6efcd640825acc9c4cf8444f2f2d225f
     icon: https://lightbend.github.io/helm-charts/lightbend.svg
     name: enterprise-suite-latest
     urls:
-    - https://lightbend.github.io/helm-charts/enterprise-suite-latest-0.0.17.tgz
+    - https://repo.lightbend.com/helm-charts/enterprise-suite-latest-0.0.17.tgz
     version: 0.0.17
   reactive-sandbox:
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.940999508-07:00
+    created: 2018-10-01T11:45:15.257230919-07:00
     description: A collection of external services required to run Lightbend Reactive
       Platform applications
     digest: a3915ae16b20841da49e26b7a25080a0cf33f1af8a7a085ce40cf2159b7cbccb
     name: reactive-sandbox
     urls:
-    - https://lightbend.github.io/helm-charts/reactive-sandbox-0.2.0.tgz
+    - https://repo.lightbend.com/helm-charts/reactive-sandbox-0.2.0.tgz
     version: 0.2.0
   - apiVersion: v1
-    created: 2018-09-07T13:11:45.940534247-07:00
+    created: 2018-10-01T11:45:15.256692943-07:00
     description: A collection of external services required to run Lightbend Reactive
       Platform applications
     digest: a4c9f371838312c06e44851874797113ee517cde2f96f9d9f269c97ba7ff326f
     name: reactive-sandbox
     urls:
-    - https://lightbend.github.io/helm-charts/reactive-sandbox-0.1.3.tgz
+    - https://repo.lightbend.com/helm-charts/reactive-sandbox-0.1.3.tgz
     version: 0.1.3
-generated: 2018-09-07T13:11:45.881012849-07:00
+generated: 2018-10-01T11:45:15.137717778-07:00
