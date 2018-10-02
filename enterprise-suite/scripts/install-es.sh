@@ -4,12 +4,11 @@
 
 set -eu
 
-CREDS=$(mktemp -t creds.XXXXXX)
-chmod go+r $CREDS
-echo "CREDS post-create: $( ls -l $CREDS )"
+CREDS=
+: "${TRAVIS:=}"
 
 cleanup() {
-    if [ -f "$CREDS" ] ; then
+    if [ -n "$CREDS" -a -f "$CREDS" ] ; then
         rm -f $CREDS
     fi
 }
@@ -46,6 +45,20 @@ function usage() {
     exit 1
 }
 
+# Create arg for the helm install/upgrade lines.  $1 is username.  $2 is password.
+# If not using Travis, we stash credentials in a file.  Seems not to work with Travis.
+# This prevents the credentials being written to a log.  (Travis obfuscates the values.)
+function set_credentials_arg() {
+    if [ -z "$TRAVIS" ] ; then
+        CREDS=$(mktemp -t creds.XXXXXX)
+        # write creds to file for use by helm
+        printf '%s\n' "imageCredentials.username: $1" "imageCredentials.password: $2" >"$CREDS"
+        HELM_CREDENTIALS_ARG="--values $CREDS"
+    else
+        HELM_CREDENTIALS_ARG="--set imageCredentials.username=$1,imageCredentials.password=$2"
+    fi
+}
+
 function import_credentials() {
     # Credential variables to set.
     repo_username=
@@ -76,15 +89,7 @@ function import_credentials() {
         usage
     fi
 
-    # hack to see if variables are expanding correctly
-	repo_username=username
-    repo_password=password
-    # write creds to file for use by helm
-    printf '%s\n' "imageCredentials.username: $repo_username" "imageCredentials.password: $repo_password" >$CREDS
-	echo "CREDS post-write: $( ls -l $CREDS )"
-	cat $CREDS
-	#sed -n '1p' $CREDS
-
+    set_credentials_arg $repo_username $repo_password
 }
 
 function debug() {
@@ -152,13 +157,13 @@ else
     should_upgrade=false
 fi
 
-echo "CREDS pre-use: $( ls -l $CREDS )"
+#echo "CREDS pre-use: $( ls -l $CREDS )"
 if [ "true" == "$should_upgrade" ]; then
     debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
-        --values $CREDS \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 else
     debug helm install "$chart_ref" --name="$ES_HELM_NAME" --namespace="$ES_NAMESPACE" \
-        --values $CREDS \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 fi
