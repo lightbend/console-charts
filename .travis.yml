@@ -5,7 +5,9 @@ dist: xenial
 services:
 - docker
 
-install: scripts/setup-tools-for-ubuntu.sh
+install:
+- scripts/setup-tools-for-ubuntu.sh
+- curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
 
 jobs:
   include:
