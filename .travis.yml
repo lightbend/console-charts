@@ -15,7 +15,6 @@ jobs:
     name: Validate
     script:
     - make lint
-    - artifacts upload $(find . -name '*.mp4' | tr "\n" ":")
 
   - name: ES Smoke Tests
     script:
@@ -38,7 +37,9 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite ES_TEST=frontend
-    - artifacts upload $(find . -name '*.mp4' | tr "\n" ":")
+    after_script:
+    # Cypress videos.
+    - artifacts upload $(find . -name '*.mp4')
 
   - name: ES Frontend E2E (Latest)
     if: type in (cron)
