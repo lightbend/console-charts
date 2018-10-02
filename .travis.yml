@@ -7,29 +7,27 @@ services:
 
 install: scripts/setup-tools-for-ubuntu.sh
 
-addons:
-  artifacts:
-    paths:
-    # Cypress videos for enterprise-suite e2e.
-    - $(find . -name '*.mp4' | tr "\n" ":")
-
 jobs:
   include:
   - stage: Tests
     name: Validate
     script:
     - make lint
-  - name: Minikube
+    - artifacts upload $(find . -name '*.mp4' | tr "\n" ":")
+
+  - name: ES Smoke Tests
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite
-  - name: Minikube - Latest
+
+  - name: ES Smoke Tests (Latest)
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
-  - name: Minikube - Frontend
+
+  - name: ES Frontend E2E
     cache:
       directories:
         - ~/.npm
@@ -38,7 +36,9 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite ES_TEST=frontend
-  - name: Minikube - Frontend (Latest)
+    - artifacts upload $(find . -name '*.mp4' | tr "\n" ":")
+
+  - name: ES Frontend E2E (Latest)
     if: type in (cron)
     cache:
       directories:
@@ -48,9 +48,11 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest ES_TEST=frontend
+
   - name: Reactive-sandbox test
     script:
     - make test CHARTS=reactive-sandbox
+
   - stage: deploy
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
