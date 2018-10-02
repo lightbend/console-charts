@@ -10,7 +10,7 @@ install: scripts/setup-tools-for-ubuntu.sh
 addons:
   artifacts: true
     paths:
-    # cypress videos
+    # Cypress videos
     - $(find . -name '*.mp4' | tr "\n" ":")
 
 jobs:
