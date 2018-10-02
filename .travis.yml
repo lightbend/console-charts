@@ -7,6 +7,9 @@ services:
 
 install: scripts/setup-tools-for-ubuntu.sh
 
+addons:
+  artifacts: true
+
 jobs:
   include:
   - stage: Tests
