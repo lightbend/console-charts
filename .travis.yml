@@ -8,9 +8,9 @@ services:
 install: scripts/setup-tools-for-ubuntu.sh
 
 addons:
-  artifacts: true
+  artifacts:
     paths:
-    # Cypress videos
+    # Cypress videos for enterprise-suite e2e.
     - $(find . -name '*.mp4' | tr "\n" ":")
 
 jobs:
