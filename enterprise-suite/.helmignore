@@ -25,3 +25,5 @@ README.md
 .idea/
 *.tmproj
 *~
+\#
+tests/

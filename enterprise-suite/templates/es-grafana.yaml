@@ -100,8 +100,12 @@ spec:
       securityContext:
         runAsUser: {{ .Values.podUID }}
       {{ end }}
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
       containers:
-      - image: lightbend-docker-registry.bintray.io/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
+      - image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
         resources:

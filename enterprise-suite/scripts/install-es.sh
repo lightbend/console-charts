@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 
+#set -x
+
 set -eu
+
+CREDS=
+: "${TRAVIS:=}"
+
+cleanup() {
+    if [ -n "$CREDS" -a -f "$CREDS" ] ; then
+        rm -f $CREDS
+    fi
+}
+
+# Make sure we delete the credentials file
+trap cleanup 0
 
 function docvar() {
     envvar=$1
@@ -25,9 +39,24 @@ function usage() {
     docvar ES_CHART "Chart name to install from the repository"
     docvar ES_NAMESPACE "Namespace to install ES-Console into"
     docvar ES_LOCAL_CHART "Set to location of local chart tarball"
-    docvar ES_UPGRADE "Set to true to perform a helm upgrade instead of an install"
+    docvar ES_HELM_NAME "Helm release name"
+    docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
+}
+
+# Create arg for the helm install/upgrade lines.  $1 is username.  $2 is password.
+# If not using Travis, we stash credentials in a file.  Seems not to work with Travis.
+# This prevents the credentials being written to a log.  (Travis obfuscates the values.)
+function set_credentials_arg() {
+    if [ -z "$TRAVIS" ] ; then
+        CREDS=$(mktemp -t creds.XXXXXX)
+        # write creds to file for use by helm
+        printf '%s\n' "imageCredentials.username: $1" "imageCredentials.password: $2" >"$CREDS"
+        HELM_CREDENTIALS_ARG="--values $CREDS"
+    else
+        HELM_CREDENTIALS_ARG="--set imageCredentials.username=$1,imageCredentials.password=$2"
+    fi
 }
 
 function import_credentials() {
@@ -59,17 +88,36 @@ function import_credentials() {
         echo
         usage
     fi
+
+    set_credentials_arg $repo_username $repo_password
+}
+
+function debug() {
+    echo "$@"
+    if [ "false" == "$DRY_RUN" ]; then
+        eval "$@"
+    fi
+}
+
+function chart_installed() {
+    local name=$1
+    if [ -n "${ES_STUB_CHART_STATUS:-}" ]; then
+        return $ES_STUB_CHART_STATUS
+    else
+        debug "helm status $name > /dev/null 2>&1"
+    fi
 }
 
 # User overridable variables.
 LIGHTBEND_COMMERCIAL_USERNAME=${LIGHTBEND_COMMERCIAL_USERNAME:-}
 LIGHTBEND_COMMERCIAL_PASSWORD=${LIGHTBEND_COMMERCIAL_PASSWORD:-}
 LIGHTBEND_COMMERCIAL_CREDENTIALS=${LIGHTBEND_COMMERCIAL_CREDENTIALS:-$HOME/.lightbend/commercial.credentials}
-ES_REPO=${ES_REPO:-https://lightbend.github.io/helm-charts}
+ES_REPO=${ES_REPO:-https://repo.lightbend.com/helm-charts}
 ES_CHART=${ES_CHART:-enterprise-suite}
 ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
-ES_UPGRADE=${ES_UPGRADE:-false}
+ES_HELM_NAME=${ES_HELM_NAME:-enterprise-suite}
+ES_FORCE_INSTALL=${ES_FORCE_INSTALL:-false}
 DRY_RUN=${DRY_RUN:-false}
 
 # Help
@@ -77,10 +125,10 @@ if [ "${1-:}" == "-h" ]; then
     usage
 fi
 
-# Setup dry-run
-debug=
-if [ "$DRY_RUN" == "true" ]; then
-    debug=echo
+# Check if version has been set
+if [[ ! "$*" =~ "version" ]]; then
+    echo "warning: --version has not been set, helm will use the latest available version. \
+It is recommended to use an explicit version."
 fi
 
 # Get credentials
@@ -91,17 +139,31 @@ if [ -n "$ES_LOCAL_CHART" ]; then
     # Install from a local chart tarball if ES_LOCAL_CHART is set.
     chart_ref=$ES_LOCAL_CHART
 else
-    $debug helm repo add es-repo "$ES_REPO"
-    $debug helm repo update
+    debug helm repo add es-repo "$ES_REPO"
+    debug helm repo update
     chart_ref=es-repo/$ES_CHART
 fi
 
-if [ "true" == "$ES_UPGRADE" ]; then
-    $debug helm upgrade es "$chart_ref" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+# Determine if we should upgrade or install
+should_upgrade=
+if chart_installed "$ES_HELM_NAME"; then
+    if [ "true" == "$ES_FORCE_INSTALL" ]; then
+        debug helm delete --purge "$ES_HELM_NAME"
+        should_upgrade=false
+    else
+        should_upgrade=true
+    fi
+else
+    should_upgrade=false
+fi
+
+#echo "CREDS pre-use: $( ls -l $CREDS )"
+if [ "true" == "$should_upgrade" ]; then
+    debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 else
-    $debug helm install "$chart_ref" --name=es --namespace="$ES_NAMESPACE" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+    debug helm install "$chart_ref" --name="$ES_HELM_NAME" --namespace="$ES_NAMESPACE" \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 fi

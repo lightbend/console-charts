@@ -1,0 +1,44 @@
+#!/bin/bash
+
+source smokecommon
+
+CONSOLE=$( busy_wait nodeport expose-es-console)
+
+#
+# arbitrary base path
+#
+
+BASEPATH="${CONSOLE}/fee/fie/fou/fum"
+
+test_es_console_responding "$BASEPATH/"
+test_grafana_responding "$BASEPATH/service/grafana/"
+test_prom_responding "$BASEPATH/service/prometheus/"
+test_es_monitor_API_responding "$BASEPATH/service/es-monitor-api/"
+test_alertmanager_responding "$BASEPATH/service/alertmanager/"
+
+#
+# redirects
+#
+
+test_redirect() {
+    redir=$( curl_headers "$1" | awk '$1=="Location:"{print $2}' )
+    [[ $redir == "$2" ]]
+    T $? "$1" redirects to "$2"
+}
+test_redirect "${CONSOLE}/service/prometheus"   "/service/prometheus/"
+test_redirect "${CONSOLE}/service/grafana"      "/service/grafana/"
+test_redirect "${CONSOLE}/service/alertmanager" "/service/alertmanager/"
+
+#
+# cache busting
+#
+
+test_no_cache() {
+    cache_control=$( curl_headers "$1" | awk -F ': ' '$1=="Cache-Control"{print $2}' )
+    [[ $cache_control == "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" ]]
+    T $? "$1" has cache control
+}
+
+test_no_cache "${CONSOLE}/cluster"
+test_no_cache "${CONSOLE}/workloads/prometheus-server"
+test_no_cache "${CONSOLE}/service/grafana/dashboard/script/exporter-async.js?service-type=cluster"

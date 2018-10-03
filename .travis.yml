@@ -18,9 +18,30 @@ jobs:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite
   - name: Minikube - Latest
+    # Only build latest in the daily cron - don't block PRs or master releases.
+    if: type in (cron)
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
+  - name: Minikube - Frontend
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    script:
+    - scripts/setup-minikube-for-linux.sh
+    - make test CHARTS=enterprise-suite ES_TEST=frontend
+  - name: Minikube - Frontend (Latest)
+    if: type in (cron)
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    script:
+    - scripts/setup-minikube-for-linux.sh
+    - make test CHARTS=enterprise-suite-latest ES_TEST=frontend
   - name: Reactive-sandbox test
     script:
     - make test CHARTS=reactive-sandbox
@@ -40,4 +61,10 @@ branches:
 notifications:
   email: false
   slack:
-    secure: Wbp33+rhtKSkDQsoBq33b3/WFk7/vzoKNqVoGhjFyXtBTE/mP/C7ZvGDxSWVLhbKTqCzlXpp3BlO9/g2PJa3GafssYr+ZRxYzkyXqQnjIUTFylSqKZky729LTtE8eBfreyjX1JZgVu0++kQTkUsQCjBEW0dhZsVSnd8QAQwQQigxue9/wPiZABOuoaZ4UCPoE7EzhRH86MO3RhRdfIMSOwj94cPf95NtN292jmOEsTCayc+CVfJ77wbbANAvqX2kBaBQTgREUk/0guR8bVTO8YxExuYkNEeQZRKa8TLjP9A3Gkd/JED6R3FLLw7EcT9J62zWLTKZqRKCb+Nhc01uy67/m21bVlHfphPgNAy3rU27lmVqzS0NCyiqix8uenoewjFYYbR8+3nTO+kuqeP/lRUmmINkzornICtx+POP+mGOSE4llmplZIhJKWBN1x/OtY9XvIXd1WcZtWnk310zurCN+0qjBIewjs4a28ZcZdB8e/si+Cx5YT2UvXgYZipjM3CX29AaPaCGsuGdjQJN/OFzYbwiJbvfI/O9OEl32aMfu1w4P3WtLNVT2eW6Kdu0HJaRKvtSwzKBmYP8b5xdTQemsG2R97rPN1uTOwVWwviOQgg/pycIxjNawMf6s+5I7CK3zO3QjwrfWSq7d8Nm2qC5J+82+rQSZ6YDr3wJliI=
+    rooms:
+      secure: AHDrkFweHIHLOY5VFaxgfLQKlARY5b8wM/jN3XGoEzvpECQgFrgUN/KNGUmYDlWJkmxuzr4lNpVKZe6gUgYUBwGbOO7uhLjpcoPJSYj9T2dj1Dddh9hEReDlgP/VCyPKQoPSX/8/ZJF1yq1vSAXC9es1ek4dyJAcEyWmH5uYYM2jslxNm6J64XFAwZKSo2gU98jEMvbGFfjbfdlDIRQJlKmMTpJMxvWJLHZFmLMAXgK2SB3htrS4lasOh775vEqMc4fS/Cmecb/KsVnDcYHUCYT2SZpNzkde8uCTPgB5XdZZf3F7zo1HK7+3a7eygIbWtGTDk9AUisODZLAjPTRDRVDyjSt7pNKbDhipGrYvWgt397WbvlXiDZ8TeOkWJdTf2E7RM5odtJL5ZF0XklnqOQMu2b/ZXlMq4vZTYAbsof5+Nw3Fw00iqCBEUd9J9nvaoQX/86cySWfU1N/NlptIG5hY4ro3tsrvSuIkmyBM6XN3GUFp8OexeNcCtaW40XO0qnzpbYv4be7Be6yG6fPhewO+5pOIM4mL8V+ryORAzK29MIU0L+9/gChmTxZ4YmUbksYYp1ifUlAmSnJAZcMXIy2DhqrWs9pszLKeGC4dzOxmNNzWGYnL1l2X137wRC0mfKK84Bxs1RiaToxWUQO88FXffI8c8xF7m/+Zir6vMq8=
+    on_success: change
+    on_failure: always
+    on_pull_requests: false
+    template:
+    - "Build <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) of %{repository_slug}@%{branch} by %{author} %{result} in %{elapsed_time}"

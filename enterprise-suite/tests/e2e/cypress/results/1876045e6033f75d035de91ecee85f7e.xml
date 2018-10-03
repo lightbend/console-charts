@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="9.126" tests="3" failures="0">
+  <testsuite name="Root Suite" timestamp="2018-09-05T18:23:59" tests="0" failures="0" time="0">
+  </testsuite>
+  <testsuite name="Cluster Page Test" timestamp="2018-09-05T18:23:59" tests="3" failures="0" time="9.126">
+    <testcase name="Cluster Page Test cluster detail panel check" time="4.053" classname="cluster detail panel check">
+    </testcase>
+    <testcase name="Cluster Page Test workload list check" time="3.513" classname="workload list check">
+    </testcase>
+    <testcase name="Cluster Page Test switch namespace check" time="1.56" classname="switch namespace check">
+    </testcase>
+  </testsuite>
+</testsuites>

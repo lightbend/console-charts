@@ -6,12 +6,15 @@ load 'lib/bats-support/load'
 load 'lib/bats-assert/load'
 
 export DRY_RUN=true
-install_es=$BATS_TEST_DIRNAME/../install-es.sh
+install_es=$BATS_TEST_DIRNAME/../scripts/install-es.sh
 
 function setup {
     unset LIGHTBEND_COMMERCIAL_CREDENTIALS
+    unset TRAVIS
     export LIGHTBEND_COMMERCIAL_USERNAME="myuser"
     export LIGHTBEND_COMMERCIAL_PASSWORD="mypass"
+    export ES_STUB_CHART_STATUS="1"
+    export ES_HELM_NAME="myhelmname"
 }
 
 @test "loads commercial credentials from file" {
@@ -19,17 +22,26 @@ function setup {
     unset LIGHTBEND_COMMERCIAL_PASSWORD
     LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials" \
         run $install_es
+    assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
+
+    export TRAVIS=true
+    LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials" \
+        run $install_es
     assert_output --partial "imageCredentials.username=testuser,imageCredentials.password=myreallysecurepassword"
 }
 
 @test "loads commercial credentials from env vars" {
+    run $install_es
+    assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
+
+    export TRAVIS=true
     run $install_es
     assert_output --partial "imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "adds and updates helm repo if using a published chart" {
     run $install_es
-    assert_output --partial "helm repo add es-repo https://lightbend.github.io/helm-charts"
+    assert_output --partial "helm repo add es-repo https://repo.lightbend.com/helm-charts"
     assert_output --partial "helm repo update"
 }
 
@@ -42,13 +54,22 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --partial "helm install es-repo/enterprise-suite --name=es --namespace=lightbend --set imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --regexp '.*helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --values [^ ]*creds\..*'
+
+    export TRAVIS=true
+    run $install_es
+    assert_output --partial "helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
-@test "helm upgrade command" {
-    ES_UPGRADE=true \
+@test "helm upgrade command if chart exists" {
+    ES_STUB_CHART_STATUS="0" \
         run $install_es
-    assert_output --partial "helm upgrade es es-repo/enterprise-suite --set imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
+
+    export TRAVIS=true
+    ES_STUB_CHART_STATUS="0" \
+        run $install_es
+    assert_output --partial "helm upgrade myhelmname es-repo/enterprise-suite --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "can set namespace" {
@@ -60,4 +81,22 @@ function setup {
 @test "can pass helm args" {
     run $install_es --version v10.0.20 --set minikube=true,podUID=100001
     assert_output --partial "--version v10.0.20 --set minikube=true,podUID=100001"
+}
+
+@test "warns if no version set" {
+    run $install_es
+    assert_output --partial "warning: --version"
+}
+
+@test "doesn't warn if version set" {
+    run $install_es --version v5.0.0
+    refute_output --partial "warning: --version"
+}
+
+@test "force install deletes the existing install first" {
+    ES_STUB_CHART_STATUS="0" ES_FORCE_INSTALL="true" \
+        run $install_es
+    assert_output --partial "helm delete --purge myhelmname" 
+    assert_output --partial "helm install"
+    refute_output --partial "helm upgrade"
 }

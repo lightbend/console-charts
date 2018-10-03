@@ -12,5 +12,12 @@ make install-local
 
 # run tests
 echo "Running tests"
-cd $script_dir/../tests
-./smoketest
+cd $script_dir/../tests/e2e
+
+# run the e2e test
+sudo apt -y install libgconf2-4
+npm install
+npm run e2e:demo-app-setup
+npm run e2e:patch-minikube-ip
+npm run e2e:wait-es-services
+npm run e2e:travis-prs
