@@ -82,6 +82,11 @@ curl_query() {
   curl -fsG "$@" "$FETCH_BASE/$FETCH_URI"
 }
 
+curl_headers() {
+    # NB: curl -I prints \n\r line endings
+    curl -sI "$1" | tr -d '\r'
+}
+
 
 # ES console access test
 # test_es_console_responding <url> [<curl-opt>...]
