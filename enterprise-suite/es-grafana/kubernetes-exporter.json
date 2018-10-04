@@ -6,9 +6,9 @@
         ]
     },
     {
-        "graphName": "Active Memory Used Percent",
+        "graphName": "Resident Memory Used Percent",
         "promQL": [
-            "sum without(container_name,id,image,name)((container_memory_working_set_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_working_set_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+            "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
         ]
     },
     {
