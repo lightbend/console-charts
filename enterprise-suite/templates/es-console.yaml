@@ -116,7 +116,7 @@ data:
       location ~ (.*/service/prometheus)(/.*) {
         proxy_pass http://$prometheus$2$is_args$args;
         sub_filter '="/' '="$1/';
-        sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = "$1"';
+        sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/graph"))';
         proxy_redirect '/' ' $1/';
       }
 

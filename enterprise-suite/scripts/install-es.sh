@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 
+#set -x
+
 set -eu
+
+CREDS=
+: "${TRAVIS:=}"
+
+cleanup() {
+    if [ -n "$CREDS" -a -f "$CREDS" ] ; then
+        rm -f $CREDS
+    fi
+}
+
+# Make sure we delete the credentials file
+trap cleanup 0
 
 function docvar() {
     envvar=$1
@@ -29,6 +43,20 @@ function usage() {
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
+}
+
+# Create arg for the helm install/upgrade lines.  $1 is username.  $2 is password.
+# If not using Travis, we stash credentials in a file.  Seems not to work with Travis.
+# This prevents the credentials being written to a log.  (Travis obfuscates the values.)
+function set_credentials_arg() {
+    if [ -z "$TRAVIS" ] ; then
+        CREDS=$(mktemp -t creds.XXXXXX)
+        # write creds to file for use by helm
+        printf '%s\n' "imageCredentials.username: $1" "imageCredentials.password: $2" >"$CREDS"
+        HELM_CREDENTIALS_ARG="--values $CREDS"
+    else
+        HELM_CREDENTIALS_ARG="--set imageCredentials.username=$1,imageCredentials.password=$2"
+    fi
 }
 
 function import_credentials() {
@@ -60,6 +88,8 @@ function import_credentials() {
         echo
         usage
     fi
+
+    set_credentials_arg $repo_username $repo_password
 }
 
 function debug() {
@@ -127,12 +157,13 @@ else
     should_upgrade=false
 fi
 
+#echo "CREDS pre-use: $( ls -l $CREDS )"
 if [ "true" == "$should_upgrade" ]; then
     debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 else
     debug helm install "$chart_ref" --name="$ES_HELM_NAME" --namespace="$ES_NAMESPACE" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 fi
