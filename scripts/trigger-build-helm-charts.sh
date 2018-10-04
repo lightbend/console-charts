@@ -11,4 +11,4 @@ curl -s -X POST \
    -H "Travis-API-Version: 3" \
    -H "Authorization: token $TRAVIS_CI_TOKEN" \
    -d "$body" \
-   https://api.travis-ci.com/repo/travis-ci%2Ftravis-core/requests
+   https://api.travis-ci.com/repo/lightbend%2Fbuild-helm-charts/requests
