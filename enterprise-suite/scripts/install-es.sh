@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
+#set -x
+
 set -eu
+
+CREDS=
+
+cleanup() {
+    if [ -n "$CREDS" -a -f "$CREDS" ] ; then
+        rm -f $CREDS
+    fi
+}
+
+# Make sure we delete the credentials file
+trap cleanup 0
 
 function docvar() {
     envvar=$1
@@ -29,6 +42,15 @@ function usage() {
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
+}
+
+# Create arg for the helm install/upgrade lines.  $1 is username.  $2 is password.
+# This prevents the credentials being written to a log.
+function set_credentials_arg() {
+    CREDS=$(mktemp -t creds.XXXXXX)
+    # write creds to file for use by helm
+    printf '%s\n' "imageCredentials:" "   username: $1" "   password: $2" >"$CREDS"
+    HELM_CREDENTIALS_ARG="--values $CREDS"
 }
 
 function import_credentials() {
@@ -60,6 +82,8 @@ function import_credentials() {
         echo
         usage
     fi
+
+    set_credentials_arg $repo_username $repo_password
 }
 
 function debug() {
@@ -127,12 +151,13 @@ else
     should_upgrade=false
 fi
 
+#echo "CREDS pre-use: $( ls -l $CREDS )"
 if [ "true" == "$should_upgrade" ]; then
     debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 else
     debug helm install "$chart_ref" --name="$ES_HELM_NAME" --namespace="$ES_NAMESPACE" \
-        --set imageCredentials.username="$repo_username",imageCredentials.password="$repo_password" \
+        "$HELM_CREDENTIALS_ARG" \
         $@
 fi

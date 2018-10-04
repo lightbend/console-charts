@@ -125,19 +125,6 @@ data:
         proxy_redirect '/' ' $1/';
       }
 
-      location ~ (.*/service/grafana)(/.*) {
-        proxy_pass http://$grafana:3000$2$is_args$args;
-        sub_filter_types *;
-        sub_filter '/service/grafana' '$1';
-        proxy_cookie_path '/service/grafana' '$1';
-        proxy_redirect '/' ' $1/';
-      }
-
-      location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager:9093$2$is_args$args;
-        proxy_redirect '/' ' $1/';
-      }
-
       # our injected plugin should never cache...
       location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
         proxy_pass http://$grafana:3000$2$is_args$args;
@@ -153,9 +140,22 @@ data:
         etag off;
       }
 
+      location ~ (.*/service/grafana)(/.*) {
+        proxy_pass http://$grafana:3000$2$is_args$args;
+        sub_filter_types *;
+        sub_filter '/service/grafana' '$1';
+        proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
+      }
+
+      location ~ (.*/service/alertmanager)(/.*) {
+        proxy_pass http://$alertmanager:9093$2$is_args$args;
+        proxy_redirect '/' ' $1/';
+      }
+
       # redirect /service/prometheus -> /service/prometheus/
 
-      location ~ (.*/service/(prometheus|grafana))$ {
+      location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
         return 301 ' $1/';
       }
 

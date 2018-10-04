@@ -21,12 +21,12 @@ function setup {
     unset LIGHTBEND_COMMERCIAL_PASSWORD
     LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials" \
         run $install_es
-    assert_output --partial "imageCredentials.username=testuser,imageCredentials.password=myreallysecurepassword"
+    assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
 }
 
 @test "loads commercial credentials from env vars" {
     run $install_es
-    assert_output --partial "imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
 }
 
 @test "adds and updates helm repo if using a published chart" {
@@ -44,13 +44,13 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --partial "helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --set imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --regexp '.*helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --values [^ ]*creds\..*'
 }
 
 @test "helm upgrade command if chart exists" {
     ES_STUB_CHART_STATUS="0" \
         run $install_es
-    assert_output --partial "helm upgrade myhelmname es-repo/enterprise-suite --set imageCredentials.username=myuser,imageCredentials.password=mypass"
+    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
 }
 
 @test "can set namespace" {
