@@ -14,16 +14,23 @@ route:
   # Group alerts by namespace and workload.
   group_by: [namespace, es_workload]
   routes:
+  # team1 Slack
   - match:
+      es_workload: workload1
       severity: warning
-    receiver: slack
+    receiver: team1-slack
+
+  # team1 PagerDuty
   - match:
+      es_workload: workload1
       severity: critical
-    receiver: slack
-    continue: true
+    receiver: team1-pagerduty
+
+  # team2 PagerDuty
   - match:
+      es_workload: workload2
       severity: critical
-    receiver: pagerduty
+    receiver: team2-pagerduty
 
 # Don't alert on warnings if the same alert is already critical.
 inhibit_rules:
@@ -39,17 +46,26 @@ templates:
 
 # Receivers.
 receivers:
-- name: slack
+- name: team1-slack
   slack_configs:
-  # Use Slack integrations to find the webhook.
+  # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
   - api_url: https://slack.localhost/services/somewhere
-    channel: '#my-alerts'
+    channel: '#team1-alerts'
     title: '{{ template "title.slack" . }}'
     text: '{{ template "text.slack" . }}'
     send_resolved: true
 
-- name: pagerduty
+- name: team1-pagerduty
   pagerduty_configs:
-  - url: https://pagerduty.localhost/api
-    routing_key: my_secret_routing_key
-    service_key: my_secret_service_key
+  - routing_key: my_secret_routing_key
+    # Remove this in actual usage. It's added to prevent sending PagerDuty alerts from local development environments.
+    url: https://pagerduty.localhost/api
+
+- name: team2-slack
+  slack_configs:
+  # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+  - api_url: https://slack.localhost/services/somewhere
+    channel: '#team2-alerts'
+    title: '{{ template "title.slack" . }}'
+    text: '{{ template "text.slack" . }}'
+    send_resolved: true
