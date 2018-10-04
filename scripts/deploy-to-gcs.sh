@@ -24,7 +24,7 @@ usage () {
 # GCS project
 GCS_PROJECT=es-repo
 # GCS bucket within project
-: "${GCS_BUCKET:=lightbend-helm-charts}"
+: "${GCS_BUCKET:=lightbend-console-charts}"
 
 # HELM_DIR is helm-charts directory.  Defaults to cwd but can be overridden.
 : "${HELM_DIR:=$(pwd)}"
