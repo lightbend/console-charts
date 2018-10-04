@@ -49,7 +49,7 @@ function usage() {
 # If not using Travis, we stash credentials in a file.  Seems not to work with Travis.
 # This prevents the credentials being written to a log.  (Travis obfuscates the values.)
 function set_credentials_arg() {
-    if [ -z "$TRAVIS" ] ; then
+    if [ -z "${TRAVIS+x}" ] ; then
         CREDS=$(mktemp -t creds.XXXXXX)
         # write creds to file for use by helm
         printf '%s\n' "imageCredentials.username: $1" "imageCredentials.password: $2" >"$CREDS"
