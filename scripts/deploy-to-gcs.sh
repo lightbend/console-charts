@@ -69,7 +69,7 @@ docker pull google/cloud-sdk:${CLOUD_SDK_VERSION}
 # Use the decrypted service account credentials to authenticate the command line tool and setup
 # volume mounts so credentials and tarballs are accessible to docker
 GCLOUD_CONFIG_CID=$( docker run -t -d \
-     -v "${HELM_DIR}/resources:/resources" \
+     -v "/tmp/resources:/resources" \
      -v "${HELM_DIR}/docs:/docs" \
      --name gcloud-config ${CLOUD_SDK_IMAGE} \
      gcloud auth activate-service-account --key-file /resources/es-repo-7c1fefe17951.json \
