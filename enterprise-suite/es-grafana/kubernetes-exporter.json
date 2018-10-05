@@ -1,7 +1,38 @@
 [
-   {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
-   {"graphName": "Memory Available Percent", "promQL":["node_memory_usable_percent"]},
-   {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
-   {"graphName": "Bytes Received Per Second", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
-   {"graphName": "Bytes Transmitted Per Second", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
+    {
+        "graphName": "CPU Percent",
+        "promQL": [
+            "sum without(container_name,id,image,name)((irate(container_cpu_user_seconds_total{ContextTags}[1m]) + irate(container_cpu_system_seconds_total[1m])) * 100)"
+        ]
+    },
+    {
+        "graphName": "Resident Memory Used Percent",
+        "promQL": [
+            "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+        ]
+    },
+    {
+        "graphName": "Total Memory Used Percent",
+        "promQL": [
+            "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+        ]
+    },
+    {
+        "graphName": "File System Used Percent",
+        "promQL": [
+            "sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)"
+        ]
+    },
+    {
+        "graphName": "Bytes Received Per Second",
+        "promQL": [
+            "sum without(container_name, id, image, name, interface)(irate(container_network_receive_bytes_total{ContextTags}[1m]))"
+        ]
+    },
+    {
+        "graphName": "Bytes Transmitted Per Second",
+        "promQL": [
+            "sum without (container_name,id, image, name, interface)(irate(container_network_transmit_bytes_total{ContextTags}[1m]))"
+        ]
+    }
 ]
