@@ -5,7 +5,9 @@ dist: xenial
 services:
 - docker
 
-install: scripts/setup-tools-for-ubuntu.sh
+install:
+- scripts/setup-tools-for-ubuntu.sh
+- curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
 
 jobs:
   include:
@@ -13,17 +15,20 @@ jobs:
     name: Validate
     script:
     - make lint
-  - name: Minikube
+
+  - name: ES Smoke Tests
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite
-  - name: Minikube - Latest
+
+  - name: ES Smoke Tests (Latest)
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest
-  - name: Minikube - Frontend
+
+  - name: ES Frontend E2E
     cache:
       directories:
         - ~/.npm
@@ -32,7 +37,11 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite ES_TEST=frontend
-  - name: Minikube - Frontend (Latest)
+    after_script:
+    # Cypress videos.
+    - artifacts upload $(find . -name '*.mp4')
+
+  - name: ES Frontend E2E (Latest)
     if: type in (cron)
     cache:
       directories:
@@ -42,16 +51,19 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite-latest ES_TEST=frontend
+
   - name: Reactive-sandbox test
     script:
     - make test CHARTS=reactive-sandbox
+
   - stage: deploy
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api)
     script:
     # Decrypt credentials for GCS system account helmchart@es-repo.iam.gserviceaccount.com
-    - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out resources/es-repo-7c1fefe17951.json -d
+    - mkdir -p /tmp/resources
+    - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out /tmp/resources/es-repo-7c1fefe17951.json -d
     - scripts/deploy-to-gcs.sh
     - scripts/trigger-build-helm-charts.sh
 
