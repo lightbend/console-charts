@@ -11,7 +11,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "cpu saturated",
-        "description": "cpu on {{$labels.instance}} over 99% busy",
+        "description": "cpu on {{$labels.node_ip}} over 99% busy",
         "monitorType": ""
       }
     },
@@ -26,7 +26,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "memory pressure",
-        "description": "{{$labels.instance}} has low usable memory",
+        "description": "{{$labels.node_ip}} has low usable memory",
         "monitorType": ""
       }
     },
@@ -43,7 +43,7 @@
         "confidence": "1",
         "severity": "warning",
         "summary": "disk filling",
-        "description": "{{$labels.instance}} will fill disk in {{$labels.prediction}}",
+        "description": "{{$labels.node_ip}} will fill disk in {{$labels.device}}",
         "monitorType": ""
       }
     },
@@ -58,7 +58,7 @@
         "confidence": "0.5",
         "severity": "warning",
         "summary": "network errors",
-        "description": "{{$labels.instance}} has network errors",
+        "description": "{{$labels.node_ip}} has network errors",
         "monitorType": ""
       }
     },
@@ -73,7 +73,7 @@
         "confidence": "0.5",
         "severity": "warning",
         "summary": "kube node pressure",
-        "description": "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}",
+        "description": "{{$labels.node_ip}} is in kubernetes condition {{$labels.condition}}",
         "monitorType": ""
       }
     },
