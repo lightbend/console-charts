@@ -4,7 +4,8 @@ global:
 
 # Routing rules.
 route:
-  receiver: slack
+  # Default receiver.
+  receiver: team1-slack
   # Resend unresolved alerts at this interval.
   repeat_interval: 4h
   # Wait for any other alerts in the same group before sending.
