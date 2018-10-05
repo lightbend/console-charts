@@ -63,7 +63,8 @@ function import_credentials() {
         repo_username=$LIGHTBEND_COMMERCIAL_USERNAME
         repo_password=$LIGHTBEND_COMMERCIAL_PASSWORD
     elif [ -e "$LIGHTBEND_COMMERCIAL_CREDENTIALS" ]; then
-        while IFS='=' read -r key value; do
+        while IFS= read -r prop || [ -n "$prop" ]; do
+            read key value <<< $( echo $prop | awk 'BEGIN { FS = ":" } { print $1 " " $2 }' )
             local trimmed_key
             trimmed_key=$(echo -e "$key" | tr -d '[:space:]')
             local trimmed_value
