@@ -31,7 +31,7 @@ route:
   - match:
       es_workload: workload2
       severity: critical
-    receiver: team2-pagerduty
+    receiver: team2-slack
 
 # Don't alert on warnings if the same alert is already critical.
 inhibit_rules:
