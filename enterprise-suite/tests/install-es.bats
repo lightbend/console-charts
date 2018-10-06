@@ -27,7 +27,7 @@ function setup {
 @test "loads commercial credentials from file with no trailing newline" {
     unset LIGHTBEND_COMMERCIAL_USERNAME
     unset LIGHTBEND_COMMERCIAL_PASSWORD
-    LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials_nonl " \
+    LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials_nonl" \
         run $install_es
     assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
 }
