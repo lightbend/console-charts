@@ -1,4 +1,19 @@
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: alertmanager-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanagerVolumeSize }}
+  parameters:
+    fstype: xfs
+
+---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -74,7 +89,8 @@ spec:
           configMap:
             name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
-          emptydir: {}
+          persistentVolumeClaim:
+            claimName: alertmanager-storage
 
 {{ if .Values.minikube }}
 ---
