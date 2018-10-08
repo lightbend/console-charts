@@ -129,9 +129,9 @@ done
 
 # coherency tests
 # data with "es_workload" should also have a "namespace" label
-prom_has_no_data 'count({es_workload=~".+", namespace="", name!~"node.*|kube_node.*"})'
+prom_has_no_data 'count({es_workload=~".+", namespace="", name!~"node.*|kube_node.*", __name__!~"node.*|kube_node.*"})'
 # health should have a "es_workload" label, with a few known exceptions
-prom_has_no_data 'health{es_workload="",name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
+prom_has_no_data 'health{es_workload="", name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
 # kube_pod_info must have es_workload labels
 prom_has_data 'kube_pod_info{es_workload=~".+"}'
 prom_has_no_data 'kube_pod_info{es_workload=""}'
