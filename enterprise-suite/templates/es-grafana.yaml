@@ -81,6 +81,21 @@ spec:
 {{ end }}
 
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: es-grafana-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esGrafanaStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.esGrafanaVolumeSize }}
+  parameters:
+    fstype: xfs
+
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -137,6 +152,9 @@ spec:
           mountPath: /usr/share/grafana/public/conf
         - name: grafana-datasources
           mountPath: /etc/grafana/provisioning/datasources/
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+
       volumes:
       - name: grafana-dashboards
         configMap:
@@ -144,3 +162,6 @@ spec:
       - name: grafana-datasources
         configMap:
           name: grafana-datasource-cm
+      - name: grafana-data
+        persistentVolumeClaim:
+          claimName: es-grafana-storage

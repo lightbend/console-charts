@@ -59,3 +59,5 @@ prometheusVolumeSize: 256Gi
 esMonitorVolumeSize: 32Gi
 # Alertmanager volume size - used for storing silences.
 alertmanagerVolumeSize: 32Gi
+# Grafana volume size - used for storing users, custom dashboards, and plugins.
+esGrafanaVolumeSize: 32Gi
