@@ -68,7 +68,8 @@ metadata:
   name: console-server
 spec:
   ports:
-    - port: 80
+    - name: console-server-port
+      port: 80
       targetPort: 8080
   selector:
     run: es-console
