@@ -31,6 +31,10 @@ spec:
               cpu: {{ default .Values.defaultCPURequest .Values.alertManagerCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.alertManagerMemoryRequest }}
           env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           args:
             - --config.file=/etc/config/alertmanager.yml
             - --storage.path=/data
