@@ -10,8 +10,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.alertmanagerVolumeSize }}
-  parameters:
-    fstype: xfs
 
 ---
 apiVersion: apps/v1beta2

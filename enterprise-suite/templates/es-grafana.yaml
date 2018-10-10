@@ -92,8 +92,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.esGrafanaVolumeSize }}
-  parameters:
-    fstype: xfs
 
 ---
 apiVersion: extensions/v1beta1

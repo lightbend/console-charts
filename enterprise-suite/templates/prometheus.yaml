@@ -52,8 +52,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.esMonitorVolumeSize }}
-  parameters:
-    fstype: xfs
 
 ---
 kind: PersistentVolumeClaim
@@ -67,8 +65,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.prometheusVolumeSize }}
-  parameters:
-    fstype: xfs
 
 ---
 apiVersion: apps/v1beta2
