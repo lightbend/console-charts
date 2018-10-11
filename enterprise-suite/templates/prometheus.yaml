@@ -41,6 +41,32 @@ subjects:
   namespace: {{.Release.Namespace}}
 
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: es-monitor-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esMonitorStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.esMonitorVolumeSize }}
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: prometheus-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.prometheusVolumeSize }}
+
+---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -170,9 +196,11 @@ spec:
           configMap:
             name: es-monitor-api
         - name: monitor-data-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: es-monitor-storage
         - name: prometheus-data-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: prometheus-storage
         - name: bare-prometheus
           configMap:
             name: bare-prometheus
@@ -231,10 +259,10 @@ metadata:
   name: bare-prometheus
 data:
   prometheus.yml: |-
-    # this is a placeholder to keep prometheus running while it waits the real config
+    # this is a placeholder to keep prometheus running while it awaits the real config
     global:
-      scrape_interval:     1m
-      evaluation_interval: 1m
+      scrape_interval:     99m
+      evaluation_interval: 99m
     scrape_configs:
       - job_name: wait
         static_configs:

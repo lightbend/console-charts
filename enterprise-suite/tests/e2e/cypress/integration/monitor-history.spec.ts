@@ -11,7 +11,7 @@ describe('History Log Test', () => {
     // Util.deleteMonitorsForWorkload('es-console');
   });
 
-  it('log history check', () => {
+  it.skip('log history check', () => {
     // create and save monitor
     const monitorName = Util.createRandomMonitorName();
     Navigation.goWorkloadPageByClick('es-console');

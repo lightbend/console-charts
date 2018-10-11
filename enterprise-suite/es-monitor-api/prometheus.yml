@@ -71,6 +71,22 @@ scrape_configs:
       - source_labels: [__name__]
         regex: container_(network_tcp_usage_total|tasks_state|cpu_usage_seconds_total|memory_failures_total|network_udp_usage_total)
         action: drop
+      # extract workload from workload-hash-rand
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[456789bcdf]{4,10}-[bcdfghjklmnpqrstvwxz2456789]{5};
+        target_label: es_workload
+      # extract workload from workload-rand
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
+        target_label: es_workload
+      # extract workload from workload-num
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[0-9]{1,4};
+        target_label: es_workload
+      # copy pod name to workload
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*);
+        target_label: es_workload
 
   # kube-state-metrics
 
@@ -126,6 +142,22 @@ scrape_configs:
         target_label: es_workload
       - source_labels: [daemonset, es_workload]
         regex: '(.+);'
+        target_label: es_workload
+      # extract workload from workload-hash-rand
+      - source_labels: [pod, es_workload]
+        regex: (.*)-[456789bcdf]{4,10}-[bcdfghjklmnpqrstvwxz2456789]{5};
+        target_label: es_workload
+      # extract workload from workload-rand
+      - source_labels: [pod, es_workload]
+        regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
+        target_label: es_workload
+      # extract workload from workload-num
+      - source_labels: [pod, es_workload]
+        regex: (.*)-[0-9]{1,4};
+        target_label: es_workload
+      # copy pod name to workload
+      - source_labels: [pod, es_workload]
+        regex: (.*);
         target_label: es_workload
 {{ .MonitorTypeRules | indent 6 }}
 

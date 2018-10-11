@@ -13,20 +13,21 @@
 - record: kube_node_pressure
   expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 
+# kube_pod_ready: exclude pods where 100% of containers have terminated (eg. Jobs)
 - record: kube_pod_ready
-  expr: avg by (node_ip, node_name, namespace, pod, es_monitor_type) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
+  expr: kube_pod_status_ready{condition="true"} unless on (pod) avg by (pod) (kube_pod_container_status_terminated) == 1
 
 - record: kube_pod_container_restarts_rate
-  expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
+  expr: rate(kube_pod_container_status_restarts_total[1m])>=0 unless on (pod) avg by (pod) (kube_pod_container_status_terminated) == 1
 
 - record: container_starts_total
-  expr: sum by (es_workload, namespace, es_monitor_type) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info)
+  expr: sum by (es_workload, namespace, es_monitor_type) (1 + kube_pod_container_status_restarts_total)
 
 - record: kube_pod_failed
-  expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
+  expr: kube_pod_status_phase{phase="Failed"}
 
 - record: kube_pod_not_running
-  expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info)
+  expr: 1 - kube_pod_status_phase{phase="Running"} and ignoring(phase) kube_pod_status_phase{phase="Failed"}==0 and ignoring(phase) kube_pod_status_phase{phase="Succeeded"}==0
 
 - record: kube_workload_generation_lag
   expr: avg by (es_workload, namespace, es_monitor_type) (kube_deployment_metadata_generation - kube_deployment_status_observed_generation)

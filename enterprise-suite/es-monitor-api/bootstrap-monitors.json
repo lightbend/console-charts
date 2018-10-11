@@ -80,11 +80,11 @@
     {
       "model": "threshold",
       "parameters": {
-        "name": "restarts",
+        "name": "kube_container_rapid_restarts",
         "metric": "kube_pod_container_restarts_rate",
         "comparator": ">",
         "threshold": "0",
-        "window": "10m",
+        "window": "5m",
         "confidence": "0.5",
         "severity": "warning",
         "summary": "container restarting rapidly",
