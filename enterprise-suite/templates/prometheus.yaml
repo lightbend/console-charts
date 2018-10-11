@@ -41,6 +41,32 @@ subjects:
   namespace: {{.Release.Namespace}}
 
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: es-monitor-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esMonitorStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.esMonitorVolumeSize }}
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: prometheus-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.prometheusVolumeSize }}
+
+---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -170,9 +196,11 @@ spec:
           configMap:
             name: es-monitor-api
         - name: monitor-data-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: es-monitor-storage
         - name: prometheus-data-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: prometheus-storage
         - name: bare-prometheus
           configMap:
             name: bare-prometheus
