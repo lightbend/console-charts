@@ -24,7 +24,7 @@ CHART_DIR = ../$(ES_CHART)
 COMPONENTS := $(wildcard ../$(ES_CHART)/*/.)
 SUBCOMPONENTS := $(wildcard ../$(ES_CHART)/*/*/.)
 # Override dev helm settings using values-latest.yaml file
-DEV_HELM_VALUES_FILE = values-latest.yaml
+HELM_VALUES_FILE = values-latest.yaml
 
 # Special rule to build 'latest' chart
 $(HELM_CHARTS_DIR)/docs/$(filter %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
