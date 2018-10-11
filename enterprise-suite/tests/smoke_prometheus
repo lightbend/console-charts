@@ -193,20 +193,8 @@ node_metrics=(
   node_network_error_rate
 )
 
-# grep node_ rules.json | jq -r '.parameters.name'
-node_health=(
-  node_high_cpu
-  node_memory_pressure
-  node_network_errors
-)
-
 for m in "${node_metrics[@]}" ; do
   prom_has_data "$m"
-done
-
-for m in "${node_health[@]}"; do
-  prom_has_data "model{name=\"$m\"}"
-  prom_has_data "health{name=\"$m\"}"
 done
 
 NODE_EXPORTER_LOGS=$( node_exporter_logs )
