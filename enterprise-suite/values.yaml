@@ -47,3 +47,17 @@ defaultCPURequest: 100m
 defaultMemoryRequest: 50Mi
 # Prometheus resource request for memory
 prometheusMemoryRequest: 250Mi
+
+#################################################
+# Persistent Volumes
+#
+# Default StorageClass to use for persistent volumes
+defaultStorageClass: standard
+# Prometheus volume size - used for storing metrics data.
+prometheusVolumeSize: 256Gi
+# ES Monitor API volume size - used for storing monitors in a git repo.
+esMonitorVolumeSize: 32Gi
+# Alertmanager volume size - used for storing silences.
+alertmanagerVolumeSize: 32Gi
+# Grafana volume size - used for storing users, custom dashboards, and plugins.
+esGrafanaVolumeSize: 32Gi
