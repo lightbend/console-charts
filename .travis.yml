@@ -30,10 +30,10 @@ jobs:
 
   - name: ES Frontend E2E
     addons:
-    apt:
-      update: true
-      packages:
-      - libgconf2-4
+      apt:
+        update: true
+        packages:
+        - libgconf2-4
     cache:
       directories:
         - ~/.npm
