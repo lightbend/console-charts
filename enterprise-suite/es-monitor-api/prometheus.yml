@@ -85,7 +85,7 @@ scrape_configs:
         target_label: es_workload
       # copy pod name to workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*);
+        regex: (.+);
         target_label: es_workload
 
   # kube-state-metrics
@@ -157,8 +157,9 @@ scrape_configs:
         target_label: es_workload
       # copy pod name to workload
       - source_labels: [pod, es_workload]
-        regex: (.*);
+        regex: (.+);
         target_label: es_workload
+
 {{ .MonitorTypeRules | indent 6 }}
 
 

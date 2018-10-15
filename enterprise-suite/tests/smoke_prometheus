@@ -70,7 +70,7 @@ prom_three_scrapes() {
 busy_wait prom_three_scrapes kube_pod_info
 T $? Prometheus kube-state-metrics has at least three scrapes
 
-busy_wait prom_three_scrapes node_cpu_percent
+busy_wait prom_three_scrapes node_cpu
 T $? Prometheus node-exporter has at least three scrapes
 
 
@@ -129,9 +129,9 @@ done
 
 # coherency tests
 # data with "es_workload" should also have a "namespace" label
-prom_has_no_data 'count({es_workload=~".+", namespace=""})'
+prom_has_no_data 'count({es_workload=~".+", namespace="", name!~"node.*|kube_node.*", __name__!~"node.*|kube_node.*"})'
 # health should have a "es_workload" label, with a few known exceptions
-prom_has_no_data 'health{es_workload="",name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
+prom_has_no_data 'health{es_workload="", name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
 # kube_pod_info must have es_workload labels
 prom_has_data 'kube_pod_info{es_workload=~".+"}'
 prom_has_no_data 'kube_pod_info{es_workload=""}'
@@ -147,7 +147,6 @@ prom_has_no_data '{__name__=~"container_.+", es_workload=""}'
 # grep kube_ rules.json | jq -r '.parameters.metric'
 kube_state_metrics=(
   kube_pod_info
-  kube_node_pressure
   kube_pod_ready
   kube_pod_container_restarts_rate
   kube_pod_failed
@@ -157,7 +156,6 @@ kube_state_metrics=(
 
 # grep kube_ rules.json | jq -r '.parameters.name'
 kube_state_health=(
-  kube_node_pressure
   kube_container_rapid_restarts
   kube_pod_not_ready
   kube_pod_not_running
@@ -191,26 +189,14 @@ T $? 'kube-state-metrics "err" logs'
 
 # grep node_ rules.json | jq -r '.parameters.metric'
 node_metrics=(
-  node_cpu_percent
-  node_memory_usable_percent
-  node_filesystem_free_percent
-  node_network_error_rate
-)
-
-# grep node_ rules.json | jq -r '.parameters.name'
-node_health=(
-  node_high_cpu
-  node_memory_pressure
-  node_network_errors
+  node_cpu
+  node_memory_MemAvailable
+  node_filesystem_free
+  node_network_transmit_errs
 )
 
 for m in "${node_metrics[@]}" ; do
   prom_has_data "$m"
-done
-
-for m in "${node_health[@]}"; do
-  prom_has_data "model{name=\"$m\"}"
-  prom_has_data "health{name=\"$m\"}"
 done
 
 NODE_EXPORTER_LOGS=$( node_exporter_logs )
