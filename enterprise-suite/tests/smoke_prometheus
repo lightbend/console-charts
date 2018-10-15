@@ -70,7 +70,7 @@ prom_three_scrapes() {
 busy_wait prom_three_scrapes kube_pod_info
 T $? Prometheus kube-state-metrics has at least three scrapes
 
-busy_wait prom_three_scrapes node_cpu_percent
+busy_wait prom_three_scrapes node_cpu
 T $? Prometheus node-exporter has at least three scrapes
 
 
@@ -191,26 +191,14 @@ T $? 'kube-state-metrics "err" logs'
 
 # grep node_ rules.json | jq -r '.parameters.metric'
 node_metrics=(
-  node_cpu_percent
-  node_memory_usable_percent
-  node_filesystem_free_percent
-  node_network_error_rate
-)
-
-# grep node_ rules.json | jq -r '.parameters.name'
-node_health=(
-  node_high_cpu
-  node_memory_pressure
-  node_network_errors
+  node_cpu
+  node_memory_MemAvailable
+  node_filesystem_free
+  node_network_transmit_errs
 )
 
 for m in "${node_metrics[@]}" ; do
   prom_has_data "$m"
-done
-
-for m in "${node_health[@]}"; do
-  prom_has_data "model{name=\"$m\"}"
-  prom_has_data "health{name=\"$m\"}"
 done
 
 NODE_EXPORTER_LOGS=$( node_exporter_logs )
