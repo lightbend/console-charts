@@ -159,12 +159,6 @@ scrape_configs:
       - source_labels: [pod, es_workload]
         regex: (.+);
         target_label: es_workload
-      # doesn't belong to a pod, this is a cluster wide metric, e.g. kube_node_status_condition
-      - source_labels: [es_workload]
-        regex: ^$
-        target_label: es_workload
-        replacement: cluster
-        action: replace
 
 {{ .MonitorTypeRules | indent 6 }}
 
@@ -194,12 +188,6 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_host_ip]
         action: replace
         target_label: node_ip
-      # Make these metrics part of the special cluster workload
-      - source_labels: [__address__] # always exists
-        target_label: es_workload
-        regex: .* # always matches
-        replacement: cluster
-        action: replace
 
   # Scrape config for service endpoints.
   #
