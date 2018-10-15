@@ -51,6 +51,8 @@ prometheusMemoryRequest: 250Mi
 #################################################
 # Persistent Volumes
 #
+# Set to true to use emptyDir for all volumes, disabling persistent volumes.
+useEmptyDirVolumes: false
 # Default StorageClass to use for persistent volumes
 defaultStorageClass: standard
 # Prometheus volume size - used for storing metrics data.
