@@ -26,7 +26,7 @@ ALL_YAML ?= all.yaml
 
 
 all: lint build  ## lint then build chart
-build: init package $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build chart package (and all.yaml)
+build: init package allyaml  ## Build chart package (and all.yaml)
 
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
@@ -83,6 +83,9 @@ lint-json:  ## Test json files are well-formed
 lint-promql:  ## Test promql bits are well-formed
 	$(CHART_DIR)/scripts/validate-promql.sh
 
+lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
+	kubectl --context=minikube create --dry-run --validate -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
+
 clean::  ## Delete make artifacts
 	rm -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
 
@@ -93,6 +96,8 @@ clean::  ## Delete make artifacts
 # Install minikube-related services.  These are disabled by default but we enable for debugging purposes.
 # (If desired, you can override with "make <target> MINIKUBE=false")
 MINIKUBE=true
+
+allyaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build all.yaml file
 
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
@@ -124,5 +129,5 @@ install-dev: install-helm ## Install content of enterprise-suite/ folder
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all build package shell-tests minikube-tests test init lint lint-helm lint-json lint-promql clean \
-		install-helm install-local install-dev help
+.PHONY: all build package shell-tests minikube-tests test init lint lint-helm lint-json lint-promql lint-allyaml clean \
+		allyaml install-helm install-local install-dev help
