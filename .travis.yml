@@ -42,7 +42,7 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite ES_TEST=frontend
-    after_script:
+    after_failure:
     # Cypress videos.
     - artifacts upload $(find . -name '*.mp4')
 
