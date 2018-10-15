@@ -147,7 +147,6 @@ prom_has_no_data '{__name__=~"container_.+", es_workload=""}'
 # grep kube_ rules.json | jq -r '.parameters.metric'
 kube_state_metrics=(
   kube_pod_info
-  kube_node_pressure
   kube_pod_ready
   kube_pod_container_restarts_rate
   kube_pod_failed
@@ -157,7 +156,6 @@ kube_state_metrics=(
 
 # grep kube_ rules.json | jq -r '.parameters.name'
 kube_state_health=(
-  kube_node_pressure
   kube_container_rapid_restarts
   kube_pod_not_ready
   kube_pod_not_running

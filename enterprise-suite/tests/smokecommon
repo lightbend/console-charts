@@ -46,7 +46,7 @@ T() {
     echo "PASS: $msg"
     ((++TEST_SUCCESSES))
   else
-    echo "FAIL: $msg"
+    echo "*** FAIL: $msg"
     # make it conditional on a cli arg whether we bail or not
     ((++TEST_FAILURES))
     # error "test failed"
