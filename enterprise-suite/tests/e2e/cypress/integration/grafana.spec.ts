@@ -14,7 +14,7 @@ describe('Grafana Test', () => {
     Navigation.clickMonitor('akka_processing_time');
 
     // start test
-    cy.visit('/workloads/es-demo/monitors/akka_processing_time', {
+    cy.visit('/namespaces/default/workloads/es-demo/monitors/akka_processing_time', {
       onBeforeLoad(win) {
         cy.stub(win, 'open').as('windowOpen'); // stub window.open event
       }
