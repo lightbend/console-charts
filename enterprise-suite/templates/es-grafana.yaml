@@ -87,6 +87,9 @@ apiVersion: v1
 metadata:
   name: es-grafana-storage
 spec:
+  {{ if not .Values.openShift36 }}
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esGrafanaStorageClass }}
+  {{ end }}
   accessModes:
   - ReadWriteOnce
   resources:

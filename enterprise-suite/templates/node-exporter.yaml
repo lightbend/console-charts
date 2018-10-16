@@ -3,7 +3,11 @@ kind: ServiceAccount
 metadata:
   name: prometheus-node-exporter
 ---
-apiVersion: extensions/v1beta1
+{{ if .Values.openShift36 }}
+  apiVersion: extensions/v1beta1
+{{ else }}
+  apiVersion: apps/v1beta2
+{{ end }}
 kind: DaemonSet
 metadata:
   labels:

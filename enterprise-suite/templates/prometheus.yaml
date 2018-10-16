@@ -1,4 +1,3 @@
-
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -6,12 +5,64 @@ metadata:
   name: prometheus-server
 
 ---
+{{ if .Values.openShift36 }}
+apiVersion: authorization.openshift.io/v1
+{{ else }}
+apiVersion: rbac.authorization.k8s.io/v1
+{{ end }}
+kind: ClusterRole
+metadata:
+  name: prometheus-server
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+{{ if .Values.openShift36 }}
+apiVersion: authorization.openshift.io/v1
+{{ else }}
+apiVersion: rbac.authorization.k8s.io/v1
+{{ end }}
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-server
+roleRef:
+  {{ if .Values.openShift36 }}
+  apiGroup: authorization.openshift.io/v1
+  {{ else }}
+  apiGroup: rbac.authorization.k8s.io
+  {{ end }}
+  kind: ClusterRole
+  name: prometheus-server
+subjects:
+- kind: ServiceAccount
+  name: prometheus-server
+  namespace: {{.Release.Namespace}}
+
+
 {{ if not .Values.useEmptyDirVolumes }}
+---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: es-monitor-storage
 spec:
+  {{ if not .Values.openShift36 }}
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esMonitorStorageClass }}
+  {{ end }}
   accessModes:
   - ReadWriteOnce
   resources:
@@ -24,6 +75,9 @@ apiVersion: v1
 metadata:
   name: prometheus-storage
 spec:
+  {{ if not .Values.openShift36 }}
+  storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
+  {{  end }}
   accessModes:
   - ReadWriteOnce
   resources:
@@ -32,8 +86,12 @@ spec:
 
 {{ end }}
 ---
-apiVersion: apps/v1beta1
 kind: Deployment
+{{ if .Values.openShift36 }}
+apiVersion: apps/v1beta1
+{{ else }}
+apiVersion: apps/v1beta2
+{{ end }}
 metadata:
   labels:
     app: prometheus
