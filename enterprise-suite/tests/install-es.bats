@@ -52,7 +52,7 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --regexp '.*helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm install es-repo/enterprise-suite --name myhelmname --namespace lightbend --values [^ ]*creds\..*'
 }
 
 @test "helm upgrade command if chart exists" {
@@ -61,10 +61,30 @@ function setup {
     assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
 }
 
+@test "export yaml files with '--version blah'" {
+    ES_EXPORT_FILE=/tmp/myall.yaml \
+        run $install_es --version v10.0.20 --set minikube=true,podUID=100001
+	assert_output --regexp 'helm fetch .*--version v10.0.20 es-repo/enterprise-suite'
+    refute_output --regexp "helm fetch [^\n]*--set minikube=true"
+
+	assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
+    refute_output --regexp 'helm template .*--version v10.0.20'
+}
+
+@test "export yaml files with '--version=blah'" {
+    ES_EXPORT_FILE=/tmp/myall.yaml \
+        run $install_es --version=v10.0.20 --set minikube=true,podUID=100001
+	assert_output --regexp 'helm fetch .*--version=v10.0.20 es-repo/enterprise-suite'
+    refute_output --regexp "helm fetch [^\n]*--set minikube=true"
+
+	assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
+    refute_output --regexp 'helm template .*--version=v10.0.20'
+}
+
 @test "can set namespace" {
     ES_NAMESPACE=mycoolnamespace \
         run $install_es
-    assert_output --partial "--namespace=mycoolnamespace"
+    assert_output --partial "--namespace mycoolnamespace"
 }
 
 @test "can pass helm args" {
