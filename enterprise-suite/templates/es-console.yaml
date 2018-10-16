@@ -176,7 +176,7 @@ data:
       # bookmarks / reloads in the /workloads/ path
       # (for our single page app, these should reload index.html but keep the path)
 
-      location ~ (.*/)(workloads/.*) {
+      location ~ (.*/)(namespaces/.*) {
         alias $base/index.html;
         default_type text/html;
         sub_filter 'base href="/"' 'base href="$1"';
