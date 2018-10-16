@@ -10,7 +10,6 @@ install_es=$BATS_TEST_DIRNAME/../scripts/install-es.sh
 
 function setup {
     unset LIGHTBEND_COMMERCIAL_CREDENTIALS
-    unset TRAVIS
     export LIGHTBEND_COMMERCIAL_USERNAME="myuser"
     export LIGHTBEND_COMMERCIAL_PASSWORD="mypass"
     export ES_STUB_CHART_STATUS="1"
@@ -23,20 +22,19 @@ function setup {
     LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials" \
         run $install_es
     assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
+}
 
-    export TRAVIS=true
-    LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials" \
+@test "loads commercial credentials from file with no trailing newline" {
+    unset LIGHTBEND_COMMERCIAL_USERNAME
+    unset LIGHTBEND_COMMERCIAL_PASSWORD
+    LIGHTBEND_COMMERCIAL_CREDENTIALS="$BATS_TEST_DIRNAME/testdata/test_credentials_nonl" \
         run $install_es
-    assert_output --partial "imageCredentials.username=testuser,imageCredentials.password=myreallysecurepassword"
+    assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
 }
 
 @test "loads commercial credentials from env vars" {
     run $install_es
     assert_output --regexp '.*helm install.*--values [^ ]*creds\..*'
-
-    export TRAVIS=true
-    run $install_es
-    assert_output --partial "imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "adds and updates helm repo if using a published chart" {
@@ -55,21 +53,12 @@ function setup {
 @test "helm install command" {
     run $install_es
     assert_output --regexp '.*helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --values [^ ]*creds\..*'
-
-    export TRAVIS=true
-    run $install_es
-    assert_output --partial "helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "helm upgrade command if chart exists" {
     ES_STUB_CHART_STATUS="0" \
         run $install_es
     assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
-
-    export TRAVIS=true
-    ES_STUB_CHART_STATUS="0" \
-        run $install_es
-    assert_output --partial "helm upgrade myhelmname es-repo/enterprise-suite --set imageCredentials.username=myuser,imageCredentials.password=mypass"
 }
 
 @test "can set namespace" {

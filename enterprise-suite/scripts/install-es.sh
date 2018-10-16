@@ -5,7 +5,6 @@
 set -eu
 
 CREDS=
-: "${TRAVIS:=}"
 
 cleanup() {
     if [ -n "$CREDS" -a -f "$CREDS" ] ; then
@@ -46,17 +45,12 @@ function usage() {
 }
 
 # Create arg for the helm install/upgrade lines.  $1 is username.  $2 is password.
-# If not using Travis, we stash credentials in a file.  Seems not to work with Travis.
-# This prevents the credentials being written to a log.  (Travis obfuscates the values.)
+# This prevents the credentials being written to a log.
 function set_credentials_arg() {
-    if [ -z "$TRAVIS" ] ; then
-        CREDS=$(mktemp -t creds.XXXXXX)
-        # write creds to file for use by helm
-        printf '%s\n' "imageCredentials.username: $1" "imageCredentials.password: $2" >"$CREDS"
-        HELM_CREDENTIALS_ARG="--values $CREDS"
-    else
-        HELM_CREDENTIALS_ARG="--set imageCredentials.username=$1,imageCredentials.password=$2"
-    fi
+    CREDS=$(mktemp -t creds.XXXXXX)
+    # write creds to file for use by helm
+    printf '%s\n' "imageCredentials:" "   username: $1" "   password: $2" >"$CREDS"
+    HELM_CREDENTIALS_ARG="--values $CREDS"
 }
 
 function import_credentials() {
@@ -69,7 +63,7 @@ function import_credentials() {
         repo_username=$LIGHTBEND_COMMERCIAL_USERNAME
         repo_password=$LIGHTBEND_COMMERCIAL_PASSWORD
     elif [ -e "$LIGHTBEND_COMMERCIAL_CREDENTIALS" ]; then
-        while IFS='=' read -r key value; do
+        while IFS='=' read -r key value || [ -n "$key" ]; do
             local trimmed_key
             trimmed_key=$(echo -e "$key" | tr -d '[:space:]')
             local trimmed_value

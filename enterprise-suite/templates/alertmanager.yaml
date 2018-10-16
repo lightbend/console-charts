@@ -1,4 +1,17 @@
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: alertmanager-storage
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanagerVolumeSize }}
+
+---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -31,9 +44,14 @@ spec:
               cpu: {{ default .Values.defaultCPURequest .Values.alertManagerCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.alertManagerMemoryRequest }}
           env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           args:
             - --config.file=/etc/config/alertmanager.yml
             - --storage.path=/data
+            - --cluster.listen-address=$(POD_IP):6783
 
           ports:
             - containerPort: 9093
@@ -74,7 +92,8 @@ spec:
           configMap:
             name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
-          emptydir: {}
+          persistentVolumeClaim:
+            claimName: alertmanager-storage
 
 {{ if .Values.minikube }}
 ---

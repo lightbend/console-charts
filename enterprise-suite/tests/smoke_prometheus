@@ -135,6 +135,10 @@ prom_has_no_data 'health{es_workload="",name!~"node.*|kube_node.*|prometheus_tar
 # kube_pod_info must have es_workload labels
 prom_has_data 'kube_pod_info{es_workload=~".+"}'
 prom_has_no_data 'kube_pod_info{es_workload=""}'
+# kube data mapped pod to workload labels
+prom_has_no_data '{__name__=~ "kube_.+", pod!="", es_workload=""}'
+# all container data have a workload label
+prom_has_no_data '{__name__=~"container_.+", es_workload=""}'
 
 #
 # kube-state-metrics
@@ -154,7 +158,7 @@ kube_state_metrics=(
 # grep kube_ rules.json | jq -r '.parameters.name'
 kube_state_health=(
   kube_node_pressure
-  restarts
+  kube_container_rapid_restarts
   kube_pod_not_ready
   kube_pod_not_running
   kube_workload_generation_lag
