@@ -1,25 +1,60 @@
 [
-  {"graphName":"Heap", "promQL":["sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
-                                 "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
-                                 "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
-                                 "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})"]},
-  {"graphName":"Non Heap", "promQL":["sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})"]},
-  {"graphName":"Total Heap", "promQL":["sum by (kubernetes_pod_name)(jvm_total_heap_committed{ContextTags})",
-                                       "sum by (kubernetes_pod_name)(jvm_total_heap_init{ContextTags})",
-                                       "sum by (kubernetes_pod_name)(jvm_total_heap_max{ContextTags})",
-                                       "sum by (kubernetes_pod_name)(jvm_total_heap_used{ContextTags})"]},
-  {"graphName":"GC Count", "promQL":["sum by (kubernetes_pod_name)(jvm_PS_MarkSweep_count{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_PS_Scavenge_count{ContextTags})"]},
-  {"graphName":"GC Time", "promQL":["max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
-                                    "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})"]},
-  {"graphName":"Class Loading", "promQL":["sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
-                                          "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})"]},
-  {"graphName":"Memory Pools", "promQL":["sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})"]}
+  {
+    "graphName": "Heap",
+    "promQL": [
+      "sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})"
+    ]
+  },
+  {
+    "graphName": "Non Heap",
+    "promQL": [
+      "sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})"
+    ]
+  },
+  {
+    "graphName": "Total Memory",
+    "promQL": [
+      "sum by (kubernetes_pod_name)(jvm_total_committed{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_total_init{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_total_max{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_total_used{ContextTags})"
+    ]
+  },
+  {
+    "graphName": "GC Count",
+    "promQL": [
+      "sum by (kubernetes_pod_name)(jvm_PS_MarkSweep_count{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_PS_Scavenge_count{ContextTags})"
+    ]
+  },
+  {
+    "graphName": "GC Time",
+    "promQL": [
+      "max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
+      "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})"
+    ]
+  },
+  {
+    "graphName": "Class Loading",
+    "promQL": [
+      "sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})"
+    ]
+  },
+  {
+    "graphName": "Memory Pools",
+    "promQL": [
+      "sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
+      "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})"
+    ]
+  }
 ]
