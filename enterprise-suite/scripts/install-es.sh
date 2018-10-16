@@ -135,9 +135,6 @@ It is recommended to use an explicit version."
     has_version=false
 fi
 
-# Get credentials
-import_credentials
-
 # Setup and install helm chart
 if [ -n "$ES_LOCAL_CHART" ]; then
     # Install from a local chart tarball if ES_LOCAL_CHART is set.
@@ -196,15 +193,18 @@ if [ "true" == "$should_export" ]; then
     TDIR=$( mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir' )
     debug helm fetch -d $TDIR "$VERSION_ARG" "$chart_ref"
     debug helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
-        "$HELM_CREDENTIALS_ARG" \
         "$@" \
         $TDIR/${ES_CHART}*.tgz > "$ES_EXPORT_FILE"
-elif [ "true" == "$should_upgrade" ]; then
-    debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
-        "$HELM_CREDENTIALS_ARG" \
-        "$@"
 else
-    debug helm install "$chart_ref" --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
-        "$HELM_CREDENTIALS_ARG" \
-        "$@"
+    # Get credentials
+    import_credentials
+    if [ "true" == "$should_upgrade" ]; then
+        debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
+            "$HELM_CREDENTIALS_ARG" \
+            "$@"
+    else
+        debug helm install "$chart_ref" --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
+            "$HELM_CREDENTIALS_ARG" \
+            "$@"
+    fi
 fi
