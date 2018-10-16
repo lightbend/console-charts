@@ -3,7 +3,7 @@ kind: ServiceAccount
 metadata:
   name: prometheus-node-exporter
 ---
-{{ if .Values.openShift36 }}
+{{ if .Values.openshift36 }}
   apiVersion: extensions/v1beta1
 {{ else }}
   apiVersion: apps/v1beta2
