@@ -52,7 +52,6 @@ subjects:
   name: prometheus-server
   namespace: {{.Release.Namespace}}
 
-
 {{ if not .Values.useEmptyDirVolumes }}
 ---
 kind: PersistentVolumeClaim
