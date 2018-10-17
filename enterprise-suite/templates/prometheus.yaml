@@ -158,6 +158,19 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
+        - name: es-monitor-api-configmap-reload
+          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
+          args:
+          - --volume-dir=/etc/config
+          - --webhook-url=http://localhost:8180/shutdown
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
           resources:
