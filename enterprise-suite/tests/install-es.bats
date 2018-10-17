@@ -62,7 +62,7 @@ function setup {
 }
 
 @test "export yaml files with '--version blah'" {
-    ES_EXPORT_FILE=/tmp/myall.yaml \
+    ES_EXPORT_YAML=true \
         run $install_es --version v10.0.20 --set minikube=true,podUID=100001
 	assert_output --regexp 'helm fetch .*--version v10.0.20 es-repo/enterprise-suite'
     refute_output --regexp "helm fetch [^\n]*--set minikube=true"
@@ -72,7 +72,7 @@ function setup {
 }
 
 @test "export yaml files with '--version=blah'" {
-    ES_EXPORT_FILE=/tmp/myall.yaml \
+    ES_EXPORT_YAML=true \
         run $install_es --version=v10.0.20 --set minikube=true,podUID=100001
 	assert_output --regexp 'helm fetch .*--version=v10.0.20 es-repo/enterprise-suite'
     refute_output --regexp "helm fetch [^\n]*--set minikube=true"

@@ -44,7 +44,7 @@ function usage() {
     docvar ES_LOCAL_CHART "Set to location of local chart tarball"
     docvar ES_HELM_NAME "Helm release name"
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
-    docvar ES_EXPORT_FILE "Export resource yaml to this file.  Does not install in this case."
+    docvar ES_EXPORT_YAML "Export resource yaml to stdout.  Does not install in this case."
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
 }
@@ -52,7 +52,7 @@ function usage() {
 # Create arg for the helm install/upgrade lines.  $1 is username.  $2 is password.
 # This prevents the credentials being written to a log.
 function set_credentials_arg() {
-    CREDS=$( mktemp -t creds.XXXXXX )
+    CREDS=$(mktemp -t creds.XXXXXX)
     # write creds to file for use by helm
     printf '%s\n' "imageCredentials:" "   username: $1" "   password: $2" >"$CREDS"
     HELM_CREDENTIALS_ARG="--values $CREDS"
@@ -117,10 +117,8 @@ ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_HELM_NAME=${ES_HELM_NAME:-enterprise-suite}
 ES_FORCE_INSTALL=${ES_FORCE_INSTALL:-false}
+ES_EXPORT_YAML=${ES_EXPORT_YAML:-false}
 DRY_RUN=${DRY_RUN:-false}
-# should_export will be true/false depending on whether ES_EXPORT_FILE has a non-null value
-should_export=${ES_EXPORT_FILE:+true}
-should_export=${should_export:=false}
 
 # Help
 if [ "${1-:}" == "-h" ]; then
@@ -147,10 +145,10 @@ fi
 
 # Determine if we should upgrade or install.
 # Note that the chart_installed function depends on tiller.  We're assuming that a user
-# specifying "ES_EXPORT_FILE=something" is not using tiller, therefore we also avoid calling
+# specifying "ES_EXPORT_YAML=something" is not using tiller, therefore we also avoid calling
 # chart_installed in that case.
 should_upgrade=
-if [ "false" == "$should_export" ] && chart_installed "$ES_HELM_NAME" ; then
+if [ "false" == "$ES_EXPORT_YAML" ] && chart_installed "$ES_HELM_NAME" ; then
     if [ "true" == "$ES_FORCE_INSTALL" ]; then
         debug helm delete --purge "$ES_HELM_NAME"
         echo "warning: helm delete does not wait for resources to be removed - if the script fails on install, please re-run it."
@@ -162,11 +160,12 @@ else
     should_upgrade=false
 fi
 
-if [ "true" == "$should_export" ]; then
-    # We need to grab any --version setting and pull it out of the command line args
+if [ "false" != "$ES_EXPORT_YAML" ]; then
+    # First grab any --version setting and pull it out of the command line args
+    # Note that this modifies $@.
     VERSION_ARG=""
-    REST=()
     if [ "true" = "$has_version" ] ; then
+		REST=()
         while [[ $# -gt 0 ]]
         do
             arg=$1
@@ -190,11 +189,11 @@ if [ "true" == "$should_export" ]; then
         set -- "${REST[@]}" # restore the other positional parameters
     fi
 
-    TDIR=$( mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir' )
+    TDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir')
     debug helm fetch -d $TDIR "$VERSION_ARG" "$chart_ref"
     debug helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
         "$@" \
-        $TDIR/${ES_CHART}*.tgz > "$ES_EXPORT_FILE"
+        $TDIR/${ES_CHART}*.tgz
 else
     # Get credentials
     import_credentials
