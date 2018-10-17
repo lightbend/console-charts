@@ -15,7 +15,7 @@ describe('Cluster Page Test', () => {
 
   it('workload list check', () => {
     ClusterPage.validateWorkloadCountGte(10);
-    ClusterPage.validateNodePodContainerCount('prometheus-server', 1, 1, 2);
+    // ClusterPage.validateNodePodContainerCount('prometheus-server', 1, 1, 2);
   });
 
   it('switch namespace check', () => {
