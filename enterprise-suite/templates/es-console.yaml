@@ -68,7 +68,7 @@ metadata:
   name: console-server
 spec:
   ports:
-    - name: console-server-port
+    - name: http
       port: 80
       targetPort: 8080
   selector:
