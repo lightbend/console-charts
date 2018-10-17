@@ -299,10 +299,11 @@ scrape_configs:
         action: keep
         regex: ^(.+;.*)|(;.*metrics)$
 
-      # Set port from prometheus.io/port.
+      # Set port from prometheus.io/port if it's set.
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
-        regex: (.+):(?:\d+);(\d+)
+        # Extract IP from address. Address might not contain a port in some cases.
+        regex: ([^:]+):?(?:\d+);(\d+)
         replacement: ${1}:${2}
         target_label: __address__
 
