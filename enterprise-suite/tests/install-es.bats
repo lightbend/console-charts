@@ -61,7 +61,7 @@ function setup {
     assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
 }
 
-@test "export yaml files with '--version blah'" {
+@test "export yaml with '--version blah'" {
     ES_EXPORT_YAML=true \
         run $install_es --version v10.0.20 --set minikube=true,podUID=100001
 	assert_output --regexp 'helm fetch .*--version v10.0.20 es-repo/enterprise-suite'
@@ -71,7 +71,7 @@ function setup {
     refute_output --regexp 'helm template .*--version v10.0.20'
 }
 
-@test "export yaml files with '--version=blah'" {
+@test "export yaml with '--version=blah'" {
     ES_EXPORT_YAML=true \
         run $install_es --version=v10.0.20 --set minikube=true,podUID=100001
 	assert_output --regexp 'helm fetch .*--version=v10.0.20 es-repo/enterprise-suite'
@@ -79,6 +79,21 @@ function setup {
 
 	assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
     refute_output --regexp 'helm template .*--version=v10.0.20'
+}
+
+@test "export credentials" {
+    ES_EXPORT_CREDS=true \
+        run $install_es
+
+	assert_output --regexp "kubectl .*create secret docker-registry commercial-credentials.*--docker-username=myuser --docker-password=mypass"
+}
+
+@test "warn for both ES_EXPORT_CREDS=true ES_EXPORT_YAML=true" {
+    ES_EXPORT_CREDS=true ES_EXPORT_YAML=true \
+        run $install_es
+
+    assert_output --partial "warning: both ES_EXPORT_CREDS and ES_EXPORT_YAML specified.  Ignoring ES_EXPORT_YAML."
+	assert_output --regexp "kubectl .*create secret docker-registry commercial-credentials.*--docker-username=myuser --docker-password=mypass"
 }
 
 @test "can set namespace" {

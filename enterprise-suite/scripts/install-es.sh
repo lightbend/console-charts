@@ -45,6 +45,7 @@ function usage() {
     docvar ES_HELM_NAME "Helm release name"
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
     docvar ES_EXPORT_YAML "Export resource yaml to stdout.  Does not install in this case."
+    docvar ES_EXPORT_CREDS "Export command to install credentials to stdout.  Will not install or export yaml."
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
 }
@@ -56,6 +57,7 @@ function set_credentials_arg() {
     # write creds to file for use by helm
     printf '%s\n' "imageCredentials:" "   username: $1" "   password: $2" >"$CREDS"
     HELM_CREDENTIALS_ARG="--values $CREDS"
+    KUBECTL_CREDENTIALS_ARG="--docker-username=$1 --docker-password=$2"
 }
 
 function import_credentials() {
@@ -117,12 +119,28 @@ ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_HELM_NAME=${ES_HELM_NAME:-enterprise-suite}
 ES_FORCE_INSTALL=${ES_FORCE_INSTALL:-false}
+ES_EXPORT_CREDS=${ES_EXPORT_CREDS:-false}
 ES_EXPORT_YAML=${ES_EXPORT_YAML:-false}
 DRY_RUN=${DRY_RUN:-false}
 
 # Help
 if [ "${1-:}" == "-h" ]; then
     usage
+fi
+
+if [ "false" != "$ES_EXPORT_CREDS"  -a  "false" != "$ES_EXPORT_YAML" ] ; then
+    (>&2 echo "warning: both ES_EXPORT_CREDS and ES_EXPORT_YAML specified.  Ignoring ES_EXPORT_YAML.")
+    ES_EXPORT_YAML=false
+fi
+
+if [ "false" != "$ES_EXPORT_CREDS" ]; then
+    import_credentials
+    KUBECTL_CMD="kubectl -n $ES_NAMESPACE create secret docker-registry \
+        commercial-credentials \
+        --docker-server=lightbend-docker-commercial-registry.bintray.io \
+        $KUBECTL_CREDENTIALS_ARG"
+    echo $KUBECTL_CMD
+    exit
 fi
 
 # Check if version has been set
@@ -133,7 +151,7 @@ It is recommended to use an explicit version."
     has_version=false
 fi
 
-# Setup and install helm chart
+# Setup and install helm chart in the repo
 if [ -n "$ES_LOCAL_CHART" ]; then
     # Install from a local chart tarball if ES_LOCAL_CHART is set.
     chart_ref=$ES_LOCAL_CHART
@@ -143,29 +161,12 @@ else
     chart_ref=es-repo/$ES_CHART
 fi
 
-# Determine if we should upgrade or install.
-# Note that the chart_installed function depends on tiller.  We're assuming that a user
-# specifying "ES_EXPORT_YAML=something" is not using tiller, therefore we also avoid calling
-# chart_installed in that case.
-should_upgrade=
-if [ "false" == "$ES_EXPORT_YAML" ] && chart_installed "$ES_HELM_NAME" ; then
-    if [ "true" == "$ES_FORCE_INSTALL" ]; then
-        debug helm delete --purge "$ES_HELM_NAME"
-        echo "warning: helm delete does not wait for resources to be removed - if the script fails on install, please re-run it."
-        should_upgrade=false
-    else
-        should_upgrade=true
-    fi
-else
-    should_upgrade=false
-fi
-
 if [ "false" != "$ES_EXPORT_YAML" ]; then
     # First grab any --version setting and pull it out of the command line args
     # Note that this modifies $@.
     VERSION_ARG=""
     if [ "true" = "$has_version" ] ; then
-		REST=()
+        REST=()
         while [[ $# -gt 0 ]]
         do
             arg=$1
@@ -194,9 +195,24 @@ if [ "false" != "$ES_EXPORT_YAML" ]; then
     debug helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
         "$@" \
         $TDIR/${ES_CHART}*.tgz
+
 else
-    # Get credentials
+    # Determine if we should upgrade or install.
+    should_upgrade=
+    if chart_installed "$ES_HELM_NAME" ; then
+        if [ "true" == "$ES_FORCE_INSTALL" ]; then
+            debug helm delete --purge "$ES_HELM_NAME"
+            echo "warning: helm delete does not wait for resources to be removed - if the script fails on install, please re-run it."
+            should_upgrade=false
+        else
+            should_upgrade=true
+        fi
+    else
+        should_upgrade=false
+    fi
+
     import_credentials
+
     if [ "true" == "$should_upgrade" ]; then
         debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
             "$HELM_CREDENTIALS_ARG" \
