@@ -168,8 +168,8 @@ spec:
           - --volume-dir=/etc/config
           - --webhook-url=http://localhost:8180/shutdown
           volumeMounts:
-          - name: config-volume
-            mountPath: /etc/config
+          - name: monitor-data-volume
+            mountPath: /monitor-data
 
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
