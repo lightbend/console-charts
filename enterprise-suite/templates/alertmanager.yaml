@@ -14,11 +14,7 @@ spec:
 {{ end }}
 
 ---
-{{ if .Values.openshift36 }}
-  apiVersion: apps/v1beta1
-{{ else }}
-  apiVersion: apps/v1beta2
-{{ end }}
+apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
   labels:

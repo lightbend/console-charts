@@ -5,11 +5,7 @@ metadata:
   name: prometheus-server
 
 ---
-{{ if .Values.openshift36 }}
-apiVersion: authorization.openshift.io/v1
-{{ else }}
-apiVersion: rbac.authorization.k8s.io/v1
-{{ end }}
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
   name: prometheus-server
@@ -31,20 +27,12 @@ rules:
   verbs: ["get"]
 
 ---
-{{ if .Values.openshift36 }}
-apiVersion: authorization.openshift.io/v1
-{{ else }}
-apiVersion: rbac.authorization.k8s.io/v1
-{{ end }}
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
   name: prometheus-server
 roleRef:
-  {{ if .Values.openshift36 }}
-  apiGroup: authorization.openshift.io/v1
-  {{ else }}
-  apiGroup: rbac.authorization.k8s.io
-  {{ end }}
+  apiGroup: {{ .Values.rbacApiVersion }}
   kind: ClusterRole
   name: prometheus-server
 subjects:
@@ -82,11 +70,7 @@ spec:
 {{ end }}
 ---
 kind: Deployment
-{{ if .Values.openshift36 }}
-apiVersion: apps/v1beta1
-{{ else }}
-apiVersion: apps/v1beta2
-{{ end }}
+apiVersion: {{ .Values.deploymentApiVersion }}
 metadata:
   labels:
     app: prometheus

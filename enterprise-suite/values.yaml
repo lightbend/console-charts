@@ -18,6 +18,12 @@ kubeStateMetricsVersion: v1.2.0
 # prom/node-exporter
 nodeExporterVersion: v0.15.2
 
+#################################################
+# Kubernetes Api Versions
+#
+rbacApiVersion: rbac.authorization.k8s.io/v1
+deploymentApiVersion: apps/v1beta2
+daemonSetApiVersion: apps/v1beta2
 
 #################################################
 # Settings

@@ -1,10 +1,6 @@
 
 ---
-{{ if .Values.openshift36 }}
-apiVersion: authorization.openshift.io/v1
-{{ else }}
-apiVersion: rbac.authorization.k8s.io/v1
-{{ end }}
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
   name: prometheus-kube-state-metrics
@@ -44,20 +40,12 @@ rules:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
 ---
-{{ if .Values.openshift36 }}
-apiVersion: authorization.openshift.io/v1
-{{ else }}
-apiVersion: rbac.authorization.k8s.io/v1
-{{ end }}
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
   name: prometheus-kube-state-metrics
 roleRef:
-  {{ if .Values.openshift36 }}
-  apiGroup: authorization.openshift.io/v1
-  {{ else }}
-  apiGroup: rbac.authorization.k8s.io
-  {{ end }}
+  apiGroup: {{ .Values.rbacApiVersion }}
   kind: ClusterRole
   name: prometheus-kube-state-metrics
 subjects:
@@ -72,11 +60,7 @@ metadata:
   name: prometheus-kube-state-metrics
 
 ---
-{{ if .Values.openshift36 }}
-apiVersion: apps/v1beta1
-{{ else }}
-apiVersion: apps/v1beta2
-{{ end }}
+apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
   labels:
