@@ -135,7 +135,7 @@ fi
 
 if [ "false" != "$ES_EXPORT_CREDS" ]; then
     import_credentials
-    KUBECTL_CMD="kubectl -n $ES_NAMESPACE create secret docker-registry \
+    KUBECTL_CMD="kubectl -n $ES_NAMESPACE create secret docker-registry --dry-run \
         commercial-credentials \
         --docker-server=lightbend-docker-commercial-registry.bintray.io \
         $KUBECTL_CREDENTIALS_ARG"
