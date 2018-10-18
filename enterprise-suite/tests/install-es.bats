@@ -61,24 +61,31 @@ function setup {
     assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
 }
 
-@test "export yaml with '--version blah'" {
-    ES_EXPORT_YAML=true \
+@test "export console yaml with '--version blah'" {
+    ES_EXPORT_YAML=console \
         run $install_es --version v10.0.20 --set minikube=true,podUID=100001
-	assert_output --regexp 'helm fetch .*--version v10.0.20 es-repo/enterprise-suite'
+    assert_output --regexp 'helm fetch .*--version v10.0.20 es-repo/enterprise-suite'
     refute_output --regexp "helm fetch [^\n]*--set minikube=true"
 
-	assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
+    assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
     refute_output --regexp 'helm template .*--version v10.0.20'
 }
 
-@test "export yaml with '--version=blah'" {
-    ES_EXPORT_YAML=true \
+@test "export console yaml with '--version=blah'" {
+    ES_EXPORT_YAML=console \
         run $install_es --version=v10.0.20 --set minikube=true,podUID=100001
-	assert_output --regexp 'helm fetch .*--version=v10.0.20 es-repo/enterprise-suite'
+    assert_output --regexp 'helm fetch .*--version=v10.0.20 es-repo/enterprise-suite'
     refute_output --regexp "helm fetch [^\n]*--set minikube=true"
 
-	assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
+    assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
     refute_output --regexp 'helm template .*--version=v10.0.20'
+}
+
+@test "export credentials yaml" {
+    ES_EXPORT_YAML=creds \
+        run $install_es
+    assert_output --regexp 'helm template --name myhelmname --namespace lightbend --execute templates/commercial-credentials.yaml --values .*creds\........*enterprise-suite\*.tgz'
+    # Would rather test generated yaml but Bats seems to eat it...
 }
 
 @test "can set namespace" {
@@ -105,7 +112,7 @@ function setup {
 @test "force install deletes the existing install first" {
     ES_STUB_CHART_STATUS="0" ES_FORCE_INSTALL="true" \
         run $install_es
-    assert_output --partial "helm delete --purge myhelmname" 
+    assert_output --partial "helm delete --purge myhelmname"
     assert_output --partial "helm install"
     refute_output --partial "helm upgrade"
 }
