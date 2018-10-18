@@ -162,7 +162,7 @@ data:
 
       # version
 
-      location ~ (.*)/version {
+      location ~ (.*)/version$ {
         return 200 '{
           "description": {{ .Chart.Description | quote }},
           "version": {{ .Chart.Version | quote }},
