@@ -160,6 +160,21 @@ data:
         return 301 ' $1/';
       }
 
+      # version
+
+      location ~ (.*)/version$ {
+        return 200 '{
+          "description": {{ .Chart.Description | quote }},
+          "version": {{ .Chart.Version | quote }},
+          {{- range $k, $v := .Values }}
+          {{- if and (ne $k "imageCredentials") ($v) }}
+          {{ $k | quote }}: {{ $v | quote }},
+          {{- end}}
+          {{- end}}
+          "name": {{ .Chart.Name | quote }}\n}';
+        add_header Content-Type application/json;
+      }
+
       # console entry point
 
       location ~ (.*/)index.html {
