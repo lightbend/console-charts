@@ -81,21 +81,6 @@ function setup {
     refute_output --regexp 'helm template .*--version=v10.0.20'
 }
 
-@test "export credentials" {
-    ES_EXPORT_CREDS=true \
-        run $install_es
-
-	assert_output --regexp "kubectl .*create secret docker-registry .* commercial-credentials.*--docker-username=myuser --docker-password=mypass"
-}
-
-@test "warn for both ES_EXPORT_CREDS=true ES_EXPORT_YAML=true" {
-    ES_EXPORT_CREDS=true ES_EXPORT_YAML=true \
-        run $install_es
-
-    assert_output --partial "warning: both ES_EXPORT_CREDS and ES_EXPORT_YAML specified.  Ignoring ES_EXPORT_YAML."
-	assert_output --regexp "kubectl .*create secret docker-registry .* commercial-credentials.*--docker-username=myuser --docker-password=mypass"
-}
-
 @test "can set namespace" {
     ES_NAMESPACE=mycoolnamespace \
         run $install_es

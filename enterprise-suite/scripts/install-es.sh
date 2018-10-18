@@ -45,7 +45,6 @@ function usage() {
     docvar ES_HELM_NAME "Helm release name"
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
     docvar ES_EXPORT_YAML "Export resource yaml to stdout.  Set to 'creds' for credentials, 'console' for everything else.  Does not install."
-    docvar ES_EXPORT_CREDS "Export command to install credentials to stdout.  Will not install or export yaml."
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
 }
@@ -57,7 +56,6 @@ function set_credentials_arg() {
     # write creds to file for use by helm
     printf '%s\n' "imageCredentials:" "   username: $1" "   password: $2" >"$CREDS"
     HELM_CREDENTIALS_VALUES="--values $CREDS"
-    KUBECTL_CREDENTIALS_ARG="--docker-username=$1 --docker-password=$2"
 }
 
 function import_credentials() {
@@ -127,28 +125,12 @@ ES_NAMESPACE=${ES_NAMESPACE:-lightbend}
 ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_HELM_NAME=${ES_HELM_NAME:-enterprise-suite}
 ES_FORCE_INSTALL=${ES_FORCE_INSTALL:-false}
-ES_EXPORT_CREDS=${ES_EXPORT_CREDS:-false}
 ES_EXPORT_YAML=${ES_EXPORT_YAML:-false}
 DRY_RUN=${DRY_RUN:-false}
 
 # Help
 if [ "${1-:}" == "-h" ]; then
     usage
-fi
-
-if [ "false" != "$ES_EXPORT_CREDS"  -a  "false" != "$ES_EXPORT_YAML" ] ; then
-    echo "warning: both ES_EXPORT_CREDS and ES_EXPORT_YAML specified.  Ignoring ES_EXPORT_YAML." >&2
-    ES_EXPORT_YAML=false
-fi
-
-if [ "false" != "$ES_EXPORT_CREDS" ]; then
-    import_credentials
-    KUBECTL_CMD="kubectl -n $ES_NAMESPACE create secret docker-registry --dry-run \
-        commercial-credentials \
-        --docker-server=lightbend-docker-commercial-registry.bintray.io \
-        $KUBECTL_CREDENTIALS_ARG"
-    echo $KUBECTL_CMD
-    exit
 fi
 
 # Check if version has been set
