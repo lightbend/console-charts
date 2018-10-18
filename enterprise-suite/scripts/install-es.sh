@@ -44,7 +44,7 @@ function usage() {
     docvar ES_LOCAL_CHART "Set to location of local chart tarball"
     docvar ES_HELM_NAME "Helm release name"
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
-    docvar ES_EXPORT_YAML "Export resource yaml to stdout.  Does not install in this case."
+    docvar ES_EXPORT_YAML "Export resource yaml to stdout.  Set to 'creds' for credentials, 'console' for everything else.  Does not install."
     docvar ES_EXPORT_CREDS "Export command to install credentials to stdout.  Will not install or export yaml."
     docvar DRY_RUN "Set to true to dry run the install script"
     exit 1
@@ -56,7 +56,7 @@ function set_credentials_arg() {
     CREDS=$(mktemp -t creds.XXXXXX)
     # write creds to file for use by helm
     printf '%s\n' "imageCredentials:" "   username: $1" "   password: $2" >"$CREDS"
-    HELM_CREDENTIALS_ARG="--values $CREDS"
+    HELM_CREDENTIALS_VALUES="--values $CREDS"
     KUBECTL_CREDENTIALS_ARG="--docker-username=$1 --docker-password=$2"
 }
 
@@ -93,10 +93,18 @@ function import_credentials() {
     set_credentials_arg "$repo_username" "$repo_password"
 }
 
+# Echo command to stderr.  Output of running command also goes to stderr by default.
+# If "-o X" flag is first argument, stdout of the command is redirected to X.
 function debug() {
-    (>&2 echo "$@")
+    command_redirect_to=2
+    if [ "$1" = "-o" ] ; then
+        command_redirect_to=$2
+        shift
+        shift
+    fi
+    echo "$@" >&2
     if [ "false" == "$DRY_RUN" ]; then
-        eval "$@"
+        eval "$@" >&$command_redirect_to
     fi
 }
 
@@ -129,7 +137,7 @@ if [ "${1-:}" == "-h" ]; then
 fi
 
 if [ "false" != "$ES_EXPORT_CREDS"  -a  "false" != "$ES_EXPORT_YAML" ] ; then
-    (>&2 echo "warning: both ES_EXPORT_CREDS and ES_EXPORT_YAML specified.  Ignoring ES_EXPORT_YAML.")
+    echo "warning: both ES_EXPORT_CREDS and ES_EXPORT_YAML specified.  Ignoring ES_EXPORT_YAML." >&2
     ES_EXPORT_YAML=false
 fi
 
@@ -147,7 +155,7 @@ fi
 has_version=true
 if [[ ! "$*" =~ "--version" ]]; then
     echo "warning: --version has not been set, helm will use the latest available version. \
-It is recommended to use an explicit version."
+It is recommended to use an explicit version." >&2
     has_version=false
 fi
 
@@ -190,10 +198,19 @@ if [ "false" != "$ES_EXPORT_YAML" ]; then
         set -- "${REST[@]}" # restore the other positional parameters
     fi
 
+    CREDENTIALS_ARG=""
+    if [ "creds" == "$ES_EXPORT_YAML" ]; then
+        import_credentials
+        # This will generate only the credentials yaml.
+        CREDENTIALS_ARG="--execute templates/commercial-credentials.yaml $HELM_CREDENTIALS_VALUES"
+        echo "warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately." >&2
+    fi
+
     TDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir')
     debug helm fetch -d $TDIR "$VERSION_ARG" "$chart_ref"
-    debug helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
+    debug -o 1 helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
         "$@" \
+        "$CREDENTIALS_ARG" \
         $TDIR/${ES_CHART}*.tgz
 
 else
@@ -202,7 +219,7 @@ else
     if chart_installed "$ES_HELM_NAME" ; then
         if [ "true" == "$ES_FORCE_INSTALL" ]; then
             debug helm delete --purge "$ES_HELM_NAME"
-            echo "warning: helm delete does not wait for resources to be removed - if the script fails on install, please re-run it."
+            echo "warning: helm delete does not wait for resources to be removed - if the script fails on install, please re-run it." >&2
             should_upgrade=false
         else
             should_upgrade=true
@@ -215,11 +232,11 @@ else
 
     if [ "true" == "$should_upgrade" ]; then
         debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
-            "$HELM_CREDENTIALS_ARG" \
+            "$HELM_CREDENTIALS_VALUES" \
             "$@"
     else
         debug helm install "$chart_ref" --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
-            "$HELM_CREDENTIALS_ARG" \
+            "$HELM_CREDENTIALS_VALUES" \
             "$@"
     fi
 fi
