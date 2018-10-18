@@ -227,6 +227,21 @@ scrape_configs:
         action: replace
         target_label: __metrics_path__
         regex: (.+)
+
+      # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: ^(.+;.*)|(;.*metrics)$
+
+      # Set port from prometheus.io/port if it's set.
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+        action: replace
+        # Extract IP from address. Address might not contain a port in some cases.
+        regex: ([^:]+):?(?:\d+);(\d+)
+        replacement: ${1}:${2}
+        target_label: __address__
+
+
       - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         target_label: __address__
@@ -299,10 +314,11 @@ scrape_configs:
         action: keep
         regex: ^(.+;.*)|(;.*metrics)$
 
-      # Set port from prometheus.io/port.
+      # Set port from prometheus.io/port if it's set.
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
-        regex: (.+):(?:\d+);(\d+)
+        # Extract IP from address. Address might not contain a port in some cases.
+        regex: ([^:]+):?(?:\d+);(\d+)
         replacement: ${1}:${2}
         target_label: __address__
 

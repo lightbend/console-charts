@@ -143,6 +143,7 @@ should_upgrade=
 if chart_installed "$ES_HELM_NAME"; then
     if [ "true" == "$ES_FORCE_INSTALL" ]; then
         debug helm delete --purge "$ES_HELM_NAME"
+        echo "warning: helm delete does not wait for resources to be removed - if the script fails on install, please re-run it."
         should_upgrade=false
     else
         should_upgrade=true

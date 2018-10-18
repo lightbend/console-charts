@@ -130,7 +130,8 @@ metadata:
   name: alertmanager
 spec:
   ports:
-  - port: 9093
+  - name: http
+    port: 9093
     targetPort: 9093
   selector:
     app: prometheus

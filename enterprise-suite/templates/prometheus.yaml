@@ -238,7 +238,8 @@ metadata:
   name: prometheus-server
 spec:
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 9090
   selector:
     app: prometheus
@@ -251,7 +252,8 @@ metadata:
   name: es-monitor-api
 spec:
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8180
   selector:
     app: prometheus

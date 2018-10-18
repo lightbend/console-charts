@@ -22,10 +22,11 @@ cleanup() {
 trap cleanup 0
 
 # Make sure the services are ready
-CONSOLE_NODE_BASE=$( busy_wait nodeport expose-es-console )
-PROM_NODE_BASE=$( busy_wait nodeport expose-prometheus )
-GRAFANA_NODE_BASE=$( busy_wait nodeport expose-grafana )
-ALERTMGR_NODE_BASE=$( busy_wait nodeport expose-alertmanager )
+CONSOLE_NODE_BASE=$( busy_wait nodeport console-server )
+ESMONITOR_NODE_BASE=$( busy_wait nodeport es-monitor-api )
+PROM_NODE_BASE=$( busy_wait nodeport prometheus-server )
+GRAFANA_NODE_BASE=$( busy_wait nodeport grafana-server )
+ALERTMGR_NODE_BASE=$( busy_wait nodeport alertmanager )
 
 # Get port for service in kubernetes.  $1 is service
 getport() {
@@ -57,19 +58,23 @@ PROXY_PORT=$( sed -n -e '1s/^.*:\(.*\)/\1/p' -e '1q' <$TMPPIPE )
 
 ## Test access
 
-# Get ports for services
-CONSOLE_REMOTE_PORT=$( getport expose-es-console )
-PROMETHEUS_REMOTE_PORT=$( getport expose-prometheus )
-GRAFANA_REMOTE_PORT=$( getport expose-grafana )
-ALERTMGR_REMOTE_PORT=$( getport expose-alertmanager )
+# All services should be using the same port name for consistency.
+# It also should not change, to maintain a stable interface for our users.
+CONSOLE_REMOTE_PORT=http
+MONITOR_API_REMOTE_PORT=http
+PROMETHEUS_REMOTE_PORT=http
+GRAFANA_REMOTE_PORT=http
+ALERTMGR_REMOTE_PORT=http
 
 # Base URLs for access via kubectl proxy
-ESMONITOR_VIA_PROXY=$( getproxyUrl es-monitor-api $CONSOLE_REMOTE_PORT )
-PROMETHEUS_VIA_PROXY=$( getproxyUrl expose-prometheus $PROMETHEUS_REMOTE_PORT )
-GRAFANA_VIA_PROXY=$( getproxyUrl expose-grafana $GRAFANA_REMOTE_PORT )
-ALERTMGR_VIA_PROXY=$( getproxyUrl expose-alertmanager $ALERTMGR_REMOTE_PORT )
+CONSOLE_VIA_PROXY=$( getproxyUrl console-server $CONSOLE_REMOTE_PORT )
+ESMONITOR_VIA_PROXY=$( getproxyUrl es-monitor-api $MONITOR_API_REMOTE_PORT )
+PROMETHEUS_VIA_PROXY=$( getproxyUrl prometheus-server $PROMETHEUS_REMOTE_PORT )
+GRAFANA_VIA_PROXY=$( getproxyUrl grafana-server $GRAFANA_REMOTE_PORT )
+ALERTMGR_VIA_PROXY=$( getproxyUrl alertmanager $ALERTMGR_REMOTE_PORT )
 
 # Now run our tests
+test_es_console_responding $CONSOLE_VIA_PROXY
 test_es_monitor_API_responding $ESMONITOR_VIA_PROXY
 test_prom_responding $PROMETHEUS_VIA_PROXY
 test_grafana_responding $GRAFANA_VIA_PROXY
