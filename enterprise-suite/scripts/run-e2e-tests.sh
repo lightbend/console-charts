@@ -15,7 +15,6 @@ echo "Running tests"
 cd $script_dir/../tests/e2e
 
 # run the e2e test
-sudo apt -y install libgconf2-4
 npm install
 npm run e2e:demo-app-setup
 npm run e2e:patch-minikube-ip

@@ -1,3 +1,4 @@
+{{ if not .Values.useEmptyDirVolumes }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -10,6 +11,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.alertmanagerVolumeSize }}
+{{ end }}
 
 ---
 apiVersion: apps/v1beta2
@@ -92,8 +94,12 @@ spec:
           configMap:
             name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
+          {{ if .Values.useEmptyDirVolumes }}
+          emptyDir: {}
+          {{ else }}
           persistentVolumeClaim:
             claimName: alertmanager-storage
+          {{ end }}
 
 {{ if .Values.minikube }}
 ---
@@ -120,7 +126,8 @@ metadata:
   name: alertmanager
 spec:
   ports:
-  - port: 9093
+  - name: http
+    port: 9093
     targetPort: 9093
   selector:
     app: prometheus
