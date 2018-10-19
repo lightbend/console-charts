@@ -165,7 +165,7 @@ spec:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
-          - --volume-dir=/etc/config
+          - --volume-dir=/monitor-data
           - --webhook-url=http://localhost:8180/reload
           volumeMounts:
           - name: monitor-data-volume
