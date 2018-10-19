@@ -41,7 +41,6 @@ function usage() {
     docvar ES_HELM_NAME "Helm release name"
     docvar ES_FORCE_INSTALL "Set to true to delete an existing install first, instead of upgrading"
     docvar DRY_RUN "Set to true to dry run the install script"
-    docvar ES_KUBERNETES "Specify older versions, set to openshift36 to support OpenShift 3.6 version"
     exit 1
 }
 
@@ -114,7 +113,6 @@ ES_LOCAL_CHART=${ES_LOCAL_CHART:-}
 ES_HELM_NAME=${ES_HELM_NAME:-enterprise-suite}
 ES_FORCE_INSTALL=${ES_FORCE_INSTALL:-false}
 DRY_RUN=${DRY_RUN:-false}
-ES_KUBERNETES=${ES_KUBERNETES:-}
 
 # Help
 if [ "${1-:}" == "-h" ]; then
@@ -154,22 +152,13 @@ else
     should_upgrade=false
 fi
 
-# OPENSHIFT_V_3.6 Support
-OPENSHIFT36_APIVERSIONS=
-if [ "openshift36" == "$ES_KUBERNETES" ]; then
-    OPENSHIFT36_APIVERSIONS="--set rbacApiVersion=authorization.openshift.io/v1,deploymentApiVersion=apps/v1beta1,daemonSetApiVersion=extensions/v1beta1"
-fi
-
-
 #echo "CREDS pre-use: $( ls -l $CREDS )"
 if [ "true" == "$should_upgrade" ]; then
     debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
         "$HELM_CREDENTIALS_ARG" \
-        "$OPENSHIFT36_APIVERSIONS" \
         $@
 else
     debug helm install "$chart_ref" --name="$ES_HELM_NAME" --namespace="$ES_NAMESPACE" \
         "$HELM_CREDENTIALS_ARG" \
-        "$OPENSHIFT36_APIVERSIONS" \
         $@
 fi
