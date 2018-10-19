@@ -5,7 +5,7 @@ metadata:
   name: prometheus-server
 
 ---
-apiVersion: {{ .Values.rbacApiVersion }}
+apiVersion: {{ .Values.aprbacApiVersion }}
 kind: ClusterRole
 metadata:
   name: prometheus-server
@@ -32,7 +32,7 @@ kind: ClusterRoleBinding
 metadata:
   name: prometheus-server
 roleRef:
-  apiGroup: {{ .Values.rbacApiVersion }}
+  apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
   name: prometheus-server
 subjects:

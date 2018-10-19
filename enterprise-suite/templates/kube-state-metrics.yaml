@@ -45,7 +45,7 @@ kind: ClusterRoleBinding
 metadata:
   name: prometheus-kube-state-metrics
 roleRef:
-  apiGroup: {{ .Values.rbacApiVersion }}
+  apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
   name: prometheus-kube-state-metrics
 subjects:
