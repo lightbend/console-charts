@@ -14,7 +14,7 @@ spec:
 {{ end }}
 
 ---
-apiVersion: apps/v1beta2
+apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
   labels:

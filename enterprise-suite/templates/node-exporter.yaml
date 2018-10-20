@@ -2,8 +2,9 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus-node-exporter
+
 ---
-apiVersion: apps/v1beta2
+apiVersion: {{ .Values.daemonSetApiVersion }}
 kind: DaemonSet
 metadata:
   labels:
