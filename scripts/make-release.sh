@@ -37,6 +37,7 @@ if [ -z "$version" ]; then
 else
     echo "setting version to $version"
     yq w -i Chart.yaml version $version
+    git add Chart.yaml
 fi
 echo "using version: $version"
 
