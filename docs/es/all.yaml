@@ -296,7 +296,7 @@ spec:
       - name: commercial-credentials
 
       containers:
-      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:v0.1.3
+      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:v0.1.4
         imagePullPolicy: IfNotPresent
         name: grafana-server
         resources:
@@ -1885,6 +1885,19 @@ data:
         metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
   static-rules.yml: |
+    # node-exporter metrics
+    - record: node_cpu_percent
+      expr: 100 - avg by (es_workload, node_ip) (irate(node_cpu{mode="idle"}[5m]) * 100)
+  
+    - record: node_memory_usable_percent
+      expr: avg by (es_workload, node_ip) (node_memory_MemAvailable / node_memory_MemTotal) * 100
+  
+    - record: node_filesystem_free_percent
+      expr: avg by (es_workload, device, node_ip) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
+  
+    - record: node_network_error_rate
+      expr: sum by(es_workload, node_ip) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
+  
     # include all nodes in the pod info, so the UI can query a single metric
     # Not supported, yet.
     #- record: kube_pod_info
@@ -2247,7 +2260,7 @@ data:
       location ~ (.*)/version$ {
         return 200 '{
           "description": "Lightbend Enterprise Suite",
-          "version": "1.0.0-rc.1",
+          "version": "1.0.0-rc.2",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerVersion": "v0.15.1",
           "alertmanagerVolumeSize": "32Gi",
@@ -2259,7 +2272,7 @@ data:
           "defaultStorageClass": "standard",
           "deploymentApiVersion": "apps/v1beta2",
           "esConsoleVersion": "v0.1.6",
-          "esGrafanaVersion": "v0.1.3",
+          "esGrafanaVersion": "v0.1.4",
           "esGrafanaVolumeSize": "32Gi",
           "esMonitorVersion": "v0.1.1",
           "esMonitorVolumeSize": "32Gi",
