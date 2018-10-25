@@ -2,59 +2,157 @@
   {
     "graphName": "Heap",
     "promQL": [
-      "sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})"
-    ]
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
+        "legendFormat": "committed {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
+        "legendFormat": "init {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
+        "legendFormat": "max {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})",
+        "legendFormat": "used {{kubernetes_pod_name}}"
+      }
+    ],
+    "yaxes": {
+      "format": "bytes"
+    }
   },
   {
     "graphName": "Non Heap",
     "promQL": [
-      "sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})"
-    ]
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
+        "legendFormat": "commmitted {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
+        "legendFormat": "init {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
+        "legendFormat": "max {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})",
+        "legendFormat": "used {{kubernetes_pod_name}}"
+      }
+    ],
+    "yaxes": {
+      "format": "bytes"
+    }
   },
   {
     "graphName": "Total Memory",
     "promQL": [
-      "sum by (kubernetes_pod_name)(jvm_total_committed{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_total_init{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_total_max{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_total_used{ContextTags})"
-    ]
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_total_committed{ContextTags})",
+        "legendFormat": "committed {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_total_init{ContextTags})",
+        "legendFormat": "init {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_total_max{ContextTags})",
+        "legendFormat": "max {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_total_used{ContextTags})",
+        "legendFormat": "used {{kubernetes_pod_name}}"
+      }
+    ],
+    "yaxes": {
+      "format": "bytes"
+    }
   },
   {
-    "graphName": "GC Count",
+    "graphName": "GC Count over",
     "promQL": [
-      "sum by (kubernetes_pod_name)(jvm_PS_MarkSweep_count{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_PS_Scavenge_count{ContextTags})"
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_PS_MarkSweep_count{ContextTags})",
+        "legendFormat": "PS_MarkSweep Total {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_PS_Scavenge_count{ContextTags})",
+        "legendFormat": "PS_Scavenge Total {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(rate(jvm_PS_MarkSweep_count{ContextTags}[5m]))",
+        "legendFormat": "PS_MarkSweep Rate {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(rate(jvm_PS_Scavenge_count{ContextTags}[5m]))",
+        "legendFormat": "PS_Scavenge Rate {{kubernetes_pod_name}}"
+      }
+    ],
+    "yaxes": {
+      "label": "per second"
+    },
+    "seriesOverrides": [
+      {
+        "alias": "/Total/",
+        "yaxis": 2
+      }
     ]
   },
   {
     "graphName": "GC Time",
     "promQL": [
-      "max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
-      "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})"
+      {
+        "expr": "max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
+        "legendFormat": "{{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})",
+        "legendFormat": "{{kubernetes_pod_name}}"
+      }
     ]
   },
   {
     "graphName": "Class Loading",
     "promQL": [
-      "sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})"
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
+        "legendFormat": "loaded {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})",
+        "legendFormat": "unloaded {{kubernetes_pod_name}}"
+      }
     ]
   },
   {
-    "graphName": "Memory Pools",
+    "graphName": "Memory Pool Usage",
     "promQL": [
-      "sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
-      "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})"
-    ]
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
+        "legendFormat": "Code Cache {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
+        "legendFormat": "Compressed Class Space {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
+        "legendFormat": "PS Eden Space {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
+        "legendFormat": "PS Old Gen {{kubernetes_pod_name}}"
+      },
+      {
+        "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})",
+        "legendFormat": "PS Survivor Space {{kubernetes_pod_name}}"
+      }
+    ],
+    "yaxes": {
+      "format": "percent"
+    }
   }
 ]
