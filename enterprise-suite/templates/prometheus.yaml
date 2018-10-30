@@ -166,7 +166,7 @@ spec:
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
           - --volume-dir=/monitor-data
-          - --webhook-url=http://localhost:8180/reload
+          - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
           - name: monitor-data-volume
             mountPath: /monitor-data
