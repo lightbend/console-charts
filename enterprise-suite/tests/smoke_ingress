@@ -5,6 +5,7 @@
 #set -x
 
 source smokecommon
+
 if [[ $CURRENT_CONTEXT == "minishift" ]]; then exit 0; fi
 
 TMPPIPE=$(mktemp -t pipe.XXX)
@@ -47,12 +48,13 @@ kubectl apply -f $TMPPIPE > /dev/null
 
 # Wait until the changes have been applied
 busy_wait ingress_ready
+busy_wait es_console_ready
 
 # The more traditional way to do this would be to tweak DNS or /etc/hosts to point 'minikube.ingress.test' to
 # your minikup ip.  We don't want to mess with such things for this test so use the curl -H flag to achieve
 # the equivalent.
 
 # Test access
-busy_wait test_es_console_responding http://$( minikube ip )/es-console -H 'Host: minikube.ingress.test'
+test_es_console_responding http://$( minikube ip )/es-console -H 'Host: minikube.ingress.test'
 
 test_summary
