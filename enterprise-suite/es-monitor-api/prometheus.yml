@@ -237,7 +237,7 @@ scrape_configs:
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         # Extract IP from address. Address might not contain a port in some cases.
-        regex: ([^:]+):?(?:\d+);(\d+)
+        regex: ([^:]+):?(?:\d*);(\d+)
         replacement: ${1}:${2}
         target_label: __address__
 
@@ -245,7 +245,7 @@ scrape_configs:
       - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         target_label: __address__
-        regex: (.+)(?::\d+);(\d+)
+        regex: ([^:]+):?(?:\d*);(\d+)
         replacement: $1:$2
       # metadata labels
       - action: labelmap
@@ -288,7 +288,7 @@ scrape_configs:
   #
   # * `{{ .PrometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
   # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all ports by default.
+  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all `metrics` ports.
   - job_name: 'kubernetes-pods'
 
     kubernetes_sd_configs:
@@ -318,7 +318,7 @@ scrape_configs:
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         # Extract IP from address. Address might not contain a port in some cases.
-        regex: ([^:]+):?(?:\d+);(\d+)
+        regex: ([^:]+):?(?:\d*);(\d+)
         replacement: ${1}:${2}
         target_label: __address__
 
