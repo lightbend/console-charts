@@ -116,11 +116,12 @@ install-helm:  ## Install required helm components into cluster
 # If set, HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
 HELM_VALUES_FLAG=$(if $(HELM_VALUES_FILE),--values $(HELM_VALUES_FILE))
 
-# called from shell script for travis job:
+# Used for minikube tests.
 install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install local tarball
 	# We set a podUID here for test purposes to ensure everything works as non-root.
+	# We disable emptyDirVolumes to ensure PVCs work as expected.
 	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
-	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001 $(HELM_VALUES_FLAG)
+	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001,useEmptyDirVolumes=false $(HELM_VALUES_FLAG)
 
 install-dev: install-helm ## Install content of enterprise-suite/ folder
 	ES_LOCAL_CHART=$(CHART_DIR) \
