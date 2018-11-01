@@ -62,6 +62,7 @@ kubectl apply -f $TMPFILE > /dev/null
 
 # Wait until the changes have been applied
 busy_wait ingress_ready
+busy_wait es_console_ready
 
 #
 ##

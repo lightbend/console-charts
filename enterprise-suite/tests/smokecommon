@@ -88,13 +88,18 @@ curl_headers() {
 }
 
 
-# ES console access test
+# Used with busy_wait to determine if the console is ready for requests
+es_console_ready() {
+	[ "Running" = $(kubectl get pod -l run=es-console -n lightbend -o go-template --template="{{ (index .items 0).status.phase }}") ]
+}
+
+# Lightbend Console access test
 # test_es_console_responding <url> [<curl-opt>...]
 test_es_console_responding() {
   CONSOLE_URL=$1
   shift
   results=$( curl_query $CONSOLE_URL "" "$@" | fgrep -q '<title>Enterprise Suite Reactive Console</title>' )
-  T $? ES2 console accessible via $CONSOLE_URL "$@"
+  T $? Lightbend Console accessible via $CONSOLE_URL "$@"
 }
 
 # Grafana access test
