@@ -165,11 +165,11 @@ spec:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
-          - --volume-dir=/monitor-data
+          - --volume-dir=/etc/es-monitor-api
           - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
-          - name: monitor-data-volume
-            mountPath: /monitor-data
+          - name: es-monitor-api-volume
+            mountPath: /etc/es-monitor-api
 
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
