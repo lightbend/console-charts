@@ -1,4 +1,4 @@
-{{ if not .Values.useEmptyDirVolumes }}
+{{ if .Values.usePersistentVolumes }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -94,11 +94,11 @@ spec:
           configMap:
             name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
-          {{ if .Values.useEmptyDirVolumes }}
-          emptyDir: {}
-          {{ else }}
+          {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
             claimName: alertmanager-storage
+          {{ else }}
+          emptyDir: {}
           {{ end }}
 
 {{ if .Values.minikube }}
