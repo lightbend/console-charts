@@ -91,6 +91,10 @@ Finally, `git push --follow-tags` will push the changes (including tag) to the u
     helm repo update
     helm search enterprise-suite
 
+Once all that is done, announce the release.  For a minor release a
+note to the #console Slack group would suffice.  A major release would
+warrant an email to a wider group.
+
 ## Maintenance
 
 Enterprise Suite Team <es-all@lightbend.com>
