@@ -259,7 +259,6 @@ spec:
   type: NodePort
 
 
-
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -272,7 +271,6 @@ spec:
   resources:
     requests:
       storage: 32Gi
-
 
 ---
 apiVersion: extensions/v1beta1
@@ -340,13 +338,11 @@ spec:
           name: grafana-datasource-cm
       - name: grafana-data
         
-        persistentVolumeClaim:
-          claimName: es-grafana-storage
+        emptyDir: {}
         
 
 ---
 # Source: enterprise-suite-latest/templates/alertmanager.yaml
-
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -359,7 +355,6 @@ spec:
   resources:
     requests:
       storage: 32Gi
-
 
 ---
 apiVersion: apps/v1beta2
@@ -428,7 +423,7 @@ spec:
               memory: 50Mi
           args:
             - --volume-dir=/etc/config
-            - --webhook-url=http://localhost:9093/-/reload
+            - --webhook-url=http://127.0.0.1:9093/-/reload
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -440,8 +435,7 @@ spec:
             name: alertmanager-default
         - name: data-volume
           
-          persistentVolumeClaim:
-            claimName: alertmanager-storage
+          emptyDir: {}
           
 
 
@@ -698,7 +692,6 @@ subjects:
   name: prometheus-server
   namespace: lightbend
 
-
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -724,7 +717,6 @@ spec:
   resources:
     requests:
       storage: 256Gi
-
 
 ---
 kind: Deployment
@@ -813,6 +805,19 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
+        - name: es-monitor-api-configmap-reload
+          image: jimmidyson/configmap-reload:v0.2.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+          - --volume-dir=/etc/es-monitor-api
+          - --webhook-url=http://127.0.0.1:8180/reload
+          volumeMounts:
+          - name: es-monitor-api-volume
+            mountPath: /etc/es-monitor-api
+
         - name: prometheus-server
           image: prom/prometheus:v2.2.1
           resources:
@@ -854,13 +859,11 @@ spec:
             name: es-monitor-api
         - name: monitor-data-volume
           
-          persistentVolumeClaim:
-            claimName: es-monitor-storage
+          emptyDir: {}
           
         - name: prometheus-data-volume
           
-          persistentVolumeClaim:
-            claimName: prometheus-storage
+          emptyDir: {}
           
         - name: bare-prometheus
           configMap:
@@ -1762,7 +1765,7 @@ data:
           - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
             action: replace
             # Extract IP from address. Address might not contain a port in some cases.
-            regex: ([^:]+):?(?:\d+);(\d+)
+            regex: ([^:]+):?(?:\d*);(\d+)
             replacement: ${1}:${2}
             target_label: __address__
   
@@ -1770,7 +1773,7 @@ data:
           - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
             action: replace
             target_label: __address__
-            regex: (.+)(?::\d+);(\d+)
+            regex: ([^:]+):?(?:\d*);(\d+)
             replacement: $1:$2
           # metadata labels
           - action: labelmap
@@ -1813,7 +1816,7 @@ data:
       #
       # * `{{ .PrometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
       # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-      # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all ports by default.
+      # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all `metrics` ports.
       - job_name: 'kubernetes-pods'
   
         kubernetes_sd_configs:
@@ -1843,7 +1846,7 @@ data:
           - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
             action: replace
             # Extract IP from address. Address might not contain a port in some cases.
-            regex: ([^:]+):?(?:\d+);(\d+)
+            regex: ([^:]+):?(?:\d*);(\d+)
             replacement: ${1}:${2}
             target_label: __address__
   
@@ -2260,7 +2263,7 @@ data:
       location ~ (.*)/version$ {
         return 200 '{
           "description": "Lightbend Enterprise Suite",
-          "version": "1.0.0-rc.2",
+          "version": "1.0.0-rc.3",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerVersion": "v0.15.1",
           "alertmanagerVolumeSize": "32Gi",
@@ -2285,6 +2288,7 @@ data:
           "prometheusVersion": "v2.2.1",
           "prometheusVolumeSize": "256Gi",
           "rbacApiVersion": "rbac.authorization.k8s.io/v1",
+          "useEmptyDirVolumes": "true",
           "name": "enterprise-suite-latest"\n}';
         add_header Content-Type application/json;
       }
