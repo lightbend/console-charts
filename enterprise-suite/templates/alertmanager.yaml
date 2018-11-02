@@ -1,4 +1,3 @@
-{{ if .Values.usePersistentVolumes }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -11,7 +10,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.alertmanagerVolumeSize }}
-{{ end }}
 
 ---
 apiVersion: {{ .Values.deploymentApiVersion }}
@@ -94,7 +92,7 @@ spec:
           configMap:
             name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
-          {{ if .Values.usePersistentVolumes }}
+          {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
           persistentVolumeClaim:
             claimName: alertmanager-storage
           {{ else }}

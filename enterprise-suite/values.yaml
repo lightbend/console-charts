@@ -58,6 +58,8 @@ prometheusMemoryRequest: 250Mi
 #################################################
 # Persistent Volumes
 #
+# Deprecated value - set to false to disable emptyDir and use persistent volumes. Prefer `usePersistentVolumes`.
+useEmptyDirVolumes: true
 # Set to true to use persistent volumes, otherwise emptyDir volumes are used.
 usePersistentVolumes: false
 # Default StorageClass to use for persistent volumes

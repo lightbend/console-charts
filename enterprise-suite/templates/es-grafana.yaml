@@ -80,7 +80,6 @@ spec:
   type: NodePort
 {{ end }}
 
-{{ if .Values.usePersistentVolumes }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -93,7 +92,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.esGrafanaVolumeSize }}
-{{ end }}
 
 ---
 apiVersion: extensions/v1beta1
@@ -163,7 +161,7 @@ spec:
         configMap:
           name: grafana-datasource-cm
       - name: grafana-data
-        {{ if .Values.usePersistentVolumes }}
+        {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
         persistentVolumeClaim:
           claimName: es-grafana-storage
         {{ else }}
