@@ -40,7 +40,6 @@ subjects:
   name: prometheus-server
   namespace: {{.Release.Namespace}}
 
-{{ if not .Values.useEmptyDirVolumes }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -67,7 +66,6 @@ spec:
     requests:
       storage: {{ .Values.prometheusVolumeSize }}
 
-{{ end }}
 ---
 kind: Deployment
 apiVersion: {{ .Values.deploymentApiVersion }}
@@ -211,18 +209,18 @@ spec:
           configMap:
             name: es-monitor-api
         - name: monitor-data-volume
-          {{ if .Values.useEmptyDirVolumes }}
-          emptyDir: {}
-          {{ else }}
+          {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
           persistentVolumeClaim:
             claimName: es-monitor-storage
+          {{ else }}
+          emptyDir: {}
           {{ end }}
         - name: prometheus-data-volume
-          {{ if .Values.useEmptyDirVolumes }}
-          emptyDir: {}
-          {{ else }}
+          {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
           persistentVolumeClaim:
             claimName: prometheus-storage
+          {{ else }}
+          emptyDir: {}
           {{ end }}
         - name: bare-prometheus
           configMap:
