@@ -1,3 +1,3 @@
 {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
-{{ define "text.slack" }}{{ range $index, $element := .Alerts }}_{{ .CommonLabels.name }}_
+{{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
 {{ end }}{{- end -}}
