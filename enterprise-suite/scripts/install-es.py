@@ -101,7 +101,6 @@ def preflight_check(creds, minikube=False):
     stdout, returncode = run('docker login -u {} --password-stdin {}'.format(creds[0], registry),
                              6, creds[1])
     if returncode != 0:
-        print(stdout)
         sys.exit('Unable to login to lightbend docker registry. Please check your credentials.')
     else:
         run('docker logout ' + registry, DEFAULT_TIMEOUT)
@@ -113,6 +112,9 @@ def preflight_check(creds, minikube=False):
     # x509: certificate is valid for *.bintray.com, bintray.com, not lightbend-commercial-registry.bintray.io
 
 def install_helm_chart(args, creds_file):
+    creds_values = '--values ' + creds_file
+    helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
+
     chart_ref = None
     if args.local_chart != None:
         # Install from local chart tarball
@@ -137,15 +139,14 @@ def install_helm_chart(args, creds_file):
             else:
                 should_upgrade = True
     
-        # TODO: import credentials
-
-        # TODO: add credentials, --set args
         if should_upgrade:
-            execute('helm upgrade {} {}'
-                .format(args.helm_name, chart_ref))
+            execute('helm upgrade {} {} {} {}'
+                .format(args.helm_name, chart_ref, creds_values,
+                        helm_args))
         else:
-            execute('helm install {} --name {}'
-                .format(chart_ref, args.helm_name))
+            execute('helm install {} --name {} --namespace {} {} {}'
+                .format(chart_ref, args.helm_name, args.namespace,
+                        creds_values, helm_args))
 
 def write_temp_credentials(creds_tempfile, creds):
     creds_tempfile.write("imageCredentials" +
@@ -185,6 +186,8 @@ def setup_args():
     parser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     parser.add_argument('--version', help='es-console version to install', type=str)
 
+    parser.add_argument('helm', help='arguments to be passed to helm', nargs=argparse.REMAINDER)
+
     return parser.parse_args()
 
 def main():
@@ -200,7 +203,7 @@ def main():
 
     with tempfile.NamedTemporaryFile('w') as creds_tempfile:
         write_temp_credentials(creds_tempfile, creds)
-        install_helm_chart(args, creds)
+        install_helm_chart(args, creds_tempfile.name)
 
 if __name__ == '__main__':
     main()
