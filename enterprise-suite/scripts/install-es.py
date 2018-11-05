@@ -2,7 +2,9 @@
 
 import sys 
 import os
+import glob
 import shlex
+import shutil
 import subprocess
 import threading
 import tempfile
@@ -42,6 +44,7 @@ def execute(cmd, can_fail=False):
     print(cmd)
     if not args.dry_run:
         stdout, returncode = run(cmd)
+        print(stdout)
         if not can_fail and returncode != 0:
             sys.exit("Command '" + cmd + "' failed:\n" + stdout)
         return returncode
@@ -125,8 +128,26 @@ def install_helm_chart(args, creds_file):
         chart_ref = 'es-repo/' + args.chart
     
     if args.export_yaml != 'false':
-        # TODO
-        pass
+        credentials_arg = ''
+        if args.export_yaml == 'creds':
+            credentials_arg = '--execute templates/commercial-credentials.yaml ' + creds_values
+            print('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
+        
+        try:
+            tempdir = tempfile.mkdtemp()
+            execute('helm fetch -d {} {} {}'
+                .format(tempdir, args.version or '', chart_ref))
+            chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
+            chartfile = glob.glob(chartfile_glob)
+            if len(chartfile) < 1:
+                sys.exit('cannot access fetched chartfile at {}, ES_CHART={}'
+                    .format(chartfile_glob, args.chart))
+            execute('helm template --name {} --namespace {} {} {} {}'
+                .format(args.helm_name, args.namespace, helm_args,
+                credentials_arg, chartfile[0]))
+        finally:
+            shutil.rmtree(tempdir)
+
     else:
         # Determine if we should upgrade or install
         should_upgrade = False
@@ -195,6 +216,7 @@ def main():
     args = setup_args()
     creds = import_credentials(args)
 
+    # TODO: autodetect minikube and minishift, do additional checks on them
     preflight_check(creds)
 
     if args.version == None:
