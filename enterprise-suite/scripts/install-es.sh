@@ -133,12 +133,14 @@ if [ "${1-:}" == "-h" ]; then
     usage
 fi
 
-# Check if version has been set
+# Check version and ES_LOCAL_CHART settings
 has_version=true
-if [[ ! "$*" =~ "--version" ]]; then
-    echo "warning: --version has not been set, helm will use the latest available version. \
-It is recommended to use an explicit version." >&2
+if [[ ! "$*" =~ "--version" ]] ; then
     has_version=false
+    if [ -z "$ES_LOCAL_CHART" ] ; then
+        echo "warning: --version has not been set, helm will use the latest available version." \
+             "It is recommended to use an explicit version." >&2
+    fi
 fi
 
 # Setup and install helm chart in the repo
@@ -156,7 +158,7 @@ if [ "false" != "$ES_EXPORT_YAML" ]; then
     # Note that this modifies $@.
     VERSION_ARG=""
     if [ "true" = "$has_version" ] ; then
-        REST=()
+        REST=("")
         while [[ $# -gt 0 ]]
         do
             arg=$1
@@ -177,6 +179,10 @@ if [ "false" != "$ES_EXPORT_YAML" ]; then
                     ;;
             esac
         done
+        if [ -n "$ES_LOCAL_CHART" ] ; then
+            echo "warning: --version ignored when ES_LOCAL_CHART is set" >&2
+            VERSION_ARG=""
+        fi
         set -- "${REST[@]}" # restore the other positional parameters
     fi
 
@@ -188,12 +194,15 @@ if [ "false" != "$ES_EXPORT_YAML" ]; then
         echo "warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately." >&2
     fi
 
-    TDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir')
-    debug helm fetch -d $TDIR "$VERSION_ARG" "$chart_ref"
+    if [ -z "$ES_LOCAL_CHART" ]; then
+        TDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir')
+        debug helm fetch -d $TDIR "$VERSION_ARG" "$chart_ref"
+        chart_ref=$TDIR/${ES_CHART}*.tgz
+    fi
     debug -o 1 helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
         "$@" \
         "$CREDENTIALS_ARG" \
-        $TDIR/${ES_CHART}*.tgz
+        $chart_ref
 
 else
     # Determine if we should upgrade or install.
