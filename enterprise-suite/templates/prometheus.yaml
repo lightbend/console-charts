@@ -91,10 +91,12 @@ spec:
     spec:
       serviceAccountName: prometheus-server
 
-      {{ if .Values.podUID }}
       securityContext:
+      {{ if .Values.podUID }}
         runAsUser: {{ .Values.podUID }}
       {{ end }}
+        # Needed so the prometheus data volume is write-able. The official prometheus image runs with gid 65534.
+        fsGroup: 65534
 
       initContainers:
         - name: setup
@@ -171,29 +173,35 @@ spec:
 
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
+
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.prometheusCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.prometheusMemoryRequest }}
+
           args:
             - --config.file=/etc/config/prometheus.yml
             - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
+
           ports:
             - containerPort: 9090
+
           readinessProbe:
             httpGet:
               path: /-/ready
               port: 9090
             timeoutSeconds: 30
+
           livenessProbe:
             httpGet:
               path: /-/healthy
               port: 9090
             timeoutSeconds: 30
             initialDelaySeconds: 30
+
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
