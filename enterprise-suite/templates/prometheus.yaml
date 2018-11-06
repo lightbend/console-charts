@@ -112,10 +112,11 @@ spec:
           command:
             - sh
             - -c
-            - "chown -Rc :65534 /data || true"
+            - "chown -Rc 65534:65534 /data || true"
           volumeMounts:
             - name: prometheus-data-volume
-              mountPath: /data/prometheus-data
+              mountPath: /data
+              subPath: prometheus-data
 
       imagePullSecrets:
         - name: commercial-credentials
