@@ -81,6 +81,12 @@ function setup {
     refute_output --regexp 'helm template .*--version=v10.0.20'
 }
 
+@test "export console yaml with ES_LOCAL_CHART set" {
+    ES_EXPORT_YAML=console ES_LOCAL_CHART=my-local-chart.tgz \
+        run $install_es --set minikube=true,podUID=100001
+    assert_output --regexp 'helm template --name myhelmname --namespace lightbend .*my-local-chart.tgz'
+}
+
 @test "export credentials yaml" {
     ES_EXPORT_YAML=creds \
         run $install_es
