@@ -12,6 +12,13 @@ import re
 import argparse
 from distutils.version import LooseVersion
 
+# Required versions
+REQ_VER_DOCKER = '17.06'
+REQ_VER_KUBECTL = '1.10'
+REQ_VER_HELM = '2.10'
+REQ_VER_MINIKUBE = '0.29'
+REQ_VER_MINISHIFT = '1.20'
+
 DEFAULT_TIMEOUT=3
 
 # Parsed commandline args
@@ -76,11 +83,11 @@ def require_version(cmd, required_version):
 
 def preflight_check(creds, minikube=False):
     # Check versions
-    require_version("docker version -f '{{.Client.Version}}'", '17.06')
-    require_version('kubectl version --client=true --short=true', '1.10')
-    require_version('helm version --client --short', '2.10')
+    require_version("docker version -f '{{.Client.Version}}'", REQ_VER_DOCKER)
+    require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
+    require_version('helm version --client --short', REQ_VER_HELM)
     if minikube:
-        require_version('minikube version', '0.29')
+        require_version('minikube version', REQ_VER_MINIKUBE)
 
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
     stdout, returncode = run('kubectl version', DEFAULT_TIMEOUT)
@@ -192,40 +199,52 @@ def import_credentials(args):
 
 def setup_args():
     parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
 
-    parser.add_argument('--dry-run', help='only print out the commands that will be executed',
-                        action='store_true')
-    parser.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
-                        action='store_true')
-    parser.add_argument('--export-yaml', help='export resource yaml to stdout, forces dry_run if not false',
-                        choices=['creds', 'console', 'false'], default='false')
-    parser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
-    parser.add_argument('--local-chart', help='set to location of local chart tarball')
-    parser.add_argument('--namespace', help='namespace to install es-console into', default='lightbend')
-    parser.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
-    parser.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
+    install = subparsers.add_parser('install', help='install es-console')
+    verify = subparsers.add_parser('verify', help='verify es-console installation')
+    diagnose = subparsers.add_parser('diagnose', help='make an archive with k8s logs for debugging and diagnostic purposes')
+
     parser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
-    parser.add_argument('--version', help='es-console version to install', type=str)
+    parser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
 
-    parser.add_argument('helm', help='arguments to be passed to helm', nargs=argparse.REMAINDER)
+    install.add_argument('--dry-run', help='only print out the commands that will be executed',
+                        action='store_true')
+    install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
+                        action='store_true')
+    install.add_argument('--export-yaml', help='export resource yaml to stdout, forces dry_run if not false',
+                        choices=['creds', 'console', 'false'], default='false')
+    install.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
+    install.add_argument('--local-chart', help='set to location of local chart tarball')
+    install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
+    install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
+    install.add_argument('--version', help='es-console version to install', type=str)
+
+    install.add_argument('helm', help='arguments to be passed to helm', nargs=argparse.REMAINDER)
 
     return parser.parse_args()
 
 def main():
     global args
     args = setup_args()
-    creds = import_credentials(args)
 
-    # TODO: autodetect minikube and minishift, do additional checks on them
-    preflight_check(creds)
+    if args.subcommand == 'verify':
+        creds = import_credentials(args)
+        preflight_check(creds)
+    
+    if args.subcommand == 'install':
+        creds = import_credentials(args)
 
-    if args.version == None:
-        print(("warning: --version has not been set, helm will use the latest available version. "
-               "It is recommended to use an explicit version."))
+        # TODO: autodetect minikube and minishift, do additional checks on them
+        preflight_check(creds)
 
-    with tempfile.NamedTemporaryFile('w') as creds_tempfile:
-        write_temp_credentials(creds_tempfile, creds)
-        install_helm_chart(args, creds_tempfile.name)
+        if args.version == None:
+            print(("warning: --version has not been set, helm will use the latest available version. "
+                "It is recommended to use an explicit version."))
+
+        with tempfile.NamedTemporaryFile('w') as creds_tempfile:
+            write_temp_credentials(creds_tempfile, creds)
+            install_helm_chart(args, creds_tempfile.name)
 
 if __name__ == '__main__':
     main()
