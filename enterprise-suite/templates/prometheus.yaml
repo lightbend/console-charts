@@ -45,6 +45,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: prometheus-storage
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
   accessModes:
@@ -82,8 +84,6 @@ spec:
       {{ if .Values.podUID }}
         runAsUser: {{ .Values.podUID }}
       {{ end }}
-        # Needed so the prometheus data volume is write-able. The official prometheus image runs with gid 65534.
-        fsGroup: 65534
 
       initContainers:
         - name: setup
@@ -103,6 +103,19 @@ spec:
               name: config-volume
             - mountPath: /etc/bare
               name: bare-prometheus
+
+        # For vanilla K8s clusters, we need to match prometheus-data permissions to the prometheus user.
+        # In prometheus 2.x, this is `65534`.
+        # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
+        - name: change-prometheus-data-volume-ownership
+          image: busybox
+          command:
+            - sh
+            - -c
+            - "chown -Rc :65534 /data || true"
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: /data/prometheus-data
 
       imagePullSecrets:
         - name: commercial-credentials
