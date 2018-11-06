@@ -130,7 +130,7 @@ spec:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
           volumeMounts:
