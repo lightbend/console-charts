@@ -264,6 +264,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: es-grafana-storage
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: standard
   accessModes:
@@ -348,6 +350,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: alertmanager-storage
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: standard
   accessModes:
@@ -555,7 +559,7 @@ data:
         send_resolved: true
   slack.tmpl: |
     {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
-    {{ define "text.slack" }}{{ range $index, $element := .Alerts }}_{{ .CommonLabels.name }}_
+    {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
     {{ end }}{{- end -}}
   
 
@@ -696,20 +700,9 @@ subjects:
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: es-monitor-storage
-spec:
-  storageClassName: standard
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 32Gi
-
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
   name: prometheus-storage
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: standard
   accessModes:
@@ -743,6 +736,7 @@ spec:
     spec:
       serviceAccountName: prometheus-server
 
+      securityContext:
       
 
       initContainers:
@@ -764,6 +758,20 @@ spec:
             - mountPath: /etc/bare
               name: bare-prometheus
 
+        # For vanilla K8s clusters, we need to match prometheus-data permissions to the prometheus user.
+        # In prometheus 2.x, this is `65534`.
+        # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
+        - name: change-prometheus-data-volume-ownership
+          image: busybox
+          command:
+            - sh
+            - -c
+            - "chown -Rc 65534:65534 /data || true"
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: /data
+              subPath: prometheus-data
+
       imagePullSecrets:
         - name: commercial-credentials
 
@@ -779,7 +787,7 @@ spec:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain=prometheus.io
           volumeMounts:
@@ -787,8 +795,9 @@ spec:
               mountPath: /etc/config
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
-            - name: monitor-data-volume
+            - name: prometheus-data-volume
               mountPath: /monitor-data
+              subPath: monitor-data
           ports:
             - containerPort: 8180
           readinessProbe:
@@ -820,35 +829,42 @@ spec:
 
         - name: prometheus-server
           image: prom/prometheus:v2.2.1
+
           resources:
             requests:
               cpu: 100m
               memory: 250Mi
+
           args:
             - --config.file=/etc/config/prometheus.yml
             - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
+
           ports:
             - containerPort: 9090
+
           readinessProbe:
             httpGet:
               path: /-/ready
               port: 9090
             timeoutSeconds: 30
+
           livenessProbe:
             httpGet:
               path: /-/healthy
               port: 9090
             timeoutSeconds: 30
             initialDelaySeconds: 30
+
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
             - name: prometheus-data-volume
               mountPath: /data
+              subPath: prometheus-data
 
       terminationGracePeriodSeconds: 300
       volumes:
@@ -857,10 +873,6 @@ spec:
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
-        - name: monitor-data-volume
-          
-          emptyDir: {}
-          
         - name: prometheus-data-volume
           
           emptyDir: {}
@@ -947,7 +959,7 @@ metadata:
     component: server
   name: es-monitor-api
 data:
-  bootstrap-monitors.json: |
+  default-monitors.json: |
     {
       "monitors": [
         {
@@ -2263,7 +2275,7 @@ data:
       location ~ (.*)/version$ {
         return 200 '{
           "description": "Lightbend Enterprise Suite",
-          "version": "1.0.0-rc.3",
+          "version": "1.0.0-rc.4",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerVersion": "v0.15.1",
           "alertmanagerVolumeSize": "32Gi",
@@ -2278,7 +2290,6 @@ data:
           "esGrafanaVersion": "latest",
           "esGrafanaVolumeSize": "32Gi",
           "esMonitorVersion": "latest",
-          "esMonitorVolumeSize": "32Gi",
           "imagePullPolicy": "Always",
           "kubeStateMetricsVersion": "v1.2.0",
           "minikube": "true",
