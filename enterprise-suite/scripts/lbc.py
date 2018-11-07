@@ -53,13 +53,16 @@ def run(cmd, timeout=None, stdin=None):
         return stdout, returncode
 
 # Executes a command if dry_run=False,
-# prints it to stdout, handles failure status
+# prints it to stdout or stderr, handles failure status
 # codes by exiting with and error if can_fail=False.
-def execute(cmd, can_fail=False):
-    print(cmd)
+def execute(cmd, can_fail=False, print_to_stdout=False):
+    printerr(cmd)
     if not args.dry_run:
         stdout, returncode = run(cmd)
-        print(stdout)
+        if print_to_stdout:
+            print(stdout)
+        else:
+            printerr(stdout)
         if not can_fail and returncode != 0:
             sys.exit("Command '" + cmd + "' failed!")
         return returncode
@@ -164,7 +167,7 @@ def install_helm_chart(args, creds_file):
                     .format(chartfile_glob, args.chart))
             execute('helm template --name {} --namespace {} {} {} {}'
                 .format(args.helm_name, args.namespace, helm_args,
-                credentials_arg, chartfile[0]))
+                credentials_arg, chartfile[0]), print_to_stdout=True)
         finally:
             shutil.rmtree(tempdir)
 
