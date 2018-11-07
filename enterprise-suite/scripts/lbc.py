@@ -97,18 +97,22 @@ def require_version(cmd, required_version):
 def check_helm():
     require_version('helm version --client --short', REQ_VER_HELM)
 
-def preflight_check(creds, minikube=False):
-    # Check versions
-    require_version("docker version -f '{{.Client.Version}}'", REQ_VER_DOCKER)
+# Kubectl check is needed both in install and verify subcommands
+def check_kubectl():
     require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
-    check_helm()
-    if minikube:
-        require_version('minikube version', REQ_VER_MINIKUBE)
 
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
     stdout, returncode = run('kubectl version', DEFAULT_TIMEOUT)
     if returncode != 0:
         sys.exit('Cannot reach cluster with kubectl')
+
+def preinstall_check(creds, minikube=False):
+    check_helm()
+    check_kubectl()
+
+    require_version("docker version -f '{{.Client.Version}}'", REQ_VER_DOCKER)
+    if minikube:
+        require_version('minikube version', REQ_VER_MINIKUBE)
 
     if minikube:
         # Check if docker is pointing to a cluster
@@ -223,18 +227,49 @@ def import_credentials(args):
 
     return creds
 
+def check_install(args):
+    def deployment_running(name):
+        stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
+                                 .format(args.namespace, name))
+        if returncode == 0:
+            # Skip first (deployment name) and last (running time) items
+            cols = [int(col) for col in stdout.split()[1:-1]]
+            desired, current, up_to_date, available = cols[0], cols[1], cols[2], cols[3]
+            if desired <= 0:
+                printerr('Deployment {} status check: expected to see 1 or more desired replicas, found 0'
+                         .format(name))
+            if desired > available:
+                printerr('Deployment {} status check: available replica number ({}) is less than desired ({})'
+                         .format(name, available, desired))
+            if desired > 0 and desired == available:
+                return True
+        else:
+            printerr('Unable to check deployment {} status'.format(name))
+        return False
+
+    status_ok = True
+    status_ok &= deployment_running('es-console')
+    status_ok &= deployment_running('grafana-server')
+    status_ok &= deployment_running('prometheus-alertmanager')
+    status_ok &= deployment_running('prometheus-kube-state-metrics')
+    status_ok &= deployment_running('prometheus-server')
+
+    if status_ok:
+        printerr('Your Lightbend Console seems to be running fine!')
+    else:
+        sys.exit('Lightbend Console status check failed')
+
 def setup_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
 
     install = subparsers.add_parser('install', help='install es-console')
     verify = subparsers.add_parser('verify', help='verify es-console installation')
-    diagnose = subparsers.add_parser('diagnose', help='make an archive with k8s logs for debugging and diagnostic purposes')
+    diagnose = subparsers.add_parser('diagnose', help='make an archive with k8s status info for debugging and diagnostic purposes')
 
     # Install arguments
     install.add_argument('--dry-run', help='only print out the commands that will be executed',
                         action='store_true')
-    install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
@@ -251,6 +286,7 @@ def setup_args():
     for subparser in [install, verify, diagnose]:
         subparser.add_argument('--skip-checks', help='skip environment checks',
                             action='store_true')
+        subparser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
         subparser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
 
 
@@ -261,9 +297,9 @@ def main():
     args = setup_args()
 
     if args.subcommand == 'verify':
-        creds = import_credentials(args)
         if not args.skip_checks:
-            preflight_check(creds)
+            check_kubectl()
+        check_install(args)
     
     if args.subcommand == 'install':
         creds = import_credentials(args)
@@ -271,7 +307,7 @@ def main():
         # TODO: autodetect minikube and minishift, do additional checks on them
         if not args.skip_checks:
             if args.export_yaml == None:
-                preflight_check(creds)
+                preinstall_check(creds)
             else:
                 check_helm()
 
