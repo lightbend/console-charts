@@ -52,13 +52,13 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --regexp '.*helm install es-repo/enterprise-suite --name myhelmname --namespace lightbend --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm install es-repo/enterprise-suite --devel --name myhelmname --namespace lightbend --values [^ ]*creds\..*'
 }
 
 @test "helm upgrade command if chart exists" {
     ES_STUB_CHART_STATUS="0" \
         run $install_es
-    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --devel --values [^ ]*creds\..*'
 }
 
 @test "export console yaml with '--version blah'" {
