@@ -52,13 +52,13 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --regexp '.*helm install es-repo/enterprise-suite --name myhelmname --namespace lightbend --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm install es-repo/enterprise-suite --devel --name myhelmname --namespace lightbend --values [^ ]*creds\..*'
 }
 
 @test "helm upgrade command if chart exists" {
     ES_STUB_CHART_STATUS="0" \
         run $install_es
-    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --devel --values [^ ]*creds\..*'
 }
 
 @test "export console yaml with '--version blah'" {
@@ -79,6 +79,12 @@ function setup {
 
     assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
     refute_output --regexp 'helm template .*--version=v10.0.20'
+}
+
+@test "export console yaml with ES_LOCAL_CHART set" {
+    ES_EXPORT_YAML=console ES_LOCAL_CHART=my-local-chart.tgz \
+        run $install_es --set minikube=true,podUID=100001
+    assert_output --regexp 'helm template --name myhelmname --namespace lightbend .*my-local-chart.tgz'
 }
 
 @test "export credentials yaml" {

@@ -1,6 +1,6 @@
 
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
   name: prometheus-kube-state-metrics
@@ -40,12 +40,12 @@ rules:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
   name: prometheus-kube-state-metrics
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
+  apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
   name: prometheus-kube-state-metrics
 subjects:
@@ -60,7 +60,7 @@ metadata:
   name: prometheus-kube-state-metrics
 
 ---
-apiVersion: apps/v1beta2
+apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
   labels:

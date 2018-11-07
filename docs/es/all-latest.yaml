@@ -98,11 +98,42 @@ data:
     ]
   kubernetes-exporter.json: |
     [
-       {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
-       {"graphName": "Memory Available Percent", "promQL":["node_memory_usable_percent"]},
-       {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
-       {"graphName": "Bytes Received Per Second", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
-       {"graphName": "Bytes Transmitted Per Second", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
+        {
+            "graphName": "CPU Percent",
+            "promQL": [
+                "sum without(container_name,id,image,name)((irate(container_cpu_user_seconds_total{ContextTags}[1m]) + irate(container_cpu_system_seconds_total[1m])) * 100)"
+            ]
+        },
+        {
+            "graphName": "Resident Memory Used Percent",
+            "promQL": [
+                "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+            ]
+        },
+        {
+            "graphName": "Total Memory Used Percent",
+            "promQL": [
+                "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
+            ]
+        },
+        {
+            "graphName": "File System Used Percent",
+            "promQL": [
+                "sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)"
+            ]
+        },
+        {
+            "graphName": "Bytes Received Per Second",
+            "promQL": [
+                "sum without(container_name, id, image, name, interface)(irate(container_network_receive_bytes_total{ContextTags}[1m]))"
+            ]
+        },
+        {
+            "graphName": "Bytes Transmitted Per Second",
+            "promQL": [
+                "sum without (container_name,id, image, name, interface)(irate(container_network_transmit_bytes_total{ContextTags}[1m]))"
+            ]
+        }
     ]
   lagom-exporter.json: |
     [
@@ -229,6 +260,21 @@ spec:
 
 
 ---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: es-grafana-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -282,6 +328,9 @@ spec:
           mountPath: /usr/share/grafana/public/conf
         - name: grafana-datasources
           mountPath: /etc/grafana/provisioning/datasources/
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+
       volumes:
       - name: grafana-dashboards
         configMap:
@@ -289,6 +338,230 @@ spec:
       - name: grafana-datasources
         configMap:
           name: grafana-datasource-cm
+      - name: grafana-data
+        
+        emptyDir: {}
+        
+
+---
+# Source: enterprise-suite-latest/templates/alertmanager.yaml
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: alertmanager-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: prometheus-alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      component: alertmanager
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: alertmanager
+    spec:
+      
+      serviceAccountName: default
+      containers:
+        - name: prometheus-alertmanager
+          image: prom/alertmanager:v0.15.1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          args:
+            - --config.file=/etc/config/alertmanager.yml
+            - --storage.path=/data
+            - --cluster.listen-address=$(POD_IP):6783
+
+          ports:
+            - containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
+
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: data-volume
+              mountPath: /data
+
+        - name: prometheus-alertmanager-configmap-reload
+          image: jimmidyson/configmap-reload:v0.2.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+            - --volume-dir=/etc/config
+            - --webhook-url=http://127.0.0.1:9093/-/reload
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: alertmanager-default
+        - name: data-volume
+          
+          emptyDir: {}
+          
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expose-alertmanager
+spec:
+  ports:
+  - port: 9093
+    protocol: TCP
+    targetPort: 9093
+    nodePort: 30093
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: NodePort
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+spec:
+  ports:
+  - name: http
+    port: 9093
+    targetPort: 9093
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: alertmanager-default
+data:
+  alertmanager.yml: |
+    # Example Lightbend Console Alertmanager config.
+  
+    global:
+  
+    # Routing rules.
+    route:
+      # Default receiver.
+      receiver: team1-slack
+      # Resend unresolved alerts at this interval.
+      repeat_interval: 4h
+      # Wait for any other alerts in the same group before sending.
+      group_wait: 30s
+      # Wait before sending a new alert for a group.
+      group_interval: 5m
+      # Group alerts by namespace and workload.
+      group_by: [namespace, es_workload]
+      routes:
+      # team1 Slack
+      - match:
+          es_workload: workload1
+          severity: warning
+        receiver: team1-slack
+  
+      # team1 PagerDuty
+      - match:
+          es_workload: workload1
+          severity: critical
+        receiver: team1-pagerduty
+  
+      # team2 PagerDuty
+      - match:
+          es_workload: workload2
+          severity: critical
+        receiver: team2-slack
+  
+    # Don't alert on warnings if the same alert is already critical.
+    inhibit_rules:
+    - source_match:
+        severity: critical
+      target_match:
+        severity: warning
+      equal: [alertname]
+  
+    templates:
+    # Slack notification templates.
+    - '/etc/config/slack.tmpl'
+  
+    # Receivers.
+    receivers:
+    - name: team1-slack
+      slack_configs:
+      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#team1-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  
+    - name: team1-pagerduty
+      pagerduty_configs:
+      - routing_key: my_secret_routing_key
+        # Remove this in actual usage. It's added to prevent sending PagerDuty alerts from local development environments.
+        url: https://pagerduty.localhost/api
+  
+    - name: team2-slack
+      slack_configs:
+      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#team2-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  slack.tmpl: |
+    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
+    {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
+    {{ end }}{{- end -}}
+  
 
 ---
 # Source: enterprise-suite-latest/templates/node-exporter.yaml
@@ -296,6 +569,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus-node-exporter
+
 ---
 apiVersion: apps/v1beta2
 kind: DaemonSet
@@ -379,128 +653,13 @@ spec:
 
 
 ---
-# Source: enterprise-suite-latest/templates/kube-state-metrics.yaml
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: prometheus-kube-state-metrics
-rules:
-- apiGroups: [""]
-  resources:
-  - configmaps
-  - secrets
-  - nodes
-  - pods
-  - services
-  - resourcequotas
-  - replicationcontrollers
-  - limitranges
-  - persistentvolumeclaims
-  - persistentvolumes
-  - namespaces
-  - endpoints
-  verbs: ["list", "watch"]
-- apiGroups: ["extensions"]
-  resources:
-  - daemonsets
-  - deployments
-  - replicasets
-  verbs: ["list", "watch"]
-- apiGroups: ["apps"]
-  resources:
-  - statefulsets
-  verbs: ["list", "watch"]
-- apiGroups: ["batch"]
-  resources:
-  - cronjobs
-  - jobs
-  verbs: ["list", "watch"]
-- apiGroups: ["autoscaling"]
-  resources:
-  - horizontalpodautoscalers
-  verbs: ["list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: prometheus-kube-state-metrics
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: prometheus-kube-state-metrics
-subjects:
-- kind: ServiceAccount
-  name: prometheus-kube-state-metrics
-  namespace: lightbend
-
+# Source: enterprise-suite-latest/templates/prometheus.yaml
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: prometheus-kube-state-metrics
+  name: prometheus-server
 
----
-apiVersion: apps/v1beta2
-kind: Deployment
-metadata:
-  labels:
-    app: prometheus
-    component: kube-state-metrics
-  name: prometheus-kube-state-metrics
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prometheus
-      component: kube-state-metrics
-  template:
-    metadata:
-      labels:
-        app: prometheus
-        component: kube-state-metrics
-    spec:
-      
-      serviceAccountName: prometheus-kube-state-metrics
-      containers:
-        - name: prometheus-kube-state-metrics
-          image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
-          args:
-            - --port=8080
-            - --telemetry-port=8081
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          ports:
-            - name: metrics
-              containerPort: 8080
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    prometheus.io/scrape: "true"
-  labels:
-    app: prometheus
-    component: "kube-state-metrics"
-  name: prometheus-kube-state-metrics
-spec:
-  clusterIP: None
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: 8080
-  selector:
-    app: prometheus
-    component: "kube-state-metrics"
-  type: "ClusterIP"
-
----
-# Source: enterprise-suite-latest/templates/prometheus.yaml
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -524,12 +683,6 @@ rules:
   verbs: ["get"]
 
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-server
-
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -544,8 +697,23 @@ subjects:
   namespace: lightbend
 
 ---
-apiVersion: apps/v1beta2
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: prometheus-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Gi
+
+---
 kind: Deployment
+apiVersion: apps/v1beta2
 metadata:
   labels:
     app: prometheus
@@ -568,6 +736,7 @@ spec:
     spec:
       serviceAccountName: prometheus-server
 
+      securityContext:
       
 
       initContainers:
@@ -589,6 +758,20 @@ spec:
             - mountPath: /etc/bare
               name: bare-prometheus
 
+        # For vanilla K8s clusters, we need to match prometheus-data permissions to the prometheus user.
+        # In prometheus 2.x, this is `65534`.
+        # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
+        - name: change-prometheus-data-volume-ownership
+          image: busybox
+          command:
+            - sh
+            - -c
+            - "chown -Rc 65534:65534 /data || true"
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: /data
+              subPath: prometheus-data
+
       imagePullSecrets:
         - name: commercial-credentials
 
@@ -604,7 +787,7 @@ spec:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain=prometheus.io
           volumeMounts:
@@ -612,8 +795,9 @@ spec:
               mountPath: /etc/config
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
-            - name: monitor-data-volume
+            - name: prometheus-data-volume
               mountPath: /monitor-data
+              subPath: monitor-data
           ports:
             - containerPort: 8180
           readinessProbe:
@@ -630,37 +814,57 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
+        - name: es-monitor-api-configmap-reload
+          image: jimmidyson/configmap-reload:v0.2.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+          - --volume-dir=/etc/es-monitor-api
+          - --webhook-url=http://127.0.0.1:8180/reload
+          volumeMounts:
+          - name: es-monitor-api-volume
+            mountPath: /etc/es-monitor-api
+
         - name: prometheus-server
           image: prom/prometheus:v2.2.1
+
           resources:
             requests:
               cpu: 100m
               memory: 250Mi
+
           args:
             - --config.file=/etc/config/prometheus.yml
             - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
+
           ports:
             - containerPort: 9090
+
           readinessProbe:
             httpGet:
               path: /-/ready
               port: 9090
             timeoutSeconds: 30
+
           livenessProbe:
             httpGet:
               path: /-/healthy
               port: 9090
             timeoutSeconds: 30
             initialDelaySeconds: 30
+
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
             - name: prometheus-data-volume
               mountPath: /data
+              subPath: prometheus-data
 
       terminationGracePeriodSeconds: 300
       volumes:
@@ -669,10 +873,10 @@ spec:
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
-        - name: monitor-data-volume
-          emptyDir: {}
         - name: prometheus-data-volume
+          
           emptyDir: {}
+          
         - name: bare-prometheus
           configMap:
             name: bare-prometheus
@@ -684,7 +888,8 @@ metadata:
   name: prometheus-server
 spec:
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 9090
   selector:
     app: prometheus
@@ -697,7 +902,8 @@ metadata:
   name: es-monitor-api
 spec:
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8180
   selector:
     app: prometheus
@@ -731,10 +937,10 @@ metadata:
   name: bare-prometheus
 data:
   prometheus.yml: |-
-    # this is a placeholder to keep prometheus running while it waits the real config
+    # this is a placeholder to keep prometheus running while it awaits the real config
     global:
-      scrape_interval:     1m
-      evaluation_interval: 1m
+      scrape_interval:     99m
+      evaluation_interval: 99m
     scrape_configs:
       - job_name: wait
         static_configs:
@@ -753,94 +959,17 @@ metadata:
     component: server
   name: es-monitor-api
 data:
-  bootstrap-monitors.json: |
+  default-monitors.json: |
     {
       "monitors": [
         {
           "model": "threshold",
           "parameters": {
-            "name": "node_high_cpu",
-            "metric": "node_cpu_percent",
-            "comparator": ">=",
-            "threshold": "99",
-            "window": "2m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "cpu saturated",
-            "description": "cpu on {{$labels.instance}} over 99% busy",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "node_memory_pressure",
-            "metric": "node_memory_usable_percent",
-            "comparator": "<",
-            "threshold": "5",
-            "window": "5m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "memory pressure",
-            "description": "{{$labels.instance}} has low usable memory",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "predict",
-          "parameters": {
-            "name": "node_disk_filling",
-            "metric": "node_filesystem_free_percent",
-            "period": "1h",
-            "seconds": "28800",
-            "comparator": "<",
-            "threshold": "0",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "disk filling",
-            "description": "{{$labels.instance}} will fill disk in {{$labels.prediction}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "node_network_errors",
-            "metric": "node_network_error_rate",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "5m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "network errors",
-            "description": "{{$labels.instance}} has network errors",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kube_node_pressure",
-            "metric": "kube_node_pressure",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "5m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "kube node pressure",
-            "description": "{{$labels.node_name}} is in kubernetes condition {{$labels.condition}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "restarts",
+            "name": "kube_container_rapid_restarts",
             "metric": "kube_pod_container_restarts_rate",
             "comparator": ">",
             "threshold": "0",
-            "window": "10m",
+            "window": "5m",
             "confidence": "0.5",
             "severity": "warning",
             "summary": "container restarting rapidly",
@@ -1482,6 +1611,22 @@ data:
           - source_labels: [__name__]
             regex: container_(network_tcp_usage_total|tasks_state|cpu_usage_seconds_total|memory_failures_total|network_udp_usage_total)
             action: drop
+          # extract workload from workload-hash-rand
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[456789bcdf]{4,10}-[bcdfghjklmnpqrstvwxz2456789]{5};
+            target_label: es_workload
+          # extract workload from workload-rand
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
+            target_label: es_workload
+          # extract workload from workload-num
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{1,4};
+            target_label: es_workload
+          # copy pod name to workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.+);
+            target_label: es_workload
   
       # kube-state-metrics
   
@@ -1538,6 +1683,23 @@ data:
           - source_labels: [daemonset, es_workload]
             regex: '(.+);'
             target_label: es_workload
+          # extract workload from workload-hash-rand
+          - source_labels: [pod, es_workload]
+            regex: (.*)-[456789bcdf]{4,10}-[bcdfghjklmnpqrstvwxz2456789]{5};
+            target_label: es_workload
+          # extract workload from workload-rand
+          - source_labels: [pod, es_workload]
+            regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
+            target_label: es_workload
+          # extract workload from workload-num
+          - source_labels: [pod, es_workload]
+            regex: (.*)-[0-9]{1,4};
+            target_label: es_workload
+          # copy pod name to workload
+          - source_labels: [pod, es_workload]
+            regex: (.+);
+            target_label: es_workload
+  
     {{ .MonitorTypeRules | indent 6 }}
   
   
@@ -1605,10 +1767,25 @@ data:
             action: replace
             target_label: __metrics_path__
             regex: (.+)
+  
+          # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
+          - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
+            action: keep
+            regex: ^(.+;.*)|(;.*metrics)$
+  
+          # Set port from prometheus.io/port if it's set.
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+            action: replace
+            # Extract IP from address. Address might not contain a port in some cases.
+            regex: ([^:]+):?(?:\d*);(\d+)
+            replacement: ${1}:${2}
+            target_label: __address__
+  
+  
           - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
             action: replace
             target_label: __address__
-            regex: (.+)(?::\d+);(\d+)
+            regex: ([^:]+):?(?:\d*);(\d+)
             replacement: $1:$2
           # metadata labels
           - action: labelmap
@@ -1651,7 +1828,7 @@ data:
       #
       # * `{{ .PrometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
       # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-      # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all ports by default.
+      # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all `metrics` ports.
       - job_name: 'kubernetes-pods'
   
         kubernetes_sd_configs:
@@ -1677,10 +1854,11 @@ data:
             action: keep
             regex: ^(.+;.*)|(;.*metrics)$
   
-          # Set port from prometheus.io/port.
+          # Set port from prometheus.io/port if it's set.
           - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
             action: replace
-            regex: (.+):(?:\d+);(\d+)
+            # Extract IP from address. Address might not contain a port in some cases.
+            regex: ([^:]+):?(?:\d*);(\d+)
             replacement: ${1}:${2}
             target_label: __address__
   
@@ -1722,35 +1900,44 @@ data:
         metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
   static-rules.yml: |
+    # node-exporter metrics
     - record: node_cpu_percent
-      expr: 100 - avg by (instance) (irate(node_cpu{mode="idle"}[5m]) * 100)
+      expr: 100 - avg by (es_workload, node_ip) (irate(node_cpu{mode="idle"}[5m]) * 100)
   
     - record: node_memory_usable_percent
-      expr: avg by (instance) (node_memory_MemAvailable / node_memory_MemTotal) * 100
+      expr: avg by (es_workload, node_ip) (node_memory_MemAvailable / node_memory_MemTotal) * 100
   
     - record: node_filesystem_free_percent
-      expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
+      expr: avg by (es_workload, device, node_ip) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
   
     - record: node_network_error_rate
-      expr: sum by(instance) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
+      expr: sum by(es_workload, node_ip) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
+  
+    # include all nodes in the pod info, so the UI can query a single metric
+    # Not supported, yet.
+    #- record: kube_pod_info
+    #  expr: kube_node_info
+    #  labels:
+    #    pod: cluster-node
   
     - record: kube_node_pressure
-      expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
+      expr: avg by (es_workload, condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
   
+    # kube_pod_ready: exclude pods where 100% of containers have terminated (eg. Jobs)
     - record: kube_pod_ready
-      expr: avg by (node_ip, node_name, namespace, pod, es_monitor_type) (kube_pod_status_ready{condition="true"}) * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
+      expr: kube_pod_status_ready{condition="true"} unless on (pod) avg by (pod) (kube_pod_container_status_terminated) == 1
   
     - record: kube_pod_container_restarts_rate
-      expr: rate(kube_pod_container_status_restarts_total[1m]) * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
+      expr: rate(kube_pod_container_status_restarts_total[1m])>=0 unless on (pod) avg by (pod) (kube_pod_container_status_terminated) == 1
   
     - record: container_starts_total
-      expr: sum by (es_workload, namespace, es_monitor_type) (1 + kube_pod_container_status_restarts_total * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info)
+      expr: sum by (es_workload, namespace, es_monitor_type) (1 + kube_pod_container_status_restarts_total)
   
     - record: kube_pod_failed
-      expr: kube_pod_status_phase{phase="Failed"} * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info
+      expr: kube_pod_status_phase{phase="Failed"}
   
     - record: kube_pod_not_running
-      expr: max without (phase) (kube_pod_status_phase{phase=~"Pending|Unknown"} * on (pod) group_left(es_workload, es_monitor_type) kube_pod_info)
+      expr: 1 - kube_pod_status_phase{phase="Running"} and ignoring(phase) kube_pod_status_phase{phase="Failed"}==0 and ignoring(phase) kube_pod_status_phase{phase="Succeeded"}==0
   
     - record: kube_workload_generation_lag
       expr: avg by (es_workload, namespace, es_monitor_type) (kube_deployment_metadata_generation - kube_deployment_status_observed_generation)
@@ -1802,185 +1989,125 @@ data:
   
 
 ---
-# Source: enterprise-suite-latest/templates/alertmanager.yaml
+# Source: enterprise-suite-latest/templates/kube-state-metrics.yaml
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-kube-state-metrics
+rules:
+- apiGroups: [""]
+  resources:
+  - configmaps
+  - secrets
+  - nodes
+  - pods
+  - services
+  - resourcequotas
+  - replicationcontrollers
+  - limitranges
+  - persistentvolumeclaims
+  - persistentvolumes
+  - namespaces
+  - endpoints
+  verbs: ["list", "watch"]
+- apiGroups: ["extensions"]
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  verbs: ["list", "watch"]
+- apiGroups: ["apps"]
+  resources:
+  - statefulsets
+  verbs: ["list", "watch"]
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  - jobs
+  verbs: ["list", "watch"]
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: prometheus-kube-state-metrics
+  namespace: lightbend
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-kube-state-metrics
+
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   labels:
     app: prometheus
-    component: alertmanager
-  name: prometheus-alertmanager
+    component: kube-state-metrics
+  name: prometheus-kube-state-metrics
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: prometheus
-      component: alertmanager
+      component: kube-state-metrics
   template:
     metadata:
       labels:
         app: prometheus
-        component: alertmanager
+        component: kube-state-metrics
     spec:
       
-      serviceAccountName: default
+      serviceAccountName: prometheus-kube-state-metrics
       containers:
-        - name: prometheus-alertmanager
-          image: prom/alertmanager:v0.15.1
+        - name: prometheus-kube-state-metrics
+          image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
+          args:
+            - --port=8080
+            - --telemetry-port=8081
           resources:
             requests:
               cpu: 100m
               memory: 50Mi
-          env:
-          args:
-            - --config.file=/etc/config/alertmanager.yml
-            - --storage.path=/data
-
           ports:
-            - containerPort: 9093
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 9093
-            timeoutSeconds: 30
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9093
-            timeoutSeconds: 30
-            initialDelaySeconds: 30
-
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-            - name: data-volume
-              mountPath: /data
-
-        - name: prometheus-alertmanager-configmap-reload
-          image: jimmidyson/configmap-reload:v0.2.2
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          args:
-            - --volume-dir=/etc/config
-            - --webhook-url=http://localhost:9093/-/reload
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-              readOnly: true
-
-      volumes:
-        - name: config-volume
-          configMap:
-            name: alertmanager-default
-        - name: data-volume
-          emptydir: {}
-
+            - name: metrics
+              containerPort: 8080
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: expose-alertmanager
-spec:
-  ports:
-  - port: 9093
-    protocol: TCP
-    targetPort: 9093
-    nodePort: 30093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: NodePort
-
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: alertmanager
-spec:
-  ports:
-  - port: 9093
-    targetPort: 9093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
+  annotations:
+    prometheus.io/scrape: "true"
   labels:
     app: prometheus
-    component: alertmanager
-  name: alertmanager-default
-data:
-  alertmanager.yml: |
-    # Example Lightbend Console Alertmanager config.
-  
-    global:
-  
-    # Routing rules.
-    route:
-      receiver: slack
-      # Resend unresolved alerts at this interval.
-      repeat_interval: 4h
-      # Wait for any other alerts in the same group before sending.
-      group_wait: 30s
-      # Wait before sending a new alert for a group.
-      group_interval: 5m
-      # Group alerts by namespace and workload.
-      group_by: [namespace, es_workload]
-      routes:
-      - match:
-          severity: warning
-        receiver: slack
-      - match:
-          severity: critical
-        receiver: slack
-        continue: true
-      - match:
-          severity: critical
-        receiver: pagerduty
-  
-    # Don't alert on warnings if the same alert is already critical.
-    inhibit_rules:
-    - source_match:
-        severity: critical
-      target_match:
-        severity: warning
-      equal: [alertname]
-  
-    templates:
-    # Slack notification templates.
-    - '/etc/config/slack.tmpl'
-  
-    # Receivers.
-    receivers:
-    - name: slack
-      slack_configs:
-      # Use Slack integrations to find the webhook.
-      - api_url: https://slack.localhost/services/somewhere
-        channel: '#my-alerts'
-        title: '{{ template "title.slack" . }}'
-        text: '{{ template "text.slack" . }}'
-        send_resolved: true
-  
-    - name: pagerduty
-      pagerduty_configs:
-      - url: https://pagerduty.localhost/api
-        routing_key: my_secret_routing_key
-        service_key: my_secret_service_key
-  slack.tmpl: |
-    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
-    {{ define "text.slack" }}{{ range $index, $element := .Alerts }}_{{ .Annotations.summary }}_
-        {{ .Annotations.description }}
-    {{ end }}{{- end -}}
-  
+    component: "kube-state-metrics"
+  name: prometheus-kube-state-metrics
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: prometheus
+    component: "kube-state-metrics"
+  type: "ClusterIP"
 
 ---
 # Source: enterprise-suite-latest/templates/es-console.yaml
@@ -2051,7 +2178,8 @@ metadata:
   name: console-server
 spec:
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8080
   selector:
     run: es-console
@@ -2108,19 +2236,6 @@ data:
         proxy_redirect '/' ' $1/';
       }
 
-      location ~ (.*/service/grafana)(/.*) {
-        proxy_pass http://$grafana:3000$2$is_args$args;
-        sub_filter_types *;
-        sub_filter '/service/grafana' '$1';
-        proxy_cookie_path '/service/grafana' '$1';
-        proxy_redirect '/' ' $1/';
-      }
-
-      location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager:9093$2$is_args$args;
-        proxy_redirect '/' ' $1/';
-      }
-
       # our injected plugin should never cache...
       location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
         proxy_pass http://$grafana:3000$2$is_args$args;
@@ -2136,10 +2251,57 @@ data:
         etag off;
       }
 
+      location ~ (.*/service/grafana)(/.*) {
+        proxy_pass http://$grafana:3000$2$is_args$args;
+        sub_filter_types *;
+        sub_filter '/service/grafana' '$1';
+        proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
+      }
+
+      location ~ (.*/service/alertmanager)(/.*) {
+        proxy_pass http://$alertmanager:9093$2$is_args$args;
+        proxy_redirect '/' ' $1/';
+      }
+
       # redirect /service/prometheus -> /service/prometheus/
 
-      location ~ (.*/service/(prometheus|grafana))$ {
+      location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
         return 301 ' $1/';
+      }
+
+      # version
+
+      location ~ (.*)/version$ {
+        return 200 '{
+          "description": "Lightbend Enterprise Suite",
+          "version": "1.0.0-rc.4",
+          "alertManagerConfigMap": "alertmanager-default",
+          "alertManagerVersion": "v0.15.1",
+          "alertmanagerVolumeSize": "32Gi",
+          "apiGroupVersion": "rbac.authorization.k8s.io",
+          "configMapReloadVersion": "v0.2.2",
+          "daemonSetApiVersion": "apps/v1beta2",
+          "defaultCPURequest": "100m",
+          "defaultMemoryRequest": "50Mi",
+          "defaultStorageClass": "standard",
+          "deploymentApiVersion": "apps/v1beta2",
+          "esConsoleVersion": "latest",
+          "esGrafanaVersion": "latest",
+          "esGrafanaVolumeSize": "32Gi",
+          "esMonitorVersion": "latest",
+          "imagePullPolicy": "Always",
+          "kubeStateMetricsVersion": "v1.2.0",
+          "minikube": "true",
+          "nodeExporterVersion": "v0.15.2",
+          "prometheusDomain": "prometheus.io",
+          "prometheusMemoryRequest": "250Mi",
+          "prometheusVersion": "v2.2.1",
+          "prometheusVolumeSize": "256Gi",
+          "rbacApiVersion": "rbac.authorization.k8s.io/v1",
+          "useEmptyDirVolumes": "true",
+          "name": "enterprise-suite-latest"\n}';
+        add_header Content-Type application/json;
       }
 
       # console entry point
@@ -2158,7 +2320,7 @@ data:
       # bookmarks / reloads in the /workloads/ path
       # (for our single page app, these should reload index.html but keep the path)
 
-      location ~ (.*/)(workloads/.*) {
+      location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
         alias $base/index.html;
         default_type text/html;
         sub_filter 'base href="/"' 'base href="$1"';

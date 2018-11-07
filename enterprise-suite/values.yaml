@@ -2,11 +2,11 @@
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.5
+esConsoleVersion: v0.1.6
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v0.1.1
+esMonitorVersion: v0.2.0
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.1.3
+esGrafanaVersion: v0.1.4
 # prom/prometheus
 prometheusVersion: v2.2.1
 # prom/alertmanager
@@ -18,6 +18,13 @@ kubeStateMetricsVersion: v1.2.0
 # prom/node-exporter
 nodeExporterVersion: v0.15.2
 
+#################################################
+# Kubernetes Api Versions
+#
+rbacApiVersion: rbac.authorization.k8s.io/v1
+apiGroupVersion: rbac.authorization.k8s.io
+deploymentApiVersion: apps/v1beta2
+daemonSetApiVersion: apps/v1beta2
 
 #################################################
 # Settings
@@ -51,14 +58,14 @@ prometheusMemoryRequest: 250Mi
 #################################################
 # Persistent Volumes
 #
-# Set to true to use emptyDir for all volumes, disabling persistent volumes.
-useEmptyDirVolumes: false
+# Deprecated value - set to false to disable emptyDir and use persistent volumes. Prefer `usePersistentVolumes`.
+useEmptyDirVolumes: true
+# Set to true to use persistent volumes, otherwise emptyDir volumes are used.
+usePersistentVolumes: false
 # Default StorageClass to use for persistent volumes
 defaultStorageClass: standard
 # Prometheus volume size - used for storing metrics data.
 prometheusVolumeSize: 256Gi
-# ES Monitor API volume size - used for storing monitors in a git repo.
-esMonitorVolumeSize: 32Gi
 # Alertmanager volume size - used for storing silences.
 alertmanagerVolumeSize: 32Gi
 # Grafana volume size - used for storing users, custom dashboards, and plugins.

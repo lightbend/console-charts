@@ -1,5 +1,11 @@
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-server
+
+---
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
   name: prometheus-server
@@ -21,18 +27,12 @@ rules:
   verbs: ["get"]
 
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-server
-
----
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
   name: prometheus-server
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
+  apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
   name: prometheus-server
 subjects:
@@ -40,25 +40,13 @@ subjects:
   name: prometheus-server
   namespace: {{.Release.Namespace}}
 
-{{ if not .Values.useEmptyDirVolumes }}
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: es-monitor-storage
-spec:
-  storageClassName: {{ default .Values.defaultStorageClass .Values.esMonitorStorageClass }}
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.esMonitorVolumeSize }}
-
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: prometheus-storage
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
   accessModes:
@@ -67,10 +55,9 @@ spec:
     requests:
       storage: {{ .Values.prometheusVolumeSize }}
 
-{{ end }}
 ---
-apiVersion: apps/v1beta2
 kind: Deployment
+apiVersion: {{ .Values.deploymentApiVersion }}
 metadata:
   labels:
     app: prometheus
@@ -93,8 +80,8 @@ spec:
     spec:
       serviceAccountName: prometheus-server
 
-      {{ if .Values.podUID }}
       securityContext:
+      {{ if .Values.podUID }}
         runAsUser: {{ .Values.podUID }}
       {{ end }}
 
@@ -117,6 +104,20 @@ spec:
             - mountPath: /etc/bare
               name: bare-prometheus
 
+        # For vanilla K8s clusters, we need to match prometheus-data permissions to the prometheus user.
+        # In prometheus 2.x, this is `65534`.
+        # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
+        - name: change-prometheus-data-volume-ownership
+          image: busybox
+          command:
+            - sh
+            - -c
+            - "chown -Rc 65534:65534 /data || true"
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: /data
+              subPath: prometheus-data
+
       imagePullSecrets:
         - name: commercial-credentials
 
@@ -132,7 +133,7 @@ spec:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --bootstrapMonitorsFile=/etc/es-monitor-api/bootstrap-monitors.json
+            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
           volumeMounts:
@@ -140,8 +141,9 @@ spec:
               mountPath: /etc/config
             - name: es-monitor-api-volume
               mountPath: /etc/es-monitor-api
-            - name: monitor-data-volume
+            - name: prometheus-data-volume
               mountPath: /monitor-data
+              subPath: monitor-data
           ports:
             - containerPort: 8180
           readinessProbe:
@@ -158,37 +160,57 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
+        - name: es-monitor-api-configmap-reload
+          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
+          args:
+          - --volume-dir=/etc/es-monitor-api
+          - --webhook-url=http://127.0.0.1:8180/reload
+          volumeMounts:
+          - name: es-monitor-api-volume
+            mountPath: /etc/es-monitor-api
+
         - name: prometheus-server
           image: prom/prometheus:{{ .Values.prometheusVersion }}
+
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.prometheusCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.prometheusMemoryRequest }}
+
           args:
             - --config.file=/etc/config/prometheus.yml
             - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
+
           ports:
             - containerPort: 9090
+
           readinessProbe:
             httpGet:
               path: /-/ready
               port: 9090
             timeoutSeconds: 30
+
           livenessProbe:
             httpGet:
               path: /-/healthy
               port: 9090
             timeoutSeconds: 30
             initialDelaySeconds: 30
+
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
             - name: prometheus-data-volume
               mountPath: /data
+              subPath: prometheus-data
 
       terminationGracePeriodSeconds: 300
       volumes:
@@ -197,19 +219,12 @@ spec:
         - name: es-monitor-api-volume
           configMap:
             name: es-monitor-api
-        - name: monitor-data-volume
-          {{ if .Values.useEmptyDirVolumes }}
-          emptyDir: {}
-          {{ else }}
-          persistentVolumeClaim:
-            claimName: es-monitor-storage
-          {{ end }}
         - name: prometheus-data-volume
-          {{ if .Values.useEmptyDirVolumes }}
-          emptyDir: {}
-          {{ else }}
+          {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
           persistentVolumeClaim:
             claimName: prometheus-storage
+          {{ else }}
+          emptyDir: {}
           {{ end }}
         - name: bare-prometheus
           configMap:

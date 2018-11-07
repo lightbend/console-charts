@@ -7,5 +7,5 @@ To learn more about the release, try:
   $ helm status {{ .Release.Name }}
   $ helm get {{ .Release.Name }}
 
-See https://developer.lightbend.com/docs/enterprisesuiteconsole/beta/installation/index.html for
-install options.
+See https://developer.lightbend.com/docs/console/current/installation/index.html
+for further information on installation.

@@ -62,10 +62,7 @@ T $? kubectl port-forward listening
 #
 # wait for console to respond
 #
-console_running() {
-    curl_query $1 "" "" | fgrep -q '<title>Enterprise Suite Reactive Console</title>'
-}
-busy_wait console_running http://127.0.0.1:$CONSOLE_LOCAL_PORT
+busy_wait es_console_ready
 
 # Test access
 test_es_console_responding http://127.0.0.1:$CONSOLE_LOCAL_PORT
