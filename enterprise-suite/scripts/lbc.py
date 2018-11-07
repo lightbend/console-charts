@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys 
 import os
 import glob
@@ -24,6 +26,10 @@ DEFAULT_TIMEOUT=3
 # Parsed commandline args
 args = None
 
+# Prints to stderr
+def printerr(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 # Runs a given command with optional timeout.
 # Returns (stdout, returncode) tuple. If timeout
 # occured, returncode will be negative (-9 on macOS).
@@ -38,6 +44,8 @@ def run(cmd, timeout=None, stdin=None):
         if timer != None:
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
+        if len(stderr) > 0:
+            printerr(stderr)
         returncode = proc.returncode
     finally:
         if timer != None:
@@ -53,7 +61,7 @@ def execute(cmd, can_fail=False):
         stdout, returncode = run(cmd)
         print(stdout)
         if not can_fail and returncode != 0:
-            sys.exit("Command '" + cmd + "' failed:\n" + stdout)
+            sys.exit("Command '" + cmd + "' failed!")
         return returncode
     return 0
 
@@ -79,13 +87,18 @@ def require_version(cmd, required_version):
                     .format(current, required)) 
 
     # Non-critical warning
-    print("warning: unable to determine installed version of '" + name + "'")
+    printerr("warning: unable to determine installed version of '" + name + "'")
+
+# Helm check is a separate function because we also need it when not doing full
+# preflight check, eg. when using --export-yaml argument
+def check_helm():
+    require_version('helm version --client --short', REQ_VER_HELM)
 
 def preflight_check(creds, minikube=False):
     # Check versions
     require_version("docker version -f '{{.Client.Version}}'", REQ_VER_DOCKER)
     require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
-    require_version('helm version --client --short', REQ_VER_HELM)
+    check_helm()
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
 
@@ -138,15 +151,15 @@ def install_helm_chart(args, creds_file):
         credentials_arg = ''
         if args.export_yaml == 'creds':
             credentials_arg = '--execute templates/commercial-credentials.yaml ' + creds_values
-            print('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
+            printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
         
         try:
             tempdir = tempfile.mkdtemp()
             execute('helm fetch -d {} {} {}'
                 .format(tempdir, args.version or '', chart_ref))
             chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
-            chartfile = glob.glob(chartfile_glob)
-            if len(chartfile) < 1:
+            chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-latest.tgz']
+            if len(chartfile) < 1: 
                 sys.exit('cannot access fetched chartfile at {}, ES_CHART={}'
                     .format(chartfile_glob, args.chart))
             execute('helm template --name {} --namespace {} {} {} {}'
@@ -162,7 +175,7 @@ def install_helm_chart(args, creds_file):
         if returncode == 0:
             if args.force_install:
                 execute('helm delete --purge ' + args.helm_name)
-                print(('warning: helm delete does not wait for resources to be removed'
+                printerr(('warning: helm delete does not wait for resources to be removed'
                        '- if the script fails on install, please re-run it.'))
             else:
                 should_upgrade = True
@@ -177,9 +190,11 @@ def install_helm_chart(args, creds_file):
                         creds_values, helm_args))
 
 def write_temp_credentials(creds_tempfile, creds):
-    creds_tempfile.write("imageCredentials" +
-                    "    username: " + creds[0] +
-                    "    password: " + creds[1])
+    #creds_tempfile.write("imageCredentials" +
+    credsstr = '\n'.join(["imageCredentials:",
+                          "    username: " + creds[0],
+                          "    password: " + creds[1]])
+    creds_tempfile.write(credsstr)
     creds_tempfile.flush()
 
 def import_credentials(args):
@@ -212,8 +227,8 @@ def setup_args():
                         action='store_true')
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
                         action='store_true')
-    install.add_argument('--export-yaml', help='export resource yaml to stdout, forces dry_run if not false',
-                        choices=['creds', 'console', 'false'], default='false')
+    install.add_argument('--export-yaml', help='export resource yaml to stdout',
+                        choices=['creds', 'console'])
     install.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
@@ -236,10 +251,13 @@ def main():
         creds = import_credentials(args)
 
         # TODO: autodetect minikube and minishift, do additional checks on them
-        preflight_check(creds)
+        if args.export_yaml == None:
+            preflight_check(creds)
+        else:
+            check_helm()
 
         if args.version == None:
-            print(("warning: --version has not been set, helm will use the latest available version. "
+            printerr(("warning: --version has not been set, helm will use the latest available version. "
                 "It is recommended to use an explicit version."))
 
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
