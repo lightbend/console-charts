@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 from __future__ import print_function
 
@@ -12,6 +12,8 @@ import threading
 import tempfile
 import re
 import argparse
+import zipfile
+import datetime
 from distutils.version import LooseVersion
 
 # Required versions
@@ -259,6 +261,55 @@ def check_install(args):
     else:
         sys.exit('Lightbend Console status check failed')
 
+def diagnose(args):
+    failure_msg = 'Failed to get diagnostic data: '
+
+    def get_pod_containers(pod):
+        # This magic gives us all the containers in a pod
+        containers, returncode = run("kubectl --namespace {} get pods {} -o jsonpath='{{.spec.containers[*].name}}'"
+                                     .format(args.namespace, pod))
+        if returncode == 0:
+            return containers.split()
+        else:
+            sys.exit(failure_msg + 'unable to get containers in a pod {}'
+                     .format(pod))
+
+    def write_log(archive, pod, container):
+        stdout, returncode = run('kubectl --namespace {} logs {} -c {}'
+                                 .format(args.namespace, pod, container))
+        if returncode == 0:
+            filename = '{}+{}.log'.format(pod, container)
+            archive.writestr(filename, stdout)
+        else:
+            sys.exit(failure_msg + 'unable to get logs for container {} in a pod {}'
+                     .format(container, pod))
+
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    filename = 'es-console-diagnostics-{}.zip'.format(timestamp)
+    with zipfile.ZipFile(filename, 'w') as archive:
+        # List all resources in our namespace
+        stdout, returncode = run('kubectl --namespace {} get all'.format(args.namespace), show_stderr=False)
+        if returncode == 0:
+            archive.writestr('kubectl-get-all.txt', stdout)
+        else:
+            sys.exit(failure_msg + 'unable to list k8s resources in {} namespace'
+                     .format(args.namespace))
+
+        # Iterate over pods
+        stdout, returncode = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
+        if returncode == 0:
+            for line in stdout.split('\n'):
+                if len(line) > 0:
+                    # Pod name is the first thing on the line
+                    pod = line.split()[0]
+
+                    for container in get_pod_containers(pod):
+                        write_log(archive, pod, container)
+        else:
+            sys.exit(failure_msg + 'unable to pods in the namespace {}'.format(args.namespace))
+    
+    printerr('Lightbend Console diagnostic data written to {}'.format(filename))
+
 def setup_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
@@ -318,6 +369,11 @@ def main():
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
             write_temp_credentials(creds_tempfile, creds)
             install_helm_chart(args, creds_tempfile.name)
+
+    if args.subcommand == 'diagnose':
+        if not args.skip_checks:
+            check_kubectl()
+        diagnose(args)
 
 if __name__ == '__main__':
     main()
