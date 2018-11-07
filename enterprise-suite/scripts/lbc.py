@@ -33,7 +33,7 @@ def printerr(*args, **kwargs):
 # Runs a given command with optional timeout.
 # Returns (stdout, returncode) tuple. If timeout
 # occured, returncode will be negative (-9 on macOS).
-def run(cmd, timeout=None, stdin=None):
+def run(cmd, timeout=None, stdin=None, show_stderr=True):
     stdout, stderr, returncode = None, None, None
     try:
         proc = subprocess.Popen(shlex.split(cmd),
@@ -44,7 +44,7 @@ def run(cmd, timeout=None, stdin=None):
         if timer != None:
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
-        if len(stderr) > 0:
+        if len(stderr) > 0 and show_stderr:
             printerr(stderr)
         returncode = proc.returncode
     finally:
@@ -138,8 +138,10 @@ def preflight_check(creds, minikube=False):
     # x509: certificate is valid for *.bintray.com, bintray.com, not lightbend-commercial-registry.bintray.io
 
 def install_helm_chart(args, creds_file):
-    creds_values = '--values ' + creds_file
+    creds_arg = '--values ' + creds_file
+    # Helm args are separated from lbc.py args by double dash, filter it out
     helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
+    version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
     chart_ref = None
     if args.local_chart != None:
@@ -150,47 +152,53 @@ def install_helm_chart(args, creds_file):
         execute('helm repo update')
         chart_ref = 'es-repo/' + args.chart
     
-    if args.export_yaml != 'false':
-        credentials_arg = ''
+    if args.export_yaml != None:
+        # Tilerless path - renders kubernetes resources and prints to stdout
+
+        creds_exec_arg = ''
         if args.export_yaml == 'creds':
-            credentials_arg = '--execute templates/commercial-credentials.yaml ' + creds_values
+            creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
             printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
         
         try:
             tempdir = tempfile.mkdtemp()
             execute('helm fetch -d {} {} {}'
-                .format(tempdir, args.version or '', chart_ref))
+                .format(tempdir, version_arg, chart_ref))
             chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
-            chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-latest.tgz']
+            # Print a fake chart archive name when dry-running
+            chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-ver.tgz']
             if len(chartfile) < 1: 
                 sys.exit('cannot access fetched chartfile at {}, ES_CHART={}'
                     .format(chartfile_glob, args.chart))
             execute('helm template --name {} --namespace {} {} {} {}'
                 .format(args.helm_name, args.namespace, helm_args,
-                credentials_arg, chartfile[0]), print_to_stdout=True)
+                creds_exec_arg, chartfile[0]), print_to_stdout=True)
         finally:
             shutil.rmtree(tempdir)
 
     else:
+        # Tiller path - installs console directly to a k8s cluster in a given namespace
+
         # Determine if we should upgrade or install
         should_upgrade = False
-        stdout, returncode = run('helm status ' + args.helm_name, DEFAULT_TIMEOUT)
+        stdout, returncode = run('helm status ' + args.helm_name,
+                                 DEFAULT_TIMEOUT, show_stderr=False)
         if returncode == 0:
             if args.force_install:
                 execute('helm delete --purge ' + args.helm_name)
                 printerr(('warning: helm delete does not wait for resources to be removed'
-                       '- if the script fails on install, please re-run it.'))
+                          '- if the script fails on install, please re-run it.'))
             else:
                 should_upgrade = True
     
         if should_upgrade:
-            execute('helm upgrade {} {} {} {}'
-                .format(args.helm_name, chart_ref, creds_values,
-                        helm_args))
+            execute('helm upgrade {} {} {} {} {}'
+                .format(args.helm_name, chart_ref, creds_arg,
+                        version_arg, helm_args))
         else:
-            execute('helm install {} --name {} --namespace {} {} {}'
+            execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
-                        creds_values, helm_args))
+                        version_arg, creds_arg, helm_args))
 
 def write_temp_credentials(creds_tempfile, creds):
     #creds_tempfile.write("imageCredentials" +
@@ -223,9 +231,11 @@ def setup_args():
     verify = subparsers.add_parser('verify', help='verify es-console installation')
     diagnose = subparsers.add_parser('diagnose', help='make an archive with k8s logs for debugging and diagnostic purposes')
 
+    # Common arguments
     parser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     parser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
 
+    # Install arguments
     install.add_argument('--dry-run', help='only print out the commands that will be executed',
                         action='store_true')
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
