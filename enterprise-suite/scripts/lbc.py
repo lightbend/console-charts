@@ -231,13 +231,10 @@ def setup_args():
     verify = subparsers.add_parser('verify', help='verify es-console installation')
     diagnose = subparsers.add_parser('diagnose', help='make an archive with k8s logs for debugging and diagnostic purposes')
 
-    # Common arguments
-    parser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
-    parser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
-
     # Install arguments
     install.add_argument('--dry-run', help='only print out the commands that will be executed',
                         action='store_true')
+    install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
@@ -250,6 +247,13 @@ def setup_args():
 
     install.add_argument('helm', help='arguments to be passed to helm', nargs=argparse.REMAINDER)
 
+    # Common arguments for all subparsers
+    for subparser in [install, verify, diagnose]:
+        subparser.add_argument('--skip-checks', help='skip environment checks',
+                            action='store_true')
+        subparser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
+
+
     return parser.parse_args()
 
 def main():
@@ -258,16 +262,18 @@ def main():
 
     if args.subcommand == 'verify':
         creds = import_credentials(args)
-        preflight_check(creds)
+        if not args.skip_checks:
+            preflight_check(creds)
     
     if args.subcommand == 'install':
         creds = import_credentials(args)
 
         # TODO: autodetect minikube and minishift, do additional checks on them
-        if args.export_yaml == None:
-            preflight_check(creds)
-        else:
-            check_helm()
+        if not args.skip_checks:
+            if args.export_yaml == None:
+                preflight_check(creds)
+            else:
+                check_helm()
 
         if args.version == None:
             printerr(("warning: --version has not been set, helm will use the latest available version. "
