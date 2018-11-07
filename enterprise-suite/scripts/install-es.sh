@@ -196,7 +196,7 @@ if [ "false" != "$ES_EXPORT_YAML" ]; then
 
     if [ -z "$ES_LOCAL_CHART" ]; then
         TDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'install-es-tdir')
-        debug helm fetch -d $TDIR "$VERSION_ARG" "$chart_ref"
+        debug helm fetch -d $TDIR --devel "$VERSION_ARG" "$chart_ref"
         chart_ref=$TDIR/${ES_CHART}*.tgz
     fi
     debug -o 1 helm template --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
@@ -222,11 +222,11 @@ else
     import_credentials
 
     if [ "true" == "$should_upgrade" ]; then
-        debug helm upgrade "$ES_HELM_NAME" "$chart_ref" \
+        debug helm upgrade "$ES_HELM_NAME" "$chart_ref" --devel \
             "$HELM_CREDENTIALS_VALUES" \
             "$@"
     else
-        debug helm install "$chart_ref" --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
+        debug helm install "$chart_ref" --devel --name "$ES_HELM_NAME" --namespace "$ES_NAMESPACE" \
             "$HELM_CREDENTIALS_VALUES" \
             "$@"
     fi
