@@ -168,7 +168,7 @@ def preinstall_check(creds, minikube=False, minishift=False):
     # Error response from daemon: Get https://lightbend-commercial-registry.bintray.io/v2/: 
     # x509: certificate is valid for *.bintray.com, bintray.com, not lightbend-commercial-registry.bintray.io
 
-def install_helm_chart(args, creds_file):
+def install_helm_chart(creds_file):
     creds_arg = '--values ' + creds_file
     # Helm args are separated from lbc.py args by double dash, filter it out
     helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
@@ -232,14 +232,13 @@ def install_helm_chart(args, creds_file):
                         version_arg, creds_arg, helm_args))
 
 def write_temp_credentials(creds_tempfile, creds):
-    #creds_tempfile.write("imageCredentials" +
-    credsstr = '\n'.join(["imageCredentials:",
-                          "    username: " + creds[0],
-                          "    password: " + creds[1]])
-    creds_tempfile.write(credsstr)
+    creds_str = '\n'.join(["imageCredentials:",
+                           "    username: " + creds[0],
+                           "    password: " + creds[1]])
+    creds_tempfile.write(creds_str)
     creds_tempfile.flush()
 
-def import_credentials(args):
+def import_credentials():
     creds = (os.environ.get('LIGHTBEND_COMMERCIAL_USERNAME'),
              os.environ.get('LIGHTBEND_COMMERCIAL_PASSWORD'))
 
@@ -254,8 +253,9 @@ def import_credentials(args):
 
     return creds
 
-def check_install(args):
+def check_install():
     def deployment_running(name):
+        print('Checking deployment {} ... '.format(name), end='')
         stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
                                  .format(args.namespace, name))
         if returncode == 0:
@@ -263,14 +263,18 @@ def check_install(args):
             cols = [int(col) for col in stdout.split()[1:-1]]
             desired, current, up_to_date, available = cols[0], cols[1], cols[2], cols[3]
             if desired <= 0:
+                print('failed')
                 printerr('Deployment {} status check: expected to see 1 or more desired replicas, found 0'
                          .format(name))
             if desired > available:
+                print('failed')
                 printerr('Deployment {} status check: available replica number ({}) is less than desired ({})'
                          .format(name, available, desired))
             if desired > 0 and desired == available:
+                print('ok')
                 return True
         else:
+            print('failed')
             printerr('Unable to check deployment {} status'.format(name))
         return False
 
@@ -286,7 +290,7 @@ def check_install(args):
     else:
         sys.exit('Lightbend Console status check failed')
 
-def diagnose(args):
+def debug_dump(args):
     failure_msg = 'Failed to get diagnostic data: '
 
     def get_pod_containers(pod):
@@ -309,8 +313,15 @@ def diagnose(args):
             sys.exit(failure_msg + 'unable to get logs for container {} in a pod {}'
                      .format(container, pod))
 
+        # Try to get previous logs too
+        stdout, returncode = run('kubectl --namespace {} logs {} -c {} -p'
+                                 .format(args.namespace, pod, container))
+        if returncode == 0:
+            filename = '{}+{}+prev.log'.format(pod, container)
+            archive.writestr(filename, stdout)
+
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-    filename = 'es-console-diagnostics-{}.zip'.format(timestamp)
+    filename = 'console-diagnostics-{}.zip'.format(timestamp)
     with zipfile.ZipFile(filename, 'w') as archive:
         # List all resources in our namespace
         stdout, returncode = run('kubectl --namespace {} get all'.format(args.namespace), show_stderr=False)
@@ -318,6 +329,14 @@ def diagnose(args):
             archive.writestr('kubectl-get-all.txt', stdout)
         else:
             sys.exit(failure_msg + 'unable to list k8s resources in {} namespace'
+                     .format(args.namespace))
+
+        # Describe all resources
+        stdout, returncode = run('kubectl --namespace {} describe all'.format(args.namespace), show_stderr=False)
+        if returncode == 0:
+            archive.writestr('kubectl-describe-all.txt', stdout)
+        else:
+            sys.exit(failure_msg + 'unable to describe k8s resources in {} namespace'
                      .format(args.namespace))
 
         # Iterate over pods
@@ -339,9 +358,9 @@ def setup_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
 
-    install = subparsers.add_parser('install', help='install es-console')
-    verify = subparsers.add_parser('verify', help='verify es-console installation')
-    diagnose = subparsers.add_parser('diagnose', help='make an archive with k8s status info for debugging and diagnostic purposes')
+    install = subparsers.add_parser('install', help='install lightbend console')
+    verify = subparsers.add_parser('verify', help='verify console installation')
+    debug_dump = subparsers.add_parser('debug-dump', help='make an archive with k8s status info for debugging and diagnostic purposes')
 
     # Install arguments
     install.add_argument('--dry-run', help='only print out the commands that will be executed',
@@ -354,16 +373,16 @@ def setup_args():
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
-    install.add_argument('--version', help='es-console version to install', type=str)
+    install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
+    install.add_argument('--version', help='console version to install', type=str)
 
     install.add_argument('helm', help='arguments to be passed to helm', nargs=argparse.REMAINDER)
 
     # Common arguments for all subparsers
-    for subparser in [install, verify, diagnose]:
+    for subparser in [install, verify, debug_dump]:
         subparser.add_argument('--skip-checks', help='skip environment checks',
-                            action='store_true')
-        subparser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
-        subparser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
+                               action='store_true')
+        subparser.add_argument('--namespace', help='namespace to install console into/where it is installed', default='lightbend')
 
     return parser.parse_args()
 
@@ -374,10 +393,10 @@ def main():
     if args.subcommand == 'verify':
         if not args.skip_checks:
             check_kubectl()
-        check_install(args)
+        check_install()
     
     if args.subcommand == 'install':
-        creds = import_credentials(args)
+        creds = import_credentials()
 
         if not args.skip_checks:
             if args.export_yaml == None:
@@ -393,12 +412,12 @@ def main():
 
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
             write_temp_credentials(creds_tempfile, creds)
-            install_helm_chart(args, creds_tempfile.name)
+            install_helm_chart(creds_tempfile.name)
 
-    if args.subcommand == 'diagnose':
+    if args.subcommand == 'debug-dump':
         if not args.skip_checks:
             check_kubectl()
-        diagnose(args)
+        debug_dump(args)
 
 if __name__ == '__main__':
     main()
