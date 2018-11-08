@@ -14,10 +14,11 @@ import re
 import argparse
 import zipfile
 import datetime
+import urllib2
+import base64
 from distutils.version import LooseVersion
 
 # Required versions
-REQ_VER_DOCKER = '17.06'
 REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
 REQ_VER_MINIKUBE = '0.29'
@@ -125,13 +126,30 @@ def check_kubectl(minishift=False):
             msg = msg + ". Did you do 'eval $(minishift oc-env)'?"
         sys.exit(msg)
 
+def check_credentials(creds):
+    registry = 'https://lightbend-docker-commercial-registry.bintray.io/v2'
+    api_url = registry + '/enterprise-suite/es-monitor-api/tags/list'
+
+    # Set up basic auth with given creds
+    req = urllib2.Request(api_url)
+    basic_auth = base64.b64encode('{}:{}'.format(creds[0], creds[1]))
+    req.add_header('Authorization', 'Basic ' + basic_auth)
+
+    success = False
+    try:
+        resp = urllib2.urlopen(req)
+        if resp.getcode() == 200:
+            # Lazy way of verifying returned json - there should be a tag named "latest"
+            if '"latest"' in resp.read():
+                success = True
+    finally:
+        return success 
+
 def preinstall_check(creds, minikube=False, minishift=False):
     assert minikube == False or minishift == False, 'Did not expect both minikube and minishift running'
 
     check_helm()
     check_kubectl()
-
-    require_version("docker version -f '{{.Client.Version}}'", REQ_VER_DOCKER)
 
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
@@ -140,12 +158,6 @@ def preinstall_check(creds, minikube=False, minishift=False):
         require_version('minishift version', REQ_VER_MINISHIFT)
         require_version('oc version', REQ_VER_OC)
 
-    if minikube or minishift:
-        # Check if docker is pointing to a cluster
-        if os.environ.get('DOCKER_HOST') == None:
-            sys.exit('Docker CLI is not pointing to a cluster. Did you run "eval $({} docker-env)"?'
-                     .format('minikube' if minikube else 'minishift'))
-
     # Check if helm is set up inside a cluster
     stdout, returncode = run('helm version', DEFAULT_TIMEOUT)
     if returncode != 0:
@@ -153,20 +165,9 @@ def preinstall_check(creds, minikube=False, minishift=False):
 
     # TODO: Check if RBAC rules for tiller are set up
 
-    # Check credentials
-    registry = 'lightbend-docker-commercial-registry.bintray.io'
-    stdout, returncode = run('docker login -u {} --password-stdin {}'.format(creds[0], registry),
-                             6, creds[1])
-    if returncode != 0:
-        sys.exit('Unable to login to lightbend docker registry. Please check your credentials.')
-    else:
-        run('docker logout ' + registry, DEFAULT_TIMEOUT)
-    
-    # TODO: Try to pull docker image from lighbend registry
-    
-    # At the moment when I try 'docker pull {registry}/enterprise-suite/es-monitor-api:latest' I get:
-    # Error response from daemon: Get https://lightbend-commercial-registry.bintray.io/v2/: 
-    # x509: certificate is valid for *.bintray.com, bintray.com, not lightbend-commercial-registry.bintray.io
+    if not check_credentials(creds):
+        sys.exit('Your credentials do not appear to be correct' +
+                 ' - unable to make authenticated request to lightbend docker registry')
 
 def install_helm_chart(creds_file):
     creds_arg = '--values ' + creds_file
