@@ -22,6 +22,7 @@ REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
 REQ_VER_MINIKUBE = '0.29'
 REQ_VER_MINISHIFT = '1.20'
+REQ_VER_OC = '3.9'
 
 DEFAULT_TIMEOUT=3
 
@@ -94,32 +95,56 @@ def require_version(cmd, required_version):
     # Non-critical warning
     printerr("warning: unable to determine installed version of '" + name + "'")
 
+def is_running_minikube():
+    stdout, returncode = run('minikube status')
+    return returncode == 0 \
+        and 'minikube: Running' in stdout \
+        and 'cluster: Running' in stdout
+
+def is_running_minishift():
+    stdout, returncode = run('minishift status')
+    return returncode == 0 \
+        and 'minishift: Running' in stdout \
+        and 'openshift: Running' in stdout
+
 # Helm check is a separate function because we also need it when not doing full
 # preflight check, eg. when using --export-yaml argument
 def check_helm():
     require_version('helm version --client --short', REQ_VER_HELM)
 
 # Kubectl check is needed both in install and verify subcommands
-def check_kubectl():
+def check_kubectl(minishift=False):
     require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
 
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
     stdout, returncode = run('kubectl version', DEFAULT_TIMEOUT)
     if returncode != 0:
-        sys.exit('Cannot reach cluster with kubectl')
+        msg = 'Cannot reach cluster with kubectl'
+        if minishift:
+            # Minishift needs special configuration for kubectl to work
+            msg = msg + ". Did you do 'eval $(minishift oc-env)'?"
+        sys.exit(msg)
 
-def preinstall_check(creds, minikube=False):
+def preinstall_check(creds, minikube=False, minishift=False):
+    assert minikube == False or minishift == False, 'Did not expect both minikube and minishift running'
+
     check_helm()
     check_kubectl()
 
     require_version("docker version -f '{{.Client.Version}}'", REQ_VER_DOCKER)
+
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
 
-    if minikube:
+    if minishift:
+        require_version('minishift version', REQ_VER_MINISHIFT)
+        require_version('oc version', REQ_VER_OC)
+
+    if minikube or minishift:
         # Check if docker is pointing to a cluster
         if os.environ.get('DOCKER_HOST') == None:
-            sys.exit('Docker CLI is not pointing to a cluster. Did you run "eval $(minikube docker-env)"?')
+            sys.exit('Docker CLI is not pointing to a cluster. Did you run "eval $({} docker-env)"?'
+                     .format('minikube' if minikube else 'minishift'))
 
     # Check if helm is set up inside a cluster
     stdout, returncode = run('helm version', DEFAULT_TIMEOUT)
@@ -340,7 +365,6 @@ def setup_args():
         subparser.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
         subparser.add_argument('--namespace', help='namespace to install es-console into/where it is installed', default='lightbend')
 
-
     return parser.parse_args()
 
 def main():
@@ -355,10 +379,11 @@ def main():
     if args.subcommand == 'install':
         creds = import_credentials(args)
 
-        # TODO: autodetect minikube and minishift, do additional checks on them
         if not args.skip_checks:
             if args.export_yaml == None:
-                preinstall_check(creds)
+                minikube = is_running_minikube()
+                minishift = is_running_minishift()
+                preinstall_check(creds, minikube, minishift)
             else:
                 check_helm()
 
