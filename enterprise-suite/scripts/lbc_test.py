@@ -118,6 +118,63 @@ class LbcTest(unittest.TestCase):
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--version=1.0.0-rc.9'])
         self.assertEqual(len(expected_cmds), 0)
 
+    def test_install_local_chart(self):
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install chart.tgz --name enterprise-suite --namespace lightbend --devel --values \S+')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--local-chart=chart.tgz'])
+        self.assertEqual(len(expected_cmds), 0)
+
+    def test_install_override_repo(self):
+        expect_cmd(r'helm repo add es-repo https://repo.bintray.com/helm')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm'])
+        self.assertEqual(len(expected_cmds), 0)
+
+    def test_install_override_name(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status lb-console', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name lb-console --namespace lightbend --devel --values \S+')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--helm-name=lb-console'])
+        self.assertEqual(len(expected_cmds), 0)
+
+    def test_verify_fail(self):
+        expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',
+                   stdout='es-console 1 1 1 1 15m')
+        # Grafana is not running
+        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
+                   stdout='grafana-server 1 1 1 0 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
+                   stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
+                   stdout='prometheus-server 2 2 2 2 15m')
+
+        # Expect verify to fail
+        with self.assertRaises(TestFailException):
+            lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])
+
+        self.assertEqual(len(expected_cmds), 0)
+
+    def test_verify_success(self):
+        expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',
+                   stdout='es-console 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
+                   stdout='grafana-server 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
+                   stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
+                   stdout='prometheus-server 2 2 2 2 15m')
+
+        lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])
+
+        self.assertEqual(len(expected_cmds), 0)
+
 if __name__ == '__main__':
     # Override internal functions so we can test them
     lbc.run = test_run
