@@ -111,15 +111,19 @@ def require_version(cmd, required_version):
 
 def is_running_minikube():
     stdout, returncode = run('minikube status')
-    return returncode == 0 \
-        and 'minikube: Running' in stdout \
-        and 'cluster: Running' in stdout
+    if returncode == 0:
+        if ('minikube: Running' in stdout) and ('cluster: Running') in stdout:
+            stdout, returncode = run('kubectl config current-context')
+            return returncode == 0 and stdout == 'minikube'
+    return False
 
 def is_running_minishift():
     stdout, returncode = run('minishift status')
-    return returncode == 0 \
-        and 'minishift: Running' in stdout \
-        and 'openshift: Running' in stdout
+    if returncode == 0:
+        if ('minishift: Running' in stdout) and ('cluster: Running') in stdout:
+            stdout, returncode = run('kubectl config current-context')
+            return returncode == 0 and stdout == 'minishift'
+    return False
 
 # Helm check is a separate function because we also need it when not doing full
 # preflight check, eg. when using --export-yaml argument
@@ -159,8 +163,6 @@ def check_credentials(creds):
         return success 
 
 def preinstall_check(creds, minikube=False, minishift=False):
-    assert minikube == False or minishift == False, 'Did not expect both minikube and minishift running'
-
     check_helm()
     check_kubectl()
 
