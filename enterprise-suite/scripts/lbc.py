@@ -30,9 +30,22 @@ DEFAULT_TIMEOUT=3
 # Parsed commandline args
 args = None
 
+# The following functions are overridable for testing purposes
+
 # Prints to stderr
 def printerr(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+# Prints to stdout
+def printinfo(*args, **kwargs):
+    print(*args, **kwargs)
+
+# Exits process with a message and non-0 exit code
+def fail(msg):
+    sys.exit(msg)
+
+def make_tempdir():
+    return tempfile.mkdtemp()
 
 # Runs a given command with optional timeout.
 # Returns (stdout, returncode) tuple. If timeout
@@ -64,11 +77,11 @@ def execute(cmd, can_fail=False, print_to_stdout=False):
     if not args.dry_run:
         stdout, returncode = run(cmd)
         if print_to_stdout:
-            print(stdout)
+            printinfo(stdout)
         else:
             printerr(stdout)
         if not can_fail and returncode != 0:
-            sys.exit("Command '" + cmd + "' failed!")
+            fail("Command '" + cmd + "' failed!")
         return returncode
     return 0
 
@@ -81,7 +94,7 @@ def require_version(cmd, required_version):
     stdout, returncode = run(cmd, 1)
 
     if returncode == None:
-        sys.exit("Required program '" + name + "' not found")
+        fail("Required program '" + name + "' not found")
     elif returncode == 0 and stdout != '':
         match = version_re.search(stdout)
         if match != None:
@@ -90,8 +103,8 @@ def require_version(cmd, required_version):
             if current >= required:
                 return
             else:
-                sys.exit("Installed version of '" + name + "' is too old. Found: {}, required: {}"
-                    .format(current, required)) 
+                fail("Installed version of '" + name + "' is too old. Found: {}, required: {}"
+                     .format(current, required)) 
 
     # Non-critical warning
     printerr("warning: unable to determine installed version of '" + name + "'")
@@ -124,7 +137,7 @@ def check_kubectl(minishift=False):
         if minishift:
             # Minishift needs special configuration for kubectl to work
             msg = msg + ". Did you do 'eval $(minishift oc-env)'?"
-        sys.exit(msg)
+        fail(msg)
 
 def check_credentials(creds):
     registry = 'https://lightbend-docker-commercial-registry.bintray.io/v2'
@@ -161,12 +174,12 @@ def preinstall_check(creds, minikube=False, minishift=False):
     # Check if helm is set up inside a cluster
     stdout, returncode = run('helm version', DEFAULT_TIMEOUT)
     if returncode != 0:
-        sys.exit('Cannot get helm status. Did you set up helm inside your cluster?')
+        fail('Cannot get helm status. Did you set up helm inside your cluster?')
 
     # TODO: Check if RBAC rules for tiller are set up
 
     if not check_credentials(creds):
-        sys.exit('Your credentials do not appear to be correct' +
+        fail('Your credentials do not appear to be correct' +
                  ' - unable to make authenticated request to lightbend docker registry')
 
 def install_helm_chart(creds_file):
@@ -193,14 +206,14 @@ def install_helm_chart(creds_file):
             printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
         
         try:
-            tempdir = tempfile.mkdtemp()
+            tempdir = make_tempdir()
             execute('helm fetch -d {} {} {}'
                 .format(tempdir, version_arg, chart_ref))
             chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
             # Print a fake chart archive name when dry-running
             chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-ver.tgz']
             if len(chartfile) < 1: 
-                sys.exit('cannot access fetched chartfile at {}, ES_CHART={}'
+                fail('cannot access fetched chartfile at {}, ES_CHART={}'
                     .format(chartfile_glob, args.chart))
             execute('helm template --name {} --namespace {} {} {} {}'
                 .format(args.helm_name, args.namespace, helm_args,
@@ -225,8 +238,8 @@ def install_helm_chart(creds_file):
     
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
-                .format(args.helm_name, chart_ref, creds_arg,
-                        version_arg, helm_args))
+                .format(args.helm_name, chart_ref, version_arg,
+                        creds_arg, helm_args))
         else:
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
@@ -249,14 +262,14 @@ def import_credentials():
             creds = (creds_dict.get('user'), creds_dict.get('password'))
 
     if creds[0] == None or creds[1] == None:
-        sys.exit("Credentials missing, please check your credentials file\n"
-                 "LIGHTBEND_COMMERCIAL_CREDENTIALS=" + args.creds)
+        fail("Credentials missing, please check your credentials file\n"
+             "LIGHTBEND_COMMERCIAL_CREDENTIALS=" + args.creds)
 
     return creds
 
 def check_install():
     def deployment_running(name):
-        print('Checking deployment {} ... '.format(name), end='')
+        printinfo('Checking deployment {} ... '.format(name), end='')
         stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
                                  .format(args.namespace, name))
         if returncode == 0:
@@ -264,18 +277,18 @@ def check_install():
             cols = [int(col) for col in stdout.split()[1:-1]]
             desired, current, up_to_date, available = cols[0], cols[1], cols[2], cols[3]
             if desired <= 0:
-                print('failed')
+                printinfo('failed')
                 printerr('Deployment {} status check: expected to see 1 or more desired replicas, found 0'
                          .format(name))
             if desired > available:
-                print('failed')
+                printinfo('failed')
                 printerr('Deployment {} status check: available replica number ({}) is less than desired ({})'
                          .format(name, available, desired))
             if desired > 0 and desired == available:
-                print('ok')
+                printinfo('ok')
                 return True
         else:
-            print('failed')
+            printinfo('failed')
             printerr('Unable to check deployment {} status'.format(name))
         return False
 
@@ -289,7 +302,7 @@ def check_install():
     if status_ok:
         printerr('Your Lightbend Console seems to be running fine!')
     else:
-        sys.exit('Lightbend Console status check failed')
+        fail('Lightbend Console status check failed')
 
 def debug_dump(args):
     failure_msg = 'Failed to get diagnostic data: '
@@ -301,8 +314,8 @@ def debug_dump(args):
         if returncode == 0:
             return containers.split()
         else:
-            sys.exit(failure_msg + 'unable to get containers in a pod {}'
-                     .format(pod))
+            fail(failure_msg + 'unable to get containers in a pod {}'
+                 .format(pod))
 
     def write_log(archive, pod, container):
         stdout, returncode = run('kubectl --namespace {} logs {} -c {}'
@@ -311,7 +324,7 @@ def debug_dump(args):
             filename = '{}+{}.log'.format(pod, container)
             archive.writestr(filename, stdout)
         else:
-            sys.exit(failure_msg + 'unable to get logs for container {} in a pod {}'
+            fail(failure_msg + 'unable to get logs for container {} in a pod {}'
                      .format(container, pod))
 
         # Try to get previous logs too
@@ -329,16 +342,16 @@ def debug_dump(args):
         if returncode == 0:
             archive.writestr('kubectl-get-all.txt', stdout)
         else:
-            sys.exit(failure_msg + 'unable to list k8s resources in {} namespace'
-                     .format(args.namespace))
+            fail(failure_msg + 'unable to list k8s resources in {} namespace'
+                 .format(args.namespace))
 
         # Describe all resources
         stdout, returncode = run('kubectl --namespace {} describe all'.format(args.namespace), show_stderr=False)
         if returncode == 0:
             archive.writestr('kubectl-describe-all.txt', stdout)
         else:
-            sys.exit(failure_msg + 'unable to describe k8s resources in {} namespace'
-                     .format(args.namespace))
+            fail(failure_msg + 'unable to describe k8s resources in {} namespace'
+                 .format(args.namespace))
 
         # Iterate over pods
         stdout, returncode = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
@@ -351,11 +364,11 @@ def debug_dump(args):
                     for container in get_pod_containers(pod):
                         write_log(archive, pod, container)
         else:
-            sys.exit(failure_msg + 'unable to pods in the namespace {}'.format(args.namespace))
+            fail(failure_msg + 'unable to pods in the namespace {}'.format(args.namespace))
     
     printerr('Lightbend Console diagnostic data written to {}'.format(filename))
 
-def setup_args():
+def setup_args(argv):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
 
@@ -385,11 +398,11 @@ def setup_args():
                                action='store_true')
         subparser.add_argument('--namespace', help='namespace to install console into/where it is installed', default='lightbend')
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
-def main():
+def main(argv):
     global args
-    args = setup_args()
+    args = setup_args(argv)
 
     if args.subcommand == 'verify':
         if not args.skip_checks:
@@ -421,4 +434,4 @@ def main():
         debug_dump(args)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
