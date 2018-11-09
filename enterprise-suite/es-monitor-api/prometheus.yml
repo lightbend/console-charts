@@ -50,6 +50,7 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_node_address_InternalIP]
         target_label: node_ip
 
+    # These are explicitly metric_label_configs so they don't affect automatic metrics (up, scrape_time_duration, etc.).
     metric_relabel_configs:
       - source_labels: [pod_name]
         target_label: kubernetes_pod_name
@@ -117,7 +118,10 @@ scrape_configs:
         action: replace
         target_label: node_ip
 
+{{ .MonitorTypeRules | indent 6 }}
+
     # es_workload labels:
+    # These are explicitly metric_label_configs so they don't affect automatic metrics (up, scrape_time_duration, etc.).
     metric_relabel_configs:
       - source_labels: [created_by_kind, pod, es_workload]
         regex: 'ReplicaSet;(.+)-[^-]+-[^-]+;'
@@ -159,9 +163,6 @@ scrape_configs:
       - source_labels: [pod, es_workload]
         regex: (.+);
         target_label: es_workload
-
-{{ .MonitorTypeRules | indent 6 }}
-
 
   - job_name: 'node-exporter'
     kubernetes_sd_configs:
@@ -277,7 +278,6 @@ scrape_configs:
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
 
-    metric_relabel_configs:
 {{ .MonitorTypeRules | indent 6 }}
 
 
@@ -357,5 +357,4 @@ scrape_configs:
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
 
-    metric_relabel_configs:
 {{ .MonitorTypeRules | indent 6 }}
