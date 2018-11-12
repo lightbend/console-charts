@@ -1,5 +1,5 @@
-
 ---
+{{ if .Values.createClusterRole }}
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
@@ -39,11 +39,12 @@ rules:
   resources:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
+{{ end }}
 ---
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
-  name: prometheus-kube-state-metrics
+  name: {{.Release.Namespace}}:prometheus-kube-state-metrics
 roleRef:
   apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
