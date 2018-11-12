@@ -21,8 +21,11 @@ test_alertmanager_responding "$BASEPATH/service/alertmanager/"
 #
 
 test_redirect() {
-    redir=$( curl_headers "$1" | awk '$1=="Location:"{print $2}' )
-    [[ $redir == "$2" ]]
+    redirect () {
+      redir=$( curl_headers "$1" | awk '$1=="Location:"{print $2}' )
+      [[ $redir == "$2" ]]
+    }
+    timeout redirect "$@"
     T $? "$1" redirects to "$2"
 }
 test_redirect "${CONSOLE}/service/prometheus"   "/service/prometheus/"
@@ -34,8 +37,11 @@ test_redirect "${CONSOLE}/service/alertmanager" "/service/alertmanager/"
 #
 
 test_no_cache() {
-    cache_control=$( curl_headers "$1" | awk -F ': ' '$1=="Cache-Control"{print $2}' )
-    [[ $cache_control == "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" ]]
+    no_cache() {
+      cache_control=$( curl_headers "$1" | awk -F ': ' '$1=="Cache-Control"{print $2}' )
+      [[ $cache_control == "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" ]]
+    }
+    timeout no_cache "$@"
     T $? "$1" has cache control
 }
 
