@@ -1,3 +1,4 @@
+{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -81,6 +82,7 @@ spec:
 {{ end }}
 
 ---
+{{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -94,7 +96,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.esGrafanaVolumeSize }}
-
+{{ end }}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
