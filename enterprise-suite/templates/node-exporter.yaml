@@ -31,7 +31,7 @@ spec:
       {{ end }}
       containers:
         - name: prometheus-node-exporter
-          image: "prom/node-exporter:{{ .Values.nodeExporterVersion }}"
+          image: {{ .Values.nodeExporterImage }}:{{ .Values.nodeExporterVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.nodeExporterCPURequest }}

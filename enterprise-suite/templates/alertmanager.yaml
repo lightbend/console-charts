@@ -40,7 +40,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: prometheus-alertmanager
-          image: prom/alertmanager:{{ .Values.alertManagerVersion }}
+          image: {{ .Values.alertManagerImage }}:{{ .Values.alertManagerVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.alertManagerCPURequest }}
@@ -76,7 +76,7 @@ spec:
               mountPath: /data
 
         - name: prometheus-alertmanager-configmap-reload
-          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          image: {{ .Values.configMapReloadImage }}:{{ .Values.configMapReloadVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
