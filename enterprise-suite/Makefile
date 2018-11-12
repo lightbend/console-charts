@@ -31,8 +31,9 @@ build: init package allyaml  ## Build chart package (and all.yaml)
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
 
-shell-tests:
+script-tests:
 	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
+	python2 $(CHART_DIR)/scripts/lbc_test.py
 
 minikube-tests: build install-local
 	@echo Installed Console from helm charts: $(CHART)
