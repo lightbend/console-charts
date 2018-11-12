@@ -399,9 +399,11 @@ def setup_args(argv):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
 
-    install = subparsers.add_parser('install', help='install lightbend console')
-    verify = subparsers.add_parser('verify', help='verify console installation')
-    debug_dump = subparsers.add_parser('debug-dump', help='make an archive with k8s status info for debugging and diagnostic purposes')
+    fmt = argparse.ArgumentDefaultsHelpFormatter
+    install = subparsers.add_parser('install', help='install lightbend console', formatter_class=fmt)
+    verify = subparsers.add_parser('verify', help='verify console installation', formatter_class=fmt)
+    debug_dump = subparsers.add_parser('debug-dump', help='make an archive with k8s status info for debugging and diagnostic purposes',
+                                       formatter_class=fmt)
 
     # Debug dump arguments
     debug_dump.add_argument('--print', help='print the output instead of writing it to a zip file',
