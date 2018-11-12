@@ -423,7 +423,8 @@ def setup_args(argv):
     install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     install.add_argument('--version', help='console version to install', type=str)
 
-    install.add_argument('helm', help='arguments to be passed to helm', nargs=argparse.REMAINDER)
+    install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
+                         nargs=argparse.REMAINDER)
 
     # Common arguments for all subparsers
     for subparser in [install, verify, debug_dump]:
