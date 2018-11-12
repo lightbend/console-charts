@@ -208,20 +208,26 @@ def install_helm_chart(creds_file):
             printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
         
         try:
-            tempdir = make_tempdir()
-            execute('helm fetch -d {} {} {}'
-                .format(tempdir, version_arg, chart_ref))
-            chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
-            # Print a fake chart archive name when dry-running
-            chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-ver.tgz']
-            if len(chartfile) < 1: 
-                fail('cannot access fetched chartfile at {}, ES_CHART={}'
-                    .format(chartfile_glob, args.chart))
+            chartfile = args.local_chart
+            tempdir = None
+            if chartfile == None:
+                # No local chart given, fetch from repo
+                tempdir = make_tempdir()
+                execute('helm fetch -d {} {} {}'
+                    .format(tempdir, version_arg, chart_ref))
+                chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
+                # Print a fake chart archive name when dry-running
+                chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-ver.tgz']
+                if len(chartfile) < 1: 
+                    fail('cannot access fetched chartfile at {}, ES_CHART={}'
+                        .format(chartfile_glob, args.chart))
+                chartfile = chartfile[0]
             execute('helm template --name {} --namespace {} {} {} {}'
                 .format(args.helm_name, args.namespace, helm_args,
-                creds_exec_arg, chartfile[0]), print_to_stdout=True)
+                creds_exec_arg, chartfile), print_to_stdout=True)
         finally:
-            shutil.rmtree(tempdir)
+            if tempdir != None:
+                shutil.rmtree(tempdir)
 
     else:
         # Tiller path - installs console directly to a k8s cluster in a given namespace
