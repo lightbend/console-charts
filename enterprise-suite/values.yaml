@@ -62,6 +62,8 @@ prometheusMemoryRequest: 250Mi
 useEmptyDirVolumes: true
 # Set to true to use persistent volumes, otherwise emptyDir volumes are used.
 usePersistentVolumes: false
+# If true, the chart creates persistent volumes using PVCs. Set to false to reuse previously created persistent volumes.
+createPersistentVolumes: true
 # Default StorageClass to use for persistent volumes
 defaultStorageClass: standard
 # Prometheus volume size - used for storing metrics data.
