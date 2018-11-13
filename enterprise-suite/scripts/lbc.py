@@ -4,6 +4,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys 
+
+# Note: this script expects to run on python2. Some systems map 'python'
+# executable name to python3, detect that and complain.
+if sys.version_info >= (3, 0):
+    sys.exit(("It appears 'python' in your PATH is Python 3.X, please "
+              "run this script using Python 2: 'python2 lbc.py'"))
+
 import os
 import glob
 import shlex
@@ -16,31 +23,8 @@ import argparse
 import zipfile
 import datetime
 import base64
+import urllib2 as url
 from distutils.version import LooseVersion
-
-# Note: this script has to run on both python2 and python3, because we dont know
-# which version 'python' will be installed on a host system. The main difference
-# to keep in mind is 'bytes' vs 'str' types. Following are some helper methods.
-
-def is_python2():
-    return sys.version_info < (3, 0)
-
-if is_python2():
-    import urllib2 as url
-else:
-    import urllib.request as url
-
-def bytes_to_str(s):
-    if is_python2():
-        return s
-    else:
-        return str(s, encoding='utf-8')
-
-def str_to_bytes(s):
-    if is_python2():
-        return s
-    else:
-        return s.encode('utf-8')
 
 # Required dependency versions
 REQ_VER_KUBECTL = '1.10'
@@ -107,12 +91,12 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
         if len(stderr) > 0 and show_stderr:
-            printerr(bytes_to_str(stderr))
+            printerr(stderr)
         returncode = proc.returncode
     finally:
         if timer != None:
             timer.cancel()
-        return bytes_to_str(stdout), returncode
+        return stdout, returncode
 
 # Executes a command if dry_run=False,
 # prints it to stdout or stderr, handles failure status
@@ -194,15 +178,15 @@ def check_credentials(creds):
 
     # Set up basic auth with given creds
     req = url.Request(api_url)
-    basic_auth = base64.b64encode(str_to_bytes('{}:{}'.format(creds[0], creds[1])))
-    req.add_header('Authorization', 'Basic ' + bytes_to_str(basic_auth))
+    basic_auth = base64.b64encode('{}:{}'.format(creds[0], creds[1]))
+    req.add_header('Authorization', 'Basic ' + basic_auth)
 
     success = False
     try:
         resp = url.urlopen(req)
         if resp.getcode() == 200:
             # Lazy way of verifying returned json - there should be a tag named "latest"
-            if '"latest"' in bytes_to_str(resp.read()):
+            if '"latest"' in resp.read():
                 success = True
     finally:
         return success 
