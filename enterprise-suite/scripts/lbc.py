@@ -1,6 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import sys 
 import os
@@ -14,11 +15,34 @@ import re
 import argparse
 import zipfile
 import datetime
-import urllib2
 import base64
 from distutils.version import LooseVersion
 
-# Required versions
+# Note: this script has to run on both python2 and python3, because we dont know
+# which version 'python' will be installed on a host system. The main difference
+# to keep in mind is 'bytes' vs 'str' types. Following are some helper methods.
+
+def is_python2():
+    return sys.version_info < (3, 0)
+
+if is_python2():
+    import urllib2 as url
+else:
+    import urllib.request as url
+
+def bytes_to_str(s):
+    if is_python2():
+        return s
+    else:
+        return str(s, encoding='utf-8')
+
+def str_to_bytes(s):
+    if is_python2():
+        return s
+    else:
+        return s.encode('utf-8')
+
+# Required dependency versions
 REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
 REQ_VER_MINIKUBE = '0.29'
@@ -62,12 +86,12 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
         if len(stderr) > 0 and show_stderr:
-            printerr(stderr)
+            printerr(bytes_to_str(stderr))
         returncode = proc.returncode
     finally:
         if timer != None:
             timer.cancel()
-        return stdout, returncode
+        return bytes_to_str(stdout), returncode
 
 # Executes a command if dry_run=False,
 # prints it to stdout or stderr, handles failure status
@@ -148,16 +172,16 @@ def check_credentials(creds):
     api_url = registry + '/enterprise-suite/es-monitor-api/tags/list'
 
     # Set up basic auth with given creds
-    req = urllib2.Request(api_url)
-    basic_auth = base64.b64encode('{}:{}'.format(creds[0], creds[1]))
-    req.add_header('Authorization', 'Basic ' + basic_auth)
+    req = url.Request(api_url)
+    basic_auth = base64.b64encode(str_to_bytes('{}:{}'.format(creds[0], creds[1])))
+    req.add_header('Authorization', 'Basic ' + bytes_to_str(basic_auth))
 
     success = False
     try:
-        resp = urllib2.urlopen(req)
+        resp = url.urlopen(req)
         if resp.getcode() == 200:
             # Lazy way of verifying returned json - there should be a tag named "latest"
-            if '"latest"' in resp.read():
+            if '"latest"' in bytes_to_str(resp.read()):
                 success = True
     finally:
         return success 
@@ -432,7 +456,12 @@ def setup_args(argv):
                                action='store_true')
         subparser.add_argument('--namespace', help='namespace to install console into/where it is installed', default='lightbend')
 
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+
+    if len(argv) == 0:
+        parser.print_help()
+
+    return args
 
 def main(argv):
     global args
