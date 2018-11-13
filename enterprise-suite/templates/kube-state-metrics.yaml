@@ -1,5 +1,5 @@
 ---
-{{ if .Values.createClusterRole }}
+{{ if .Values.createClusterRoles }}
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
