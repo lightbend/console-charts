@@ -78,6 +78,13 @@ imageCredentials:
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
 
+
+#################################################
+# RBAC
+#
+# Create ClusterRoles for RBAC, used by Prometheus for service discovery and kube-state-metrics. Set to false if creating additional Lightbend Consoles in the same cluster, as this is a shared resource.
+createClusterRoles: true
+
 #################################################
 # ResourceRequests
 #
