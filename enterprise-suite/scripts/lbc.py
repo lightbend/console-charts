@@ -80,14 +80,14 @@ def make_tempdir():
 # Returns (stdout, returncode) tuple. If timeout
 # occured, returncode will be negative (-9 on macOS).
 def run(cmd, timeout=None, stdin=None, show_stderr=True):
-    stdout, stderr, returncode = None, None, None
+    stdout, stderr, returncode, timer = None, None, None, None
     try:
         proc = subprocess.Popen(shlex.split(cmd),
                                 stdout=subprocess.PIPE,
                                 stdin=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        timer = threading.Timer(timeout, proc.kill) if timeout != None else None 
-        if timer != None:
+        if timeout != None:
+            timer = threading.Timer(timeout, proc.kill) 
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
         if len(stderr) > 0 and show_stderr:
