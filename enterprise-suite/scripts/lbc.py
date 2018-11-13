@@ -235,7 +235,7 @@ def install_status(release_name):
 # Returns true if console PVCs are already present in the namespace.
 # Exits with an error if some PVCs are present, but not all.
 def are_pvcs_created(namespace):
-    stdout, returncode = run('kubectl get pvc --namespace={}'.format(namespace))
+    stdout, returncode = run('kubectl get pvc --namespace={} --no-headers'.format(namespace))
     if returncode == 0:
         all_found = True
         found_pvcs = []
@@ -252,8 +252,8 @@ def are_pvcs_created(namespace):
         return all_found
     return False
 
-def are_clusterroles_created():
-    stdout, returncode = run('kubectl get clusterroles')
+def are_cluster_roles_created():
+    stdout, returncode = run('kubectl get clusterroles --no-headers')
     if returncode == 0:
         all_found = True
         found_crs = []
@@ -280,6 +280,13 @@ def install(creds_file):
     # Add '--set' arguments to helm_args
     if args.set != None:
         helm_args += ' '.join(['--set ' + keyval for keyval in args.set])
+
+    # Helper to dynamically add new helm args
+    def helm_set(helm_args, keyval):
+        arg = '--set ' + keyval
+        if arg not in helm_args:
+            return helm_args + ' ' + arg
+        return helm_args
 
     chart_ref = None
     if args.local_chart != None:
@@ -322,6 +329,17 @@ def install(creds_file):
 
     else:
         # Tiller path - installs console directly to a k8s cluster in a given namespace
+
+        if args.reuse_resources:
+            # Reuse PVCs if present
+            if are_pvcs_created(args.namespace):
+                printerr('warning: found existing PVCs from previous console installation, will reuse them')
+                helm_args = helm_set(helm_args, 'createPersistentVolumes=false')
+
+            # Reuse closter roles if present
+            if are_cluster_roles_created():
+                printerr('warning: found existing cluster roles from previous console installation, will reuse them')
+                helm_args = helm_set(helm_args, 'createClusterRoles=false')
 
         # Determine if we should upgrade or install
         should_upgrade = False
@@ -526,6 +544,8 @@ def setup_args(argv):
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
                         choices=['creds', 'console'])
+    install.add_argument('--reuse-resources', help='try to reuse PVCs and cluster roles from a previous install',
+                        action='store_true')
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
