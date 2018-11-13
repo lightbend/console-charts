@@ -20,9 +20,9 @@ nodeExporterVersion: v0.15.2
 # janeczku/go-dnsmasq
 goDnsmasqVersion: release-1.0.7
 # alpine
-alpineVersion: latest
+alpineVersion: 3.8
 # busybox
-busyboxVersion: latest
+busyboxVersion: 1.29
 
 #################################################
 # Image names to use. Combined with the versions above, gives the fully qualified docker image name.
