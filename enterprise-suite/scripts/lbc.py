@@ -252,6 +252,8 @@ def are_pvcs_created(namespace):
         return all_found
     return False
 
+# Returns true if required cluster roles are already created.
+# Exits with an error if some cluster roles are present, but not all.
 def are_cluster_roles_created():
     stdout, returncode = run('kubectl get clusterroles --no-headers')
     if returncode == 0:
