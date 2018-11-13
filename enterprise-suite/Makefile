@@ -33,7 +33,7 @@ package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
 
 script-tests:
 	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
-	python2 $(CHART_DIR)/scripts/lbc_test.py
+	python $(CHART_DIR)/scripts/lbc_test.py
 
 minikube-tests: build install-local
 	@echo Installed Console from helm charts: $(CHART)
@@ -122,11 +122,11 @@ install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install l
 	# We set a podUID here for test purposes to ensure everything works as non-root.
 	# We usePersistentVolumes to ensure PVCs work as expected.
 	-ES_LOCAL_CHART=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
-	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE),podUID=10001,usePersistentVolumes=true $(HELM_VALUES_FLAG)
+	    $(CHART_DIR)/scripts/lbc.py install --wait --set minikube=$(MINIKUBE),podUID=10001,usePersistentVolumes=true -- $(HELM_VALUES_FLAG)
 
 install-dev: install-helm ## Install content of enterprise-suite/ folder
 	ES_LOCAL_CHART=$(CHART_DIR) \
-	    $(CHART_DIR)/scripts/install-es.sh --wait --set minikube=$(MINIKUBE) $(HELM_VALUES_FLAG)
+	    $(CHART_DIR)/scripts/lbc.py install --wait --set minikube=$(MINIKUBE) -- $(HELM_VALUES_FLAG)
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

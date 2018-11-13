@@ -282,8 +282,7 @@ def install(creds_file):
         helm_args += ' '.join(['--set ' + keyval for keyval in args.set])
 
     # Helper to dynamically add new helm args
-    def helm_set(helm_args, keyval):
-        arg = '--set ' + keyval
+    def helm_add_arg(helm_args, arg):
         if arg not in helm_args:
             return helm_args + ' ' + arg
         return helm_args
@@ -330,16 +329,19 @@ def install(creds_file):
     else:
         # Tiller path - installs console directly to a k8s cluster in a given namespace
 
+        if args.wait:
+            helm_args = helm_add_arg(helm_args, '--wait')
+
         if args.reuse_resources:
             # Reuse PVCs if present
             if are_pvcs_created(args.namespace):
                 printerr('warning: found existing PVCs from previous console installation, will reuse them')
-                helm_args = helm_set(helm_args, 'createPersistentVolumes=false')
+                helm_args = helm_add_arg(helm_args, '--set createPersistentVolumes=false')
 
             # Reuse closter roles if present
             if are_cluster_roles_created():
                 printerr('warning: found existing cluster roles from previous console installation, will reuse them')
-                helm_args = helm_set(helm_args, 'createClusterRoles=false')
+                helm_args = helm_add_arg(helm_args, '--set createClusterRoles=false')
 
         # Determine if we should upgrade or install
         should_upgrade = False
@@ -551,6 +553,8 @@ def setup_args(argv):
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
     install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     install.add_argument('--version', help='console version to install', type=str)
+    install.add_argument('--wait', help='wait for install to finish before returning',
+                         action='store_true')
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
 

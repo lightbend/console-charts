@@ -97,6 +97,13 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
+    
+    def test_install_wait(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --wait')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--wait'])
 
     def test_install_helm_failed(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
