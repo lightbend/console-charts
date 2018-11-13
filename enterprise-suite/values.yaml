@@ -17,6 +17,38 @@ configMapReloadVersion: v0.2.2
 kubeStateMetricsVersion: v1.2.0
 # prom/node-exporter
 nodeExporterVersion: v0.15.2
+# janeczku/go-dnsmasq
+goDnsmasqVersion: release-1.0.7
+# alpine
+alpineVersion: 3.8
+# busybox
+busyboxVersion: 1.29
+
+#################################################
+# Image names to use. Combined with the versions above, gives the fully qualified docker image name.
+#
+# es-console image
+esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
+# es-monitor-api image
+esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api'
+# es-grafana image
+esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
+# prometheus image
+prometheusImage: prom/prometheus
+# alertmanager image
+alertManagerImage: prom/alertmanager
+# configmap-reload image
+configMapReloadImage: jimmidyson/configmap-reload
+# kube-state-metrics image
+kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
+# node-exporter image
+nodeExporterImage: prom/node-exporter
+# go-dnsmasq image
+goDnsmasqImage: janeczku/go-dnsmasq
+# alpine image
+alpineImage: alpine
+# busybox image
+busyboxImage: busybox
 
 #################################################
 # Kubernetes Api Versions
@@ -42,6 +74,7 @@ imageCredentials:
   registry: lightbend-docker-commercial-registry.bintray.io
 #  username: setme
 #  password: setme
+
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
 

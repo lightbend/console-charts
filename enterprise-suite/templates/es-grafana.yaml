@@ -122,7 +122,7 @@ spec:
       - name: commercial-credentials
 
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
+      - image: {{ tpl .Values.esGrafanaImage . }}:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
         resources:

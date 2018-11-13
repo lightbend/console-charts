@@ -89,7 +89,7 @@ spec:
 
       initContainers:
         - name: setup
-          image: alpine
+          image: {{ .Values.alpineImage }}:{{ .Values.alpineVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest }}
@@ -110,7 +110,7 @@ spec:
         # In prometheus 2.x, this is `65534`.
         # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
         - name: change-prometheus-data-volume-ownership
-          image: busybox
+          image: {{ .Values.busyboxImage }}:{{ .Values.busyboxVersion }}
           command:
             - sh
             - -c
@@ -125,7 +125,7 @@ spec:
 
       containers:
         - name: es-monitor-api
-          image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
+          image: {{ tpl .Values.esMonitorImage . }}:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           resources:
             requests:
@@ -163,7 +163,7 @@ spec:
             initialDelaySeconds: 30
 
         - name: es-monitor-api-configmap-reload
-          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          image: {{ .Values.configMapReloadImage }}:{{ .Values.configMapReloadVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
@@ -176,7 +176,7 @@ spec:
             mountPath: /etc/es-monitor-api
 
         - name: prometheus-server
-          image: prom/prometheus:{{ .Values.prometheusVersion }}
+          image: {{ .Values.prometheusImage }}:{{ .Values.prometheusVersion }}
 
           resources:
             requests:
