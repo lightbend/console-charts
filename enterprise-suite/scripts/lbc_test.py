@@ -98,6 +98,25 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
 
+    def test_install_helm_failed(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=0,
+                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
+        expect_cmd(r'helm delete --purge enterprise-suite')
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
+
+    def test_install_not_finished(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=0,
+                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: PENDING_INSTALL\nNOTES: blah')
+
+        # Expect install to fail when previous install is still pending
+        with self.assertRaises(TestFailException):
+            lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
+
     def test_upgrade(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
@@ -145,6 +164,19 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm status lb-console', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name lb-console --namespace lightbend --devel --values \S+')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--helm-name=lb-console'])
+
+    def test_uninstall(self):
+        expect_cmd(r'helm status enterprise-suite', returncode=0,
+                  stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: DEPLOYED\nNOTES: blah')
+        expect_cmd(r'helm delete --purge enterprise-suite')
+        lbc.main(['uninstall', '--skip-checks'])
+
+    def test_uninstall_not_found(self):
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+
+        # Expect uninstall to fail
+        with self.assertRaises(TestFailException):
+            lbc.main(['uninstall', '--skip-checks'])
 
     def test_verify_fail(self):
         expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',

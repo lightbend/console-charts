@@ -49,6 +49,27 @@ REQ_VER_MINIKUBE = '0.29'
 REQ_VER_MINISHIFT = '1.20'
 REQ_VER_OC = '3.9'
 
+# Verify looks for these deployments, need to be updated if helm chart changes!
+CONSOLE_DEPLOYMENTS = [
+    'es-console',
+    'grafana-server',
+    'prometheus-alertmanager',
+    'prometheus-kube-state-metrics',
+    'prometheus-server'
+]
+
+# Install checks if these are already created, tries to reuse them if so
+CONSOLE_PVCS = [
+    'alertmanager-storage',
+    'es-grafana-storage',
+    'prometheus-storage'
+]
+
+CONSOLE_CLUSTER_ROLES = [
+    'prometheus-kube-state-metrics',
+    'prometheus-server'
+]
+
 DEFAULT_TIMEOUT=3
 
 # Parsed commandline args
@@ -208,7 +229,64 @@ def preinstall_check(creds, minikube=False, minishift=False):
         fail('Your credentials do not appear to be correct' +
                  ' - unable to make authenticated request to lightbend docker registry')
 
-def install_helm_chart(creds_file):
+# Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
+def install_status(release_name):
+    stdout, returncode = run('helm status ' + release_name,
+                            DEFAULT_TIMEOUT, show_stderr=False)
+    if returncode != 0:
+        return 'notfound' 
+    
+    if 'STATUS: DEPLOYED' in stdout or (stdout == ''):
+        return 'deployed'
+    if 'STATUS: FAILED' in stdout:
+        return 'failed'
+    if 'STATUS: PENDING_INSTALL' in stdout:
+        return 'pending'
+    if 'STATUS: PENDING_UPGRADE' in stdout:
+        return 'pending'
+    if 'STATUS: DELETING' in stdout:
+        return 'deleting'
+    return 'unknown'
+
+# Returns true if console PVCs are already present in the namespace.
+# Exits with an error if some PVCs are present, but not all.
+def are_pvcs_created(namespace):
+    stdout, returncode = run('kubectl get pvc --namespace={}'.format(namespace))
+    if returncode == 0:
+        all_found = True
+        found_pvcs = []
+        for pvc in CONSOLE_PVCS:
+            if pvc in stdout:
+                found_pvcs.append(pvc)
+            else:
+                all_found = False
+
+        if not all_found and len(found_pvcs) > 0:
+            fail('Found some PVCs from previous console install, but not all: {}.\nTo avoid data loss, please clean them up manually'
+                 .format(str(found_pvcs)))
+
+        return all_found
+    return False
+
+def are_clusterroles_created():
+    stdout, returncode = run('kubectl get clusterroles')
+    if returncode == 0:
+        all_found = True
+        found_crs = []
+        for cr in CONSOLE_CLUSTER_ROLES:
+            if cr in stdout:
+                found_crs.append(cr)
+            else:
+                all_found = False
+
+        if not all_found and len(found_crs) > 0:
+            fail('Found some cluster roles from previous console install, but not all: {}. Please clean up manually.'
+                 .format(str(found_crs)))
+
+        return all_found
+    return False
+
+def install(creds_file):
     creds_arg = '--values ' + creds_file
     # Helm args are separated from lbc.py args by double dash, filter it out
     helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
@@ -258,15 +336,23 @@ def install_helm_chart(creds_file):
 
         # Determine if we should upgrade or install
         should_upgrade = False
-        stdout, returncode = run('helm status ' + args.helm_name,
-                                 DEFAULT_TIMEOUT, show_stderr=False)
-        if returncode == 0:
+
+        status = install_status(args.helm_name)
+
+        if status == 'deployed':
             if args.force_install:
-                execute('helm delete --purge ' + args.helm_name)
-                printerr(('warning: helm delete does not wait for resources to be removed'
-                          '- if the script fails on install, please re-run it.'))
+                uninstall(status=status)
             else:
                 should_upgrade = True
+        elif status == 'failed':
+            printerr('info: found a failed installation under name {}, it will be deleted'.format(args.helm_name))
+            uninstall(status=status)
+        elif status == 'notfound':
+            # Continue with the install when status is 'notfound'
+            pass
+        else:
+            fail('Unable to install/upgrade console, an install named {} with status {} already exists. '
+                 .format(args.helm_name, status))
     
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
@@ -276,6 +362,20 @@ def install_helm_chart(creds_file):
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
                         version_arg, creds_arg, helm_args))
+
+def uninstall(status=None):
+    if status == None:
+        status = install_status(args.helm_name)
+
+    if status == 'notfound':
+        fail('Unable to delete console installation - no release named {} found'.format(args.helm_name))
+    elif status == 'deleting':
+        fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
+    else:
+        printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
+        execute('helm delete --purge ' + args.helm_name)
+        printerr(('warning: helm delete does not wait for resources to be removed'
+                  '- if the script fails on install, please re-run it.'))
 
 def write_temp_credentials(creds_tempfile, creds):
     creds_str = '\n'.join(["imageCredentials:",
@@ -316,7 +416,7 @@ def check_install():
                 printinfo('failed')
                 printerr('Deployment {} status check: available replica number ({}) is less than desired ({})'
                          .format(name, available, desired))
-            if desired > 0 and desired == available:
+            if desired > 0 and desired <= available:
                 printinfo('ok')
                 return True
         else:
@@ -325,11 +425,9 @@ def check_install():
         return False
 
     status_ok = True
-    status_ok &= deployment_running('es-console')
-    status_ok &= deployment_running('grafana-server')
-    status_ok &= deployment_running('prometheus-alertmanager')
-    status_ok &= deployment_running('prometheus-kube-state-metrics')
-    status_ok &= deployment_running('prometheus-server')
+
+    for dep in CONSOLE_DEPLOYMENTS:
+        status_ok &= deployment_running(dep)
 
     if status_ok:
         printerr('Your Lightbend Console seems to be running fine!')
@@ -425,6 +523,7 @@ def setup_args(argv):
 
     fmt = argparse.ArgumentDefaultsHelpFormatter
     install = subparsers.add_parser('install', help='install lightbend console', formatter_class=fmt)
+    uninstall = subparsers.add_parser('uninstall', help='uninstall lightbend console', formatter_class=fmt)
     verify = subparsers.add_parser('verify', help='verify console installation', formatter_class=fmt)
     debug_dump = subparsers.add_parser('debug-dump', help='make an archive with k8s status info for debugging and diagnostic purposes',
                                        formatter_class=fmt)
@@ -434,13 +533,10 @@ def setup_args(argv):
                         action='store_true')
 
     # Install arguments
-    install.add_argument('--dry-run', help='only print out the commands that will be executed',
-                        action='store_true')
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
                         choices=['creds', 'console'])
-    install.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
@@ -450,11 +546,21 @@ def setup_args(argv):
     install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
                          nargs=argparse.REMAINDER)
 
-    # Common arguments for all subparsers
+    # Common arguments for install and uninstall
+    for subparser in [install, uninstall]:
+        subparser.add_argument('--dry-run', help='only print out the commands that will be executed',
+                               action='store_true')
+        subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
+
+    # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
+        subparser.add_argument('--namespace', help='namespace to install console into/where it is installed',
+                               default='lightbend')
+
+    # Common arguments for all subparsers
+    for subparser in [install, uninstall, verify, debug_dump]:
         subparser.add_argument('--skip-checks', help='skip environment checks',
                                action='store_true')
-        subparser.add_argument('--namespace', help='namespace to install console into/where it is installed', default='lightbend')
 
     args = parser.parse_args(argv)
 
@@ -483,13 +589,18 @@ def main(argv):
             else:
                 check_helm()
 
-        if args.version == None:
+        if args.version == None and args.local_chart == None:
             printerr(("warning: --version has not been set, helm will use the latest available version. "
                 "It is recommended to use an explicit version."))
 
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
             write_temp_credentials(creds_tempfile, creds)
-            install_helm_chart(creds_tempfile.name)
+            install(creds_tempfile.name)
+    
+    if args.subcommand == 'uninstall':
+        if not args.skip_checks:
+            check_helm()
+        uninstall()
 
     if args.subcommand == 'debug-dump':
         if not args.skip_checks:
