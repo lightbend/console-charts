@@ -272,9 +272,14 @@ def are_clusterroles_created():
 
 def install(creds_file):
     creds_arg = '--values ' + creds_file
+    version_arg = ('--version ' + args.version) if args.version != None else '--devel'
+
     # Helm args are separated from lbc.py args by double dash, filter it out
     helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
-    version_arg = ('--version ' + args.version) if args.version != None else '--devel'
+
+    # Add '--set' arguments to helm_args
+    if args.set != None:
+        helm_args += ' '.join(['--set ' + keyval for keyval in args.set])
 
     chart_ref = None
     if args.local_chart != None:
@@ -526,6 +531,8 @@ def setup_args(argv):
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
     install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
     install.add_argument('--version', help='console version to install', type=str)
+    install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
+                         action='append')
 
     install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
                          nargs=argparse.REMAINDER)

@@ -139,6 +139,13 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set minikube=true --fakearg')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--', '--set', 'minikube=true', '--fakearg'])
 
+    def test_helm_set(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set minikube=true --set usePersistentVolumes=true')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'minikube=true', '--set', 'usePersistentVolumes=true'])
+
     def test_specify_version(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
