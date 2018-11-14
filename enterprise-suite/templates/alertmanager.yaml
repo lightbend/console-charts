@@ -103,7 +103,7 @@ spec:
           emptyDir: {}
           {{ end }}
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -118,7 +118,7 @@ spec:
   selector:
     app: prometheus
     component: alertmanager
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---

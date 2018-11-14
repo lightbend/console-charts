@@ -44,7 +44,7 @@ spec:
         configMap:
           name: es-console
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -58,7 +58,7 @@ spec:
     nodePort: 30080
   selector:
     run: es-console
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---

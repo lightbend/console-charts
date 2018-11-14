@@ -65,7 +65,7 @@ daemonSetApiVersion: apps/v1beta2
 imagePullPolicy: IfNotPresent
 # prometheus annotation domain, e.g. `domain/scrape=true`
 prometheusDomain: prometheus.io
-# minikube debug resources
+# (deprecated) minikube debug resources - use exposeServices=NodePort instead
 minikube: false
 # Run pods as the given UID. There is no sensible default for this, so customers need to provide it.
 podUID:
@@ -78,6 +78,8 @@ imageCredentials:
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
 
+# Service type for exposing Console outside the cluster. Can be "NodePort", "LoadBalancer" or "false".
+exposeServices: false
 
 #################################################
 # RBAC
