@@ -240,7 +240,7 @@ prom_has_data "$app_instances"
 # automatic metrics should gain an es_monitor_type label when a custom monitor is created
 curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
     "$ES_MONITOR_API/monitors/es-test/mytest" \
-    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":""}}'
+    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor","metric":"up{es_workload=\"es-test\"}","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test"}}'
 
 busy_wait model_exists my_custom_monitor
 
