@@ -78,7 +78,7 @@ def make_tempdir():
 
 # Runs a given command with optional timeout.
 # Returns (stdout, returncode) tuple. If timeout
-# occured, returncode will be negative (-9 on macOS).
+# occurred, returncode will be negative (-9 on macOS).
 def run(cmd, timeout=None, stdin=None, show_stderr=True):
     stdout, stderr, returncode, timer = None, None, None, None
     try:
@@ -232,45 +232,47 @@ def install_status(release_name):
         return 'deleting'
     return 'unknown'
 
-# Returns true if console PVCs are already present in the namespace.
-# Exits with an error if some PVCs are present, but not all.
+# Helper function that runs a command, then looks for expected strings
+# in the output, one per line. Returns True if everything in the 'expected'
+# list was found, False if nothing was found. If some resources were found,
+# but not all, it fails (sys.exit()) with a given message.
+def check_resource_list(cmd, expected, fail_msg):
+    stdout, returncode = run(cmd)
+    if returncode == 0:
+        all_found = True
+        found_resources = []
+        lines = stdout.split('\n')
+        for res in expected:
+            found_lines = filter(lambda x: res in x, lines)
+            if len(found_lines) == 1:
+                found_resources.append(res)
+                lines.remove(found_lines[0])
+            elif len(found_lines) == 0:
+                all_found = False
+            else:
+                fail('Multiple lines with resource {} found: {}'.format(res, str(found_lines)))
+
+        if not all_found and len(found_resources) > 0:
+            fail(fail_msg.format(str(found_pvcs)))
+
+        return all_found
+    return False
+
+# Checks for console PVCs
 def are_pvcs_created(namespace):
-    stdout, returncode = run('kubectl get pvc --namespace={} --no-headers'.format(namespace))
-    if returncode == 0:
-        all_found = True
-        found_pvcs = []
-        for pvc in CONSOLE_PVCS:
-            if pvc in stdout:
-                found_pvcs.append(pvc)
-            else:
-                all_found = False
+    return check_resource_list(
+        cmd='kubectl get pvc --namespace={} --no-headers'.format(namespace),
+        expected=CONSOLE_PVCS,
+        fail_msg='Found some PVCs from previous console install, but not all: {}.\nTo avoid data loss, please clean them up manually'
+    )
 
-        if not all_found and len(found_pvcs) > 0:
-            fail('Found some PVCs from previous console install, but not all: {}.\nTo avoid data loss, please clean them up manually'
-                 .format(str(found_pvcs)))
-
-        return all_found
-    return False
-
-# Returns true if required cluster roles are already created.
-# Exits with an error if some cluster roles are present, but not all.
+# Checks for console cluster roles
 def are_cluster_roles_created():
-    stdout, returncode = run('kubectl get clusterroles --no-headers')
-    if returncode == 0:
-        all_found = True
-        found_crs = []
-        for cr in CONSOLE_CLUSTER_ROLES:
-            if cr in stdout:
-                found_crs.append(cr)
-            else:
-                all_found = False
-
-        if not all_found and len(found_crs) > 0:
-            fail('Found some cluster roles from previous console install, but not all: {}. Please clean up manually.'
-                 .format(str(found_crs)))
-
-        return all_found
-    return False
+    return check_resource_list(
+        cmd='kubectl get clusterroles --no-headers',
+        expected=CONSOLE_CLUSTER_ROLES,
+        fail_msg='Found some cluster roles from previous console install, but not all: {}. Please clean them up manually.'
+    )
 
 def install(creds_file):
     creds_arg = '--values ' + creds_file
@@ -281,13 +283,7 @@ def install(creds_file):
 
     # Add '--set' arguments to helm_args
     if args.set != None:
-        helm_args += ' '.join(['--set ' + keyval for keyval in args.set])
-
-    # Helper to dynamically add new helm args
-    def helm_add_arg(helm_args, arg):
-        if arg not in helm_args:
-            return helm_args + ' ' + arg
-        return helm_args
+        helm_args += ' ' + ' '.join(['--set ' + keyval for keyval in args.set])
 
     chart_ref = None
     if args.local_chart != None:
@@ -332,18 +328,18 @@ def install(creds_file):
         # Tiller path - installs console directly to a k8s cluster in a given namespace
 
         if args.wait:
-            helm_args = helm_add_arg(helm_args, '--wait')
+            helm_args += ' --wait'
 
         if args.reuse_resources:
             # Reuse PVCs if present
             if are_pvcs_created(args.namespace):
                 printerr('warning: found existing PVCs from previous console installation, will reuse them')
-                helm_args = helm_add_arg(helm_args, '--set createPersistentVolumes=false')
+                helm_args += ' --set createPersistentVolumes=false'
 
-            # Reuse closter roles if present
+            # Reuse cluster roles if present
             if are_cluster_roles_created():
                 printerr('warning: found existing cluster roles from previous console installation, will reuse them')
-                helm_args = helm_add_arg(helm_args, '--set createClusterRoles=false')
+                helm_args += ' --set createClusterRoles=false'
 
         # Determine if we should upgrade or install
         should_upgrade = False
@@ -548,7 +544,7 @@ def setup_args(argv):
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
                         choices=['creds', 'console'])
-    install.add_argument('--reuse-resources', help='try to reuse PVCs and cluster roles from a previous install',
+    install.add_argument('--reuse-resources', help='try to reuse PVCs and/or cluster roles from a previous install',
                         action='store_true')
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
@@ -608,7 +604,7 @@ def main(argv):
 
         if args.version == None and args.local_chart == None:
             printerr(("warning: --version has not been set, helm will use the latest available version. "
-                "It is recommended to use an explicit version."))
+                      "It is recommended to use an explicit version."))
 
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
             write_temp_credentials(creds_tempfile, creds)
