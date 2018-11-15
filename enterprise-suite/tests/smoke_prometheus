@@ -275,7 +275,7 @@ prom_has_data '{job="kubernetes-cadvisor",es_monitor_type="es-test"}'
 
 # This assumes we've processed enough data at this point that any non-conforming jobs will be caught.
 busy_wait prom_all_workload_data_has_monitor_type es-test
-T $? timeseries: all data for es-test workload has a matching es-monitor-type label
+T $? "timeseries: all data for es-test workload has a matching es-monitor-type label"
 
 
 # clean up apps
