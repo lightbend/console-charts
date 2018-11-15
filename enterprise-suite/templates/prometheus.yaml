@@ -261,7 +261,7 @@ spec:
     app: prometheus
     component: server
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -272,11 +272,11 @@ spec:
   - port: 9090
     protocol: TCP
     targetPort: 9090
-    nodePort: 30090
+    nodePort: {{ .Values.prometheusExposePort }} 
   selector:
     app: prometheus
     component: server
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---

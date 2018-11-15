@@ -114,7 +114,7 @@ spec:
   - port: 9093
     protocol: TCP
     targetPort: 9093
-    nodePort: 30093
+    nodePort: {{ .Values.alertManagerExposePort }} 
   selector:
     app: prometheus
     component: alertmanager
