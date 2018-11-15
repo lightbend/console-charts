@@ -259,8 +259,9 @@ model_exists() {
 }
 
 # Succeeds if all data for the workload $1 has a matching es_monitor_type
+# Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
 prom_all_workload_data_has_monitor_type() {
-  results=$( prom_query "{es_workload=\"$1\", es_monitor_type!=\"$1\"}" | jq '.data.result | length' )
+  results=$( prom_query "{es_workload=\"$1\", es_monitor_type!=\"$1\", __name__!="health"}" | jq '.data.result | length' )
   [[ results -eq 0 ]]
 }
 
