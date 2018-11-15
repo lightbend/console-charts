@@ -18,7 +18,9 @@ set +e
 # prometheus fetchers
 #
 
-PROM=$( busy_wait nodeport expose-prometheus)
+PROM=$( busy_wait nodeport expose-prometheus )
+ES_CONSOLE=$( busy_wait nodeport expose-es-console )
+ES_MONITOR_API="$ES_CONSOLE/service/es-monitor-api"
 
 prom_query() {
   curl -fsG "$PROM/api/v1/query" --data-urlencode "query=$*"
@@ -249,6 +251,20 @@ app_data_via_service() {
 busy_wait app_data_via_service
 
 prom_has_data "$app_instances_via_service"
+
+
+monitor_exists() {
+  results=$( prom_query "model{name=\"$1\"}" | jq '.data.result | length' )
+  ! [[ results -eq 0 ]]
+}
+
+# kubernetes-cadvisor metrics should have an es_monitor_type label.
+curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/es-test/es-monitor-type-test" \
+    --data '{"model":"threshold","parameters":{"comparator":"\u003e=","confidence":"1","description":"cpu on {{ $labels.instance }} over 99% busy","meta":{},"metric":"container_cpu_load_average_10s{es_workload=\"es-test\"}","monitorType":"es-test","name":"es-monitor-type-test","severity":"warning","summary":"cpu saturated","threshold":"99","window":"5m"}}'
+
+busy_wait monitor_exists es-monitor-type-test
+prom_has_data '{job="kubernetes-cadvisor",es_monitor_type="es-test"}'
 
 # clean up apps
 
