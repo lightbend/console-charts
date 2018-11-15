@@ -253,9 +253,15 @@ busy_wait app_data_via_service
 prom_has_data "$app_instances_via_service"
 
 
-monitor_exists() {
+model_exists() {
   results=$( prom_query "model{name=\"$1\"}" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
+}
+
+# Succeeds if all data for the workload $1 has a matching es_monitor_type
+prom_all_workload_data_has_monitor_type() {
+  results=$( prom_query "{es_workload=\"$1\", es_monitor_type!=\"$1\"}" | jq '.data.result | length' )
+  [[ results -eq 0 ]]
 }
 
 # kubernetes-cadvisor metrics should have an es_monitor_type label.
@@ -263,8 +269,14 @@ curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-
     "$ES_MONITOR_API/monitors/es-test/es-monitor-type-test" \
     --data '{"model":"threshold","parameters":{"comparator":"\u003e=","confidence":"1","description":"cpu on {{ $labels.instance }} over 99% busy","meta":{},"metric":"container_cpu_load_average_10s{es_workload=\"es-test\"}","monitorType":"es-test","name":"es-monitor-type-test","severity":"warning","summary":"cpu saturated","threshold":"99","window":"5m"}}'
 
-busy_wait monitor_exists es-monitor-type-test
+busy_wait model_exists es-monitor-type-test
+# Specific test for regression of es-backend/issues/430.
 prom_has_data '{job="kubernetes-cadvisor",es_monitor_type="es-test"}'
+
+# This assumes we've processed enough data at this point that any non-conforming jobs will be caught.
+busy_wait prom_all_workload_data_has_monitor_type es-test
+T $? timeseries: all data for es-test workload has a matching es-monitor-type label
+
 
 # clean up apps
 
