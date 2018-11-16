@@ -10,8 +10,8 @@ endef
 
 # Note: We may want to require explicit lists.  As implemented, we may end
 # up with random cruft in the packages...
-COMPONENTS := $(wildcard */.)
-SUBCOMPONENTS := $(wildcard */*/.)
+COMPONENTS := $(wildcard */*)
+SUBCOMPONENTS := $(wildcard */*/*)
 
 HELM_CHARTS_DIR := ..
 SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
