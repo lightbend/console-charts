@@ -1,5 +1,6 @@
 ---
 # Source: enterprise-suite/templates/es-grafana.yaml
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -260,19 +261,6 @@ spec:
 
 
 ---
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: es-grafana-storage
-  annotations:
-    "helm.sh/resource-policy": keep
-spec:
-  storageClassName: standard
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 32Gi
 
 ---
 apiVersion: extensions/v1beta1
@@ -344,226 +332,6 @@ spec:
         
 
 ---
-# Source: enterprise-suite/templates/alertmanager.yaml
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: alertmanager-storage
-  annotations:
-    "helm.sh/resource-policy": keep
-spec:
-  storageClassName: standard
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 32Gi
-
----
-apiVersion: apps/v1beta2
-kind: Deployment
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: prometheus-alertmanager
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prometheus
-      component: alertmanager
-  template:
-    metadata:
-      labels:
-        app: prometheus
-        component: alertmanager
-    spec:
-      
-      serviceAccountName: default
-      containers:
-        - name: prometheus-alertmanager
-          image: prom/alertmanager:v0.15.1
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          env:
-            - name: POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-          args:
-            - --config.file=/etc/config/alertmanager.yml
-            - --storage.path=/data
-            - --cluster.listen-address=$(POD_IP):6783
-
-          ports:
-            - containerPort: 9093
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 9093
-            timeoutSeconds: 30
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9093
-            timeoutSeconds: 30
-            initialDelaySeconds: 30
-
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-            - name: data-volume
-              mountPath: /data
-
-        - name: prometheus-alertmanager-configmap-reload
-          image: jimmidyson/configmap-reload:v0.2.2
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          args:
-            - --volume-dir=/etc/config
-            - --webhook-url=http://127.0.0.1:9093/-/reload
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-              readOnly: true
-
-      volumes:
-        - name: config-volume
-          configMap:
-            name: alertmanager-default
-        - name: data-volume
-          
-          emptyDir: {}
-          
-
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-alertmanager
-spec:
-  ports:
-  - port: 9093
-    protocol: TCP
-    targetPort: 9093
-    nodePort: 30093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: NodePort
-
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: alertmanager
-spec:
-  ports:
-  - name: http
-    port: 9093
-    targetPort: 9093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: alertmanager-default
-data:
-  alertmanager.yml: |
-    # Example Lightbend Console Alertmanager config.
-  
-    global:
-  
-    # Routing rules.
-    route:
-      # Default receiver.
-      receiver: team1-slack
-      # Resend unresolved alerts at this interval.
-      repeat_interval: 4h
-      # Wait for any other alerts in the same group before sending.
-      group_wait: 30s
-      # Wait before sending a new alert for a group.
-      group_interval: 5m
-      # Group alerts by namespace and workload.
-      group_by: [namespace, es_workload]
-      routes:
-      # team1 Slack
-      - match:
-          es_workload: workload1
-          severity: warning
-        receiver: team1-slack
-  
-      # team1 PagerDuty
-      - match:
-          es_workload: workload1
-          severity: critical
-        receiver: team1-pagerduty
-  
-      # team2 PagerDuty
-      - match:
-          es_workload: workload2
-          severity: critical
-        receiver: team2-slack
-  
-    # Don't alert on warnings if the same alert is already critical.
-    inhibit_rules:
-    - source_match:
-        severity: critical
-      target_match:
-        severity: warning
-      equal: [alertname]
-  
-    templates:
-    # Slack notification templates.
-    - '/etc/config/slack.tmpl'
-  
-    # Receivers.
-    receivers:
-    - name: team1-slack
-      slack_configs:
-      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
-      - api_url: https://slack.localhost/services/somewhere
-        channel: '#team1-alerts'
-        title: '{{ template "title.slack" . }}'
-        text: '{{ template "text.slack" . }}'
-        send_resolved: true
-  
-    - name: team1-pagerduty
-      pagerduty_configs:
-      - routing_key: my_secret_routing_key
-        # Remove this in actual usage. It's added to prevent sending PagerDuty alerts from local development environments.
-        url: https://pagerduty.localhost/api
-  
-    - name: team2-slack
-      slack_configs:
-      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
-      - api_url: https://slack.localhost/services/somewhere
-        channel: '#team2-alerts'
-        title: '{{ template "title.slack" . }}'
-        text: '{{ template "text.slack" . }}'
-        send_resolved: true
-  slack.tmpl: |
-    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
-    {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
-    {{ end }}{{- end -}}
-  
-
----
 # Source: enterprise-suite/templates/node-exporter.yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -595,7 +363,7 @@ spec:
       
       containers:
         - name: prometheus-node-exporter
-          image: "prom/node-exporter:v0.15.2"
+          image: prom/node-exporter:v0.15.2
           resources:
             requests:
               cpu: 100m
@@ -654,6 +422,7 @@ spec:
 
 ---
 # Source: enterprise-suite/templates/prometheus.yaml
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -661,6 +430,7 @@ metadata:
   name: prometheus-server
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -686,7 +456,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: prometheus-server
+  name: lightbend:prometheus-server
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -697,19 +467,6 @@ subjects:
   namespace: lightbend
 
 ---
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: prometheus-storage
-  annotations:
-    "helm.sh/resource-policy": keep
-spec:
-  storageClassName: standard
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 256Gi
 
 ---
 kind: Deployment
@@ -741,7 +498,7 @@ spec:
 
       initContainers:
         - name: setup
-          image: alpine
+          image: alpine:3.8
           resources:
             requests:
               cpu: 100m
@@ -762,7 +519,7 @@ spec:
         # In prometheus 2.x, this is `65534`.
         # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
         - name: change-prometheus-data-volume-ownership
-          image: busybox
+          image: busybox:1.29
           command:
             - sh
             - -c
@@ -920,7 +677,7 @@ spec:
   - port: 9090
     protocol: TCP
     targetPort: 9090
-    nodePort: 30090
+    nodePort: 30090 
   selector:
     app: prometheus
     component: server
@@ -1590,6 +1347,7 @@ data:
           - source_labels: [__meta_kubernetes_node_address_InternalIP]
             target_label: node_ip
   
+        # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
         metric_relabel_configs:
           - source_labels: [pod_name]
             target_label: kubernetes_pod_name
@@ -1628,6 +1386,8 @@ data:
             regex: (.+);
             target_label: es_workload
   
+    {{ .MonitorTypeRules | indent 6 }}
+  
       # kube-state-metrics
   
       - job_name: 'kube-state-metrics'
@@ -1658,6 +1418,7 @@ data:
             target_label: node_ip
   
         # es_workload labels:
+        # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
         metric_relabel_configs:
           - source_labels: [created_by_kind, pod, es_workload]
             regex: 'ReplicaSet;(.+)-[^-]+-[^-]+;'
@@ -1701,7 +1462,6 @@ data:
             target_label: es_workload
   
     {{ .MonitorTypeRules | indent 6 }}
-  
   
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
@@ -1817,7 +1577,6 @@ data:
             regex: '(.*)-[0-9]+;'
             target_label: es_workload
   
-        metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
   
   
@@ -1897,7 +1656,6 @@ data:
             regex: '(.*)-[0-9]+;'
             target_label: es_workload
   
-        metric_relabel_configs:
     {{ .MonitorTypeRules | indent 6 }}
   static-rules.yml: |
     # node-exporter metrics
@@ -1990,8 +1748,8 @@ data:
 
 ---
 # Source: enterprise-suite/templates/kube-state-metrics.yaml
-
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -2031,11 +1789,12 @@ rules:
   resources:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: prometheus-kube-state-metrics
+  name: lightbend:prometheus-kube-state-metrics
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -2075,7 +1834,7 @@ spec:
       serviceAccountName: prometheus-kube-state-metrics
       containers:
         - name: prometheus-kube-state-metrics
-          image: "gcr.io/google_containers/kube-state-metrics:v1.2.0"
+          image: gcr.io/google_containers/kube-state-metrics:v1.2.0
           args:
             - --port=8080
             - --telemetry-port=8081
@@ -2110,6 +1869,214 @@ spec:
   type: "ClusterIP"
 
 ---
+# Source: enterprise-suite/templates/alertmanager.yaml
+
+---
+
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: prometheus-alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      component: alertmanager
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: alertmanager
+    spec:
+      
+      serviceAccountName: default
+      containers:
+        - name: prometheus-alertmanager
+          image: prom/alertmanager:v0.15.1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          args:
+            - --config.file=/etc/config/alertmanager.yml
+            - --storage.path=/data
+            - --cluster.listen-address=$(POD_IP):6783
+
+          ports:
+            - containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
+
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: data-volume
+              mountPath: /data
+
+        - name: prometheus-alertmanager-configmap-reload
+          image: jimmidyson/configmap-reload:v0.2.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+            - --volume-dir=/etc/config
+            - --webhook-url=http://127.0.0.1:9093/-/reload
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: alertmanager-default
+        - name: data-volume
+          
+          emptyDir: {}
+          
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expose-alertmanager
+spec:
+  ports:
+  - port: 9093
+    protocol: TCP
+    targetPort: 9093
+    nodePort: 30093 
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: NodePort
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+spec:
+  ports:
+  - name: http
+    port: 9093
+    targetPort: 9093
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: alertmanager-default
+data:
+  alertmanager.yml: |
+    # Example Lightbend Console Alertmanager config.
+  
+    global:
+  
+    # Routing rules.
+    route:
+      # Default receiver.
+      receiver: team1-slack
+      # Resend unresolved alerts at this interval.
+      repeat_interval: 4h
+      # Wait for any other alerts in the same group before sending.
+      group_wait: 30s
+      # Wait before sending a new alert for a group.
+      group_interval: 5m
+      # Group alerts by namespace and workload.
+      group_by: [namespace, es_workload]
+      routes:
+      # team1 Slack
+      - match:
+          es_workload: workload1
+          severity: warning
+        receiver: team1-slack
+  
+      # team1 PagerDuty
+      - match:
+          es_workload: workload1
+          severity: critical
+        receiver: team1-pagerduty
+  
+      # team2 PagerDuty
+      - match:
+          es_workload: workload2
+          severity: critical
+        receiver: team2-slack
+  
+    # Don't alert on warnings if the same alert is already critical.
+    inhibit_rules:
+    - source_match:
+        severity: critical
+      target_match:
+        severity: warning
+      equal: [alertname]
+  
+    templates:
+    # Slack notification templates.
+    - '/etc/config/slack.tmpl'
+  
+    # Receivers.
+    receivers:
+    - name: team1-slack
+      slack_configs:
+      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#team1-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  
+    - name: team1-pagerduty
+      pagerduty_configs:
+      - routing_key: my_secret_routing_key
+        # Remove this in actual usage. It's added to prevent sending PagerDuty alerts from local development environments.
+        url: https://pagerduty.localhost/api
+  
+    - name: team2-slack
+      slack_configs:
+      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#team2-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  slack.tmpl: |
+    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
+    {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
+    {{ end }}{{- end -}}
+  
+
+---
 # Source: enterprise-suite/templates/es-console.yaml
 
 ---
@@ -2130,14 +2097,14 @@ spec:
 
       containers:
       - name: dnsmasq
-        image: "janeczku/go-dnsmasq:release-1.0.7"
+        image: janeczku/go-dnsmasq:release-1.0.7
         args:
           - --listen
           - "127.0.0.1:5353"
           - --verbose
           - --enable-search
       - name: es-console
-        image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console:v0.1.6
+        image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console:v0.1.7
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -2274,27 +2241,47 @@ data:
 
       location ~ (.*)/version$ {
         return 200 '{
-          "description": "Lightbend Enterprise Suite",
-          "version": "1.0.0-rc.4",
+          "description": "Lightbend Console",
+          "version": "1.0.0-rc.5",
           "alertManagerConfigMap": "alertmanager-default",
+          "alertManagerExposePort": "30093",
+          "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.15.1",
           "alertmanagerVolumeSize": "32Gi",
+          "alpineImage": "alpine",
+          "alpineVersion": "3.8",
           "apiGroupVersion": "rbac.authorization.k8s.io",
+          "busyboxImage": "busybox",
+          "busyboxVersion": "1.29",
+          "configMapReloadImage": "jimmidyson/configmap-reload",
           "configMapReloadVersion": "v0.2.2",
+          "createClusterRoles": "true",
+          "createPersistentVolumes": "true",
           "daemonSetApiVersion": "apps/v1beta2",
           "defaultCPURequest": "100m",
           "defaultMemoryRequest": "50Mi",
           "defaultStorageClass": "standard",
           "deploymentApiVersion": "apps/v1beta2",
-          "esConsoleVersion": "v0.1.6",
+          "esConsoleExposePort": "30080",
+          "esConsoleImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console",
+          "esConsoleVersion": "v0.1.7",
+          "esGrafanaExposePort": "30030",
+          "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
           "esGrafanaVersion": "v0.1.4",
           "esGrafanaVolumeSize": "32Gi",
+          "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api",
           "esMonitorVersion": "v0.2.0",
+          "goDnsmasqImage": "janeczku/go-dnsmasq",
+          "goDnsmasqVersion": "release-1.0.7",
           "imagePullPolicy": "IfNotPresent",
+          "kubeStateMetricsImage": "gcr.io/google_containers/kube-state-metrics",
           "kubeStateMetricsVersion": "v1.2.0",
           "minikube": "true",
+          "nodeExporterImage": "prom/node-exporter",
           "nodeExporterVersion": "v0.15.2",
           "prometheusDomain": "prometheus.io",
+          "prometheusExposePort": "30090",
+          "prometheusImage": "prom/prometheus",
           "prometheusMemoryRequest": "250Mi",
           "prometheusVersion": "v2.2.1",
           "prometheusVolumeSize": "256Gi",
