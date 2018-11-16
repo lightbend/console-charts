@@ -40,7 +40,7 @@ minikube-tests: build install-local
 	@echo Running tests
 	( cd $(CHART_DIR)/tests ; ./smoketest ; )
 
-backend-tests: shell-tests minikube-tests
+backend-tests: script-tests minikube-tests
 
 frontend-tests:
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
@@ -131,5 +131,5 @@ install-dev: install-helm ## Install content of enterprise-suite/ folder
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all build package shell-tests minikube-tests test init lint lint-helm lint-json lint-promql lint-allyaml clean \
+.PHONY: all build package script-tests minikube-tests test init lint lint-helm lint-json lint-promql lint-allyaml clean \
 		allyaml install-helm install-local install-dev help
