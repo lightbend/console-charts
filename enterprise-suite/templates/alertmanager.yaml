@@ -103,7 +103,7 @@ spec:
           emptyDir: {}
           {{ end }}
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -114,11 +114,11 @@ spec:
   - port: 9093
     protocol: TCP
     targetPort: 9093
-    nodePort: 30093
+    nodePort: {{ .Values.alertManagerExposePort }} 
   selector:
     app: prometheus
     component: alertmanager
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---
