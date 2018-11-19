@@ -4,18 +4,20 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys 
+import subprocess
 
 # Note: this script expects to run on python2. Some systems map 'python'
 # executable name to python3, detect that and complain.
 if sys.version_info >= (3, 0):
-    sys.exit(("It appears 'python' in your PATH is Python 3.X, please "
-              "run this script using Python 2: 'python2 lbc.py'"))
+    print(("It appears 'python' in your PATH is Python 3.X, please "
+           "run this script using Python 2: 'python2 lbc.py'\n"))
+    proc = subprocess.run(['python2'] + sys.argv)
+    sys.exit(proc.returncode)
 
 import os
 import glob
 import shlex
 import shutil
-import subprocess
 import threading
 import tempfile
 import re
@@ -326,26 +328,12 @@ def install(creds_file):
 
     else:
         # Tiller path - installs console directly to a k8s cluster in a given namespace
-
-        if args.wait:
-            helm_args += ' --wait'
-
-        if args.reuse_resources:
-            # Reuse PVCs if present
-            if are_pvcs_created(args.namespace):
-                printerr('warning: found existing PVCs from previous console installation, will reuse them')
-                helm_args += ' --set createPersistentVolumes=false'
-
-            # Reuse cluster roles if present
-            if are_cluster_roles_created():
-                printerr('warning: found existing cluster roles from previous console installation, will reuse them')
-                helm_args += ' --set createClusterRoles=false'
-
+        
         # Determine if we should upgrade or install
         should_upgrade = False
 
+        # Check status of existing install under the same release name
         status = install_status(args.helm_name)
-
         if status == 'deployed':
             if args.force_install:
                 uninstall(status=status)
@@ -360,7 +348,21 @@ def install(creds_file):
         else:
             fail('Unable to install/upgrade console, an install named {} with status {} already exists. '
                  .format(args.helm_name, status))
-    
+
+        if args.wait:
+            helm_args += ' --wait'
+
+        if args.reuse_resources or status == 'failed':
+            # Reuse PVCs if present
+            if are_pvcs_created(args.namespace):
+                printerr('info: found existing PVCs from previous console installation, will reuse them')
+                helm_args += ' --set createPersistentVolumes=false'
+
+            # Reuse cluster roles if present
+            if are_cluster_roles_created():
+                printerr('info: found existing cluster roles from previous console installation, will reuse them')
+                helm_args += ' --set createClusterRoles=false'
+
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
                 .format(args.helm_name, chart_ref, version_arg,
