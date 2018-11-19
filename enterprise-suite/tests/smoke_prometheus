@@ -44,6 +44,11 @@ prom_has_no_data() {
   T $? timeseries: "$*"
 }
 
+model_exists() {
+  results=$( prom_query "model{name=\"$1\"}" | jq '.data.result | length' )
+  ! [[ results -eq 0 ]]
+}
+
 #
 # log fetchers
 #
@@ -232,6 +237,15 @@ busy_wait app_data
 
 prom_has_data "$app_instances"
 
+# Pod discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
+curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/es-test/mytest" \
+    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test"}}'
+
+busy_wait model_exists my_custom_monitor
+
+prom_has_data 'up{es_workload="es-test", es_monitor_type="es-test"}'
+
 # app via 'Pod' service discovery with multiple metric ports
 app_instances_with_multiple_ports='count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="lightbend"}) ) == 4'
 app_data_with_multiple_ports() {
@@ -252,11 +266,14 @@ busy_wait app_data_via_service
 
 prom_has_data "$app_instances_via_service"
 
+# 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
+curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/es-test-via-service/mytest" \
+    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor_for_service","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test-via-service"}}'
 
-model_exists() {
-  results=$( prom_query "model{name=\"$1\"}" | jq '.data.result | length' )
-  ! [[ results -eq 0 ]]
-}
+busy_wait model_exists my_custom_monitor_for_service
+
+prom_has_data 'up{es_workload="es-test-via-service", es_monitor_type="es-test-via-service"}'
 
 # Succeeds if all data for the workload $1 has a matching es_monitor_type
 # Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
