@@ -9,8 +9,6 @@ import subprocess
 # Note: this script expects to run on python2. Some systems map 'python'
 # executable name to python3, detect that and complain.
 if sys.version_info >= (3, 0):
-    print(("It appears 'python' in your PATH is Python 3.X, please "
-           "run this script using Python 2: 'python2 lbc.py'\n"))
     proc = subprocess.run(['python2'] + sys.argv)
     sys.exit(proc.returncode)
 
