@@ -326,26 +326,12 @@ def install(creds_file):
 
     else:
         # Tiller path - installs console directly to a k8s cluster in a given namespace
-
-        if args.wait:
-            helm_args += ' --wait'
-
-        if args.reuse_resources:
-            # Reuse PVCs if present
-            if are_pvcs_created(args.namespace):
-                printerr('warning: found existing PVCs from previous console installation, will reuse them')
-                helm_args += ' --set createPersistentVolumes=false'
-
-            # Reuse cluster roles if present
-            if are_cluster_roles_created():
-                printerr('warning: found existing cluster roles from previous console installation, will reuse them')
-                helm_args += ' --set createClusterRoles=false'
-
+        
         # Determine if we should upgrade or install
         should_upgrade = False
 
+        # Check status of existing install under the same release name
         status = install_status(args.helm_name)
-
         if status == 'deployed':
             if args.force_install:
                 uninstall(status=status)
@@ -360,7 +346,21 @@ def install(creds_file):
         else:
             fail('Unable to install/upgrade console, an install named {} with status {} already exists. '
                  .format(args.helm_name, status))
-    
+
+        if args.wait:
+            helm_args += ' --wait'
+
+        if args.reuse_resources or status == 'failed':
+            # Reuse PVCs if present
+            if are_pvcs_created(args.namespace):
+                printerr('warning: found existing PVCs from previous console installation, will reuse them')
+                helm_args += ' --set createPersistentVolumes=false'
+
+            # Reuse cluster roles if present
+            if are_cluster_roles_created():
+                printerr('warning: found existing cluster roles from previous console installation, will reuse them')
+                helm_args += ' --set createClusterRoles=false'
+
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
                 .format(args.helm_name, chart_ref, version_arg,
