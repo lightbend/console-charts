@@ -355,12 +355,12 @@ def install(creds_file):
         if args.reuse_resources or status == 'failed':
             # Reuse PVCs if present
             if are_pvcs_created(args.namespace):
-                printerr('warning: found existing PVCs from previous console installation, will reuse them')
+                printerr('info: found existing PVCs from previous console installation, will reuse them')
                 helm_args += ' --set createPersistentVolumes=false'
 
             # Reuse cluster roles if present
             if are_cluster_roles_created():
-                printerr('warning: found existing cluster roles from previous console installation, will reuse them')
+                printerr('info: found existing cluster roles from previous console installation, will reuse them')
                 helm_args += ' --set createClusterRoles=false'
 
         if should_upgrade:
