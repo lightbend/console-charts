@@ -17,7 +17,7 @@
       "max by (instance,circuit_breaker) (lagom_circuit_breaker_latency_ns{ContextTags, quantile=\"0.99\"})"
     ],
     "yaxes": {
-      "label": "ns"
+      "format": "ns"
     }
   },
   {

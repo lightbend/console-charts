@@ -11,7 +11,7 @@
       "max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"
     ],
     "yaxes": {
-      "label": "ns"
+      "format": "ns"
     }
   },
   {
@@ -26,7 +26,7 @@
       "max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"})"
     ],
     "yaxes": {
-      "label": "ns"
+      "format": "ns"
     }
   },
   {
@@ -35,7 +35,7 @@
       "max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"})"
     ],
     "yaxes": {
-      "label": "ns"
+      "format": "ns"
     }
   },
   {
@@ -44,7 +44,7 @@
       "max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"})"
     ],
     "yaxes": {
-      "label": "ns"
+      "format": "ns"
     }
   }
 ]
