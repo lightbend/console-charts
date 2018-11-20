@@ -8,9 +8,10 @@
 FAILURES=0
 pids=()
 
+# print_debug "tag"  will print things into a Travis fold with unique ID "tag"
 function print_debug() {
     [[ $TRAVIS ]] || return
-    echo -e "travis_fold:start:debug.logs\033[33;1mDebug Logs\033[0m"
+    echo -e "travis_fold:start:debug${1}.logs\033[33;1mDebug Logs\033[0m"
     local pods=$(kubectl -n lightbend get pod --no-headers -o go-template='{{range .items}}{{.metadata.name}} {{end}}')
     echo
     echo "========================================"
@@ -35,10 +36,10 @@ function print_debug() {
     echo
     echo "========================================"
     echo
-    echo -e "\ntravis_fold:end:debug.logs\r"
+    echo -e "\ntravis_fold:end:debug${1}.logs\r"
 }
 
-print_debug
+print_debug "pre"
 
 for smoketest in smoke_*; do
 	echo ==== Running $smoketest
@@ -71,7 +72,7 @@ echo
 echo "All tests completed with $FAILURES failures"
 
 if [ "$FAILURES" != "0" ]; then
-    print_debug
+    print_debug "post"
 fi
 
 exit $FAILURES
