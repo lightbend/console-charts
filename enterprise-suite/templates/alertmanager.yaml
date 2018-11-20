@@ -1,5 +1,6 @@
 {{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
 ---
+{{ if not .Values.alertManagerAddress }}
 {{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -58,16 +59,16 @@ spec:
             - --cluster.listen-address=$(POD_IP):6783
 
           ports:
-            - containerPort: 9093
+            - containerPort: {{ .Values.alertManagerPort }}
           readinessProbe:
             httpGet:
               path: /-/ready
-              port: 9093
+              port: {{ .Values.alertManagerPort }}
             timeoutSeconds: 30
           livenessProbe:
             httpGet:
               path: /-/healthy
-              port: 9093
+              port: {{ .Values.alertManagerPort }}
             timeoutSeconds: 30
             initialDelaySeconds: 30
 
@@ -85,7 +86,7 @@ spec:
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
             - --volume-dir=/etc/config
-            - --webhook-url=http://127.0.0.1:9093/-/reload
+            - --webhook-url=http://127.0.0.1:{{- .Values.alertManagerPort }}/-/reload
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -111,8 +112,8 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 9093
-    targetPort: 9093
+    port: {{ .Values.alertManagerPort }}
+    targetPort: {{ .Values.alertManagerPort }}
   selector:
     app: prometheus
     component: alertmanager
@@ -128,3 +129,4 @@ metadata:
   name: alertmanager-default
 data:
 {{ (.Files.Glob "alertmanager/*").AsConfig | indent 2}}
+{{ end }}

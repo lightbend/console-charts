@@ -75,6 +75,12 @@ imageCredentials:
 #  username: setme
 #  password: setme
 
+# Existing alertmanager address. If not set, a new alertmanager will be deployed.
+alertManagerAddress: 
+
+# Port to use for accessing alertmanager service
+alertManagerPort: 9093
+
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
 
