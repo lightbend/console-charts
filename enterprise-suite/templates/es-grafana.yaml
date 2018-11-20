@@ -1,3 +1,4 @@
+{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -62,7 +63,7 @@ spec:
     component: "server"
   type: "ClusterIP"
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -73,14 +74,15 @@ spec:
   - port: 3000
     protocol: TCP
     targetPort: 3000
-    nodePort: 30030
+    nodePort: {{ .Values.esGrafanaExposePort }}
   selector:
     app: grafana
     component: server
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---
+{{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -94,7 +96,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.esGrafanaVolumeSize }}
-
+{{ end }}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -120,7 +122,7 @@ spec:
       - name: commercial-credentials
 
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
+      - image: {{ tpl .Values.esGrafanaImage . }}:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
         resources:

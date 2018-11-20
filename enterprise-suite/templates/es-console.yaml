@@ -20,14 +20,14 @@ spec:
 
       containers:
       - name: dnsmasq
-        image: "janeczku/go-dnsmasq:release-1.0.7"
+        image: {{ .Values.goDnsmasqImage }}:{{ .Values.goDnsmasqVersion }}
         args:
           - --listen
           - "127.0.0.1:5353"
           - --verbose
           - --enable-search
       - name: es-console
-        image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
+        image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         resources:
           requests:
@@ -44,7 +44,7 @@ spec:
         configMap:
           name: es-console
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -55,10 +55,10 @@ spec:
   - port: 80
     protocol: TCP
     targetPort: 8080
-    nodePort: 30080
+    nodePort: {{ .Values.esConsoleExposePort }}
   selector:
     run: es-console
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---

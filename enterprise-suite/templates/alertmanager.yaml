@@ -1,4 +1,6 @@
+{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
 ---
+{{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -12,7 +14,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.alertmanagerVolumeSize }}
-
+{{ end }}
 ---
 apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
@@ -40,7 +42,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: prometheus-alertmanager
-          image: prom/alertmanager:{{ .Values.alertManagerVersion }}
+          image: {{ .Values.alertManagerImage }}:{{ .Values.alertManagerVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.alertManagerCPURequest }}
@@ -76,7 +78,7 @@ spec:
               mountPath: /data
 
         - name: prometheus-alertmanager-configmap-reload
-          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          image: {{ .Values.configMapReloadImage }}:{{ .Values.configMapReloadVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
@@ -101,7 +103,7 @@ spec:
           emptyDir: {}
           {{ end }}
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -112,11 +114,11 @@ spec:
   - port: 9093
     protocol: TCP
     targetPort: 9093
-    nodePort: 30093
+    nodePort: {{ .Values.alertManagerExposePort }} 
   selector:
     app: prometheus
     component: alertmanager
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---
