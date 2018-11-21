@@ -415,7 +415,7 @@ def import_credentials():
     return creds
 
 def check_install():
-    def deployment_running(name):
+    def deployment_running(name, optional=False):
         printinfo('Checking deployment {} ... '.format(name), end='')
         stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
                                  .format(args.namespace, name))
