@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from __future__ import unicode_literals
 
 import sys 
 import subprocess
@@ -188,6 +187,15 @@ def check_credentials(creds):
             # Lazy way of verifying returned json - there should be a tag named "latest"
             if '"latest"' in resp.read():
                 success = True
+    except url.HTTPError as err:
+        if err.code == 401:
+            # Unauthorized, error message gets printed by check_credentials caller
+            pass
+        elif err.code == 54:
+            # Code 54 error can be raised when old TLS is used due to old python
+            printerr('error: check_credentials TLS authorization failed; this can be due to an old python version, please try upgrading')
+        else:
+            printerr('error: check_credentials failed: {}'.format(err))
     finally:
         return success 
 
