@@ -10,7 +10,7 @@ metadata:
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
-  name: prometheus-server
+  name: {{.Release.Namespace}}:prometheus-server
 rules:
 - apiGroups: [""]
   resources:
@@ -36,7 +36,7 @@ metadata:
 roleRef:
   apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
-  name: prometheus-server
+  name: {{.Release.Namespace}}:prometheus-server
 subjects:
 - kind: ServiceAccount
   name: prometheus-server
