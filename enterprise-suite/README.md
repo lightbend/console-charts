@@ -69,29 +69,9 @@ These assume you're using minikube.
 
 ## Cutting a Release / Publishing Charts
 
-### Release ES images
-
-### Release Charts
-
-Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
-
-    go get github.com/mikefarah/yq
-    # or
-    brew install yq                  
-
-Make sure the image versions in `enterprise-suite/values.yaml` are as desired.
-
-Then run the release script on a clean master checkout:
-
-    ./scripts/make-release.sh enterprise-suite
-    git push --follow-tags
-    
-This will increment the chart version, package it, and make a
-commit. Finally, `git push --follow-tags` will publish the release and git tag.
-
-Optionally you can specify the version to use:
-
-    ./scripts/make-release.sh enterprise-suite 1.0.0
+See the [Google doc for releasing Enterprise Suite
+Console](https://docs.google.com/document/d/14L3Zdwc-MkCDR1-7fWQYQT3k53vLc4cehAKEuOnwhxs)
+for the definitive process.
 
 ## Development
 
