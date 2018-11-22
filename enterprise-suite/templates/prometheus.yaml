@@ -154,11 +154,7 @@ spec:
             - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
-            {{- if .Values.createAlertManager}}
-            - --alertmanagers=alertmanager:{{ .Values.alertManagerPort }}
-            {{ else }}
             - --alertmanagers={{ tuple .Values.alertManagers .Values.alertManagerPort | include "serviceList" }}
-            {{ end }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
