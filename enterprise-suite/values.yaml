@@ -75,10 +75,14 @@ imageCredentials:
 #  username: setme
 #  password: setme
 
-# Existing alertmanager address. If not set, a new alertmanager will be deployed.
-alertManagerAddress: 
+# If true, an alertmanager will be deployed. Set to false and modify `alertManagers` list to use existing alertmanager(s).
+createAlertManager: true
 
-# Port to use for accessing alertmanager service
+# List of alertmanager addresses (can be k8s local DNS service names)
+alertManagers: 
+  - alertmanager
+
+# Port to use for accessing alertmanager services
 alertManagerPort: 9093
 
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
