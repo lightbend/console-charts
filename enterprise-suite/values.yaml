@@ -91,12 +91,6 @@ prometheusExposePort: 30090
 alertManagerExposePort: 30093
 
 #################################################
-# RBAC
-#
-# Create ClusterRoles for RBAC, used by Prometheus for service discovery and kube-state-metrics. Set to false if creating additional Lightbend Consoles in the same cluster, as this is a shared resource.
-createClusterRoles: true
-
-#################################################
 # ResourceRequests
 #
 # default container resource requests for CPU (0.1)

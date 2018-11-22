@@ -6,7 +6,6 @@ metadata:
   name: prometheus-server
 
 ---
-{{ if .Values.createClusterRoles }}
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
@@ -27,7 +26,6 @@ rules:
   verbs: ["get", "list", "watch"]
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
-{{ end }}
 ---
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
