@@ -188,10 +188,10 @@ def check_credentials(creds):
             if '"latest"' in resp.read():
                 success = True
     except url.HTTPError as err:
-        if err.code == 401:
-            # Unauthorized, error message gets printed by check_credentials caller
-            pass
-        elif err.code == 54:
+        if err.code != 401:
+            printerr('error: check_credentials failed: {}'.format(err))
+    except url.URLError as err:
+        if err.reason.errno == 54:
             # Code 54 error can be raised when old TLS is used due to old python
             printerr('error: check_credentials TLS authorization failed; this can be due to an old python version, please try upgrading')
         else:
@@ -415,7 +415,7 @@ def import_credentials():
     return creds
 
 def check_install():
-    def deployment_running(name, optional=False):
+    def deployment_running(name):
         printinfo('Checking deployment {} ... '.format(name), end='')
         stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
                                  .format(args.namespace, name))
