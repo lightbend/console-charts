@@ -23,10 +23,6 @@ trap cleanup 0
 
 # Make sure the services are ready
 CONSOLE_NODE_BASE=$( busy_wait nodeport console-server )
-ESMONITOR_NODE_BASE=$( busy_wait nodeport es-monitor-api )
-PROM_NODE_BASE=$( busy_wait nodeport prometheus-server )
-GRAFANA_NODE_BASE=$( busy_wait nodeport grafana-server )
-ALERTMGR_NODE_BASE=$( busy_wait nodeport alertmanager )
 
 # Get port for service in kubernetes.  $1 is service
 getport() {

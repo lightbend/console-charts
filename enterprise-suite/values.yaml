@@ -81,14 +81,8 @@ alertManagerConfigMap: alertmanager-default
 # Service type for exposing Console outside the cluster. Can be "NodePort", "LoadBalancer" or "false".
 exposeServices: false
 
-# If exposeServices is set to "NodePort" or "LoadBalancer", Grafana will be exposed on this port.
-esGrafanaExposePort: 30030
 # If exposeServices is set to "NodePort" or "LoadBalancer", Console will be exposed on this port.
 esConsoleExposePort: 30080
-# If exposeServices is set to "NodePort" or "LoadBalancer", Prometheus will be exposed on this port.
-prometheusExposePort: 30090
-# If exposeServices is set to "NodePort" or "LoadBalancer", Alertmanager will be exposed on this port.
-alertManagerExposePort: 30093
 
 #################################################
 # ResourceRequests

@@ -63,24 +63,6 @@ spec:
     component: "server"
   type: "ClusterIP"
 
-{{ if or .Values.exposeServices .Values.minikube }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-grafana
-spec:
-  ports:
-  - port: 3000
-    protocol: TCP
-    targetPort: 3000
-    nodePort: {{ .Values.esGrafanaExposePort }}
-  selector:
-    app: grafana
-    component: server
-  type: {{ .Values.exposeServices | default "NodePort" }}
-{{ end }}
-
 ---
 {{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
@@ -97,6 +79,7 @@ spec:
     requests:
       storage: {{ .Values.esGrafanaVolumeSize }}
 {{ end }}
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
