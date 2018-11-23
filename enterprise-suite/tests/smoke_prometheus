@@ -18,8 +18,8 @@ set +e
 # prometheus fetchers
 #
 
-PROM=$( busy_wait nodeport expose-prometheus )
 ES_CONSOLE=$( busy_wait nodeport expose-es-console )
+PROM="$ES_CONSOLE/service/prometheus"
 ES_MONITOR_API="$ES_CONSOLE/service/es-monitor-api"
 
 prom_query() {
