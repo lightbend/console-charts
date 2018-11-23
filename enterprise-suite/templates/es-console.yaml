@@ -95,7 +95,6 @@ data:
       set $monitorapi "es-monitor-api";
       set $grafana "grafana-server";
       set $alertmanager {{ index .Values.alertManagers 0 | quote }};
-      set $alertmanagerport {{ .Values.alertManagerPort | quote }};
 
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
@@ -151,7 +150,7 @@ data:
       }
 
       location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager:$alertmanagerport$2$is_args$args;
+        proxy_pass http://$alertmanager$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
 

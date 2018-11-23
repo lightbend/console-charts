@@ -1,21 +1,5 @@
 {{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
 
-# The following crazyness simply adds the port suffix to each service in a list and
-# joins them into a string with commas. Argument is a tuple (list, port). Eg.:
-#
-# test:
-#   - service-00
-#   - service-01
-# {{ tuple .Values.test "9000" | include "serviceList" }}
-#
-# Evaluates to:
-# service-00:9000,service-01:9000
-{{- define "serviceList" -}}
-{{- $suffix := index . 1 -}}
-{{- $local := dict "first" true -}}
-{{- range $k, $v := index . 0 -}}{{- if not $local.first -}},{{- end -}}{{- $v -}}:{{- $suffix -}}{{- $_ := set $local "first" false -}}{{- end -}}
-{{- end -}}
-
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -154,7 +138,7 @@ spec:
             - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
-            - --alertmanagers={{ tuple .Values.alertManagers .Values.alertManagerPort | include "serviceList" }}
+            - --alertmanagers={{ .Values.alertManagers | include "serviceList" }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config

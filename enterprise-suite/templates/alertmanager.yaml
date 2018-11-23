@@ -59,16 +59,16 @@ spec:
             - --cluster.listen-address=$(POD_IP):6783
 
           ports:
-            - containerPort: {{ .Values.alertManagerPort }}
+            - containerPort: 9093
           readinessProbe:
             httpGet:
               path: /-/ready
-              port: {{ .Values.alertManagerPort }}
+              port: 9093
             timeoutSeconds: 30
           livenessProbe:
             httpGet:
               path: /-/healthy
-              port: {{ .Values.alertManagerPort }}
+              port: 9093
             timeoutSeconds: 30
             initialDelaySeconds: 30
 
@@ -86,7 +86,7 @@ spec:
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
             - --volume-dir=/etc/config
-            - --webhook-url=http://127.0.0.1:{{- .Values.alertManagerPort }}/-/reload
+            - --webhook-url=http://127.0.0.1:9093/-/reload
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -112,8 +112,8 @@ metadata:
 spec:
   ports:
   - name: http
-    port: {{ .Values.alertManagerPort }}
-    targetPort: {{ .Values.alertManagerPort }}
+    port: 9093
+    targetPort: 9093
   selector:
     app: prometheus
     component: alertmanager
