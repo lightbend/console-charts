@@ -188,12 +188,12 @@ def check_credentials(creds):
             if '"latest"' in resp.read():
                 success = True
     except url.HTTPError as err:
-        if err.code == 401:
-            # Unauthorized, error message gets printed by check_credentials caller
-            pass
-        elif err.code == 54:
+        if err.code != 401:
+            printerr('error: check_credentials failed: {}'.format(err))
+    except url.URLError as err:
+        if err.reason.errno == 54:
             # Code 54 error can be raised when old TLS is used due to old python
-            printerr('error: check_credentials TLS authorization failed; this can be due to an old python version, please try upgrading')
+             printerr('error: check_credentials TLS authorization failed; this can be due to an old python version installed on OS X - please upgrade your python version')
         else:
             printerr('error: check_credentials failed: {}'.format(err))
     finally:
