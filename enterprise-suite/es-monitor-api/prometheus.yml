@@ -11,14 +11,15 @@ global:
 rule_files:
   - /etc/config/rules/*.yaml
 
+{{ if .AlertmanagerAddresses }}
 alerting:
   alertmanagers:
-  - kubernetes_sd_configs:
-    - role: pod
-    relabel_configs:
-    - source_labels: [__meta_kubernetes_namespace,__meta_kubernetes_pod_label_app,__meta_kubernetes_pod_label_component,__meta_kubernetes_pod_container_port_number]
-      regex: lightbend;prometheus;alertmanager;[0-9]+
-      action: keep
+  - static_configs:
+    - targets:
+      {{ range $index, $address := .AlertmanagerAddresses }}
+      - {{ $address }}
+      {{ end }}
+{{ end }}
 
 scrape_configs:
 

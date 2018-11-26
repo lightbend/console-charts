@@ -4,7 +4,7 @@
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: v0.1.7
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v0.2.0
+esMonitorVersion: v0.2.1
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.1.4
 # prom/prometheus
@@ -74,6 +74,12 @@ imageCredentials:
   registry: lightbend-docker-commercial-registry.bintray.io
 #  username: setme
 #  password: setme
+
+# If true, an alertmanager will be deployed. Set to false and modify `alertManagers` list to use existing alertmanager(s).
+createAlertManager: true
+
+# Comma separated list of alertmanager addresses (can be k8s local DNS service names)
+alertManagers: alertmanager:9093
 
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
