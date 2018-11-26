@@ -2,9 +2,9 @@
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.7
+esConsoleVersion: rc
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v0.2.1
+esMonitorVersion: rc
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.1.4
 # prom/prometheus
