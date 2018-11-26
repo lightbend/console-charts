@@ -26,7 +26,8 @@ check_expr() {
 
 # extract our grafana plugin expressions as a virtual file, one row per expr
 prom_lines() {
-  jq -r '.[].promQL[]' "$1" | sed -e 's/ContextTags[,]*//g'
+  jq -r '.[].promQL[]| if type=="object" then .expr else . end' "$1" |
+    sed -e 's/ContextTags[,]*//g' -e 's/\$__interval/10s/'
 }
 
 count=0

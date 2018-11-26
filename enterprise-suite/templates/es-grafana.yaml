@@ -1,3 +1,4 @@
+{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -62,29 +63,14 @@ spec:
     component: "server"
   type: "ClusterIP"
 
-{{ if .Values.minikube }}
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-grafana
-spec:
-  ports:
-  - port: 3000
-    protocol: TCP
-    targetPort: 3000
-    nodePort: 30030
-  selector:
-    app: grafana
-    component: server
-  type: NodePort
-{{ end }}
-
----
+{{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: es-grafana-storage
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   storageClassName: {{ default .Values.defaultStorageClass .Values.esGrafanaStorageClass }}
   accessModes:
@@ -92,6 +78,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.esGrafanaVolumeSize }}
+{{ end }}
 
 ---
 apiVersion: extensions/v1beta1
@@ -118,7 +105,7 @@ spec:
       - name: commercial-credentials
 
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana:{{ .Values.esGrafanaVersion }}
+      - image: {{ tpl .Values.esGrafanaImage . }}:{{ .Values.esGrafanaVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: grafana-server
         resources:
@@ -161,5 +148,9 @@ spec:
         configMap:
           name: grafana-datasource-cm
       - name: grafana-data
+        {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
         persistentVolumeClaim:
           claimName: es-grafana-storage
+        {{ else }}
+        emptyDir: {}
+        {{ end }}

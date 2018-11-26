@@ -52,19 +52,52 @@ function setup {
 
 @test "helm install command" {
     run $install_es
-    assert_output --regexp '.*helm install es-repo/enterprise-suite --name=myhelmname --namespace=lightbend --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm install es-repo/enterprise-suite --devel --name myhelmname --namespace lightbend --values [^ ]*creds\..*'
 }
 
 @test "helm upgrade command if chart exists" {
     ES_STUB_CHART_STATUS="0" \
         run $install_es
-    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --values [^ ]*creds\..*'
+    assert_output --regexp '.*helm upgrade myhelmname es-repo/enterprise-suite --devel --values [^ ]*creds\..*'
+}
+
+@test "export console yaml with '--version blah'" {
+    ES_EXPORT_YAML=console \
+        run $install_es --version v10.0.20 --set minikube=true,podUID=100001
+    assert_output --regexp 'helm fetch .*--version v10.0.20 es-repo/enterprise-suite'
+    refute_output --regexp "helm fetch [^\n]*--set minikube=true"
+
+    assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
+    refute_output --regexp 'helm template .*--version v10.0.20'
+}
+
+@test "export console yaml with '--version=blah'" {
+    ES_EXPORT_YAML=console \
+        run $install_es --version=v10.0.20 --set minikube=true,podUID=100001
+    assert_output --regexp 'helm fetch .*--version=v10.0.20 es-repo/enterprise-suite'
+    refute_output --regexp "helm fetch [^\n]*--set minikube=true"
+
+    assert_output --regexp 'helm template .*--set minikube=true,podUID=100001 .*/enterprise-suite.*tgz'
+    refute_output --regexp 'helm template .*--version=v10.0.20'
+}
+
+@test "export console yaml with ES_LOCAL_CHART set" {
+    ES_EXPORT_YAML=console ES_LOCAL_CHART=my-local-chart.tgz \
+        run $install_es --set minikube=true,podUID=100001
+    assert_output --regexp 'helm template --name myhelmname --namespace lightbend .*my-local-chart.tgz'
+}
+
+@test "export credentials yaml" {
+    ES_EXPORT_YAML=creds \
+        run $install_es
+    assert_output --regexp 'helm template --name myhelmname --namespace lightbend --execute templates/commercial-credentials.yaml --values .*creds\........*enterprise-suite\*.tgz'
+    # Would rather test generated yaml but Bats seems to eat it...
 }
 
 @test "can set namespace" {
     ES_NAMESPACE=mycoolnamespace \
         run $install_es
-    assert_output --partial "--namespace=mycoolnamespace"
+    assert_output --partial "--namespace mycoolnamespace"
 }
 
 @test "can pass helm args" {
@@ -85,7 +118,7 @@ function setup {
 @test "force install deletes the existing install first" {
     ES_STUB_CHART_STATUS="0" ES_FORCE_INSTALL="true" \
         run $install_es
-    assert_output --partial "helm delete --purge myhelmname" 
+    assert_output --partial "helm delete --purge myhelmname"
     assert_output --partial "helm install"
     refute_output --partial "helm upgrade"
 }

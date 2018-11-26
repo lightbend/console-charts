@@ -29,6 +29,11 @@ jobs:
     - make test CHARTS=enterprise-suite-latest
 
   - name: ES Frontend E2E
+    addons:
+      apt:
+        update: true
+        packages:
+        - libgconf2-4
     cache:
       directories:
         - ~/.npm
@@ -37,12 +42,17 @@ jobs:
     script:
     - scripts/setup-minikube-for-linux.sh
     - make test CHARTS=enterprise-suite ES_TEST=frontend
-    after_script:
+    after_failure:
     # Cypress videos.
     - artifacts upload $(find . -name '*.mp4')
 
   - name: ES Frontend E2E (Latest)
     if: type in (cron)
+    addons:
+      apt:
+        update: true
+        packages:
+        - libgconf2-4
     cache:
       directories:
         - ~/.npm

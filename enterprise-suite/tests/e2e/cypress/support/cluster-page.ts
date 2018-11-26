@@ -8,7 +8,7 @@ export class ClusterPage {
     }
 
     static validateNodePodContainerCount(workload: string, nodeCount: number, podCount: number, containerCount: number) {
-        cy.get(`[workloadname="${workload}"] > :nth-child(3)`)
+        cy.get(`[workloadname="${workload}"] > :nth-child(4)`)
             .should('have.text', `${nodeCount} : ${podCount} : ${containerCount}`);
     }
 

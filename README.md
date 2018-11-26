@@ -54,42 +54,21 @@ helm upgrade lightbend-helm-charts/<chart-name> --name=<release-name> --namespac
 
 ## Cutting a Release / Publishing Charts
 
-### Release Charts
+See the [Google doc for releasing Enterprise Suite
+Console](https://docs.google.com/document/d/14L3Zdwc-MkCDR1-7fWQYQT3k53vLc4cehAKEuOnwhxs)
+for the definitive process.
 
-Install [yq](https://github.com/mikefarah/yq) if you don't have it yet:
+## Availability
 
-    go get github.com/mikefarah/yq
-    # or
-    brew install yq                  
+Published Lightbend helm charts are available from the the [public helm repo](https://repo.lightbend.com/helm-charts).
+Assuming you have `es-repo` mapped to the
+`https://repo.lightbend.com/helm-charts` repo in helm, then
+for a list of all currently published Lightbend charts run:
 
-Make sure you've done any required changes to your project, including to the `values.yaml` file.
-
-Then run the release script on a clean master checkout.  (Make sure you're in a clean master checkout and not your
-working copy as stray files could end up in the tarball.  You may need to `git clone git@github.com:lightbend/helm-charts.git` the repo into a fresh directory.)
-
-    scripts/make-release.sh enterprise-suite
-    # Check that things look right at this point.  See below...
-	git push --follow-tags
-    
-The `make-release.sh` script will create the chart tarball in the `docs`
-directory, rebuild the `index.yaml` file, make
-commits and generate a tag for the release. _This is the point to do a quick sanity check on things._  (For
-example, check the size of, and files in, the new tarball.) If things look wrong, you can do a `git reset --hard HEAD~2` and start over.  (You'll have to delete the generated tag as well.  `git tag -d blah`)
-
-By default, the build uses the version specified in the `Chart.yaml`
-file. Optionally, you can specify the version to use:
-
-    scripts/make-release.sh enterprise-suite 1.0.0
-
-This is useful if you want to increment the major or minor version
-number.  Either way, the patch component of the version number will be auto-incremented for the next build.
-In the example above, the build would use v1.0.0 and `Chart.yaml` would then
-be setup for the next build with version 1.0.1.  (The modified `Chart.yaml` is committed on its own after the commit (and tag) for the release.)
-
-Finally, `git push --follow-tags` will push the changes (including tag) to the upstream master branch.  This will kick off a build job to publish the release to the public helm repo. You can confirm things are published with
-
-    helm repo update
-    helm search enterprise-suite
+```
+helm repo update
+helm search es-repo
+```
 
 ## Maintenance
 

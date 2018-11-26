@@ -18,22 +18,35 @@ set +e
 # prometheus fetchers
 #
 
-PROM=$( busy_wait nodeport expose-prometheus)
+ES_CONSOLE=$( busy_wait nodeport expose-es-console )
+PROM="$ES_CONSOLE/service/prometheus"
+ES_MONITOR_API="$ES_CONSOLE/service/es-monitor-api"
 
 prom_query() {
   curl -fsG "$PROM/api/v1/query" --data-urlencode "query=$*"
 }
 
 prom_has_data() {
-  results=$( prom_query "$@" | jq '.data.result | length' )
-  ! [[ results -eq 0 ]]
+  test_prom_has_data () {
+    results=$( prom_query "$@" | jq '.data.result | length' )
+    ! [[ results -eq 0 ]]
+  }
+  timeout test_prom_has_data "$@"
   T $? timeseries: "$*"
 }
 
 prom_has_no_data() {
-  results=$( prom_query "$@" | jq '.data.result | length' )
-  [[ results -eq 0 ]]
+  test_prom_has_data () {
+    results=$( prom_query "$@" | jq '.data.result | length' )
+    [[ results -eq 0 ]]
+  }
+  timeout test_prom_has_data "$@"
   T $? timeseries: "$*"
+}
+
+model_exists() {
+  results=$( prom_query "model{name=\"$1\"}" | jq '.data.result | length' )
+  ! [[ results -eq 0 ]]
 }
 
 #
@@ -70,7 +83,7 @@ prom_three_scrapes() {
 busy_wait prom_three_scrapes kube_pod_info
 T $? Prometheus kube-state-metrics has at least three scrapes
 
-busy_wait prom_three_scrapes node_cpu_percent
+busy_wait prom_three_scrapes node_cpu
 T $? Prometheus node-exporter has at least three scrapes
 
 
@@ -129,9 +142,9 @@ done
 
 # coherency tests
 # data with "es_workload" should also have a "namespace" label
-prom_has_no_data 'count({es_workload=~".+", namespace=""})'
+prom_has_no_data 'count({es_workload=~".+", namespace="", name!~"node.*|kube_node.*", __name__!~"node.*|kube_node.*"})'
 # health should have a "es_workload" label, with a few known exceptions
-prom_has_no_data 'health{es_workload="",name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
+prom_has_no_data 'health{es_workload="", name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}'
 # kube_pod_info must have es_workload labels
 prom_has_data 'kube_pod_info{es_workload=~".+"}'
 prom_has_no_data 'kube_pod_info{es_workload=""}'
@@ -139,6 +152,9 @@ prom_has_no_data 'kube_pod_info{es_workload=""}'
 prom_has_no_data '{__name__=~ "kube_.+", pod!="", es_workload=""}'
 # all container data have a workload label
 prom_has_no_data '{__name__=~"container_.+", es_workload=""}'
+# all targets should be reachable
+prom_has_data 'up == 1'
+prom_has_no_data 'up == 0'
 
 #
 # kube-state-metrics
@@ -147,7 +163,6 @@ prom_has_no_data '{__name__=~"container_.+", es_workload=""}'
 # grep kube_ rules.json | jq -r '.parameters.metric'
 kube_state_metrics=(
   kube_pod_info
-  kube_node_pressure
   kube_pod_ready
   kube_pod_container_restarts_rate
   kube_pod_failed
@@ -157,7 +172,6 @@ kube_state_metrics=(
 
 # grep kube_ rules.json | jq -r '.parameters.name'
 kube_state_health=(
-  kube_node_pressure
   kube_container_rapid_restarts
   kube_pod_not_ready
   kube_pod_not_running
@@ -191,10 +205,10 @@ T $? 'kube-state-metrics "err" logs'
 
 # grep node_ rules.json | jq -r '.parameters.metric'
 node_metrics=(
-  node_cpu_percent
-  node_memory_usable_percent
-  node_filesystem_free_percent
-  node_network_error_rate
+  node_cpu
+  node_memory_MemAvailable
+  node_filesystem_free
+  node_network_transmit_errs
 )
 
 for m in "${node_metrics[@]}" ; do
@@ -223,6 +237,15 @@ busy_wait app_data
 
 prom_has_data "$app_instances"
 
+# Pod discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
+curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/es-test/mytest" \
+    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test"}}'
+
+busy_wait model_exists my_custom_monitor
+
+prom_has_data 'up{es_workload="es-test", es_monitor_type="es-test"}'
+
 # app via 'Pod' service discovery with multiple metric ports
 app_instances_with_multiple_ports='count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="lightbend"}) ) == 4'
 app_data_with_multiple_ports() {
@@ -242,6 +265,36 @@ app_data_via_service() {
 busy_wait app_data_via_service
 
 prom_has_data "$app_instances_via_service"
+
+# 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
+curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/es-test-via-service/mytest" \
+    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor_for_service","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test-via-service"}}'
+
+busy_wait model_exists my_custom_monitor_for_service
+
+prom_has_data 'up{es_workload="es-test-via-service", es_monitor_type="es-test-via-service"}'
+
+# Succeeds if all data for the workload $1 has a matching es_monitor_type
+# Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
+prom_all_workload_data_has_monitor_type() {
+  results=$( prom_query "{es_workload=\"$1\", es_monitor_type!=\"$1\", __name__!="health"}" | jq '.data.result | length' )
+  [[ results -eq 0 ]]
+}
+
+# kubernetes-cadvisor metrics should have an es_monitor_type label.
+curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/es-test/es-monitor-type-test" \
+    --data '{"model":"threshold","parameters":{"comparator":"\u003e=","confidence":"1","description":"cpu on {{ $labels.instance }} over 99% busy","meta":{},"metric":"container_cpu_load_average_10s{es_workload=\"es-test\"}","monitorType":"es-test","name":"es-monitor-type-test","severity":"warning","summary":"cpu saturated","threshold":"99","window":"5m"}}'
+
+busy_wait model_exists es-monitor-type-test
+# Specific test for regression of es-backend/issues/430.
+prom_has_data '{job="kubernetes-cadvisor",es_monitor_type="es-test"}'
+
+# This assumes we've processed enough data at this point that any non-conforming jobs will be caught.
+busy_wait prom_all_workload_data_has_monitor_type es-test
+T $? "timeseries: all data for es-test workload has a matching es-monitor-type label"
+
 
 # clean up apps
 

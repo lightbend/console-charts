@@ -2,11 +2,11 @@
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.5
+esConsoleVersion: v0.1.7
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v0.1.1
+esMonitorVersion: v0.2.1
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.1.2
+esGrafanaVersion: v0.1.4
 # prom/prometheus
 prometheusVersion: v2.2.1
 # prom/alertmanager
@@ -17,7 +17,46 @@ configMapReloadVersion: v0.2.2
 kubeStateMetricsVersion: v1.2.0
 # prom/node-exporter
 nodeExporterVersion: v0.15.2
+# janeczku/go-dnsmasq
+goDnsmasqVersion: release-1.0.7
+# alpine
+alpineVersion: 3.8
+# busybox
+busyboxVersion: 1.29
 
+#################################################
+# Image names to use. Combined with the versions above, gives the fully qualified docker image name.
+#
+# es-console image
+esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
+# es-monitor-api image
+esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api'
+# es-grafana image
+esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
+# prometheus image
+prometheusImage: prom/prometheus
+# alertmanager image
+alertManagerImage: prom/alertmanager
+# configmap-reload image
+configMapReloadImage: jimmidyson/configmap-reload
+# kube-state-metrics image
+kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
+# node-exporter image
+nodeExporterImage: prom/node-exporter
+# go-dnsmasq image
+goDnsmasqImage: janeczku/go-dnsmasq
+# alpine image
+alpineImage: alpine
+# busybox image
+busyboxImage: busybox
+
+#################################################
+# Kubernetes Api Versions
+#
+rbacApiVersion: rbac.authorization.k8s.io/v1
+apiGroupVersion: rbac.authorization.k8s.io
+deploymentApiVersion: apps/v1beta2
+daemonSetApiVersion: apps/v1beta2
 
 #################################################
 # Settings
@@ -26,7 +65,7 @@ nodeExporterVersion: v0.15.2
 imagePullPolicy: IfNotPresent
 # prometheus annotation domain, e.g. `domain/scrape=true`
 prometheusDomain: prometheus.io
-# minikube debug resources
+# (deprecated) minikube debug resources - use exposeServices=NodePort instead
 minikube: false
 # Run pods as the given UID. There is no sensible default for this, so customers need to provide it.
 podUID:
@@ -35,8 +74,21 @@ imageCredentials:
   registry: lightbend-docker-commercial-registry.bintray.io
 #  username: setme
 #  password: setme
+
+# If true, an alertmanager will be deployed. Set to false and modify `alertManagers` list to use existing alertmanager(s).
+createAlertManager: true
+
+# Comma separated list of alertmanager addresses (can be k8s local DNS service names)
+alertManagers: alertmanager:9093
+
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
+
+# Service type for exposing Console outside the cluster. Can be "NodePort", "LoadBalancer" or "false".
+exposeServices: false
+
+# If exposeServices is set to "NodePort" or "LoadBalancer", Console will be exposed on this port.
+esConsoleExposePort: 30080
 
 #################################################
 # ResourceRequests
@@ -51,12 +103,16 @@ prometheusMemoryRequest: 250Mi
 #################################################
 # Persistent Volumes
 #
+# Deprecated value - set to false to disable emptyDir and use persistent volumes. Prefer `usePersistentVolumes`.
+useEmptyDirVolumes: true
+# Set to true to use persistent volumes, otherwise emptyDir volumes are used.
+usePersistentVolumes: false
+# If true, the chart creates persistent volumes using PVCs. Set to false to reuse previously created persistent volumes.
+createPersistentVolumes: true
 # Default StorageClass to use for persistent volumes
 defaultStorageClass: standard
 # Prometheus volume size - used for storing metrics data.
 prometheusVolumeSize: 256Gi
-# ES Monitor API volume size - used for storing monitors in a git repo.
-esMonitorVolumeSize: 32Gi
 # Alertmanager volume size - used for storing silences.
 alertmanagerVolumeSize: 32Gi
 # Grafana volume size - used for storing users, custom dashboards, and plugins.

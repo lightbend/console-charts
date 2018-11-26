@@ -2,8 +2,9 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus-node-exporter
+
 ---
-apiVersion: apps/v1beta2
+apiVersion: {{ .Values.daemonSetApiVersion }}
 kind: DaemonSet
 metadata:
   labels:
@@ -30,7 +31,7 @@ spec:
       {{ end }}
       containers:
         - name: prometheus-node-exporter
-          image: "prom/node-exporter:{{ .Values.nodeExporterVersion }}"
+          image: {{ .Values.nodeExporterImage }}:{{ .Values.nodeExporterVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.nodeExporterCPURequest }}

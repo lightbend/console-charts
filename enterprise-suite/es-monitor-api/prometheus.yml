@@ -11,14 +11,15 @@ global:
 rule_files:
   - /etc/config/rules/*.yaml
 
+{{ if .AlertmanagerAddresses }}
 alerting:
   alertmanagers:
-  - kubernetes_sd_configs:
-    - role: pod
-    relabel_configs:
-    - source_labels: [__meta_kubernetes_namespace,__meta_kubernetes_pod_label_app,__meta_kubernetes_pod_label_component,__meta_kubernetes_pod_container_port_number]
-      regex: lightbend;prometheus;alertmanager;[0-9]+
-      action: keep
+  - static_configs:
+    - targets:
+      {{ range $index, $address := .AlertmanagerAddresses }}
+      - {{ $address }}
+      {{ end }}
+{{ end }}
 
 scrape_configs:
 
@@ -50,6 +51,7 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_node_address_InternalIP]
         target_label: node_ip
 
+    # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
     metric_relabel_configs:
       - source_labels: [pod_name]
         target_label: kubernetes_pod_name
@@ -85,8 +87,10 @@ scrape_configs:
         target_label: es_workload
       # copy pod name to workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*);
+        regex: (.+);
         target_label: es_workload
+
+{{ .MonitorTypeRules | indent 6 }}
 
   # kube-state-metrics
 
@@ -118,6 +122,7 @@ scrape_configs:
         target_label: node_ip
 
     # es_workload labels:
+    # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
     metric_relabel_configs:
       - source_labels: [created_by_kind, pod, es_workload]
         regex: 'ReplicaSet;(.+)-[^-]+-[^-]+;'
@@ -157,10 +162,10 @@ scrape_configs:
         target_label: es_workload
       # copy pod name to workload
       - source_labels: [pod, es_workload]
-        regex: (.*);
+        regex: (.+);
         target_label: es_workload
-{{ .MonitorTypeRules | indent 6 }}
 
+{{ .MonitorTypeRules | indent 6 }}
 
   - job_name: 'node-exporter'
     kubernetes_sd_configs:
@@ -226,10 +231,25 @@ scrape_configs:
         action: replace
         target_label: __metrics_path__
         regex: (.+)
+
+      # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: ^(.+;.*)|(;.*metrics)$
+
+      # Set port from prometheus.io/port if it's set.
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+        action: replace
+        # Extract IP from address. Address might not contain a port in some cases.
+        regex: ([^:]+):?(?:\d*);(\d+)
+        replacement: ${1}:${2}
+        target_label: __address__
+
+
       - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
         target_label: __address__
-        regex: (.+)(?::\d+);(\d+)
+        regex: ([^:]+):?(?:\d*);(\d+)
         replacement: $1:$2
       # metadata labels
       - action: labelmap
@@ -261,7 +281,6 @@ scrape_configs:
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
 
-    metric_relabel_configs:
 {{ .MonitorTypeRules | indent 6 }}
 
 
@@ -272,7 +291,7 @@ scrape_configs:
   #
   # * `{{ .PrometheusDomain }}/scrape`: Only scrape pods that have a value of `true`
   # * `{{ .PrometheusDomain }}/path`: If the metrics path is not `/metrics` override this.
-  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all ports by default.
+  # * `{{ .PrometheusDomain }}/port`: Scrape the pod on the indicated port instead of all `metrics` ports.
   - job_name: 'kubernetes-pods'
 
     kubernetes_sd_configs:
@@ -298,10 +317,11 @@ scrape_configs:
         action: keep
         regex: ^(.+;.*)|(;.*metrics)$
 
-      # Set port from prometheus.io/port.
+      # Set port from prometheus.io/port if it's set.
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
         action: replace
-        regex: (.+):(?:\d+);(\d+)
+        # Extract IP from address. Address might not contain a port in some cases.
+        regex: ([^:]+):?(?:\d*);(\d+)
         replacement: ${1}:${2}
         target_label: __address__
 
@@ -340,5 +360,4 @@ scrape_configs:
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
 
-    metric_relabel_configs:
 {{ .MonitorTypeRules | indent 6 }}

@@ -1,9 +1,8 @@
-
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
-  name: prometheus-kube-state-metrics
+  name: {{.Release.Namespace}}:kube-state-metrics
 rules:
 - apiGroups: [""]
   resources:
@@ -40,14 +39,14 @@ rules:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
 ---
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
-  name: prometheus-kube-state-metrics
+  name: {{.Release.Namespace}}:kube-state-metrics
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
+  apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
-  name: prometheus-kube-state-metrics
+  name: {{.Release.Namespace}}:kube-state-metrics
 subjects:
 - kind: ServiceAccount
   name: prometheus-kube-state-metrics
@@ -60,7 +59,7 @@ metadata:
   name: prometheus-kube-state-metrics
 
 ---
-apiVersion: apps/v1beta2
+apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
   labels:
@@ -86,7 +85,7 @@ spec:
       serviceAccountName: prometheus-kube-state-metrics
       containers:
         - name: prometheus-kube-state-metrics
-          image: "gcr.io/google_containers/kube-state-metrics:{{ .Values.kubeStateMetricsVersion }}"
+          image: {{ .Values.kubeStateMetricsImage }}:{{ .Values.kubeStateMetricsVersion }}
           args:
             - --port=8080
             - --telemetry-port=8081

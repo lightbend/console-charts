@@ -34,6 +34,10 @@ echo "=== Releasing $chart"
 cd $chart_dir
 if [ -z "$version" ]; then
     version=$(yq r Chart.yaml version)
+else
+    echo "setting version to $version"
+    yq w -i Chart.yaml version $version
+    git add Chart.yaml
 fi
 echo "using version: $version"
 
@@ -59,10 +63,12 @@ git tag -a $git_tag -m "Release $git_tag"
 echo Tagged release with $git_tag
 
 # Update version for next build
+# Assumes version is in semver form and last number is preceded by a '.' character
 cd $chart_dir
-semver=(${version//./ })
-((semver[2]++))
-next_version="${semver[0]}.${semver[1]}.${semver[2]}"
+prefix=${version%.*}
+last_component=${version##*.}
+((last_component++))
+next_version="$prefix.$last_component"
 echo
 echo "setting next version to $next_version"
 yq w -i Chart.yaml version $next_version

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Note that parts of this depend on minikube at this time.
 
 #set -x
@@ -8,6 +6,8 @@
 #set -e
 set -o pipefail
 set -o nounset
+
+source timeout.fn
 
 : "${CURRENT_CONTEXT:=minikube}"
 
@@ -32,8 +32,37 @@ busy_wait() {
   done
 }
 
-TEST_SUCCESSES=0
-TEST_FAILURES=0
+timeout() {
+    # default timeout is 90s.  If $1 is a number, it will be used as timeout value
+    timeout=90
+    re='^[0-9]+$'
+    if [[ "$1" =~ $re ]] ; then
+        timeout=$1
+        shift
+    fi
+    timeout_function $timeout "$@"
+}
+
+
+# Setup fds for writing/reading success/failure counts.  Allows things to work across subshells
+SUCCESSES=$(mktemp -t pipe.XXXXX)
+exec 3>$SUCCESSES
+exec 4<$SUCCESSES
+# unlink so we don't have to clean up later
+rm $SUCCESSES
+
+FAILURES=$(mktemp -t pipe.XXXXX)
+exec 6>$FAILURES
+exec 7<$FAILURES
+# unlink so we don't have to clean up later
+rm $FAILURES
+
+TIMEOUTS=$(mktemp -t pipe.XXXXX)
+exec 8>$TIMEOUTS
+exec 9<$TIMEOUTS
+# unlink so we don't have to clean up later
+rm $TIMEOUTS
+
 
 # test runner
 # command to test &&:
@@ -44,21 +73,36 @@ T() {
   msg="$*"
   if [[ 0 -eq res ]]; then
     echo "PASS: $msg"
-    ((++TEST_SUCCESSES))
+    echo 1 >&3
   else
-    echo "FAIL: $msg"
+    if [[ 142 -eq res ]]; then
+        echo "*** TIMEOUT: $msg"
+        echo 1 >&8
+    fi
+    echo "*** FAIL: $msg"
+    echo 1 >&6
     # make it conditional on a cli arg whether we bail or not
-    ((++TEST_FAILURES))
     # error "test failed"
   fi
 }
 
 # Note that this function calls exit, so should be last command in (sub)shell
 test_summary() {
+    # Close success/failure pipes for writing so we can read them
+    exec 3>&-
+    TEST_SUCCESSES=$( awk '{successes += $1} END {print successes}' <&4 )
+    : ${TEST_SUCCESSES:=0}
+    exec 6>&-
+    TEST_FAILURES=$( awk '{failures += $1} END {print failures}' <&7 )
+    : ${TEST_FAILURES:=0}
+    exec 8>&-
+    TEST_TIMEOUTS=$( awk '{timeouts += $1} END {print timeouts}' <&9 )
+    : ${TEST_TIMEOUTS:=0}
+
     if [ $TEST_FAILURES -eq 0 ] ; then
-        echo "All ${0##*/} tests pass.  PASS: $TEST_SUCCESSES  FAIL: 0"
+        echo "All ${0##*/} tests pass.  PASS: $TEST_SUCCESSES  FAIL: 0  (TIMEOUTS: 0)"
     else
-        echo "Some ${0##*/} tests failed!  PASS: $TEST_SUCCESSES  FAIL: $TEST_FAILURES"
+        echo "Some ${0##*/} tests failed!  PASS: $TEST_SUCCESSES  FAIL: $TEST_FAILURES  (TIMEOUTS: $TEST_TIMEOUTS)"
     fi
 
     exit $TEST_FAILURES
@@ -88,38 +132,58 @@ curl_headers() {
 }
 
 
-# ES console access test
+# Used with busy_wait to determine if the console is ready for requests
+es_console_ready() {
+    [ "Running" = $(kubectl get pod -l run=es-console -n lightbend -o go-template --template="{{ (index .items 0).status.phase }}") ]
+}
+
+# Lightbend Console access test
 # test_es_console_responding <url> [<curl-opt>...]
 test_es_console_responding() {
   CONSOLE_URL=$1
   shift
-  results=$( curl_query $CONSOLE_URL "" "$@" | fgrep -q '<title>Enterprise Suite Reactive Console</title>' )
-  T $? ES2 console accessible via $CONSOLE_URL "$@"
+  es_console_responding() {
+      curl_query $CONSOLE_URL "" "$@" | fgrep -q '<title>Enterprise Suite Reactive Console</title>'
+  }
+  timeout es_console_responding "$@"
+  T $? Lightbend Console accessible via $CONSOLE_URL "$@"
 }
 
 # Grafana access test
 test_grafana_responding() {
-  results=$( curl_query $1 "api/org" | jq '.id' )
-  ! [[ $results -eq 0 ]]
+  grafana_responding() {
+      results=$(curl_query $1 "api/org" | jq '.id')
+      ! [[ $results -eq 0 ]]
+  }
+  timeout grafana_responding "$@"
   T $? grafana service accessible via $1
 }
 
 # Prometheus access test
 test_prom_responding() {
-  status=$( curl_query $1 "api/v1/status/config" | jq '.status' )
-  [[ $status = '"success"' ]]
+  prom_responding() {
+      status=$( curl_query $1 "api/v1/status/config" | jq '.status' )
+      [[ $status = '"success"' ]]
+  }
+  timeout prom_responding "$@"
   T $? prometheus service accessible via $1
 }
 
 # ES monitor API access test
 test_es_monitor_API_responding() {
-  status=$( curl_query $1 "status" | jq '.status' )
-  [[ $status = '"success"' ]]
+  es_monitor_API_responding() {
+      status=$( curl_query $1 "status" | jq '.status' )
+      [[ $status = '"success"' ]]
+  }
+  timeout es_monitor_API_responding "$@"
   T $? es-monitor-api service accessible via $1
 }
 
 # Alertmanager access test
 test_alertmanager_responding() {
-  results=$( curl_query $1 "" | fgrep -q '<title>Alertmanager</title>' )
+  alertmanager_responding() {
+      results=$( curl_query $1 "" | fgrep -q '<title>Alertmanager</title>' )
+  }
+  timeout alertmanager_responding "$@"
   T $? alertmanager accessible via $1
 }

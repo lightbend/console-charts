@@ -20,14 +20,14 @@ spec:
 
       containers:
       - name: dnsmasq
-        image: "janeczku/go-dnsmasq:release-1.0.7"
+        image: {{ .Values.goDnsmasqImage }}:{{ .Values.goDnsmasqVersion }}
         args:
           - --listen
           - "127.0.0.1:5353"
           - --verbose
           - --enable-search
       - name: es-console
-        image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-console:{{ .Values.esConsoleVersion }}
+        image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         resources:
           requests:
@@ -44,7 +44,7 @@ spec:
         configMap:
           name: es-console
 
-{{ if .Values.minikube }}
+{{ if or .Values.exposeServices .Values.minikube }}
 ---
 apiVersion: v1
 kind: Service
@@ -55,10 +55,10 @@ spec:
   - port: 80
     protocol: TCP
     targetPort: 8080
-    nodePort: 30080
+    nodePort: {{ .Values.esConsoleExposePort }}
   selector:
     run: es-console
-  type: NodePort
+  type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}
 
 ---
@@ -68,7 +68,7 @@ metadata:
   name: console-server
 spec:
   ports:
-    - name: console-server-port
+    - name: http
       port: 80
       targetPort: 8080
   selector:
@@ -94,7 +94,7 @@ data:
       set $prometheus "prometheus-server";
       set $monitorapi "es-monitor-api";
       set $grafana "grafana-server";
-      set $alertmanager "alertmanager";
+      set $alertmanager {{ splitList "," .Values.alertManagers | first | quote }};
 
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
@@ -150,7 +150,7 @@ data:
       }
 
       location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager:9093$2$is_args$args;
+        proxy_pass http://$alertmanager$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
 
@@ -158,6 +158,21 @@ data:
 
       location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
         return 301 ' $1/';
+      }
+
+      # version
+
+      location ~ (.*)/version$ {
+        return 200 '{
+          "description": {{ .Chart.Description | quote }},
+          "version": {{ .Chart.Version | quote }},
+          {{- range $k, $v := .Values }}
+          {{- if and (ne $k "imageCredentials") ($v) }}
+          {{ $k | quote }}: {{ $v | quote }},
+          {{- end}}
+          {{- end}}
+          "name": {{ .Chart.Name | quote }}\n}';
+        add_header Content-Type application/json;
       }
 
       # console entry point
@@ -176,7 +191,7 @@ data:
       # bookmarks / reloads in the /workloads/ path
       # (for our single page app, these should reload index.html but keep the path)
 
-      location ~ (.*/)(workloads/.*) {
+      location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
         alias $base/index.html;
         default_type text/html;
         sub_filter 'base href="/"' 'base href="$1"';

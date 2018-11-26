@@ -1,17 +1,25 @@
+# node-exporter metrics
 - record: node_cpu_percent
-  expr: 100 - avg by (instance) (irate(node_cpu{mode="idle"}[5m]) * 100)
+  expr: 100 - avg by (es_workload, node_ip) (irate(node_cpu{mode="idle"}[5m]) * 100)
 
 - record: node_memory_usable_percent
-  expr: avg by (instance) (node_memory_MemAvailable / node_memory_MemTotal) * 100
+  expr: avg by (es_workload, node_ip) (node_memory_MemAvailable / node_memory_MemTotal) * 100
 
 - record: node_filesystem_free_percent
-  expr: avg by (device, instance) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
+  expr: avg by (es_workload, device, node_ip) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
 
 - record: node_network_error_rate
-  expr: sum by(instance) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
+  expr: sum by(es_workload, node_ip) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
+
+# include all nodes in the pod info, so the UI can query a single metric
+# Not supported, yet.
+#- record: kube_pod_info
+#  expr: kube_node_info
+#  labels:
+#    pod: cluster-node
 
 - record: kube_node_pressure
-  expr: avg by (condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
+  expr: avg by (es_workload, condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 
 # kube_pod_ready: exclude pods where 100% of containers have terminated (eg. Jobs)
 - record: kube_pod_ready
