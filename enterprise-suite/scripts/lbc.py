@@ -291,7 +291,7 @@ def install(creds_file):
 
     # Add '--set' arguments to helm_args
     if args.set != None:
-        helm_args += ' ' + ' '.join(['--set ' + keyval for keyval in args.set])
+        helm_args += ' ' + ' '.join(['--set "' + keyval.replace(',', '\\,') + '"' for keyval in args.set])
 
     chart_ref = None
     if args.local_chart != None:
