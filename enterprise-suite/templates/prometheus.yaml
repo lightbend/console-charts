@@ -1,3 +1,5 @@
+{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -8,7 +10,7 @@ metadata:
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRole
 metadata:
-  name: prometheus-server
+  name: {{.Release.Namespace}}:prometheus-server
 rules:
 - apiGroups: [""]
   resources:
@@ -25,22 +27,22 @@ rules:
   verbs: ["get", "list", "watch"]
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
-
 ---
 apiVersion: {{ .Values.rbacApiVersion }}
 kind: ClusterRoleBinding
 metadata:
-  name: prometheus-server
+  name: {{.Release.Namespace}}:prometheus-server
 roleRef:
   apiGroup: {{ .Values.apiGroupVersion }}
   kind: ClusterRole
-  name: prometheus-server
+  name: {{.Release.Namespace}}:prometheus-server
 subjects:
 - kind: ServiceAccount
   name: prometheus-server
   namespace: {{.Release.Namespace}}
 
 ---
+{{ if $shouldCreatePVCs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -54,7 +56,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.prometheusVolumeSize }}
-
+{{ end }}
 ---
 kind: Deployment
 apiVersion: {{ .Values.deploymentApiVersion }}
@@ -87,7 +89,7 @@ spec:
 
       initContainers:
         - name: setup
-          image: alpine
+          image: {{ .Values.alpineImage }}:{{ .Values.alpineVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest }}
@@ -108,7 +110,7 @@ spec:
         # In prometheus 2.x, this is `65534`.
         # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
         - name: change-prometheus-data-volume-ownership
-          image: busybox
+          image: {{ .Values.busyboxImage }}:{{ .Values.busyboxVersion }}
           command:
             - sh
             - -c
@@ -123,7 +125,7 @@ spec:
 
       containers:
         - name: es-monitor-api
-          image: {{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api:{{ .Values.esMonitorVersion }}
+          image: {{ tpl .Values.esMonitorImage . }}:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           resources:
             requests:
@@ -136,6 +138,7 @@ spec:
             - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
+            - --alertmanagers={{ .Values.alertManagers }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -161,7 +164,7 @@ spec:
             initialDelaySeconds: 30
 
         - name: es-monitor-api-configmap-reload
-          image: jimmidyson/configmap-reload:{{ .Values.configMapReloadVersion }}
+          image: {{ .Values.configMapReloadImage }}:{{ .Values.configMapReloadVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
@@ -174,7 +177,7 @@ spec:
             mountPath: /etc/es-monitor-api
 
         - name: prometheus-server
-          image: prom/prometheus:{{ .Values.prometheusVersion }}
+          image: {{ .Values.prometheusImage }}:{{ .Values.prometheusVersion }}
 
           resources:
             requests:
@@ -257,24 +260,6 @@ spec:
   selector:
     app: prometheus
     component: server
-
-{{ if .Values.minikube }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-prometheus
-spec:
-  ports:
-  - port: 9090
-    protocol: TCP
-    targetPort: 9090
-    nodePort: 30090
-  selector:
-    app: prometheus
-    component: server
-  type: NodePort
-{{ end }}
 
 ---
 apiVersion: v1
