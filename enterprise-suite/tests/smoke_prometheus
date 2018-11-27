@@ -9,9 +9,20 @@ source smokecommon
 #
 
 set -e
+NAMESPACE="smoketest-prometheus"
+kubectl create namespace $NAMESPACE
 for app in resources/app*.yaml; do
-  kubectl apply -f "$app" -n lightbend
+  kubectl apply -f "$app" -n $NAMESPACE
 done
+
+cleanup() {
+  for app in resources/app*.yaml; do
+    kubectl delete -f "$app" -n $NAMESPACE
+  done
+  kubectl delete namespace $NAMESPACE
+}
+
+trap cleanup 0
 set +e
 
 #
@@ -172,7 +183,7 @@ kube_state_metrics=(
 
 # grep kube_ rules.json | jq -r '.parameters.name'
 kube_state_health=(
-  kube_container_rapid_restarts
+  kube_container_restarts
   kube_pod_not_ready
   kube_pod_not_running
   kube_workload_generation_lag
@@ -228,7 +239,7 @@ T $? 'node-exporter "err" logs'
 
 # app tests
 # app via 'Pod' service discovery
-app_instances='count( count by (instance) (ohai{es_workload="es-test", namespace="lightbend"}) ) == 2'
+app_instances='count( count by (instance) (ohai{es_workload="es-test", namespace="'$NAMESPACE'"}) ) == 2'
 app_data() {
   results=$( prom_query "$app_instances" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
@@ -237,17 +248,40 @@ busy_wait app_data
 
 prom_has_data "$app_instances"
 
+# make_monitor "type/name" "metric"
+make_monitor() {
+  curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/$1" \
+    --data @- <<EOF
+    {
+      "monitorVersion": "1",
+      "model": "threshold",
+      "parameters": {
+        "metric": "$2",
+        "window": "5m",
+        "confidence": "1",
+        "severity": {
+          "warning": {
+            "comparator": "!=",
+            "threshold": "1"
+          }
+        },
+        "summary": "summ",
+        "description": "desc"
+      }
+    }
+EOF
+}
+
 # Pod discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
-curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
-    "$ES_MONITOR_API/monitors/es-test/mytest" \
-    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test"}}'
+make_monitor "es-test/my_custom_monitor" "up"
 
 busy_wait model_exists my_custom_monitor
 
 prom_has_data 'up{es_workload="es-test", es_monitor_type="es-test"}'
 
 # app via 'Pod' service discovery with multiple metric ports
-app_instances_with_multiple_ports='count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="lightbend"}) ) == 4'
+app_instances_with_multiple_ports='count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="'$NAMESPACE'"}) ) == 4'
 app_data_with_multiple_ports() {
   results=$( prom_query "$app_instances_with_multiple_ports" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
@@ -257,7 +291,7 @@ busy_wait app_data_with_multiple_ports
 prom_has_data "$app_instances_with_multiple_ports"
 
 # app via 'Service' service discovery
-app_instances_via_service='count( count by (instance) (ohai{es_workload="es-test-via-service", namespace="lightbend"}) ) == 2'
+app_instances_via_service='count( count by (instance) (ohai{es_workload="es-test-via-service", namespace="'$NAMESPACE'"}) ) == 2'
 app_data_via_service() {
   results=$( prom_query "$app_instances_via_service" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
@@ -267,9 +301,7 @@ busy_wait app_data_via_service
 prom_has_data "$app_instances_via_service"
 
 # 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
-curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
-    "$ES_MONITOR_API/monitors/es-test-via-service/mytest" \
-    --data '{"model":"threshold","parameters":{"name":"my_custom_monitor_for_service","metric":"up","comparator":"<","threshold":"1","window":"5m","confidence":"0.5","severity":"critical","summary":"pod not up","description":"","monitorType":"es-test-via-service"}}'
+make_monitor "es-test-via-service/my_custom_monitor_for_service" "up"
 
 busy_wait model_exists my_custom_monitor_for_service
 
@@ -278,14 +310,12 @@ prom_has_data 'up{es_workload="es-test-via-service", es_monitor_type="es-test-vi
 # Succeeds if all data for the workload $1 has a matching es_monitor_type
 # Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
 prom_all_workload_data_has_monitor_type() {
-  results=$( prom_query "{es_workload=\"$1\", es_monitor_type!=\"$1\", __name__!="health"}" | jq '.data.result | length' )
+  results=$( prom_query "{es_workload=\"$1\", es_monitor_type!=\"$1\", __name__!=\"health\"}" | jq '.data.result | length' )
   [[ results -eq 0 ]]
 }
 
 # kubernetes-cadvisor metrics should have an es_monitor_type label.
-curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
-    "$ES_MONITOR_API/monitors/es-test/es-monitor-type-test" \
-    --data '{"model":"threshold","parameters":{"comparator":"\u003e=","confidence":"1","description":"cpu on {{ $labels.instance }} over 99% busy","meta":{},"metric":"container_cpu_load_average_10s{es_workload=\"es-test\"}","monitorType":"es-test","name":"es-monitor-type-test","severity":"warning","summary":"cpu saturated","threshold":"99","window":"5m"}}'
+make_monitor "es-test/es-monitor-type-test" "container_cpu_load_average_10s"
 
 busy_wait model_exists es-monitor-type-test
 # Specific test for regression of es-backend/issues/430.
@@ -294,12 +324,5 @@ prom_has_data '{job="kubernetes-cadvisor",es_monitor_type="es-test"}'
 # This assumes we've processed enough data at this point that any non-conforming jobs will be caught.
 busy_wait prom_all_workload_data_has_monitor_type es-test
 T $? "timeseries: all data for es-test workload has a matching es-monitor-type label"
-
-
-# clean up apps
-
-for app in resources/app*.yaml; do
-  kubectl delete -f "$app" -n lightbend
-done
 
 test_summary
