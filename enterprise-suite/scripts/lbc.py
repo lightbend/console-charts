@@ -92,6 +92,12 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
         if len(stderr) > 0 and show_stderr:
             printerr(stderr)
         returncode = proc.returncode
+    except OSError, o:
+        stdout=o.strerror
+        returncode=o.errno
+    except Exception, e:
+        stdout=str(e)
+        returncode=1
     finally:
         if timer != None:
             timer.cancel()
@@ -101,7 +107,7 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
 # prints it to stdout or stderr, handles failure status
 # codes by exiting with and error if can_fail=False.
 def execute(cmd, can_fail=False, print_to_stdout=False):
-    printerr(cmd)
+    printinfo(cmd)
     if not args.dry_run:
         stdout, returncode = run(cmd)
         if print_to_stdout:
@@ -146,7 +152,7 @@ def is_running_minikube():
     return False
 
 def is_running_minishift():
-    stdout, returncode = run('minishift status')
+    stdout, returncode = run('minishift status', show_stderr=False)
     if returncode == 0:
         if ('minishift: Running' in stdout) and ('cluster: Running') in stdout:
             stdout, returncode = run('kubectl config current-context')
