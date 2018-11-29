@@ -13,7 +13,7 @@ route:
   # Wait before sending a new alert for a group.
   group_interval: 5m
   # Group alerts by namespace and workload.
-  group_by: [namespace, es_workload]
+  group_by: [namespace, es_workload, severity]
   routes:
   # team1 Slack
   - match:
@@ -39,7 +39,7 @@ inhibit_rules:
     severity: critical
   target_match:
     severity: warning
-  equal: [alertname]
+  equal: [alertname, namespace, es_workload]
 
 templates:
 # Slack notification templates.
