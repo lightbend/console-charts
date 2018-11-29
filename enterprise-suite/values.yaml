@@ -6,7 +6,7 @@ esConsoleVersion: v0.1.8
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
 esMonitorVersion: v1.0.0
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.1.4
+esGrafanaVersion: v0.1.5
 # prom/prometheus
 prometheusVersion: v2.2.1
 # prom/alertmanager
