@@ -308,7 +308,7 @@ busy_wait model_exists my_custom_monitor_for_service
 prom_has_data 'up{es_workload="es-test-via-service", es_monitor_type="es-test-via-service"}'
 
 # 'Service' discovery with only endpoints
-app_instances_via_service_with_only_endpoints='count( count by (instance) (up{job="kubernetes-services", kubernetes_name="es-test-service-with-only-endpoints", namespace="lightbend"}) ) == 1'
+app_instances_via_service_with_only_endpoints='count( count by (instance) (up{job="kubernetes-services", kubernetes_name="es-test-service-with-only-endpoints", namespace="'$NAMESPACE'"}) ) == 1'
 app_data_via_service_with_only_endpoints() {
   results=$( prom_query "$app_instances_via_service_with_only_endpoints" | jq '.data.result | length' )
   ! [[ results -eq 0 ]]
