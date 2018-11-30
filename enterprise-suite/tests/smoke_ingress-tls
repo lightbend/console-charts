@@ -36,11 +36,11 @@ trap cleanup 0
 #   Normal  UPDATE  3s    nginx-ingress-controller  Ingress lightbend/ingress-test-tls
 #
 ingress_ready() {
-    # debug output
-    #kubectl describe ing/ingress-test-tls -n lightbend
     # ingress can take up to 1m to get ready
-    sleep 2
     kubectl describe ing/ingress-test-tls -n lightbend | awk 'END { exit !( $1 == "Normal"  &&  $2 == "UPDATE" ) }'
+    status=$?
+    sleep 2
+    return $status
 }
 
 # Makes sure expose-es-console is ready
