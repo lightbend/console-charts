@@ -54,18 +54,8 @@ set minikube=true
 
 ## kubectl apply enterprise suite:
 
-_This option will likely disappear in the future._
-
-```
-kubectl create namespace lightbend
-
-kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all.yaml
-
-# or use "latest" container images
-kubectl --namespace=lightbend apply -f https://lightbend.github.io/helm-charts/es/all-latest.yaml
-```
-
-These assume you're using minikube.
+If you want to use `kubectl` to apply the enterprise suite
+resource definitions then follow the [instructions in the official documentation](https://developer.lightbend.com/docs/console/current/installation/es.html#use-the-install-subcommand-to-generate-the-resource-yaml).
 
 ## Cutting a Release / Publishing Charts
 
