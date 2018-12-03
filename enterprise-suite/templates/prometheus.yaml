@@ -67,6 +67,11 @@ metadata:
   name: prometheus-server
 spec:
   replicas: 1
+
+  strategy:
+    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
+    type: Recreate
+
   selector:
     matchLabels:
       app: prometheus
