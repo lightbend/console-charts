@@ -48,6 +48,37 @@ tempdir = ''
 def test_make_tempdir():
     return tempdir
 
+class SetStrParsingTest(unittest.TestCase):
+    def test_parsing(self):
+        # Empty
+        self.assertEqual(lbc.parse_set_string(""), [])
+
+        # Most trivial case
+        self.assertEqual(lbc.parse_set_string("key=value"), [("key", "value")])
+
+        # Escaped commas
+        self.assertEqual(lbc.parse_set_string("key=val1\\,val2"), [("key", "val1,val2")])
+
+        # Multiple key value pairs
+        self.assertEqual(lbc.parse_set_string("key1=val1,key2=val2"), [("key1", "val1"), ("key2", "val2")])
+
+        # Quoted values
+        self.assertEqual(lbc.parse_set_string("key=\"value\""), [("key", "value")])
+        self.assertEqual(lbc.parse_set_string("key=\"val1,val2\""), [("key", "val1,val2")])
+
+        # Quoted values + multiple pairs
+        self.assertEqual(lbc.parse_set_string("key1=\"val1,val2\",key2=val3"), [("key1", "val1,val2"), ("key2", "val3")])
+
+        # Error cases
+        with self.assertRaises(ValueError):
+            lbc.parse_set_string("key=val1,val2,key2=val3")
+
+        with self.assertRaises(ValueError):
+            lbc.parse_set_string("val1,val2")
+
+        with self.assertRaises(ValueError):
+            lbc.parse_set_string("key=val1,key2=val1,val2")
+
 class LbcTest(unittest.TestCase):
     def setUpFakeChartfile(self):
         # Create tempdir & fake chartfile there for export yaml tests.
@@ -168,14 +199,14 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --set "minikube=true" --set "usePersistentVolumes=true"')
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set minikube=true --set usePersistentVolumes=true ')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'minikube=true', '--set', 'usePersistentVolumes=true'])
 
     def test_helm_set_array(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --set "alertmanagers=alertmgr-00\\,alertmgr-01\\,alertmgr-02"')
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set alertmanagers=alertmgr-00\\,alertmgr-01\\,alertmgr-02 ')
 
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'alertmanagers=alertmgr-00,alertmgr-01,alertmgr-02'])
 

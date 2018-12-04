@@ -288,6 +288,40 @@ def are_cluster_roles_created():
         fail_msg='Found some cluster roles from previous console install, but not all: {}. Please clean them up manually.'
     )
 
+# Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
+# pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
+#  parse_set_string('am=amg01:9093,amg02:9093') -> [('am', 'amg01:9093,amg02:9093')]
+#  parse_set_string('am="am01,am02",es=NodePort') -> [('alertManagers', 'am01,am02'), ('es', 'NodePort')]
+def parse_set_string(s):
+    # Keyval pair with commas allowed
+    keyval_pair_re = re.compile(r'(\w+)=([\w\-\+\*\:\\,]+)')
+    # Keyval pair without commas
+    keyval_pair_nc_re = re.compile(r'(\w+)=([\w\-\+\*\:]+)')
+    # Keyval pair with quoted value
+    keyval_pair_quot_re = re.compile(r'(\w+)="(.*?)"')
+
+    # We accept either a single keyval pair with commas allowed inside value, or multiple pairs
+    m = keyval_pair_re.match(s)
+    if m != None and m.group(0) == s:
+        return [(m.group(1), m.group(2).replace('\\,', ','))]
+    else:
+        left, result = s, []
+        while len(left) > 0:
+            mq = keyval_pair_quot_re.match(left)
+            mn = keyval_pair_nc_re.match(left)
+            m = mq or mn
+            if m != None:
+                matchlen = len(m.group(0))
+                result.append((m.group(1), m.group(2).replace('\\,', ',')))
+                if matchlen == len(left) or left[matchlen] == ',':
+                    left = left[matchlen+1:]
+                else:
+                    raise ValueError('unexpected characted "{}"'.format(left[matchlen]))
+            else:
+                raise ValueError('unable to parse "{}"'.format(left))
+        return result
+    return [] 
+
 def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
@@ -297,7 +331,9 @@ def install(creds_file):
 
     # Add '--set' arguments to helm_args
     if args.set != None:
-        helm_args += ' ' + ' '.join(['--set "' + keyval.replace(',', '\\,') + '"' for keyval in args.set])
+        for s in args.set:
+            for key,val in parse_set_string(s):
+                helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
 
     chart_ref = None
     if args.local_chart != None:
