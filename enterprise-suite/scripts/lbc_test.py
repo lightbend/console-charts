@@ -132,14 +132,14 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--no-reuse-resources'])
     
     def test_install_wait(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --wait')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--wait'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--wait', '--no-reuse-resources'])
 
     def test_install_helm_failed(self):
         # Failed previous install, no PVCs or clusterroles found for reuse
@@ -176,14 +176,14 @@ class LbcTest(unittest.TestCase):
 
         # Expect install to fail when previous install is still pending
         with self.assertRaises(TestFailException):
-            lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
+            lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--no-reuse-resources'])
 
     def test_upgrade(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=0)
         expect_cmd(r'helm upgrade enterprise-suite es-repo/enterprise-suite --devel --values \S+ ')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--no-reuse-resources'])
 
     def test_force_install(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
@@ -191,21 +191,21 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm status enterprise-suite', returncode=0)
         expect_cmd(r'helm delete --purge enterprise-suite')
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--force-install'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--force-install', '--no-reuse-resources'])
 
     def test_helm_args(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set minikube=true --fakearg')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--', '--set', 'minikube=true', '--fakearg'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--no-reuse-resources' , '--', '--set', 'minikube=true', '--fakearg'])
 
     def test_helm_set(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set minikube=true --set usePersistentVolumes=true ')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'minikube=true', '--set', 'usePersistentVolumes=true'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'minikube=true', '--set', 'usePersistentVolumes=true', '--no-reuse-resources'])
 
     def test_helm_set_array(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
@@ -213,33 +213,33 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set alertmanagers=alertmgr-00\\,alertmgr-01\\,alertmgr-02 ')
 
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'alertmanagers=alertmgr-00,alertmgr-01,alertmgr-02'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--set', 'alertmanagers=alertmgr-00,alertmgr-01,alertmgr-02', '--no-reuse-resources'])
 
     def test_specify_version(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --version 1\.0\.0-rc\.9 --values \S+')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--version=1.0.0-rc.9'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--version=1.0.0-rc.9', '--no-reuse-resources'])
 
     def test_install_local_chart(self):
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install chart.tgz --name enterprise-suite --namespace lightbend --devel --values \S+')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--local-chart=chart.tgz'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--local-chart=chart.tgz', '--no-reuse-resources'])
 
     def test_install_override_repo(self):
         expect_cmd(r'helm repo add es-repo https://repo.bintray.com/helm')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm', '--no-reuse-resources'])
 
     def test_install_override_name(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status lb-console', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name lb-console --namespace lightbend --devel --values \S+')
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--helm-name=lb-console'])
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--helm-name=lb-console', '--no-reuse-resources'])
 
     def test_install_reuse_pvcs(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')

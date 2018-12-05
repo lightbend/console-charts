@@ -326,8 +326,10 @@ def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
-    # Helm args are separated from lbc.py args by double dash, filter it out
-    helm_args = ' '.join([arg for arg in args.helm if arg != '--']) + ' '
+    helm_args = ''
+    if len(args.helm) > 0:
+        # Helm args are separated from lbc.py args by double dash, filter it out
+        helm_args += ' '.join([arg for arg in args.helm if arg != '--']) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set != None:
@@ -603,8 +605,12 @@ def setup_args(argv):
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
                         choices=['creds', 'console'])
-    install.add_argument('--reuse-resources', help='try to reuse PVCs and/or cluster roles from a previous install',
-                        action='store_true')
+
+    install.add_argument('--reuse-resources', dest='reuse_resources',
+        help='try to reuse PVCs and/or cluster roles from a previous install', action='store_true')
+    install.add_argument('--no-reuse-resources', dest='reuse_resources', help=argparse.SUPPRESS, action='store_false')
+    install.set_defaults(reuse_resources=True)
+
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
