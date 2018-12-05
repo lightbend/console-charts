@@ -145,13 +145,12 @@ class LbcTest(unittest.TestCase):
                    stdout='es-console 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace lightbend get deploy/grafana-server --no-headers',
                    stdout='grafana-server 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-server --no-headers',
                    stdout='prometheus-server 2 2 2 2 15m')
-
+        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m')
 
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--wait', '--no-reuse-resources'])
 
@@ -308,12 +307,12 @@ class LbcTest(unittest.TestCase):
         # Grafana is not running
         expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
                    stdout='grafana-server 1 1 1 0 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
                    stdout='prometheus-server 2 2 2 2 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m')
 
         # Expect verify to fail
         with self.assertRaises(TestFailException):
@@ -324,12 +323,12 @@ class LbcTest(unittest.TestCase):
                    stdout='es-console 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
                    stdout='grafana-server 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
                    stdout='prometheus-server 2 2 2 2 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m')
 
         lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])
 

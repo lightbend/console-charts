@@ -36,10 +36,12 @@ REQ_VER_OC = '3.9'
 CONSOLE_DEPLOYMENTS = [
     'es-console',
     'grafana-server',
-    'prometheus-alertmanager',
     'prometheus-kube-state-metrics',
     'prometheus-server'
 ]
+
+# Alertmanager deployment, this check can be turned off with --external-alertmanager
+CONSOLE_ALERTMANAGER_DEPLOYMENT = 'prometheus-alertmanager'
 
 # Install checks if these are already created, tries to reuse them if so
 CONSOLE_PVCS = [
@@ -458,7 +460,7 @@ def import_credentials():
 
     return creds
 
-def check_install():
+def check_install(external_alertmanager=False):
     def deployment_running(name):
         printinfo('Checking deployment {} ... '.format(name), end='')
         stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
@@ -485,7 +487,11 @@ def check_install():
 
     status_ok = True
 
-    for dep in CONSOLE_DEPLOYMENTS:
+    deps = CONSOLE_DEPLOYMENTS
+    if not external_alertmanager:
+        deps = deps + [CONSOLE_ALERTMANAGER_DEPLOYMENT]
+
+    for dep in deps:
         status_ok &= deployment_running(dep)
 
     if status_ok:
@@ -607,7 +613,7 @@ def setup_args(argv):
                         choices=['creds', 'console'])
 
     install.add_argument('--reuse-resources', dest='reuse_resources',
-        help='try to reuse PVCs and/or cluster roles from a previous install', action='store_true')
+                         help='try to reuse PVCs and/or cluster roles from a previous install', action='store_true')
     install.add_argument('--no-reuse-resources', dest='reuse_resources', help=argparse.SUPPRESS, action='store_false')
     install.set_defaults(reuse_resources=True)
 
@@ -623,6 +629,10 @@ def setup_args(argv):
 
     install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
                          nargs=argparse.REMAINDER)
+
+    # Verify arguments
+    verify.add_argument('--external-alertmanager', help='skips alertmanager check (for use with existing alertmanagers)',
+                        action='store_true')
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
@@ -677,7 +687,10 @@ def main(argv):
     if args.subcommand == 'verify' or force_verify:
         if not args.skip_checks:
             check_kubectl()
-        check_install()
+        if force_verify:
+            check_install()
+        else:
+            check_install(args.external_alertmanager)
  
     if args.subcommand == 'uninstall':
         if not args.skip_checks:
