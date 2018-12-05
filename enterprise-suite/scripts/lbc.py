@@ -651,11 +651,7 @@ def main(argv):
     global args
     args = setup_args(argv)
 
-    if args.subcommand == 'verify':
-        if not args.skip_checks:
-            check_kubectl()
-        check_install()
-    
+    force_verify = False
     if args.subcommand == 'install':
         creds = import_credentials()
 
@@ -674,7 +670,15 @@ def main(argv):
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
             write_temp_credentials(creds_tempfile, creds)
             install(creds_tempfile.name)
-    
+
+        if args.wait:
+            force_verify = True
+
+    if args.subcommand == 'verify' or force_verify:
+        if not args.skip_checks:
+            check_kubectl()
+        check_install()
+ 
     if args.subcommand == 'uninstall':
         if not args.skip_checks:
             check_helm()

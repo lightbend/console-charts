@@ -139,6 +139,20 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --wait')
+        
+        # Verify happens automatically when --wait is provided
+        expect_cmd(r'kubectl --namespace lightbend get deploy/es-console --no-headers',
+                   stdout='es-console 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/grafana-server --no-headers',
+                   stdout='grafana-server 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-kube-state-metrics --no-headers',
+                   stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-server --no-headers',
+                   stdout='prometheus-server 2 2 2 2 15m')
+
+
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--wait', '--no-reuse-resources'])
 
     def test_install_helm_failed(self):
