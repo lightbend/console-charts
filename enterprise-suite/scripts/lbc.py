@@ -291,7 +291,7 @@ def are_cluster_roles_created():
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
 #  parse_set_string('am=amg01:9093,amg02:9093') -> [('am', 'amg01:9093,amg02:9093')]
-#  parse_set_string('am="am01,am02",es=NodePort') -> [('alertManagers', 'am01,am02'), ('es', 'NodePort')]
+#  parse_set_string('am="am01,am02",es=NodePort') -> [('am', 'am01,am02'), ('es', 'NodePort')]
 def parse_set_string(s):
     # Keyval pair with commas allowed
     keyval_pair_re = re.compile(r'(\w+)=([\w\-\+\*\:\\,]+)')
@@ -327,7 +327,7 @@ def install(creds_file):
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
     # Helm args are separated from lbc.py args by double dash, filter it out
-    helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
+    helm_args = ' '.join([arg for arg in args.helm if arg != '--']) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set != None:
@@ -553,6 +553,15 @@ def debug_dump(args):
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-describe-all.txt', stdout)
+    else:
+        fail(failure_msg + 'unable to describe k8s resources in {} namespace'
+                .format(args.namespace))
+
+    # Describe PVCs
+    stdout, returncode = run('kubectl --namespace {} get pvc'.format(args.namespace),
+                             show_stderr=False)
+    if returncode == 0:
+        dump(archive, 'kubectl-get-pvc.txt', stdout)
     else:
         fail(failure_msg + 'unable to describe k8s resources in {} namespace'
                 .format(args.namespace))

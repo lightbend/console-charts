@@ -61,6 +61,7 @@ class SetStrParsingTest(unittest.TestCase):
 
         # Multiple key value pairs
         self.assertEqual(lbc.parse_set_string("key1=val1,key2=val2"), [("key1", "val1"), ("key2", "val2")])
+        self.assertEqual(lbc.parse_set_string("key1=val1,key2=val2,b=c"), [("key1", "val1"), ("key2", "val2"), ("b", "c")])
 
         # Quoted values
         self.assertEqual(lbc.parse_set_string("key=\"value\""), [("key", "value")])
@@ -78,6 +79,10 @@ class SetStrParsingTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             lbc.parse_set_string("key=val1,key2=val1,val2")
+        
+        with self.assertRaises(ValueError):
+            lbc.parse_set_string("key=val1,key2==val1")
+
 
 class LbcTest(unittest.TestCase):
     def setUpFakeChartfile(self):
