@@ -36,10 +36,12 @@ REQ_VER_OC = '3.9'
 CONSOLE_DEPLOYMENTS = [
     'es-console',
     'grafana-server',
-    'prometheus-alertmanager',
     'prometheus-kube-state-metrics',
     'prometheus-server'
 ]
+
+# Alertmanager deployment, this check can be turned off with --external-alertmanager
+CONSOLE_ALERTMANAGER_DEPLOYMENT = 'prometheus-alertmanager'
 
 # Install checks if these are already created, tries to reuse them if so
 CONSOLE_PVCS = [
@@ -288,16 +290,54 @@ def are_cluster_roles_created():
         fail_msg='Found some cluster roles from previous console install, but not all: {}. Please clean them up manually.'
     )
 
+# Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
+# pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
+#  parse_set_string('am=amg01:9093,amg02:9093') -> [('am', 'amg01:9093,amg02:9093')]
+#  parse_set_string('am="am01,am02",es=NodePort') -> [('am', 'am01,am02'), ('es', 'NodePort')]
+def parse_set_string(s):
+    # Keyval pair with commas allowed
+    keyval_pair_re = re.compile(r'(\w+)=([\w\-\+\*\:\\,]+)')
+    # Keyval pair without commas
+    keyval_pair_nc_re = re.compile(r'(\w+)=([\w\-\+\*\:]+)')
+    # Keyval pair with quoted value
+    keyval_pair_quot_re = re.compile(r'(\w+)="(.*?)"')
+
+    # We accept either a single keyval pair with commas allowed inside value, or multiple pairs
+    m = keyval_pair_re.match(s)
+    if m != None and m.group(0) == s:
+        return [(m.group(1), m.group(2).replace('\\,', ','))]
+    else:
+        left, result = s, []
+        while len(left) > 0:
+            mq = keyval_pair_quot_re.match(left)
+            mn = keyval_pair_nc_re.match(left)
+            m = mq or mn
+            if m != None:
+                matchlen = len(m.group(0))
+                result.append((m.group(1), m.group(2).replace('\\,', ',')))
+                if matchlen == len(left) or left[matchlen] == ',':
+                    left = left[matchlen+1:]
+                else:
+                    raise ValueError('unexpected character "{}"'.format(left[matchlen]))
+            else:
+                raise ValueError('unable to parse "{}"'.format(left))
+        return result
+    return [] 
+
 def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
-    # Helm args are separated from lbc.py args by double dash, filter it out
-    helm_args = ' '.join([arg for arg in args.helm if arg != '--'])
+    helm_args = ''
+    if len(args.helm) > 0:
+        # Helm args are separated from lbc.py args by double dash, filter it out
+        helm_args += ' '.join([arg for arg in args.helm if arg != '--']) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set != None:
-        helm_args += ' ' + ' '.join(['--set "' + keyval.replace(',', '\\,') + '"' for keyval in args.set])
+        for s in args.set:
+            for key,val in parse_set_string(s):
+                helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
 
     chart_ref = None
     if args.local_chart != None:
@@ -420,7 +460,7 @@ def import_credentials():
 
     return creds
 
-def check_install():
+def check_install(external_alertmanager=False):
     def deployment_running(name):
         printinfo('Checking deployment {} ... '.format(name), end='')
         stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
@@ -447,7 +487,11 @@ def check_install():
 
     status_ok = True
 
-    for dep in CONSOLE_DEPLOYMENTS:
+    deps = CONSOLE_DEPLOYMENTS
+    if not external_alertmanager:
+        deps = deps + [CONSOLE_ALERTMANAGER_DEPLOYMENT]
+
+    for dep in deps:
         status_ok &= deployment_running(dep)
 
     if status_ok:
@@ -521,6 +565,15 @@ def debug_dump(args):
         fail(failure_msg + 'unable to describe k8s resources in {} namespace'
                 .format(args.namespace))
 
+    # Describe PVCs
+    stdout, returncode = run('kubectl --namespace {} get pvc'.format(args.namespace),
+                             show_stderr=False)
+    if returncode == 0:
+        dump(archive, 'kubectl-get-pvc.txt', stdout)
+    else:
+        fail(failure_msg + 'unable to describe k8s resources in {} namespace'
+                .format(args.namespace))
+
     # Iterate over pods
     stdout, returncode = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
     if returncode == 0:
@@ -558,8 +611,12 @@ def setup_args(argv):
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
                         choices=['creds', 'console'])
-    install.add_argument('--reuse-resources', help='try to reuse PVCs and/or cluster roles from a previous install',
-                        action='store_true')
+
+    install.add_argument('--reuse-resources', dest='reuse_resources',
+                         help='try to reuse PVCs and/or cluster roles from a previous install', action='store_true')
+    install.add_argument('--no-reuse-resources', dest='reuse_resources', help=argparse.SUPPRESS, action='store_false')
+    install.set_defaults(reuse_resources=True)
+
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
@@ -572,6 +629,10 @@ def setup_args(argv):
 
     install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
                          nargs=argparse.REMAINDER)
+
+    # Verify arguments
+    verify.add_argument('--external-alertmanager', help='skips alertmanager check (for use with existing alertmanagers)',
+                        action='store_true')
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
@@ -600,11 +661,7 @@ def main(argv):
     global args
     args = setup_args(argv)
 
-    if args.subcommand == 'verify':
-        if not args.skip_checks:
-            check_kubectl()
-        check_install()
-    
+    force_verify = False
     if args.subcommand == 'install':
         creds = import_credentials()
 
@@ -623,7 +680,18 @@ def main(argv):
         with tempfile.NamedTemporaryFile('w') as creds_tempfile:
             write_temp_credentials(creds_tempfile, creds)
             install(creds_tempfile.name)
-    
+
+        if args.wait:
+            force_verify = True
+
+    if args.subcommand == 'verify' or force_verify:
+        if not args.skip_checks:
+            check_kubectl()
+        if force_verify:
+            check_install()
+        else:
+            check_install(args.external_alertmanager)
+ 
     if args.subcommand == 'uninstall':
         if not args.skip_checks:
             check_helm()
