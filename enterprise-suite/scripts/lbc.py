@@ -318,7 +318,7 @@ def parse_set_string(s):
                 if matchlen == len(left) or left[matchlen] == ',':
                     left = left[matchlen+1:]
                 else:
-                    raise ValueError('unexpected characted "{}"'.format(left[matchlen]))
+                    raise ValueError('unexpected character "{}"'.format(left[matchlen]))
             else:
                 raise ValueError('unable to parse "{}"'.format(left))
         return result
