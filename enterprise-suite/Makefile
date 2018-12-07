@@ -94,16 +94,25 @@ clean::  ## Delete make artifacts
 ## These targets used for dev work
 #
 
-# Install minikube-related services.  These are disabled by default but we enable for debugging purposes.
-# (If desired, you can override with "make <target> MINIKUBE=false")
-MINIKUBE=true
+# Expose services using NodePorts.  Normally disabled but often used
+# with minikube.  We enable for debugging purposes.
+# (If desired, you can override with something like "make <target> EXPOSE_METHOD=LoadBalancer"
+# or "make <target> EXPOSE_METHOD=" to get the default unexposed behavior.)
+EXPOSE_SERVICES=--set exposeServices=NodePort
+ifneq ($(origin EXPOSE_METHOD), undefined)
+  ifeq ($(EXPOSE_METHOD),)
+    EXPOSE_SERVICES=
+  else
+    EXPOSE_SERVICES=--set exposeServices=$(EXPOSE_METHOD)
+  endif
+endif
 
 allyaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build all.yaml file
 
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< --set minikube=$(MINIKUBE) > $@
+	helm --namespace=$(NAMESPACE) template $< $(EXPOSE_SERVICES) > $@
 
 TILLER_NAMESPACE := kube-system
 
@@ -122,11 +131,11 @@ install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install l
 	# We set a podUID here for test purposes to ensure everything works as non-root.
 	# We usePersistentVolumes to ensure PVCs work as expected.
 	-$(CHART_DIR)/scripts/lbc.py install --local-chart=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
-		--wait --set minikube=$(MINIKUBE),podUID=10001,usePersistentVolumes=true -- $(HELM_VALUES_FLAG)
+		--wait $(EXPOSE_SERVICES) --set podUID=10001,usePersistentVolumes=true -- $(HELM_VALUES_FLAG)
 
 install-dev: install-helm ## Install content of enterprise-suite/ folder
 	-$(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) --wait \
-		--set minikube=$(MINIKUBE) -- $(HELM_VALUES_FLAG)
+		$(EXPOSE_SERVICES) -- $(HELM_VALUES_FLAG)
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
