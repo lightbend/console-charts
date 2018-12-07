@@ -105,7 +105,7 @@ data:
       #   magic 'replace' value ' $1/' with a space prefix tells nginx to not add server and port
       # sub_filter 'match' 'replace'
       #   rewrites backend content, which we use for inserting the base path
-      # proxie_cookie_path 'match' 'replace'
+      # proxy_cookie_path 'match' 'replace'
       #   fixes session cookie Path attribute, for Grafana
 
       # proxy_pass backends with dynamic base url
@@ -155,6 +155,8 @@ data:
       }
 
       # redirect /service/prometheus -> /service/prometheus/
+      # redirect /service/grafana -> /service/grafana/
+      # redirect /service/alertmanager -> /service/alertmanager/
 
       location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
         return 301 ' $1/';
