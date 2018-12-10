@@ -62,7 +62,10 @@ spec:
             - --config.file=/etc/config/alertmanager.yml
             - --storage.path=/data
             - --cluster.listen-address=$(POD_IP):6783
-
+            {{ if .Values.esConsoleURL -}}
+            - --web.external-url={{ .Values.esConsoleURL }}/service/alertmanager
+            - --web.route-prefix=/
+            {{ end }}
           ports:
             - containerPort: 9093
           readinessProbe:
