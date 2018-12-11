@@ -2,7 +2,6 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: ingress-test-tls
-  namespace: lightbend
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: “true”
@@ -17,5 +16,5 @@ spec:
         paths:
           - path: /es-console
             backend:
-              serviceName: expose-es-console
-              servicePort: {{PORT}}
+              serviceName: console-server
+              servicePort: 80

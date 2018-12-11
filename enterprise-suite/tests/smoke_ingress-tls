@@ -12,7 +12,7 @@
 # need to deal with the secrets too
 
 source smokecommon
-if [[ $CURRENT_CONTEXT == "minishift" ]]; then exit 0; fi
+if [[ "$TEST_CONTEXT" != "minikube" ]]; then exit 0; fi
 
 TMPFILE=$(mktemp -t pipe.XXX)
 
@@ -21,7 +21,7 @@ cleanup() {
         kubectl delete -f $TMPFILE > /dev/null
         rm -f $TMPFILE
     fi
-    kubectl delete secret tls-minikube-ingress-test-tls -n lightbend 2>/dev/null 1>&2
+    kubectl delete secret tls-minikube-ingress-test-tls -n ${NAMESPACE} 2>/dev/null 1>&2
 }
 
 # Make sure we delete the ingress resource
@@ -37,28 +37,25 @@ trap cleanup 0
 #
 ingress_ready() {
     # ingress can take up to 1m to get ready
-    kubectl describe ing/ingress-test-tls -n lightbend | awk 'END { exit !( $1 == "Normal"  &&  $2 == "UPDATE" ) }'
+    kubectl describe ing/ingress-test-tls -n ${NAMESPACE} | awk 'END { exit !( $1 == "Normal"  &&  $2 == "UPDATE" ) }'
     status=$?
     sleep 2
     return $status
 }
 
 # Makes sure expose-es-console is ready
-CONSOLE_NODE_BASE=$( busy_wait nodeport expose-es-console )
-
-CONSOLE_REMOTE_PORT=$( kubectl get -n lightbend services expose-es-console -o json | jq '.spec.ports[0].port' )
+CONSOLE_NODE_BASE=$( busy_wait nodeport )
 
 ## Setup ingress
 #
 # Add required secret.  This created using:
 # openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout tls.minikube.ingress.test.key -out tls.minikube.ingress.test.crt -days 3650 -subj "/CN=tls.minikube.ingress.test"
 #
-kubectl create secret tls tls-minikube-ingress-test-tls --key resources/tls.minikube.ingress.test.key --cert resources/tls.minikube.ingress.test.crt -n lightbend 2>/dev/null 1>&2
+kubectl create secret tls tls-minikube-ingress-test-tls --key resources/tls.minikube.ingress.test.key --cert resources/tls.minikube.ingress.test.crt -n ${NAMESPACE} 2>/dev/null 1>&2
 
 # Setup the Ingress resource
 # ...probably a cool way to do this with -o go-template or yq
-sed -e "s/{{PORT}}/$CONSOLE_REMOTE_PORT/g" <resources/ingress-test.template.tls.yaml >$TMPFILE
-kubectl apply -f $TMPFILE > /dev/null
+kubectl apply -n ${NAMESPACE} -f resources/ingress-test.tls.yaml
 
 # Wait until the changes have been applied
 busy_wait ingress_ready

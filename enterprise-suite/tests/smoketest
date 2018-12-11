@@ -6,13 +6,13 @@
 #   when the test run is finished, for better reports.
 
 FAILURES=0
+NAMESPACE=${NAMESPACE:-lightbend}
+DEBUG_FILE=debug.txt
 pids=()
 
 # print_debug "tag"  will print things into a Travis fold with unique ID "tag"
-function print_debug() {
-    [[ $TRAVIS ]] || return
-    echo -e "travis_fold:start:debug${1}.logs\033[33;1mDebug Logs\033[0m"
-    local pods=$(kubectl -n lightbend get pod --no-headers -o go-template='{{range .items}}{{.metadata.name}} {{end}}')
+function log_debug() {
+    local pods=$(kubectl -n $NAMESPACE get pod --no-headers -o go-template='{{range .items}}{{.metadata.name}} {{end}}')
     echo
     echo "========================================"
     echo "Deployment details:"
@@ -21,27 +21,37 @@ function print_debug() {
         echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         echo "Describe $pod:"
         echo
-        kubectl -n lightbend describe pod "$pod"
+        kubectl -n $NAMESPACE describe pod "$pod"
         echo
         echo "Previous logs for $pod:"
         echo
-        kubectl -n lightbend logs -p --all-containers "$pod"
+        kubectl -n $NAMESPACE logs -p --all-containers "$pod"
         echo
         echo
         echo "Logs for $pod:"
         echo
-        kubectl -n lightbend logs --all-containers "$pod"
+        kubectl -n $NAMESPACE logs --all-containers "$pod"
         echo
     done
     echo
     echo "========================================"
     echo
-    echo -e "\ntravis_fold:end:debug${1}.logs\r"
 }
 
-print_debug "pre"
+function print_to_travis() {
+    local file=$1
+    [[ $TRAVIS ]] || return
+    echo -e "travis_fold:start:${file}\033[33;1mDebug Logs\033[0m"
+    # throttle output so we don't kill travis
+    cat $file | while read x; do echo "$x"; sleep 0.01; done
+    echo -e "\ntravis_fold:end:${file}\r"
+}
 
-for smoketest in smoke_*; do
+if [ -z "$SMOKE_TESTS" ]; then
+    SMOKE_TESTS=$(ls smoke_*)
+fi
+
+for smoketest in $SMOKE_TESTS; do
 	echo ==== Running $smoketest
 
 	./$smoketest 2>&1 > /tmp/log-$smoketest &
@@ -72,7 +82,8 @@ echo
 echo "All tests completed with $FAILURES failures"
 
 if [ "$FAILURES" != "0" ]; then
-    print_debug "post"
+    log_debug "post" > post-$DEBUG_FILE
+    print_to_travis post-$DEBUG_FILE
 fi
 
 exit $FAILURES

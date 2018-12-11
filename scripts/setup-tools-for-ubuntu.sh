@@ -23,14 +23,20 @@ prom_version=2.3.2
 prom_file="prometheus-${prom_version}.linux-amd64.tar.gz"
 curl -LO https://github.com/prometheus/prometheus/releases/download/v${prom_version}/${prom_file}
 echo "351931fe9bb252849b7d37183099047fbe6d7b79dcba013fb6ae19cc1bbd8552 $prom_file" | sha256sum --check
-tar xzvf $prom_file
+tar xzvf ${prom_file}
 sudo cp prometheus-${prom_version}.linux-amd64/promtool /usr/local/bin/
 
 # install helm
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
-chmod 777 get_helm.sh
-sudo ./get_helm.sh
+helm_file="helm-v2.12.0-linux-amd64.tar.gz"
+curl -LO https://storage.googleapis.com/kubernetes-helm/${helm_file}
+echo "9f96a6e4fc52b5df906da381532cc2eb2f3f57cc203ccaec2b11cf5dc26a7dfc ${helm_file}" | sha256sum --check
+tar xzvf ${helm_file}
+sudo cp linux-amd64/helm /usr/local/bin/
 helm init -c
 
 # socat is needed for helm init --wait to work
 sudo apt-get install -y socat
+
+# kubectl
+curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
+    && chmod +x kubectl && sudo cp kubectl /usr/local/bin/ && rm kubectl

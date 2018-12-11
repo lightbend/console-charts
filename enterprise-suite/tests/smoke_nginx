@@ -2,7 +2,7 @@
 
 source smokecommon
 
-CONSOLE=$( busy_wait nodeport expose-es-console)
+CONSOLE=$( busy_wait nodeport)
 
 #
 # arbitrary base path

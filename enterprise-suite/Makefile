@@ -1,8 +1,8 @@
 # Using ?= cuz enterprise-suite-latest overrides this
 CHART ?= enterprise-suite
 
-RELEASE_NAME = es
-NAMESPACE = lightbend
+RELEASE_NAME := es
+NAMESPACE := lightbend
 
 define banner
 	$(info === $@)
@@ -24,7 +24,6 @@ CHART_DIR = .
 ALL_YAML ?= all.yaml
 #####
 
-
 all: lint build  ## lint then build chart
 build: init package allyaml  ## Build chart package (and all.yaml)
 
@@ -35,26 +34,20 @@ script-tests:
 	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
 	python $(CHART_DIR)/scripts/lbc_test.py
 
-minikube-tests: build install-local
-	@echo Installed Console from helm charts: $(CHART)
-	@echo Running tests
-	( cd $(CHART_DIR)/tests ; ./smoketest ; )
+minikube-backend-tests: build
+	@echo Running minikube tests
+	( cd $(CHART_DIR)/tests ; ./smoketest_minikube.sh ; )
 
-backend-tests: script-tests minikube-tests
+openshift-backend-tests: build
+	@echo Running openshift tests
+	( cd $(CHART_DIR)/tests ; ./smoketest_openshift.sh ; )
 
-frontend-tests:
+frontend-tests: build
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
 
-# This target required by top-level helm-charts Makefile.  Tests release on Travis
-#
-# The conditional bit is so we can control which set of tests are run given we're only
-# allowed a single 'test' target.
-test:  ## Run tests.  backend-tests by default.  Set env var ES_TEST=frontend to run front end tests.
-ifneq ($(ES_TEST),frontend)
-	$(MAKE) backend-tests
-else
-	$(MAKE) frontend-tests
-endif
+# This target required by top-level helm-charts Makefile. It's not used by travis.
+# It only performs lightweight checks.
+test: lint script-tests
 
 # We no longer need a target to build the index.yaml file since that's up to the
 # helm-charts Makefile.  Could include this though...
@@ -90,52 +83,12 @@ lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
 clean::  ## Delete make artifacts
 	rm -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
 
-
-## These targets used for dev work
-#
-
-# Expose services using NodePorts.  Normally disabled but often used
-# with minikube.  We enable for debugging purposes.
-# (If desired, you can override with something like "make <target> EXPOSE_METHOD=LoadBalancer"
-# or "make <target> EXPOSE_METHOD=" to get the default unexposed behavior.)
-EXPOSE_SERVICES=--set exposeServices=NodePort
-ifneq ($(origin EXPOSE_METHOD), undefined)
-  ifeq ($(EXPOSE_METHOD),)
-    EXPOSE_SERVICES=
-  else
-    EXPOSE_SERVICES=--set exposeServices=$(EXPOSE_METHOD)
-  endif
-endif
-
 allyaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build all.yaml file
 
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
 	helm --namespace=$(NAMESPACE) template $< $(EXPOSE_SERVICES) > $@
-
-TILLER_NAMESPACE := kube-system
-
-install-helm:  ## Install required helm components into cluster
-	-kubectl create namespace $(TILLER_NAMESPACE)
-	-kubectl create serviceaccount --namespace $(TILLER_NAMESPACE) tiller
-	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin --serviceaccount=$(TILLER_NAMESPACE):tiller
-	-helm init --wait --service-account tiller --upgrade --tiller-namespace=$(TILLER_NAMESPACE)
-
-# helm settings for installing locally
-# If set, HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
-HELM_VALUES_FLAG=$(if $(HELM_VALUES_FILE),--values $(HELM_VALUES_FILE))
-
-# Used for minikube tests.
-install-local: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz install-helm  ## Install local tarball
-	# We set a podUID here for test purposes to ensure everything works as non-root.
-	# We usePersistentVolumes to ensure PVCs work as expected.
-	-$(CHART_DIR)/scripts/lbc.py install --local-chart=$(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz \
-		--wait $(EXPOSE_SERVICES) --set podUID=10001,usePersistentVolumes=true -- $(HELM_VALUES_FLAG)
-
-install-dev: install-helm ## Install content of enterprise-suite/ folder
-	-$(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) --wait \
-		$(EXPOSE_SERVICES) -- $(HELM_VALUES_FLAG)
 
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
