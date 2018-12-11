@@ -51,7 +51,7 @@ CONSOLE_PVCS = [
 ]
 
 CONSOLE_CLUSTER_ROLES = [
-    'prometheus-kube-state-metrics',
+    'kube-state-metrics',
     'prometheus-server'
 ]
 
