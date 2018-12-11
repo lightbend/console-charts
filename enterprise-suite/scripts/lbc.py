@@ -269,7 +269,7 @@ def check_resource_list(cmd, expected, fail_msg):
                 fail('Multiple lines with resource {} found: {}'.format(res, str(found_lines)))
 
         if not all_found and len(found_resources) > 0:
-            fail(fail_msg.format(str(found_pvcs)))
+            fail(fail_msg.format(str(found_resources)))
 
         return all_found
     return False
