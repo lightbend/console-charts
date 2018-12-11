@@ -269,7 +269,7 @@ def check_resource_list(cmd, expected, fail_msg):
                 fail('Multiple lines with resource {} found: {}'.format(res, str(found_lines)))
 
         if not all_found and len(found_resources) > 0:
-            fail(fail_msg.format(str(found_resources)))
+            fail(fail_msg.format(str(found_resources), str(expected)))
 
         return all_found
     return False
@@ -279,7 +279,7 @@ def are_pvcs_created(namespace):
     return check_resource_list(
         cmd='kubectl get pvc --namespace={} --no-headers'.format(namespace),
         expected=CONSOLE_PVCS,
-        fail_msg='Found some PVCs from previous console install, but not all: {}.\nTo avoid data loss, please clean them up manually'
+        fail_msg='Found some PVCs ({}) from previous console install, but not all expected: {}.\nTo avoid data loss, please clean them up manually'
     )
 
 # Checks for console cluster roles
@@ -287,7 +287,7 @@ def are_cluster_roles_created():
     return check_resource_list(
         cmd='kubectl get clusterroles --no-headers',
         expected=CONSOLE_CLUSTER_ROLES,
-        fail_msg='Found some cluster roles from previous console install, but not all: {}. Please clean them up manually.'
+        fail_msg='Found some cluster roles ({}) from previous console install, but not all expected: {}. Please remove them manually.'
     )
 
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
