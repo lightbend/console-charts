@@ -279,7 +279,7 @@ def are_pvcs_created(namespace):
     return check_resource_list(
         cmd='kubectl get pvc --namespace={} --no-headers'.format(namespace),
         expected=CONSOLE_PVCS,
-        fail_msg='Found some PVCs ({}) from previous console install, but not all expected: {}.\nTo avoid data loss, please clean them up manually'
+        fail_msg='Found some PVCs ({}) from previous console install, but not all expected: {}.\nTo avoid data loss, please remove them manually'
     )
 
 # Checks for console cluster roles
