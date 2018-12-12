@@ -181,7 +181,7 @@ data:
           {{- end}}
           "name": {{ .Chart.Name | quote }}
         }';
-        add_header Content-Type application/json;
+        default_type application/json;
       }
 
       # console entry point
