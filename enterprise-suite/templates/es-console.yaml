@@ -179,7 +179,8 @@ data:
           {{ $k | quote }}: {{ $v | quote }},
             {{- end}}
           {{- end}}
-          "name": {{ .Chart.Name | quote }}\n}';
+          "name": {{ .Chart.Name | quote }}
+        }';
         add_header Content-Type application/json;
       }
 
