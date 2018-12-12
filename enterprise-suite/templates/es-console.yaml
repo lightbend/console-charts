@@ -175,7 +175,7 @@ data:
           "imageCredentials": { {{ $k2 |quote }}: {{ $v2 | quote}} },
                 {{- end}}
               {{- end}}
-            {{- else}}
+            {{- else if ($v) }}
           {{ $k | quote }}: {{ $v | quote }},
             {{- end}}
           {{- end}}
