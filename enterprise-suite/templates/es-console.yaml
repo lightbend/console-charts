@@ -169,9 +169,15 @@ data:
           "description": {{ .Chart.Description | quote }},
           "version": {{ .Chart.Version | quote }},
           {{- range $k, $v := .Values }}
-          {{- if and (ne $k "imageCredentials") ($v) }}
+            {{- if eq $k "imageCredentials" }}
+              {{- range $k2, $v2 := . }}
+                {{- if and (eq $k2 "registry") ($v2) }}
+          "imageCredentials": { {{ $k2 |quote }}: {{ $v2 | quote}} },
+                {{- end}}
+              {{- end}}
+            {{- else}}
           {{ $k | quote }}: {{ $v | quote }},
-          {{- end}}
+            {{- end}}
           {{- end}}
           "name": {{ .Chart.Name | quote }}\n}';
         add_header Content-Type application/json;
