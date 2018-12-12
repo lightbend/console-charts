@@ -2,6 +2,7 @@ package helm
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/lightbend/console_test/util"
 )
@@ -9,7 +10,7 @@ import (
 const ServiceAccountName = "tiller"
 
 func IsInstalled() bool {
-	if err := util.ExecZeroExitCode("helm", "status"); err != nil {
+	if _, err := util.Cmd("helm", "status").Run(); err != nil {
 		return false
 	}
 
@@ -17,17 +18,25 @@ func IsInstalled() bool {
 }
 
 func Install(namespace string) error {
-	if err := util.ExecZeroExitCode("kubectl", "create", "namespace", namespace); err != nil {
+	cmd := util.Cmd("kubectl", "create", "namespace", namespace)
+	if _, err := cmd.Run(); err != nil {
 		return err
 	}
-	if err := util.ExecZeroExitCode("kubectl", "create", "serviceaccount", "--namespace", namespace, ServiceAccountName); err != nil {
+
+	cmd = util.Cmd("kubectl", "create", "serviceaccount", "--namespace", namespace, ServiceAccountName)
+	if _, err := cmd.Run(); err != nil {
 		return err
 	}
 
 	namespacedServiceAccount := fmt.Sprintf("%v:%v", namespace, ServiceAccountName)
-	err := util.ExecZeroExitCode("kubectl", "create", "clusterrolebinding",
+	cmd = util.Cmd("kubectl", "create", "clusterrolebinding",
 		namespacedServiceAccount, "--clusterrole=cluster-admin", "--serviceaccount", namespacedServiceAccount)
-	if err != nil {
+	if _, err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = util.Cmd("helm", "init", "--wait", "--service-account", ServiceAccountName, "--upgrade", "--tiller-namespace", namespace)
+	if _, err := cmd.Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 

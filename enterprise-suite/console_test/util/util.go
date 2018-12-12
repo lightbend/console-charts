@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -12,47 +14,117 @@ import (
 
 const DefaultTimeout = 3 * time.Second
 
-// Executes a command with default timeout, returns exit status code or an error
-func Exec(name string, arg ...string) (int, error) {
-	return ExecWithTimeout(DefaultTimeout, name, arg...)
+type CmdBuilder struct {
+	name                 string
+	args                 []string
+	timeout              time.Duration
+	expectZeroExitStatus bool
+	panicOnError         bool
+	printStdout          bool
+	printStderr          bool
 }
 
-// Executes a command with given timeout, returns exit status code or an error
-func ExecWithTimeout(timeout time.Duration, name string, arg ...string) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func Cmd(name string, args ...string) *CmdBuilder {
+	return &CmdBuilder{
+		name:                 name,
+		args:                 args,
+		timeout:              DefaultTimeout,
+		expectZeroExitStatus: true,
+		panicOnError:         false,
+	}
+}
 
-	if err := exec.CommandContext(ctx, name, arg...).Run(); err != nil {
-		// Any non-zero return code is an error, handle that here
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				return status.ExitStatus(), nil
+func (cb *CmdBuilder) Timeout(t time.Duration) *CmdBuilder {
+	cb.timeout = t
+	return cb
+}
+
+func (cb *CmdBuilder) NoTimeout() *CmdBuilder {
+	cb.timeout = 0
+	return cb
+}
+
+func (cb *CmdBuilder) AnyExitStatus() *CmdBuilder {
+	cb.expectZeroExitStatus = false
+	return cb
+}
+
+func (cb *CmdBuilder) PanicOnError() *CmdBuilder {
+	cb.panicOnError = true
+	return cb
+}
+
+func (cb *CmdBuilder) PrintStdout() *CmdBuilder {
+	cb.printStdout = true
+	return cb
+}
+
+func (cb *CmdBuilder) PrintStderr() *CmdBuilder {
+	cb.printStderr = true
+	return cb
+}
+
+func (cb *CmdBuilder) Run() (int, error) {
+	var cmd *exec.Cmd
+
+	// Set up timeout context if needed
+	if cb.timeout == 0 {
+		cmd = exec.Command(cb.name, cb.args...)
+	} else {
+		ctx, cancel := context.WithTimeout(context.Background(), cb.timeout)
+		cmd = exec.CommandContext(ctx, cb.name, cb.args...)
+		defer cancel()
+	}
+
+	var exitcode int
+	var cmderr error
+
+	// Setup stdout/sterr pipes
+	cmdstderr, err := cmd.StderrPipe()
+	if err != nil {
+		cmderr = err
+	}
+	cmdstdout, err := cmd.StdoutPipe()
+	if err != nil {
+		cmderr = err
+	}
+
+	if cmderr == nil {
+		// Run the command
+		if err := cmd.Start(); err != nil {
+			// Arbitrary exit code for other errors
+			exitcode, cmderr = -100, err
+		} else {
+			if cb.printStdout {
+				io.Copy(os.Stdout, cmdstdout)
+			}
+
+			if cb.printStderr {
+				io.Copy(os.Stderr, cmdstderr)
+			}
+
+			// Wait for command to finish
+			if err := cmd.Run(); err != nil {
+				// Any non-zero return code results in an error, handle that here
+				if exiterr, ok := err.(*exec.ExitError); ok {
+					if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+						exitcode = status.ExitStatus()
+					}
+				} else {
+					exitcode, cmderr = -100, err
+				}
 			}
 		}
-
-		// Arbitrary exit code for other errors
-		return -100, err
 	}
 
-	return 0, nil
-}
-
-// Executes a command with default timeout where exit code is expected to be zero, returns non-nil error otherwise
-func ExecZeroExitCode(name string, arg ...string) error {
-	return ExecZeroExitCodeWithTimeout(DefaultTimeout, name, arg...)
-}
-
-// Executes a command with given timeout where exit code is expected to be zero, returns non-nil error otherwise
-func ExecZeroExitCodeWithTimeout(timeout time.Duration, name string, arg ...string) error {
-	status, err := ExecWithTimeout(timeout, name, arg...)
-
-	if err != nil {
-		return err
+	// Make an error on non-zero exit
+	if cb.expectZeroExitStatus && cmderr == nil && exitcode != 0 {
+		cmderr = errors.New(fmt.Sprintf("'%v %v' return status %v", cb.name, strings.Join(cb.args[:], " "), exitcode))
 	}
 
-	if status != 0 {
-		return errors.New(fmt.Sprintf("%v %v return status %v", name, strings.Join(arg[:], " "), status))
+	if cb.panicOnError && cmderr != nil {
+		panic(cmderr)
 	}
 
-	return nil
+	return exitcode, cmderr
 }

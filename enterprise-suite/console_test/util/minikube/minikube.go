@@ -8,10 +8,10 @@ import (
 )
 
 func IsRunning() bool {
-	if status, err := util.Exec("minikube", "status"); err != nil {
+	if status, err := util.Cmd("minikube", "status").AnyExitStatus().Run(); err != nil {
 		return false
 	} else {
-		// minikube status exit code has bit encoded
+		// minikube status exit code has bit encoded state
 		// 1 for minikube OK
 		// 2 for cluster OK
 		// 4 for kubernetes OK
@@ -20,14 +20,28 @@ func IsRunning() bool {
 }
 
 func Start(cpus int, mem int) error {
-	return util.ExecZeroExitCodeWithTimeout(time.Minute,
-		"minikube", "start", fmt.Sprintf("--cpus=%v", cpus), fmt.Sprintf("--memory=%v", mem))
+	_, err := util.Cmd("minikube", "start", fmt.Sprintf("--cpus=%v", cpus), fmt.Sprintf("--memory=%v", mem)).
+		Timeout(time.Minute * 3).
+		PrintStdout().
+		PrintStderr().
+		Run()
+	return err
 }
 
 func Stop() error {
-	return util.ExecZeroExitCodeWithTimeout(time.Second*30, "minikube", "stop")
+	_, err := util.Cmd("minikube", "stop").
+		Timeout(time.Minute).
+		PrintStdout().
+		PrintStderr().
+		Run()
+	return err
 }
 
 func Delete() error {
-	return util.ExecZeroExitCodeWithTimeout(time.Second*30, "minikube", "delete")
+	_, err := util.Cmd("minikube", "delete").
+		Timeout(time.Minute).
+		PrintStdout().
+		PrintStderr().
+		Run()
+	return err
 }
