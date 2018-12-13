@@ -50,11 +50,6 @@ CONSOLE_PVCS = [
     'prometheus-storage'
 ]
 
-CONSOLE_CLUSTER_ROLES = [
-    'kube-state-metrics',
-    'prometheus-server'
-]
-
 DEFAULT_TIMEOUT=3
 
 # Parsed commandline args
@@ -282,14 +277,6 @@ def are_pvcs_created(namespace):
         fail_msg='Found some PVCs ({}) from previous console install, but not all expected: {}.\nTo avoid data loss, please remove them manually'
     )
 
-# Checks for console cluster roles
-def are_cluster_roles_created():
-    return check_resource_list(
-        cmd='kubectl get clusterroles --no-headers',
-        expected=CONSOLE_CLUSTER_ROLES,
-        fail_msg='Found some cluster roles ({}) from previous console install, but not all expected: {}. Please remove them manually.'
-    )
-
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
 #  parse_set_string('am=amg01:9093,amg02:9093') -> [('am', 'amg01:9093,amg02:9093')]
@@ -409,11 +396,6 @@ def install(creds_file):
             if are_pvcs_created(args.namespace):
                 printerr('info: found existing PVCs from previous console installation, will reuse them')
                 helm_args += ' --set createPersistentVolumes=false'
-
-            # Reuse cluster roles if present
-            if are_cluster_roles_created():
-                printerr('info: found existing cluster roles from previous console installation, will reuse them')
-                helm_args += ' --set createClusterRoles=false'
 
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
