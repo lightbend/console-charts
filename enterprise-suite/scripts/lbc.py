@@ -94,10 +94,10 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
         if len(stderr) > 0 and show_stderr:
             printerr(stderr)
         returncode = proc.returncode
-    except OSError, o:
-        stdout=o.strerror
-        returncode=o.errno
-    except Exception, e:
+    except OSError as e:
+        stdout=e.strerror
+        returncode=e.errno
+    except Exception as e:
         stdout=str(e)
         returncode=1
     finally:
