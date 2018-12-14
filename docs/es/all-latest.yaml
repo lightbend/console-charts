@@ -9,27 +9,193 @@ metadata:
 data:
   akka-exporter.json: |
     [
-      {"graphName":"Mailbox Size", "promQL":["max by (actor)(akka_actor_mailbox_size{ContextTags})"]},
-      {"graphName":"Mailbox Time", "promQL":["max by (actor)(akka_actor_mailbox_time_ns{ContextTags,quantile=\"0.99\"})"]},
-      {"graphName":"Actor Failures Rate", "promQL":["sum by (actor) (irate(akka_actor_actor_failure{ContextTags}[1m]))"]},
-      {"graphName":"Processed Message Rate", "promQL":["sum by (actor)(irate(akka_actor_processed_messages{ContextTags}[1m]))"]},
-      {"graphName":"Processing Time", "promQL":["max by (actor)(akka_actor_processing_time_ns{ContextTags,quantile=\"0.99\"})"]},
-      {"graphName":"Sent Messages Rate", "promQL":["sum by (actor)(irate(akka_actor_sent_messages{ContextTags}[1m]))"]},
-      {"graphName":"Running Actors", "promQL":["sum by (actor)(akka_actor_running_actors{ContextTags})"]},
-      {"graphName":"Unhandled Messages Rate", "promQL":["sum by (actor)(irate(akka_actor_unhandled_message{ContextTags}[1m]))"]},
-      {"graphName":"Dead Letters Rate", "promQL":["sum by (actor) (irate(akka_actor_dead_letter{ContextTags}[1m]))"]},
-      {"graphName":"Dispatcher Queue Size", "promQL":["max by (actor_system) (akka_dispatcher_queue_size{ContextTags})"]},
-      {"graphName":"Dispatcher Pool Size", "promQL":["sum by (actor_system) (akka_dispatcher_pool_size{ContextTags})"]},
-      {"graphName":"Dispatcher Threads", "promQL":["sum by (actor_system) (akka_dispatcher_active_threads{ContextTags})","sum by (actor_system) (akka_dispatcher_running_threads{ContextTags})"]}
+      {
+        "graphName": "Mailbox Size",
+        "promQL": [
+          {
+            "expr": "max by (actor)(akka_actor_mailbox_size{ContextTags,quantile=\"0.99\"})",
+            "legendFormat": "{{actor}} max"
+          }
+        ]
+      },
+      {
+        "graphName": "Mailbox Time",
+        "promQL": [
+          {
+            "expr": "max by (actor)(akka_actor_mailbox_time_ns{ContextTags,quantile=\"0.99\"})",
+            "legendFormat": "{{actor}} max"
+          }
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      },
+      {
+        "graphName": "Actor Failure Rate",
+        "promQL": [
+          {
+            "expr": "sum by (actor) (irate(akka_actor_actor_failure{ContextTags}[1m]))",
+            "legendFormat": "{{actor}} sum"
+          }
+        ]
+      },
+      {
+        "graphName": "Processed Message Rate",
+        "promQL": [
+          {
+            "expr": "sum by (actor)(irate(akka_actor_processed_messages{ContextTags}[1m]))",
+            "legendFormat": "{{actor}} sum"
+          }
+        ],
+        "yaxes": {
+          "label": "msgs/sec"
+        }
+      },
+      {
+        "graphName": "Processing Time",
+        "promQL": [
+          {
+            "expr": "max by (actor)(akka_actor_processing_time_ns{ContextTags,quantile=\"0.99\"})",
+            "legendFormat": "{{actor}} max"
+          }
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      },
+      {
+        "graphName": "Sent Message Rate",
+        "promQL": [
+          {
+            "expr": "sum by (actor)(irate(akka_actor_sent_messages{ContextTags}[1m]))",
+            "legendFormat": "{{actor}} sum"
+          }
+        ],
+        "yaxes": {
+          "label": "msgs/sec"
+        }
+      },
+      {
+        "graphName": "Running Actors",
+        "promQL": [
+          {
+            "expr": "sum by (actor)(akka_actor_running_actors{ContextTags})",
+            "legendFormat": "{{actor}} sum"
+          }
+        ],
+        "yaxes": {
+          "decimals": 0
+        }
+      },
+      {
+        "graphName": "Unhandled Message Rate",
+        "promQL": [
+          {
+            "expr": "sum by (actor)(irate(akka_actor_unhandled_message{ContextTags}[1m]))",
+            "legendFormat": "{{actor}} sum"
+          }
+        ]
+      },
+      {
+        "graphName": "Dead Letter Rate",
+        "promQL": [
+          {
+            "expr": "sum by (actor) (rate(akka_actor_dead_letter{ContextTags}[5m]))",
+            "legendFormat": "{{actor}} sum"
+          }
+        ]
+      },
+      {
+        "graphName": "Dispatcher Queue Size",
+        "promQL": [
+          {
+            "expr": "max by (actor_system) (max_over_time(akka_dispatcher_queue_size{ContextTags}[$__interval]))",
+            "legendFormat": "{{actor_system}} max"
+          }
+        ],
+        "yaxes": {
+          "decimals": 0
+        }
+      },
+      {
+        "graphName": "Dispatcher Pool Size",
+        "promQL": [
+          {
+            "expr": "max by (actor_system) (max_over_time(akka_dispatcher_pool_size{ContextTags}[$__interval]))",
+            "legendFormat": "{{actor_system}} max"
+          }
+        ],
+        "yaxes": {
+          "decimals": 0
+        }
+      },
+      {
+        "graphName": "Dispatcher Threads",
+        "promQL": [
+          {
+            "expr": "max by (actor_system) (akka_dispatcher_active_threads{ContextTags})",
+            "legendFormat": "{{actor_system}} max"
+          },
+          {
+            "expr": "max by (actor_system) (akka_dispatcher_running_threads{ContextTags})",
+            "legendFormat": "{{actor_system}} max"
+          }
+        ],
+        "yaxes": {
+          "decimals": 0
+        }
+      }
     ]
   akka-http-exporter.json: |
     [
-      {"graphName":"Responses Per Second", "promQL":["sum by (request_path)(irate(akka_http_request_path_endpoint_responses{ContextTags}[1m]))"]},
-      {"graphName":"Response Time", "promQL":["max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"]},
-      {"graphName":"Connections Per Second", "promQL":["sum by (http_server)(irate(akka_http_http_server_connections{ContextTags}[1m]))"]},
-      {"graphName":"Response Time 2XX 99% (ms)", "promQL":["max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]},
-      {"graphName":"Response Time 4XX 99% (ms)", "promQL":["max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]},
-      {"graphName":"Response Time 5XX 99% (ms)", "promQL":["max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]}
+      {
+        "graphName": "Responses Per Second",
+        "promQL": [
+          "sum by (request_path)(irate(akka_http_request_path_endpoint_responses{ContextTags}[1m]))"
+        ]
+      },
+      {
+        "graphName": "Response Time",
+        "promQL": [
+          "max by (request_path)(akka_http_request_path_endpoint_response_time_ns{ContextTags,quantile=\"0.99\"})"
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      },
+      {
+        "graphName": "Connections Per Second",
+        "promQL": [
+          "sum by (http_server)(irate(akka_http_http_server_connections{ContextTags}[1m]))"
+        ]
+      },
+      {
+        "graphName": "Response Time 2XX 99%",
+        "promQL": [
+          "max by (http_server)(akka_http_http_server_response_time_2xx_ns{ContextTags, quantile=\"0.99\"})"
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      },
+      {
+        "graphName": "Response Time 4XX 99%",
+        "promQL": [
+          "max by (http_server)(akka_http_http_server_response_time_4xx_ns{ContextTags, quantile=\"0.99\"})"
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      },
+      {
+        "graphName": "Response Time 5XX 99%",
+        "promQL": [
+          "max by (http_server)(akka_http_http_server_response_time_5xx_ns{ContextTags, quantile=\"0.99\"})"
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      }
     ]
   cassandra-exporter.json: |
     [
@@ -49,29 +215,145 @@ data:
     ]
   jvm-exporter.json: |
     [
-      {"graphName":"Heap", "promQL":["sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
-                                     "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})"]},
-      {"graphName":"Non Heap", "promQL":["sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})"]},
-      {"graphName":"Total Heap", "promQL":["sum by (kubernetes_pod_name)(jvm_total_heap_committed{ContextTags})",
-                                           "sum by (kubernetes_pod_name)(jvm_total_heap_init{ContextTags})",
-                                           "sum by (kubernetes_pod_name)(jvm_total_heap_max{ContextTags})",
-                                           "sum by (kubernetes_pod_name)(jvm_total_heap_used{ContextTags})"]},
-      {"graphName":"GC Count", "promQL":["sum by (kubernetes_pod_name)(jvm_PS_MarkSweep_count{ContextTags})",
-                                         "sum by (kubernetes_pod_name)(jvm_PS_Scavenge_count{ContextTags})"]},
-      {"graphName":"GC Time", "promQL":["max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
-                                        "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})"]},
-      {"graphName":"Class Loading", "promQL":["sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
-                                              "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})"]},
-      {"graphName":"Memory Pools", "promQL":["sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
-                                             "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
-                                             "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
-                                             "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
-                                             "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})"]}
+      {
+        "graphName": "Heap",
+        "promQL": [
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
+            "legendFormat": "committed {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
+            "legendFormat": "init {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
+            "legendFormat": "max {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})",
+            "legendFormat": "used {{kubernetes_pod_name}}"
+          }
+        ],
+        "yaxes": {
+          "format": "bytes"
+        }
+      },
+      {
+        "graphName": "Non Heap",
+        "promQL": [
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
+            "legendFormat": "commmitted {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
+            "legendFormat": "init {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
+            "legendFormat": "max {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})",
+            "legendFormat": "used {{kubernetes_pod_name}}"
+          }
+        ],
+        "yaxes": {
+          "format": "bytes"
+        }
+      },
+      {
+        "graphName": "Total Memory",
+        "promQL": [
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_total_committed{ContextTags})",
+            "legendFormat": "committed {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_total_init{ContextTags})",
+            "legendFormat": "init {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_total_max{ContextTags})",
+            "legendFormat": "max {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_total_used{ContextTags})",
+            "legendFormat": "used {{kubernetes_pod_name}}"
+          }
+        ],
+        "yaxes": {
+          "format": "bytes"
+        }
+      },
+      {
+        "graphName": "GC Rate",
+        "promQL": [
+          {
+            "expr": "sum by (kubernetes_pod_name)(rate(jvm_PS_MarkSweep_count{ContextTags}[5m]))",
+            "legendFormat": "PS_MarkSweep Rate {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(rate(jvm_PS_Scavenge_count{ContextTags}[5m]))",
+            "legendFormat": "PS_Scavenge Rate {{kubernetes_pod_name}}"
+          }
+        ]
+      },
+      {
+        "graphName": "GC Time",
+        "promQL": [
+          {
+            "expr": "max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
+            "legendFormat": "PS_MarkSweep max {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})",
+            "legendFormat": "PS_Scavenge max {{kubernetes_pod_name}}"
+          }
+        ]
+      },
+      {
+        "graphName": "Class Loading",
+        "promQL": [
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
+            "legendFormat": "loaded {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})",
+            "legendFormat": "unloaded {{kubernetes_pod_name}}"
+          }
+        ]
+      },
+      {
+        "graphName": "Memory Pool Usage",
+        "promQL": [
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
+            "legendFormat": "Code Cache {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
+            "legendFormat": "Compressed Class Space {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
+            "legendFormat": "PS Eden Space {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
+            "legendFormat": "PS Old Gen {{kubernetes_pod_name}}"
+          },
+          {
+            "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})",
+            "legendFormat": "PS Survivor Space {{kubernetes_pod_name}}"
+          }
+        ],
+        "yaxes": {
+          "format": "percent"
+        }
+      }
     ]
   kafka-exporter.json: |
     [
@@ -102,46 +384,99 @@ data:
         {
             "graphName": "CPU Percent",
             "promQL": [
-                "sum without(container_name,id,image,name)((irate(container_cpu_user_seconds_total{ContextTags}[1m]) + irate(container_cpu_system_seconds_total[1m])) * 100)"
-            ]
+                {
+                    "expr": "sum without(container_name,id,image,name)((irate(container_cpu_user_seconds_total{ContextTags}[1m]) + irate(container_cpu_system_seconds_total[1m])) * 100)",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "percent"
+            }
         },
         {
             "graphName": "Resident Memory Used Percent",
             "promQL": [
-                "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
-            ]
+                {
+                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "percent"
+            }
         },
         {
             "graphName": "Total Memory Used Percent",
             "promQL": [
-                "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)"
-            ]
+                {
+                    "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "percent"
+            }
         },
         {
             "graphName": "File System Used Percent",
             "promQL": [
-                "sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)"
-            ]
+                {
+                    "expr": "sum without(container_name, id, image, name)(container_fs_usage_bytes{ContextTags} / container_fs_limit_bytes * 100)",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "percent"
+            }
         },
         {
             "graphName": "Bytes Received Per Second",
             "promQL": [
-                "sum without(container_name, id, image, name, interface)(irate(container_network_receive_bytes_total{ContextTags}[1m]))"
+                {
+                    "expr": "sum without(container_name, id, image, name, interface)(irate(container_network_receive_bytes_total{ContextTags}[1m]))",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
             ]
         },
         {
             "graphName": "Bytes Transmitted Per Second",
             "promQL": [
-                "sum without (container_name,id, image, name, interface)(irate(container_network_transmit_bytes_total{ContextTags}[1m]))"
+                {
+                    "expr": "sum without (container_name,id, image, name, interface)(irate(container_network_transmit_bytes_total{ContextTags}[1m]))",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
             ]
         }
     ]
   lagom-exporter.json: |
     [
-      {"graphName":"Circuit Breaker State", "promQL":["min by (instance,circuit_breaker) (lagom_circuit_breaker_state{ContextTags})"]},
-      {"graphName":"Circuit Breaker Failures Per Second", "promQL":["sum by (instance,circuit_breaker)(irate (lagom_circuit_breaker_failure{ContextTags}[1m]))"]},
-      {"graphName":"Circuit Breaker Latency 99% (ms)", "promQL":["max by (instance,circuit_breaker) (lagom_circuit_breaker_latency_ns{ContextTags, quantile=\"0.99\"}) / 1000000"]},
-      {"graphName":"Circuit Breaker Throughput Per Second", "promQL":["sum by (instance,circuit_breaker)(irate (lagom_circuit_breaker_throughput{ContextTags}[1m]))"]}
+      {
+        "graphName": "Circuit Breaker State",
+        "promQL": [
+          "min by (instance,circuit_breaker) (lagom_circuit_breaker_state{ContextTags})"
+        ]
+      },
+      {
+        "graphName": "Circuit Breaker Failures Per Second",
+        "promQL": [
+          "sum by (instance,circuit_breaker)(irate (lagom_circuit_breaker_failure{ContextTags}[1m]))"
+        ]
+      },
+      {
+        "graphName": "Circuit Breaker Latency 99%",
+        "promQL": [
+          "max by (instance,circuit_breaker) (lagom_circuit_breaker_latency_ns{ContextTags, quantile=\"0.99\"})"
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      },
+      {
+        "graphName": "Circuit Breaker Throughput Per Second",
+        "promQL": [
+          "sum by (instance,circuit_breaker)(irate (lagom_circuit_breaker_throughput{ContextTags}[1m]))"
+        ]
+      }
     ]
   memcached-exporter.json: |
     [
@@ -159,8 +494,21 @@ data:
     ]
   play-exporter.json: |
     [
-      {"graphName":"Play Client Requests Per Second", "promQL":["sum by (http_client)(irate(play_http_client_play_client_requests{ContextTags}[1m]))"]},
-      {"graphName":"Play Client Response Time", "promQL":["max by (http_client)(play_http_client_play_client_service_response_time_ns{ContextTags, quantile=\"0.99\"})"]}
+      {
+        "graphName": "Play Client Requests Per Second",
+        "promQL": [
+          "sum by (http_client)(irate(play_http_client_play_client_requests{ContextTags}[1m]))"
+        ]
+      },
+      {
+        "graphName": "Play Client Response Time",
+        "promQL": [
+          "max by (http_client)(play_http_client_play_client_service_response_time_ns{ContextTags, quantile=\"0.99\"})"
+        ],
+        "yaxes": {
+          "format": "ns"
+        }
+      }
     ]
   redis-exporter.json: |
     [
@@ -242,25 +590,8 @@ spec:
     component: "server"
   type: "ClusterIP"
 
-
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-grafana
-spec:
-  ports:
-  - port: 3000
-    protocol: TCP
-    targetPort: 3000
-    nodePort: 30030
-  selector:
-    app: grafana
-    component: server
-  type: NodePort
 
-
----
 
 ---
 apiVersion: extensions/v1beta1
@@ -272,6 +603,11 @@ metadata:
     component: server
 spec:
   replicas: 1
+
+  strategy:
+    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
+    type: Recreate
+
   template:
     metadata:
       labels:
@@ -423,6 +759,7 @@ spec:
 ---
 # Source: enterprise-suite-latest/templates/prometheus.yaml
 
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -430,11 +767,10 @@ metadata:
   name: prometheus-server
 
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: prometheus-server
+  name: lightbend:prometheus-server
 rules:
 - apiGroups: [""]
   resources:
@@ -451,7 +787,6 @@ rules:
   verbs: ["get", "list", "watch"]
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -460,7 +795,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: prometheus-server
+  name: lightbend:prometheus-server
 subjects:
 - kind: ServiceAccount
   name: prometheus-server
@@ -478,6 +813,11 @@ metadata:
   name: prometheus-server
 spec:
   replicas: 1
+
+  strategy:
+    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
+    type: Recreate
+
   selector:
     matchLabels:
       app: prometheus
@@ -547,6 +887,7 @@ spec:
             - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
             - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
             - --prometheusDomain=prometheus.io
+            - --alertmanagers=alertmanager:9093
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -598,7 +939,7 @@ spec:
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
             - --web.enable-lifecycle
-
+            
           ports:
             - containerPort: 9090
 
@@ -666,24 +1007,6 @@ spec:
     app: prometheus
     component: server
 
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-prometheus
-spec:
-  ports:
-  - port: 9090
-    protocol: TCP
-    targetPort: 9090
-    nodePort: 30090 
-  selector:
-    app: prometheus
-    component: server
-  type: NodePort
-
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -718,581 +1041,672 @@ metadata:
 data:
   default-monitors.json: |
     {
-      "monitors": [
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kube_container_rapid_restarts",
-            "metric": "kube_pod_container_restarts_rate",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "5m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "container restarting rapidly",
-            "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kube_pod_not_ready",
-            "metric": "kube_pod_ready",
-            "comparator": "<",
-            "threshold": "1",
-            "window": "5m",
-            "confidence": "0.5",
-            "severity": "critical",
-            "summary": "pod not ready",
-            "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kube_pod_not_running",
-            "metric": "kube_pod_not_running",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "10m",
-            "confidence": "0.75",
-            "severity": "warning",
-            "summary": "pod not running",
-            "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not running",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kube_workload_generation_lag",
-            "metric": "kube_workload_generation_lag",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "es_workload not updating",
-            "description": "es_workload {{$labels.es_workload}} has not updated for 10 minutes",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "growth",
-          "parameters": {
-            "name": "kafka_consumergroup_lag",
-            "metric": "kafka_consumergroup_lag",
-            "period": "15m",
-            "minslope": "1",
-            "window": "5m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "consumergroup falling behind",
-            "description": "{{$labels.consumergroup}} is falling behind",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "scrape_time",
-            "metric": "scrape_duration_seconds",
-            "period": "15m",
-            "numsigma": "3",
-            "minval": "3",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "scrape time anomalous",
-            "description": "{{$labels.instance}} has anomalous scrape_duration_seconds",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "growth",
-          "parameters": {
-            "name": "akka_inbox_growth",
-            "metric": "akka_actor_mailbox_size{quantile=\"0.5\"}",
-            "period": "15m",
-            "minslope": "0.1",
-            "window": "5m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "actor inbox growing",
-            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "akka_processing_time",
-            "metric": "akka_actor_processing_time_ns{quantile=\"0.5\"}",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "100000000",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "actor processing time is anomalous",
-            "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_notifications_dropped",
-            "metric": "prometheus_notifications_dropped_rate",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "10m",
-            "confidence": "0.25",
-            "severity": "warning",
-            "summary": "Prometheus dropping notifications",
-            "description": "Prometheus dropping alerts sent to Alertmanager",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_notification_queue",
-            "metric": "prometheus_notification_queue_percent",
-            "comparator": ">",
-            "threshold": "50",
-            "window": "10m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "Prometheus alert queue filling",
-            "description": "Prometheus alert queue is staying over 50% full",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_rule_evaluation_failures",
-            "metric": "prometheus_rule_evaluation_failures_rate",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Prometheus rule failures",
-            "description": "Prometheus has {{$value}} rules failing",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_target_too_many_metrics",
-            "metric": "prometheus_target_scrapes_exceeded_sample_limit_rate",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Prometheus target over limit",
-            "description": "Prometheus target at {{labels.instance}} has too many metrics",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_tsdb_reloads_failures",
-            "metric": "prometheus_tsdb_reloads_failures_rate",
-            "comparator": ">=",
-            "threshold": "1",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "Prometheus tsdb reload failing",
-            "description": "Prometheus had {{$value}} reload failures",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_target_down",
-            "metric": "up",
-            "comparator": "!=",
-            "threshold": "1",
-            "window": "10m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "metrics target down",
-            "description": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_config_reload_failed",
-            "metric": "prometheus_config_last_reload_successful",
-            "comparator": "!=",
-            "threshold": "1",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "prometheus bad config",
-            "description": "current config for prometheus has errors, will prevent restarts",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "prometheus_scrape_time",
-            "metric": "prometheus_target_sync_percent",
-            "comparator": ">",
-            "threshold": "75",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "prometheus has long scrape times",
-            "description": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "zookeeper_latency",
-            "metric": "zk_avg_latency",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "Zookeeper Latency",
-            "description": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "zookeeper_connections",
-            "metric": "zk_num_alive_connections",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Zookeeper live connections is not normal",
-            "description": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "zookeeper_pending_syncs",
-            "metric": "zk_pending_syncs",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "Zookeeper pending-syncs is not normal",
-            "description": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0.",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "zookeeper_open_file_descriptor",
-            "metric": "zk_open_file_descriptor_count",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Zookeeper open file descriptor growth",
-            "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "cassandra_write_latency",
-            "metric": "cassandra_clientrequest_write_latency",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "critical",
-            "summary": "Cassandra Write Latency",
-            "description": "Cassandra write latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "cassandra_read_latency",
-            "metric": "cassandra_clientrequest_read_latency",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "critical",
-            "summary": "Cassandra Read Latency",
-            "description": "Cassandra read latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "redis_keyspace_miss",
-            "metric": "redis_keyspace_miss_ratio",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "1",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Redis key space miss ratio growth",
-            "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "redis_evictions",
-            "metric": "redis_evicted_keys_total",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "1",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Redis evictions growing",
-            "description": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "redis_commands_processed",
-            "metric": "redis_commands_processed_total",
-            "period": "10m",
-            "numsigma": "3",
-            "minval": "10",
-            "window": "5m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Redis command processed",
-            "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "redis_connections",
-            "metric": "redis_connected_clients",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Redis client connections is not normal",
-            "description": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "kafka_incoming_messages",
-            "metric": "kafka_incoming_messages_rate",
-            "period": "5m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "10m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "Kafka incoming message rate is not normal",
-            "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kafka_offline_partition",
-            "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "5m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "Kafka offline partition is not zero",
-            "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "kafka_under_replicated_partitions",
-            "metric": "kafka_server_replicamanager_underreplicatedpartitions",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "5m",
-            "confidence": "1",
-            "severity": "critical",
-            "summary": "Kafka under replicated partitions is up",
-            "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "memcached_miss_ratio",
-            "metric": "memcached_miss_ratio",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Memcached miss ratio shifts",
-            "description": "Memcached miss ratio in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "memcached_current_connections",
-            "metric": "memcached_current_connections",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "10",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Memcached connections are changing",
-            "description": "Memcached connections in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "memcached_evictions",
-            "metric": "memcached_evictions_rate",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "1",
-            "window": "15m",
-            "confidence": "1",
-            "severity": "warning",
-            "summary": "Memcached evictions shifts",
-            "description": "Memcached evictions in {{$labels.es_workload}} is not normal on {{$labels.instance}}",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "akka_http_server_response_time",
-            "metric": "akka_http_http_server_response_time_ns{quantile=\"0.5\"}",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "100000000",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "HTTP server response time is anomalous",
-            "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "akka_http_client_response_time",
-            "metric": "akka_http_http_client_http_client_service_response_time_ns{quantile=\"0.5\"}",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "100000000",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "HTTP client response time is anomalous",
-            "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "akka_http_server_5xx",
-            "metric": "akka_http_http_server_responses_5xx_rate",
-            "comparator": ">",
-            "threshold": "0",
-            "window": "5m",
-            "confidence": "1.0",
-            "severity": "warning",
-            "summary": "HTTP 5xx errors",
-            "description": "HTTP server at {{$labels.instance}} has 5xx errors",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "sma",
-          "parameters": {
-            "name": "play_http_client_response_time",
-            "metric": "play_http_client_play_client_service_response_time_ns{quantile=\"0.5\"}",
-            "period": "15m",
-            "numsigma": "2",
-            "minval": "100000000",
-            "window": "15m",
-            "confidence": "0.5",
-            "severity": "warning",
-            "summary": "HTTP client response time is anomalous",
-            "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
-            "monitorType": ""
-          }
-        },
-        {
-          "model": "threshold",
-          "parameters": {
-            "name": "lagom_circuit_breaker_state",
-            "metric": "lagom_circuit_breaker_state",
-            "comparator": "<",
-            "threshold": "3",
-            "window": "1m",
-            "confidence": "5e-324",
-            "severity": "critical",
-            "summary": "Circuit breaker tripped",
-            "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}",
-            "monitorType": ""
+      "monitors": {
+        "_": {
+          "kube_container_restarts": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "kube_pod_container_restarts_rate",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "container restarting rapidly",
+              "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly"
+            }
+          },
+          "kube_pod_not_ready": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "kube_pod_ready",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "comparator": "<",
+                  "threshold": "1"
+                }
+              },
+              "summary": "pod not ready",
+              "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready"
+            }
+          },
+          "kube_pod_not_running": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "kube_pod_not_running",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "pod not running",
+              "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not running"
+            }
+          },
+          "kube_workload_generation_lag": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "kube_workload_generation_lag",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "workload not updating",
+              "description": "workload {{$labels.es_workload}} has not updated for 10 minutes"
+            }
+          },
+          "kafka_consumergroup_lag": {
+            "monitorVersion": "1",
+            "model": "growth",
+            "parameters": {
+              "metric": "kafka_consumergroup_lag",
+              "period": "5m",
+              "minslope": "1",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "window": "5m"
+                }
+              },
+              "summary": "consumergroup falling behind",
+              "description": "{{$labels.consumergroup}} is falling behind"
+            }
+          },
+          "scrape_time": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "scrape_duration_seconds",
+              "period": "15m",
+              "minval": "3",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "numsigma": "3"
+                }
+              },
+              "summary": "scrape time anomalous",
+              "description": "{{$labels.instance}} has anomalous scrape_duration_seconds"
+            }
+          },
+          "akka_inbox_growth": {
+            "monitorVersion": "1",
+            "model": "growth",
+            "parameters": {
+              "metric": "akka_actor_mailbox_size",
+              "filters": {
+                "quantile": "0.5"
+              },
+              "period": "15m",
+              "minslope": "0.1",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "window": "5m"
+                }
+              },
+              "summary": "actor inbox growing",
+              "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
+            }
+          },
+          "akka_processing_time": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "akka_actor_processing_time_ns",
+              "filters": {
+                "quantile": "0.5"
+              },
+              "period": "15m",
+              "minval": "100000000",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "actor processing time is anomalous",
+              "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
+            }
+          },
+          "prometheus_notifications_dropped": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_notifications_dropped_rate",
+              "window": "10m",
+              "confidence": "0.25",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "Prometheus dropping notifications",
+              "description": "Prometheus dropping alerts sent to Alertmanager"
+            }
+          },
+          "prometheus_notification_queue": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_notification_queue_percent",
+              "window": "10m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "50"
+                }
+              },
+              "summary": "Prometheus alert queue filling",
+              "description": "Prometheus alert queue is staying over 50% full"
+            }
+          },
+          "prometheus_rule_evaluation_failures": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_rule_evaluation_failures_rate",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "Prometheus rule failures",
+              "description": "Prometheus has {{$value}} rules failing"
+            }
+          },
+          "prometheus_target_too_many_metrics": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_target_scrapes_exceeded_sample_limit_rate",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "Prometheus target over limit",
+              "description": "Prometheus target at {{labels.instance}} has too many metrics"
+            }
+          },
+          "prometheus_tsdb_reloads_failures": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_tsdb_reloads_failures_rate",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "comparator": ">=",
+                  "threshold": "1"
+                }
+              },
+              "summary": "Prometheus tsdb reload failing",
+              "description": "Prometheus had {{$value}} reload failures"
+            }
+          },
+          "prometheus_target_down": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "up",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": "!=",
+                  "threshold": "1"
+                }
+              },
+              "summary": "metrics target down",
+              "description": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data"
+            }
+          },
+          "prometheus_config_reload_failed": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_config_last_reload_successful",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "comparator": "!=",
+                  "threshold": "1"
+                }
+              },
+              "summary": "prometheus bad config",
+              "description": "current config for prometheus has errors, will prevent restarts"
+            }
+          },
+          "prometheus_scrape_time": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "prometheus_target_sync_percent",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "75"
+                }
+              },
+              "summary": "prometheus has long scrape times",
+              "description": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}"
+            }
+          },
+          "zookeeper_latency": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "zk_avg_latency",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Zookeeper Latency",
+              "description": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}"
+            }
+          },
+          "zookeeper_connections": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "zk_num_alive_connections",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Zookeeper live connections is not normal",
+              "description": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
+            }
+          },
+          "zookeeper_pending_syncs": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "zk_pending_syncs",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "Zookeeper pending-syncs is not normal",
+              "description": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0."
+            }
+          },
+          "zookeeper_open_file_descriptor": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "zk_open_file_descriptor_count",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Zookeeper open file descriptor growth",
+              "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}"
+            }
+          },
+          "cassandra_write_latency": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "cassandra_clientrequest_write_latency",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "critical": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Cassandra Write Latency",
+              "description": "Cassandra write latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}"
+            }
+          },
+          "cassandra_read_latency": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "cassandra_clientrequest_read_latency",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "critical": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Cassandra Read Latency",
+              "description": "Cassandra read latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}"
+            }
+          },
+          "redis_keyspace_miss": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "redis_keyspace_miss_ratio",
+              "period": "15m",
+              "minval": "1",
+              "window": "10m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Redis key space miss ratio growth",
+              "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}"
+            }
+          },
+          "redis_evictions": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "redis_evicted_keys_total",
+              "period": "15m",
+              "minval": "1",
+              "window": "10m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Redis evictions growing",
+              "description": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}"
+            }
+          },
+          "redis_commands_processed": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "redis_commands_processed_total",
+              "period": "10m",
+              "minval": "10",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "3"
+                }
+              },
+              "summary": "Redis command processed",
+              "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}"
+            }
+          },
+          "redis_connections": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "redis_connected_clients",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Redis client connections is not normal",
+              "description": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
+            }
+          },
+          "kafka_incoming_messages": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "kafka_incoming_messages_rate",
+              "period": "5m",
+              "minval": "10",
+              "window": "10m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Kafka incoming message rate is not normal",
+              "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}"
+            }
+          },
+          "kafka_offline_partition": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "Kafka offline partition is not zero",
+              "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}"
+            }
+          },
+          "kafka_under_replicated_partitions": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "kafka_server_replicamanager_underreplicatedpartitions",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "critical": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "Kafka under replicated partitions is up",
+              "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}"
+            }
+          },
+          "memcached_miss_ratio": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "memcached_miss_ratio",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Memcached miss ratio shifts",
+              "description": "Memcached miss ratio in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
+            }
+          },
+          "memcached_current_connections": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "memcached_current_connections",
+              "period": "15m",
+              "minval": "10",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Memcached connections are changing",
+              "description": "Memcached connections in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
+            }
+          },
+          "memcached_evictions": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "memcached_evictions_rate",
+              "period": "15m",
+              "minval": "1",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "Memcached evictions shifts",
+              "description": "Memcached evictions in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
+            }
+          },
+          "akka_http_server_response_time": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "akka_http_http_server_response_time_ns",
+              "filters": {
+                "quantile": "0.5"
+              },
+              "period": "15m",
+              "minval": "100000000",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "HTTP server response time is anomalous",
+              "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+            }
+          },
+          "akka_http_client_response_time": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "akka_http_http_client_http_client_service_response_time_ns",
+              "filters": {
+                "quantile": "0.5"
+              },
+              "period": "15m",
+              "minval": "100000000",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "HTTP client response time is anomalous",
+              "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+            }
+          },
+          "akka_http_server_5xx": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "akka_http_http_server_responses_5xx_rate",
+              "window": "5m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "HTTP 5xx errors",
+              "description": "HTTP server at {{$labels.instance}} has 5xx errors"
+            }
+          },
+          "play_http_client_response_time": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "play_http_client_play_client_service_response_time_ns",
+              "filters": {
+                "quantile": "0.5"
+              },
+              "period": "15m",
+              "minval": "100000000",
+              "window": "15m",
+              "confidence": "0.5",
+              "severity": {
+                "warning": {
+                  "numsigma": "2"
+                }
+              },
+              "summary": "HTTP client response time is anomalous",
+              "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+            }
+          },
+          "lagom_circuit_breaker_state": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "lagom_circuit_breaker_state",
+              "window": "1m",
+              "confidence": "5e-324",
+              "severity": {
+                "critical": {
+                  "comparator": "<",
+                  "threshold": "3"
+                }
+              },
+              "summary": "Circuit breaker tripped",
+              "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
+            }
           }
         }
-      ]
+      }
     }
   prometheus.yml: |
     {{/*
@@ -1308,14 +1722,15 @@ data:
     rule_files:
       - /etc/config/rules/*.yaml
   
+    {{ if .AlertmanagerAddresses }}
     alerting:
       alertmanagers:
-      - kubernetes_sd_configs:
-        - role: pod
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_namespace,__meta_kubernetes_pod_label_app,__meta_kubernetes_pod_label_component,__meta_kubernetes_pod_container_port_number]
-          regex: lightbend;prometheus;alertmanager;[0-9]+
-          action: keep
+      - static_configs:
+        - targets:
+          {{ range $index, $address := .AlertmanagerAddresses }}
+          - {{ $address }}
+          {{ end }}
+    {{ end }}
   
     scrape_configs:
   
@@ -1515,6 +1930,7 @@ data:
           - source_labels: [__meta_kubernetes_endpoints_name]
             regex:  prometheus-kube-state-metrics
             action: drop
+  
           # _scrape _scheme _path _port annotation triggers:
           - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
             action: keep
@@ -1529,24 +1945,18 @@ data:
             regex: (.+)
   
           # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
-          - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
+          - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: ^(.+;.*)|(;.*metrics)$
   
           # Set port from prometheus.io/port if it's set.
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
             action: replace
             # Extract IP from address. Address might not contain a port in some cases.
             regex: ([^:]+):?(?:\d*);(\d+)
             replacement: ${1}:${2}
             target_label: __address__
   
-  
-          - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
-            action: replace
-            target_label: __address__
-            regex: ([^:]+):?(?:\d*);(\d+)
-            replacement: $1:$2
           # metadata labels
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
@@ -1749,11 +2159,10 @@ data:
 ---
 # Source: enterprise-suite-latest/templates/kube-state-metrics.yaml
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: prometheus-kube-state-metrics
+  name: lightbend:kube-state-metrics
 rules:
 - apiGroups: [""]
   resources:
@@ -1789,16 +2198,15 @@ rules:
   resources:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: lightbend:prometheus-kube-state-metrics
+  name: lightbend:kube-state-metrics
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: prometheus-kube-state-metrics
+  name: lightbend:kube-state-metrics
 subjects:
 - kind: ServiceAccount
   name: prometheus-kube-state-metrics
@@ -1873,6 +2281,7 @@ spec:
 
 ---
 
+
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
@@ -1883,6 +2292,11 @@ metadata:
   name: prometheus-alertmanager
 spec:
   replicas: 1
+
+  strategy:
+    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
+    type: Recreate
+
   selector:
     matchLabels:
       app: prometheus
@@ -1911,7 +2325,7 @@ spec:
             - --config.file=/etc/config/alertmanager.yml
             - --storage.path=/data
             - --cluster.listen-address=$(POD_IP):6783
-
+            
           ports:
             - containerPort: 9093
           readinessProbe:
@@ -1955,24 +2369,6 @@ spec:
           emptyDir: {}
           
 
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: expose-alertmanager
-spec:
-  ports:
-  - port: 9093
-    protocol: TCP
-    targetPort: 9093
-    nodePort: 30093 
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: NodePort
-
-
 ---
 apiVersion: v1
 kind: Service
@@ -2013,7 +2409,7 @@ data:
       # Wait before sending a new alert for a group.
       group_interval: 5m
       # Group alerts by namespace and workload.
-      group_by: [namespace, es_workload]
+      group_by: [namespace, es_workload, severity]
       routes:
       # team1 Slack
       - match:
@@ -2039,7 +2435,7 @@ data:
         severity: critical
       target_match:
         severity: warning
-      equal: [alertname]
+      equal: [alertname, namespace, es_workload]
   
     templates:
     # Slack notification templates.
@@ -2071,10 +2467,11 @@ data:
         text: '{{ template "text.slack" . }}'
         send_resolved: true
   slack.tmpl: |
-    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .CommonLabels.severity | toUpper }}]{{ end }}
+    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .GroupLabels.severity | toUpper }}]{{ end }}
     {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
     {{ end }}{{- end -}}
   
+
 
 ---
 # Source: enterprise-suite-latest/templates/es-console.yaml
@@ -2171,7 +2568,7 @@ data:
       set $prometheus "prometheus-server";
       set $monitorapi "es-monitor-api";
       set $grafana "grafana-server";
-      set $alertmanager "alertmanager";
+      set $alertmanager "alertmanager:9093";
 
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
@@ -2182,7 +2579,7 @@ data:
       #   magic 'replace' value ' $1/' with a space prefix tells nginx to not add server and port
       # sub_filter 'match' 'replace'
       #   rewrites backend content, which we use for inserting the base path
-      # proxie_cookie_path 'match' 'replace'
+      # proxy_cookie_path 'match' 'replace'
       #   fixes session cookie Path attribute, for Grafana
 
       # proxy_pass backends with dynamic base url
@@ -2227,11 +2624,13 @@ data:
       }
 
       location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager:9093$2$is_args$args;
+        proxy_pass http://$alertmanager$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
 
       # redirect /service/prometheus -> /service/prometheus/
+      # redirect /service/grafana -> /service/grafana/
+      # redirect /service/alertmanager -> /service/alertmanager/
 
       location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
         return 301 ' $1/';
@@ -2242,11 +2641,11 @@ data:
       location ~ (.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.0-rc.5",
+          "version": "1.0.0-rc.6",
           "alertManagerConfigMap": "alertmanager-default",
-          "alertManagerExposePort": "30093",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.15.1",
+          "alertManagers": "alertmanager:9093",
           "alertmanagerVolumeSize": "32Gi",
           "alpineImage": "alpine",
           "alpineVersion": "3.8",
@@ -2255,7 +2654,7 @@ data:
           "busyboxVersion": "1.29",
           "configMapReloadImage": "jimmidyson/configmap-reload",
           "configMapReloadVersion": "v0.2.2",
-          "createClusterRoles": "true",
+          "createAlertManager": "true",
           "createPersistentVolumes": "true",
           "daemonSetApiVersion": "apps/v1beta2",
           "defaultCPURequest": "100m",
@@ -2265,30 +2664,30 @@ data:
           "esConsoleExposePort": "30080",
           "esConsoleImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console",
           "esConsoleVersion": "latest",
-          "esGrafanaExposePort": "30030",
           "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
           "esGrafanaVersion": "latest",
           "esGrafanaVolumeSize": "32Gi",
           "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api",
           "esMonitorVersion": "latest",
+          "exposeServices": "NodePort",
           "goDnsmasqImage": "janeczku/go-dnsmasq",
           "goDnsmasqVersion": "release-1.0.7",
+          "imageCredentials": { "registry": "lightbend-docker-commercial-registry.bintray.io" },
           "imagePullPolicy": "Always",
           "kubeStateMetricsImage": "gcr.io/google_containers/kube-state-metrics",
           "kubeStateMetricsVersion": "v1.2.0",
-          "minikube": "true",
           "nodeExporterImage": "prom/node-exporter",
           "nodeExporterVersion": "v0.15.2",
           "prometheusDomain": "prometheus.io",
-          "prometheusExposePort": "30090",
           "prometheusImage": "prom/prometheus",
           "prometheusMemoryRequest": "250Mi",
           "prometheusVersion": "v2.2.1",
           "prometheusVolumeSize": "256Gi",
           "rbacApiVersion": "rbac.authorization.k8s.io/v1",
           "useEmptyDirVolumes": "true",
-          "name": "enterprise-suite-latest"\n}';
-        add_header Content-Type application/json;
+          "name": "enterprise-suite-latest"
+        }';
+        default_type application/json;
       }
 
       # console entry point
