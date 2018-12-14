@@ -162,7 +162,6 @@ class LbcTest(unittest.TestCase):
                    stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
         expect_cmd(r'helm delete --purge enterprise-suite')
         expect_cmd(r'kubectl get pvc --namespace=lightbend --no-headers')
-        expect_cmd(r'kubectl get clusterroles --no-headers')
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
 
@@ -177,7 +176,6 @@ class LbcTest(unittest.TestCase):
                    stdout=('alertmanager-storage Bound pvc-a3815792-e744-11e8-a15b-080027dccb43 32Gi RWO standard 1h\n'
                            'es-grafana-storage Bound pvc-a3824cbc-e744-11e8-a15b-080027dccb43 32Gi RWO standard 1h\n'
                            'prometheus-storage Bound pvc-a382f4c1-e744-11e8-a15b-080027dccb43 256Gi RWO standard 1h\n'))
-        expect_cmd(r'kubectl get clusterroles --no-headers')
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --set createPersistentVolumes=false')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
 
@@ -262,19 +260,7 @@ class LbcTest(unittest.TestCase):
                    stdout=('alertmanager-storage Bound pvc-a3815792-e744-11e8-a15b-080027dccb43 32Gi RWO standard 1h\n'
                            'es-grafana-storage Bound pvc-a3824cbc-e744-11e8-a15b-080027dccb43 32Gi RWO standard 1h\n'
                            'prometheus-storage Bound pvc-a382f4c1-e744-11e8-a15b-080027dccb43 256Gi RWO standard 1h\n'))
-        expect_cmd(r'kubectl get clusterroles --no-headers')
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --set createPersistentVolumes=false')
-
-        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--reuse-resources'])
-
-    def test_install_reuse_cluster_roles(self):
-        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
-        expect_cmd(r'helm repo update')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'kubectl get pvc --namespace=lightbend --no-headers')
-        expect_cmd(r'kubectl get clusterroles --no-headers',
-                   stdout='prometheus-kube-state-metrics 72m\nprometheus-server 72m')
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+  --set createClusterRoles=false')
 
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--reuse-resources'])
 
@@ -283,7 +269,6 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'kubectl get pvc --namespace=lightbend --no-headers')
-        expect_cmd(r'kubectl get clusterroles --no-headers')
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
 
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--reuse-resources'])
