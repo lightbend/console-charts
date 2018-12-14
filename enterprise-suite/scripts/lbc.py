@@ -391,17 +391,16 @@ def install(creds_file):
         if args.wait:
             helm_args += ' --wait'
 
-        if args.reuse_resources or status == 'failed':
-            # Reuse PVCs if present
-            if are_pvcs_created(args.namespace):
-                printerr('info: found existing PVCs from previous console installation, will reuse them')
-                helm_args += ' --set createPersistentVolumes=false'
-
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
+            if are_pvcs_created(args.namespace):
+                printerr('info: Found existing PVCs from a previous console installation.')
+                printerr('info: Please remove them with `kubectl delete pvc`, or pass --set createPersistentVolumes=false.')
+                printerr('info: Otherwise, the install may fail.')
+
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
                         version_arg, creds_arg, helm_args))
