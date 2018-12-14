@@ -2,4 +2,4 @@ apiVersion: v1
 description: Lightbend Console
 name: enterprise-suite
 icon: https://repo.lightbend.com/helm-charts/lightbend.svg
-version: 1.0.0-rc.6
+version: 1.0.0-rc.7
