@@ -1,0 +1,12 @@
+apiVersion: {{ .Values.rbacApiVersion }}
+kind: ClusterRoleBinding
+metadata:
+  name: {{.Release.Namespace}}:prometheus-server
+roleRef:
+  apiGroup: {{ .Values.apiGroupVersion }}
+  kind: ClusterRole
+  name: {{.Release.Namespace}}:prometheus-server
+subjects:
+- kind: ServiceAccount
+  name: prometheus-server
+  namespace: {{.Release.Namespace}}

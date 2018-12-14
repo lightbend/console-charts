@@ -1,0 +1,38 @@
+apiVersion: {{ .Values.deploymentApiVersion }}
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus
+    component: kube-state-metrics
+  name: prometheus-kube-state-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      component: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: kube-state-metrics
+    spec:
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
+      serviceAccountName: prometheus-kube-state-metrics
+      containers:
+        - name: prometheus-kube-state-metrics
+          image: {{ .Values.kubeStateMetricsImage }}:{{ .Values.kubeStateMetricsVersion }}
+          args:
+            - --port=8080
+            - --telemetry-port=8081
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.kubeStateMetricsCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.kubeStateMetricsMemoryRequest }}
+          ports:
+            - name: metrics
+              containerPort: 8080
+

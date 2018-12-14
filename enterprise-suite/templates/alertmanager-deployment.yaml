@@ -1,22 +1,4 @@
-{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
----
 {{ if .Values.createAlertManager }}
-{{ if $shouldCreatePVCs }}
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: alertmanager-storage
-  annotations:
-    "helm.sh/resource-policy": keep
-spec:
-  storageClassName: {{ default .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.alertmanagerVolumeSize }}
-{{ end }}
----
 apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
@@ -111,30 +93,4 @@ spec:
           {{ else }}
           emptyDir: {}
           {{ end }}
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: alertmanager
-spec:
-  ports:
-  - name: http
-    port: 9093
-    targetPort: 9093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: alertmanager-default
-data:
-{{ (.Files.Glob "alertmanager/*").AsConfig | indent 2}}
 {{ end }}

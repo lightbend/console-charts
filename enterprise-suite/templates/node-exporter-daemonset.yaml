@@ -1,9 +1,3 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-node-exporter
-
----
 apiVersion: {{ .Values.daemonSetApiVersion }}
 kind: DaemonSet
 metadata:
@@ -64,26 +58,3 @@ spec:
         - name: sys
           hostPath:
             path: /sys
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    {{ .Values.prometheusDomain }}/scrape: "true"
-  labels:
-    app: prometheus
-    component: "node-exporter"
-  name: prometheus-node-exporter
-spec:
-  clusterIP: None
-  ports:
-    - name: metrics
-      port: 9100
-      protocol: TCP
-      targetPort: 9100
-  selector:
-    app: prometheus
-    component: "node-exporter"
-  type: "ClusterIP"
-

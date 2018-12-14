@@ -1,0 +1,15 @@
+{{ if or .Values.exposeServices .Values.minikube }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: expose-es-console
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+    nodePort: {{ .Values.esConsoleExposePort }}
+  selector:
+    run: es-console
+  type: {{ .Values.exposeServices | default "NodePort" }}
+{{ end }}

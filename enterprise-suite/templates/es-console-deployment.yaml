@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: es-console
+spec:
+  template:
+    metadata:
+      labels:
+        run: es-console
+    spec:
+      {{ if .Values.podUID }}
+      securityContext:
+        runAsUser: {{ .Values.podUID }}
+      {{ end }}
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
+      containers:
+      - name: dnsmasq
+        image: {{ .Values.goDnsmasqImage }}:{{ .Values.goDnsmasqVersion }}
+        args:
+          - --listen
+          - "127.0.0.1:5353"
+          - --verbose
+          - --enable-search
+      - name: es-console
+        image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        resources:
+          requests:
+            cpu: {{ default .Values.defaultCPURequest .Values.esConsoleCPURequest }}
+            memory: {{ default .Values.defaultMemoryRequest .Values.esConsoleMemoryRequest }}
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nginx/conf.d
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: es-console

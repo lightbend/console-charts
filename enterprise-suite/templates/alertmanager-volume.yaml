@@ -1,0 +1,18 @@
+{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
+{{ if .Values.createAlertManager }}
+{{ if $shouldCreatePVCs }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: alertmanager-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: {{ default .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanagerVolumeSize }}
+{{ end }}
+{{ end }}
