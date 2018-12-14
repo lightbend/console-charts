@@ -64,6 +64,12 @@ func (cb *CmdBuilder) PrintStderr() *CmdBuilder {
 	return cb
 }
 
+func (cb *CmdBuilder) PrintOutput() *CmdBuilder {
+	cb.printStdout = true
+	cb.printStderr = true
+	return cb
+}
+
 func (cb *CmdBuilder) Run() (int, error) {
 	var cmd *exec.Cmd
 
@@ -82,18 +88,18 @@ func (cb *CmdBuilder) Run() (int, error) {
 	// Setup stdout/sterr pipes
 	cmdstderr, err := cmd.StderrPipe()
 	if err != nil {
-		cmderr = err
+		exitcode, cmderr = -100, err
 	}
 	cmdstdout, err := cmd.StdoutPipe()
 	if err != nil {
-		cmderr = err
+		exitcode, cmderr = -200, err
 	}
 
 	if cmderr == nil {
 		// Run the command
 		if err := cmd.Start(); err != nil {
 			// Arbitrary exit code for other errors
-			exitcode, cmderr = -100, err
+			exitcode, cmderr = -300, err
 		} else {
 			if cb.printStdout {
 				io.Copy(os.Stdout, cmdstdout)
@@ -104,14 +110,14 @@ func (cb *CmdBuilder) Run() (int, error) {
 			}
 
 			// Wait for command to finish
-			if err := cmd.Run(); err != nil {
+			if err := cmd.Wait(); err != nil {
 				// Any non-zero return code results in an error, handle that here
 				if exiterr, ok := err.(*exec.ExitError); ok {
 					if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 						exitcode = status.ExitStatus()
 					}
 				} else {
-					exitcode, cmderr = -100, err
+					exitcode, cmderr = -400, err
 				}
 			}
 		}

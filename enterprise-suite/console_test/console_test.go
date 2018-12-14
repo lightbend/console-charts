@@ -3,7 +3,10 @@ package console_test
 import (
 	"testing"
 
+	"github.com/lightbend/console_test/args"
+
 	"github.com/lightbend/console_test/util/helm"
+	"github.com/lightbend/console_test/util/lbc"
 	"github.com/lightbend/console_test/util/minikube"
 
 	. "github.com/onsi/ginkgo"
@@ -13,14 +16,20 @@ import (
 const consoleNamespace = "lightbend-test"
 
 var _ = BeforeSuite(func() {
-	Expect(minikube.IsRunning()).ShouldNot(BeTrue())
-	Expect(minikube.Start(3, 6000)).To(Succeed())
-	Expect(helm.Install(consoleNamespace)).To(Succeed())
+	if args.StartMinikube {
+		Expect(minikube.IsRunning()).ShouldNot(BeTrue())
+		Expect(minikube.Start(3, 6000)).To(Succeed())
+		Expect(helm.Install()).To(Succeed())
+	}
+	Expect(lbc.Install(consoleNamespace)).To(Succeed())
 })
 
 var _ = AfterSuite(func() {
-	Expect(minikube.IsRunning()).Should(BeTrue())
-	Expect(minikube.Delete()).To(Succeed())
+	Expect(lbc.Uninstall()).To(Succeed())
+	if args.StartMinikube {
+		Expect(minikube.IsRunning()).Should(BeTrue())
+		Expect(minikube.Delete()).To(Succeed())
+	}
 })
 
 var _ = Describe("Console", func() {
@@ -32,6 +41,9 @@ var _ = Describe("Console", func() {
 
 	Context("Minikube", func() {
 		It("is running", func() {
+			if !args.Minikube {
+				return
+			}
 			Expect(minikube.IsRunning()).Should(BeTrue())
 		})
 	})
@@ -39,6 +51,12 @@ var _ = Describe("Console", func() {
 	Context("Helm", func() {
 		It("is installed", func() {
 			Expect(helm.IsInstalled()).Should(BeTrue())
+		})
+	})
+
+	Context("Console", func() {
+		It("is verified", func() {
+			Expect(lbc.Verify(consoleNamespace)).Should(Succeed())
 		})
 	})
 })
