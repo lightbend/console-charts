@@ -391,17 +391,17 @@ def install(creds_file):
         if args.wait:
             helm_args += ' --wait'
 
-        if args.reuse_resources or status == 'failed':
-            # Reuse PVCs if present
-            if are_pvcs_created(args.namespace):
-                printerr('info: found existing PVCs from previous console installation, will reuse them')
-                helm_args += ' --set createPersistentVolumes=false'
-
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
+            createPVs = len(filter(lambda x: 'createPersistentVolumes=false' in x, sys.argv)) == 0
+            if createPVs and are_pvcs_created(args.namespace):
+                printerr('info: Found existing PVCs from a previous console installation.')
+                printerr('info: Please remove them with `kubectl delete pvc`, or pass --set createPersistentVolumes=false.')
+                printerr('info: Otherwise, the install may fail.')
+
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
                         version_arg, creds_arg, helm_args))
@@ -593,11 +593,6 @@ def setup_args(argv):
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
                         choices=['creds', 'console'])
-
-    install.add_argument('--reuse-resources', dest='reuse_resources',
-                         help='try to reuse PVCs and/or cluster roles from a previous install', action='store_true')
-    install.add_argument('--no-reuse-resources', dest='reuse_resources', help=argparse.SUPPRESS, action='store_false')
-    install.set_defaults(reuse_resources=True)
 
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
