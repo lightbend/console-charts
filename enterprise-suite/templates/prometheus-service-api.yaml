@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: es-monitor-api
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8180
+  selector:
+    app: prometheus
+    component: server
