@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/lightbend/helm-charts.svg?branch=master)](https://travis-ci.org/lightbend/helm-charts)
+[![Build Status](https://travis-ci.org/lightbend/console-charts.svg?branch=master)](https://travis-ci.org/lightbend/console-charts)
 
-# helm-charts
+# console-charts
 
-Contains public Helm charts for various Lightbend projects. The helm repo is available at `https://repo.lightbend.com/helm-charts`.
+Contains public Helm charts related to the Lightbend Console. Lightbend's helm repo is available at `https://repo.lightbend.com/helm-charts`.
 
 ## Project layout
 
@@ -15,12 +15,12 @@ If there are files that you don't want included in the chart, add them to a `.he
 All projects must have a `Makefile` that implements the targets:
 
 - `lint`:  Should do preliminary checks to confirm the project is ready for packaging.
-- `package`:  Should create the chart tarball and push it up to the `helm-charts/docs` directory.
+- `package`:  Should create the chart tarball and push it up to the `console-charts/docs` directory.
 - `test`:  Typically run by Travis to test the release.
 
 A default `common.mk` file is included that can be used for this purpose, although a project is free to implement these targets as they see fit.
 
-## Helm-charts Makefile
+## console-charts Makefile
 
 The default target of the top-level Makefile packages all the charts
 and then builds the `index.yaml` file based on the tarballs.
