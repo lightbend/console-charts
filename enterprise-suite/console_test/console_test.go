@@ -3,6 +3,9 @@ package console_test
 import (
 	"testing"
 
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/lightbend/console_test/args"
 
 	"github.com/lightbend/console_test/util/helm"
@@ -15,12 +18,32 @@ import (
 
 const consoleNamespace = "lightbend-test"
 
+var k8sClient *kubernetes.Clientset
+
 var _ = BeforeSuite(func() {
+	// Start minikube if --start-minikube arg was given
 	if args.StartMinikube {
 		Expect(minikube.IsRunning()).ShouldNot(BeTrue())
 		Expect(minikube.Start(3, 6000)).To(Succeed())
-		Expect(helm.Install()).To(Succeed())
 	}
+
+
+	// Setup k8s client
+	config, err := clientcmd.BuildConfigFromFlags("", args.Kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+	k8sClient, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// If we started minikube, install helm as well
+	if args.StartMinikube {
+		Expect(helm.Install(k8sClient)).To(Succeed())
+	}
+
+	// Install console
 	Expect(lbc.Install(consoleNamespace)).To(Succeed())
 })
 
