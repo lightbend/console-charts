@@ -1,4 +1,4 @@
-# helm-charts/enterprise-suite
+# console-charts/enterprise-suite
 
 Helm chart setup for the Enterprise Suite project.
 
@@ -78,7 +78,7 @@ Enterprise Suite Team <es-all@lightbend.com>
 
 ## License
 
-Copyright (C) 2017 Lightbend Inc. (https://www.lightbend.com).
+Copyright (C) 2018 Lightbend Inc. (https://www.lightbend.com).
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
 
