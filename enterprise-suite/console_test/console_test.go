@@ -1,4 +1,4 @@
-package console_test
+package console
 
 import (
 	"testing"
@@ -16,8 +16,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const consoleNamespace = "lightbend-test"
-
 var k8sClient *kubernetes.Clientset
 
 var _ = BeforeSuite(func() {
@@ -26,7 +24,6 @@ var _ = BeforeSuite(func() {
 		Expect(minikube.IsRunning()).ShouldNot(BeTrue())
 		Expect(minikube.Start(3, 6000)).To(Succeed())
 	}
-
 
 	// Setup k8s client
 	config, err := clientcmd.BuildConfigFromFlags("", args.Kubeconfig)
@@ -44,7 +41,8 @@ var _ = BeforeSuite(func() {
 	}
 
 	// Install console
-	Expect(lbc.Install(consoleNamespace)).To(Succeed())
+	Expect(lbc.Install(args.ConsoleNamespace)).To(Succeed())
+
 })
 
 var _ = AfterSuite(func() {
@@ -64,9 +62,6 @@ var _ = Describe("Console", func() {
 
 	Context("Minikube", func() {
 		It("is running", func() {
-			if !args.Minikube {
-				return
-			}
 			Expect(minikube.IsRunning()).Should(BeTrue())
 		})
 	})
@@ -79,7 +74,7 @@ var _ = Describe("Console", func() {
 
 	Context("Console", func() {
 		It("is verified", func() {
-			Expect(lbc.Verify(consoleNamespace)).Should(Succeed())
+			Expect(lbc.Verify(args.ConsoleNamespace)).Should(Succeed())
 		})
 	})
 })

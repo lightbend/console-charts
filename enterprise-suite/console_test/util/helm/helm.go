@@ -40,6 +40,7 @@ func Install(k8sClient *kubernetes.Clientset) error {
 			Name: "tiller-admin",
 		},
 		RoleRef: rbacv1.RoleRef{
+			Kind: "ClusterRole",
 			Name: "cluster-admin",
 		},
 		Subjects: []rbacv1.Subject{

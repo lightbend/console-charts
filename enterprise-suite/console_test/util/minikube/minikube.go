@@ -38,3 +38,16 @@ func Delete() error {
 		Run()
 	return err
 }
+
+func Ip() (string, error) {
+	/*
+		result := ""
+		_, err := util.Cmd("minikube", "ip").
+			CaptureStdout(&result).
+			Run()
+
+		return result, err
+	*/
+
+	return "192.168.99.100", nil
+}
