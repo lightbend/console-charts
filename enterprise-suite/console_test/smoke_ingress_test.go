@@ -16,12 +16,17 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// Console NodePort service
+const consoleServiceName = "expose-es-console"
+
 var _ = Describe("minikube:ingress", func() {
-	It("is reachable using ingress", func() {
-		consoleService, err := k8sClient.CoreV1().Services(args.ConsoleNamespace).Get("expose-es-console", metav1.GetOptions{})
+	It("responds to requests", func() {
+		// Figure out which port expose-es-console service uses
+		consoleService, err := k8sClient.CoreV1().Services(args.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
 		Expect(err).To(Succeed())
 		servicePort := consoleService.Spec.Ports[0].Port
 
+		// Create ingress
 		ingress := &extv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-ingress",
@@ -39,7 +44,7 @@ var _ = Describe("minikube:ingress", func() {
 									extv1.HTTPIngressPath{
 										Path: "/es-console",
 										Backend: extv1.IngressBackend{
-											ServiceName: "expose-es-console",
+											ServiceName: consoleServiceName,
 											ServicePort: intstr.FromInt(int(servicePort)),
 										},
 									},

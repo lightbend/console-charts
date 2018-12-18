@@ -2,6 +2,7 @@ package minikube
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lightbend/console_test/util"
@@ -40,14 +41,11 @@ func Delete() error {
 }
 
 func Ip() (string, error) {
-	/*
-		result := ""
-		_, err := util.Cmd("minikube", "ip").
-			CaptureStdout(&result).
-			Run()
+	var result strings.Builder
+	_, err := util.Cmd("minikube", "ip").
+		CaptureStdout(&result).
+		Run()
 
-		return result, err
-	*/
-
-	return "192.168.99.100", nil
+	ip := result.String()
+	return strings.TrimRight(ip, "\n"), err
 }

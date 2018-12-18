@@ -22,6 +22,8 @@ type CmdBuilder struct {
 	panicOnError         bool
 	printStdout          bool
 	printStderr          bool
+	captureStdout        *strings.Builder
+	captureStderr        *strings.Builder
 }
 
 func Cmd(name string, args ...string) *CmdBuilder {
@@ -70,6 +72,16 @@ func (cb *CmdBuilder) PrintOutput() *CmdBuilder {
 	return cb
 }
 
+func (cb *CmdBuilder) CaptureStdout(out *strings.Builder) *CmdBuilder {
+	cb.captureStdout = out
+	return cb
+}
+
+func (cb *CmdBuilder) CaptureStderr(out *strings.Builder) *CmdBuilder {
+	cb.captureStderr = out
+	return cb
+}
+
 func (cb *CmdBuilder) Run() (int, error) {
 	var cmd *exec.Cmd
 
@@ -101,12 +113,31 @@ func (cb *CmdBuilder) Run() (int, error) {
 			// Arbitrary exit code for other errors
 			exitcode, cmderr = -300, err
 		} else {
-			if cb.printStdout {
-				io.Copy(os.Stdout, cmdstdout)
+			var stdoutWriters []io.Writer
+			var stderrWriters []io.Writer
+
+			// Add string.Builder outputs
+			if cb.captureStdout != nil {
+				stdoutWriters = append(stdoutWriters, cb.captureStdout)
+			}
+			if cb.captureStderr != nil {
+				stderrWriters = append(stderrWriters, cb.captureStderr)
 			}
 
+			// Add OS outputs
+			if cb.printStdout {
+				stdoutWriters = append(stdoutWriters, os.Stdout)
+			}
 			if cb.printStderr {
-				io.Copy(os.Stderr, cmdstderr)
+				stderrWriters = append(stderrWriters, os.Stderr)
+			}
+
+			// Hook up command stdout/stderr to potential destinations
+			if len(stdoutWriters) > 0 {
+				io.Copy(io.MultiWriter(stdoutWriters...), cmdstdout)
+			}
+			if len(stderrWriters) > 0 {
+				io.Copy(io.MultiWriter(stderrWriters...), cmdstderr)
 			}
 
 			// Wait for command to finish
