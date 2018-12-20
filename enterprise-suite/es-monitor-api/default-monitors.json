@@ -108,8 +108,8 @@
         "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
-          "metric": "es_monitor_api_errors",
-          "window": "5m",
+          "metric": "es_monitor_api_last_error",
+          "window": "1m",
           "confidence": "1",
           "severity": {
             "warning": {
@@ -118,7 +118,7 @@
             }
           },
           "summary": "es monitors errors ",
-          "description": "One or more more monitors or config files have errors"
+          "description": "One or more monitors have errors"
         }
       },
 

@@ -84,6 +84,3 @@
 
 - record: akka_http_http_server_responses_5xx_rate
   expr: rate(akka_http_http_server_responses_5xx[5m])
-
-- record: es_monitor_api_errors
-  expr: es_monitor_api_last_error + es_monitor_api_bad_monitors
