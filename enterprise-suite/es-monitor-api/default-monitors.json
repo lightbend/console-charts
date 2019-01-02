@@ -117,8 +117,8 @@
               "threshold": "0"
             }
           },
-          "summary": "es monitors errors ",
-          "description": "One or more monitors have errors"
+          "summary": "es console monitor errors",
+          "description": "one or more monitors are erroneous"
         }
       },
 
