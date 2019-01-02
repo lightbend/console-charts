@@ -15,9 +15,6 @@ var Kubeconfig string
 // ConsoleNamespace is name for kubernetes namespace where tests will run
 var ConsoleNamespace string
 
-// Openshift is true if tests are running on openshift
-var Openshift bool
-
 func init() {
 	homeDir := os.Getenv("HOME")
 
