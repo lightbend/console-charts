@@ -23,7 +23,6 @@ spec:
         component: server
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
-        {{ .Values.prometheusDomain }}/port: "9090"
     spec:
       serviceAccountName: prometheus-server
 
@@ -93,7 +92,8 @@ spec:
               mountPath: /monitor-data
               subPath: monitor-data
           ports:
-            - containerPort: 8180
+            - name: metrics
+              containerPort: 8180
           readinessProbe:
             failureThreshold: 3
             httpGet:
@@ -140,7 +140,8 @@ spec:
             - --web.route-prefix=/
             {{ end }}
           ports:
-            - containerPort: 9090
+            - name: metrics
+              containerPort: 9090
 
           readinessProbe:
             httpGet:
