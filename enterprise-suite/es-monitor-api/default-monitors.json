@@ -104,7 +104,7 @@
           "description": "{{$labels.instance}} has anomalous scrape_duration_seconds"
         }
       },
-      "es_monitor_api_errors": {
+      "lightbend_monitor_api_errors": {
         "monitorVersion": "1",
         "model": "threshold",
         "parameters": {
@@ -117,8 +117,8 @@
               "threshold": "0"
             }
           },
-          "summary": "es console monitor errors",
-          "description": "one or more monitors are erroneous"
+          "summary": "lightbend console monitor errors",
+          "description": "Lightbend console api on {{$labels.instance}} has monitor errors"
         }
       },
 
