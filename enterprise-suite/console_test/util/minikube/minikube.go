@@ -18,7 +18,7 @@ func IsRunning() bool {
 
 func Start(cpus int, mem int) error {
 	_, err := util.Cmd("minikube", "start", fmt.Sprintf("--cpus=%v", cpus), fmt.Sprintf("--memory=%v", mem)).
-		Timeout(time.Minute * 3).
+		Timeout(time.Minute * 4).
 		PrintOutput().
 		Run()
 	return err

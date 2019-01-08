@@ -3,6 +3,7 @@ package console
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	extv1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,33 +20,41 @@ import (
 // Console NodePort service
 const consoleServiceName = "expose-es-console"
 
+// Name of Ingress that this test creates
+const testIngressName = "console-test-ingress"
+
 var _ = Describe("minikube:ingress", func() {
 	It("responds to requests", func() {
-		// Figure out which port expose-es-console service uses
-		consoleService, err := k8sClient.CoreV1().Services(args.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
-		Expect(err).To(Succeed())
-		servicePort := consoleService.Spec.Ports[0].Port
+		// On repeated test runs the ingress might already exist, so check before creating a new one
+		_, err := k8sClient.ExtensionsV1beta1().Ingresses(args.ConsoleNamespace).Get(testIngressName, metav1.GetOptions{})
+		if err != nil {
 
-		// Create ingress
-		ingress := &extv1.Ingress{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-ingress",
-				Annotations: map[string]string{
-					"nginx.ingress.kubernetes.io/rewrite-target": "/",
+			// Figure out which port expose-es-console service uses
+			consoleService, err := k8sClient.CoreV1().Services(args.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
+			Expect(err).To(Succeed())
+			servicePort := consoleService.Spec.Ports[0].Port
+
+			// Create ingress
+			ingress := &extv1.Ingress{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: testIngressName,
+					Annotations: map[string]string{
+						"nginx.ingress.kubernetes.io/rewrite-target": "/",
+					},
 				},
-			},
-			Spec: extv1.IngressSpec{
-				Rules: []extv1.IngressRule{
-					extv1.IngressRule{
-						"minikube.ingress.test",
-						extv1.IngressRuleValue{
-							&extv1.HTTPIngressRuleValue{
-								Paths: []extv1.HTTPIngressPath{
-									extv1.HTTPIngressPath{
-										Path: "/es-console",
-										Backend: extv1.IngressBackend{
-											ServiceName: consoleServiceName,
-											ServicePort: intstr.FromInt(int(servicePort)),
+				Spec: extv1.IngressSpec{
+					Rules: []extv1.IngressRule{
+						extv1.IngressRule{
+							"minikube.ingress.test",
+							extv1.IngressRuleValue{
+								&extv1.HTTPIngressRuleValue{
+									Paths: []extv1.HTTPIngressPath{
+										extv1.HTTPIngressPath{
+											Path: "/es-console",
+											Backend: extv1.IngressBackend{
+												ServiceName: consoleServiceName,
+												ServicePort: intstr.FromInt(int(servicePort)),
+											},
 										},
 									},
 								},
@@ -53,14 +62,17 @@ var _ = Describe("minikube:ingress", func() {
 						},
 					},
 				},
-			},
+			}
+			_, err = k8sClient.ExtensionsV1beta1().Ingresses(args.ConsoleNamespace).Create(ingress)
+			Expect(err).To(Succeed())
+
+			time.Sleep(6 * time.Second)
 		}
-		_, err = k8sClient.ExtensionsV1beta1().Ingresses(args.ConsoleNamespace).Create(ingress)
-		Expect(err).To(Succeed())
 
 		ip, err := minikube.Ip()
 		Expect(err).To(Succeed())
 
+		// TODO: Check if this works manually
 		resp, err := http.Get(fmt.Sprintf("http://%v/es-console", ip))
 		Expect(err).To(Succeed())
 		Expect(resp.StatusCode).To(Equal(200))
