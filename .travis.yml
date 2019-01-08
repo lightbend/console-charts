@@ -29,11 +29,11 @@ jobs:
     - make test CHARTS=enterprise-suite-latest
 
   - name: ES Frontend E2E
-    addons:
-      apt:
-        update: true
-        packages:
-        - libgconf2-4
+    # addons:
+    #   apt:
+    #     update: true
+    #     packages:
+    #     - libgconf2-4
     cache:
       directories:
         - ~/.npm
@@ -48,11 +48,11 @@ jobs:
 
   - name: ES Frontend E2E (Latest)
     if: type in (cron)
-    addons:
-      apt:
-        update: true
-        packages:
-        - libgconf2-4
+    # addons:
+    #   apt:
+    #     update: true
+    #     packages:
+    #     - libgconf2-4
     cache:
       directories:
         - ~/.npm
