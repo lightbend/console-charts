@@ -11,7 +11,7 @@ sudo apt install -y yq
 sudo apt install -y jq
 
 # libgconf2-4
-# sudo apt install -y libgconf2-4
+sudo apt install -y libgconf2-4
 
 # promtool
 mkdir -p build

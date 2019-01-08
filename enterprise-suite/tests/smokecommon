@@ -22,7 +22,7 @@ error() {
 # quickly retry command til it works, up to some limit
 # idea: succeed fast, fail slow
 busy_wait() {
-  limit=90
+  limit=120
   until "$@"; do
     if [[ limit -le 0 ]]; then
       error "giving up: busy_wait $*"
