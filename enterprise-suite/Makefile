@@ -24,74 +24,74 @@ CHART_DIR = .
 ALL_YAML ?= all.yaml
 #####
 
+.PHONY: all build
 all: lint build  ## lint then build chart
 build: init package allyaml  ## Build chart package (and all.yaml)
 
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
+.PHONY: package
 package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
 
-script-tests:
+.PHONY: script-tests
+script-tests: ## Run installer tests
 	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
 	python $(CHART_DIR)/scripts/lbc_test.py
 
-minikube-backend-tests: build
+.PHONY: minikube-backend-tests
+minikube-backend-tests: ## Run the backend tests against minikube
 	@echo Running minikube tests
 	( cd $(CHART_DIR)/tests ; ./smoketest_minikube.sh ; )
 
-openshift-backend-tests: build
+.PHONY: openshift-backend-tests
+openshift-backend-tests: ## Run the backend tests against openshift
 	@echo Running openshift tests
 	( cd $(CHART_DIR)/tests ; ./smoketest_openshift.sh ; )
 
-frontend-tests: build
+.PHONY: frontend-tests
+frontend-tests: ## Run the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
 
 # This target required by top-level helm-charts Makefile. It's not used by travis.
 # It only performs lightweight checks.
-test: lint script-tests
-
-# We no longer need a target to build the index.yaml file since that's up to the
-# helm-charts Makefile.  Could include this though...
-# build: $(HELM_CHARTS_DIR)/docs/index.yaml
-#
-# $(HELM_CHARTS_DIR)/docs/index.yaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
-# 	$(call banner)
-# 	$(MAKE) -C $(HELM_CHARTS_DIR) index
-
-init:
-	@$(SCRIPTS_DIR)/lib.sh
-	@helm init -c > /dev/null
+.PHONY: test
+test: lint script-tests ## Run unit tests
 
 # Note: This works for enterprise-suite and allows us to define a latest-specific version in enterprise-suite-latest
 $(HELM_CHARTS_DIR)/docs/$(filter-out %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
 	$(call banner)
 	helm package -d $(HELM_CHARTS_DIR)/docs $(CHART_DIR)
 
+.PHONY: lint
 lint: lint-helm lint-json lint-promql  ## Run all lint tests on chart files
 
+.PHONY: lint-helm
 lint-helm:  ## Run helm lint on chart files
 	helm lint $(CHART_DIR)
 
+.PHONY: lint-json
 lint-json:  ## Test json files are well-formed
 	find $(CHART_DIR) -name \*.json | xargs -tn 1 jq . >/dev/null
 
+.PHONY: lint-promql
 lint-promql:  ## Test promql bits are well-formed
 	$(CHART_DIR)/scripts/validate-promql.sh
 
+.PHONY: lint-allyaml
 lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
 	kubectl --context=minikube create --dry-run --validate -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
 
+.PHONY: clean
 clean::  ## Delete make artifacts
 	rm -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
 
+.PHONY: allyaml
 allyaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build all.yaml file
 
 $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
 	$(call banner)
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
-	helm --namespace=$(NAMESPACE) template $< $(EXPOSE_SERVICES) > $@
+	helm --namespace=$(NAMESPACE) template $< --set exposeServices=NodePort > $@
 
+.PHONY: help
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-
-.PHONY: all build package script-tests minikube-tests test init lint lint-helm lint-json lint-promql lint-allyaml clean \
-		allyaml install-helm install-local install-dev help
