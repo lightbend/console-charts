@@ -114,7 +114,8 @@ PROM_LOGS=$( prom_logs )
 ! echo "$PROM_LOGS" | grep -qi warn
 T $? 'Prometheus "warn" logs'
 
-! echo "$PROM_LOGS" | grep -qi err
+# It's okay if the reload fails, due to prometheus-server sometimes taking a little while to start up.
+! echo "$PROM_LOGS" | grep -qi err | grep -v -e 'reload: context deadline exceeded'
 T $? 'Prometheus "err" logs'
 
 # grep prometheus_ rules.json | jq -r '.parameters.metric'
