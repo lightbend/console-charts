@@ -221,8 +221,9 @@ def preinstall_check(creds, minikube=False, minishift=False):
     # TODO: Check if RBAC rules for tiller are set up
 
     if not check_credentials(creds):
-        fail('Your credentials do not appear to be correct' +
-                 ' - unable to make authenticated request to lightbend docker registry')
+        printerr('Your credentials might not be correct' +
+                 ' - unable to make authenticated request to lightbend docker registry; ' +
+                 'proceeding with the installation anyway')
 
 # Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 def install_status(release_name):
