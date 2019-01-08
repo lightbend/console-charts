@@ -13,8 +13,8 @@ sudo apt install -y yq
 # jq
 sudo apt install -y jq
 
-# sponge
-sudo apt install -y moreutils
+# libgconf2-4
+sudo apt install -y libgconf2-4
 
 # promtool
 mkdir -p build
