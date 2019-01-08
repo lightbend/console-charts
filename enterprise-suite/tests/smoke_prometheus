@@ -216,7 +216,7 @@ prom_has_data "$app_instances"
 
 # make_monitor "type/name" "metric"
 make_monitor() {
-  curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+  curl -s -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
     "$ES_MONITOR_API/monitors/$1" \
     --data @- <<EOF
     {

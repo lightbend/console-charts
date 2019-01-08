@@ -2,6 +2,9 @@
 
 set -eux
 
+# git-lfs repo key, needed for apt update as of 2018/01/07 on travis
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+
 # yq
 sudo add-apt-repository -y ppa:rmescandon/yq
 sudo apt update
@@ -10,8 +13,8 @@ sudo apt install -y yq
 # jq
 sudo apt install -y jq
 
-# sponge
-sudo apt install -y moreutils
+# libgconf2-4
+sudo apt install -y libgconf2-4
 
 # promtool
 mkdir -p build
