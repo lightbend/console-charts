@@ -92,6 +92,15 @@ $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(R
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
 	helm --namespace=$(NAMESPACE) template $< --set exposeServices=NodePort > $@
 
+.PHONY: install-dev
+install-dev: ## Install local chart directory to a local minikube.
+	-kubectl create namespace lightbend
+	-kubectl create serviceaccount --namespace lightbend tiller
+	-kubectl create clusterrolebinding lightbend:tiller --clusterrole=cluster-admin \
+		--serviceaccount=lightbend:tiller
+	helm init --wait --service-account tiller --upgrade --tiller-namespace=lightbend
+	TILLER_NAMESPACE=lightbend scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
+
 .PHONY: help
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
