@@ -178,11 +178,12 @@ def check_credentials(creds):
     registry = 'https://lightbend-docker-commercial-registry.bintray.io/v2'
     api_url = registry + '/enterprise-suite/es-monitor-api/tags/list'
 
-    # Use curl for checking credentials by default, only do urllib2 backup in case curl doesn't work (eg. not installed)
-    stdout, returncode = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
-        .format(creds[0], creds[1], url), DEFAULT_TIMEOUT)
-    if returncode == 0 and stdout == '200':
-        return True
+    # Use curl for checking credentials by default, only do urllib2 backup in case curl isn't installed
+    stdout, returncode = run('curl --version')
+    if returncode == 0:
+        stdout, returncode = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
+            .format(creds[0], creds[1], api_url), DEFAULT_TIMEOUT, show_stderr=True)
+        return int(stdout) == 200
 
     # Set up basic auth with given creds
     req = url.Request(api_url)
