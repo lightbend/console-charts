@@ -3,9 +3,7 @@
 set -eux
 
 # git-lfs repo key, needed for apt update as of 2018/01/07 on travis
-# apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-sudo rm /var/lib/apt/lists/* -vf
-sudo apt-get update && sudo apt-get upgrade
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
 
 # yq
 sudo add-apt-repository -y ppa:rmescandon/yq
