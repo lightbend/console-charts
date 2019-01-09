@@ -11,6 +11,7 @@ spec:
   strategy:
     # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
     type: Recreate
+    rollingUpdate: null
 
   selector:
     matchLabels:
