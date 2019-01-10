@@ -1,6 +1,7 @@
 package console
 
 import (
+	"fmt"
 	"testing"
 
 	"k8s.io/client-go/kubernetes"
@@ -16,7 +17,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// The following variables are used in this package to access kubernetes
+// and make requests on Console components.
 var k8sClient *kubernetes.Clientset
+var consoleAddr string
+var prometheusAddr string
+var monitorApiAddr string
 
 var _ = BeforeSuite(func() {
 	// Start minikube if --start-minikube arg was given
@@ -43,6 +49,17 @@ var _ = BeforeSuite(func() {
 	// Install console
 	Expect(lbc.Install(args.ConsoleNamespace)).To(Succeed())
 
+	// Setup addresses for making requests to Console components
+	if minikube.IsRunning() {
+		ip, err := minikube.Ip()
+		Expect(err).To(Succeed())
+
+		consoleAddr = fmt.Sprintf("http://%v:30080", ip)
+		prometheusAddr = fmt.Sprintf("%v/service/prometheus", consoleAddr)
+		monitorApiAddr = fmt.Sprintf("%v/service/es-monitor-api", consoleAddr)
+	} else {
+		// TODO: Setup addresses for openshift
+	}
 })
 
 var _ = AfterSuite(func() {
@@ -53,19 +70,15 @@ var _ = AfterSuite(func() {
 	}
 })
 
-var _ = Describe("Console", func() {
-	Context("Temporary", func() {
-		It("works", func() {
-			Expect(2 * 4).To(Equal(8))
-		})
-	})
-
+var _ = Describe("minikube:verify", func() {
 	Context("Minikube", func() {
 		It("is running", func() {
 			Expect(minikube.IsRunning()).Should(BeTrue())
 		})
 	})
+})
 
+var _ = Describe("all:verify", func() { 
 	Context("Helm", func() {
 		It("is installed", func() {
 			Expect(helm.IsInstalled()).Should(BeTrue())

@@ -165,3 +165,25 @@ func (cb *CmdBuilder) Run() (int, error) {
 
 	return exitcode, cmderr
 }
+
+const maxRepeats = 100
+const failureSleep = 500 * time.Millisecond
+
+// Repeatedly runs a function, sleeping for a bit after each time, until it returns true or reaches maxRepeats
+func WaitUntilTrue(f func() bool) error {
+	for i := 0; i < maxRepeats; i++ {
+		if f() == true {
+			return nil
+		}
+		time.Sleep(failureSleep)
+	}
+	return errors.New("WaitUntilTrue reached maximum repeats without f() returning true")
+}
+
+// Repeatedly runs a function, sleeping for a bit after each time, until it succeeds or reaches maxRepeats
+func WaitUntilSuccess(f func() error) error {
+	if WaitUntilTrue(func() bool { return f() == nil }) != nil {
+		return errors.New("WaitUntilSuccess reached maximum repeats without f() succeeding")
+	}
+	return nil
+}

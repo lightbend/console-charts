@@ -1,0 +1,12 @@
+Lightbend Console e2e tests
+
+Depends on having ginkgo installed:
+> go get github.com/onsi/ginkgo/ginkgo
+
+Running tests locally with no minikube or helm running:
+> ginkgo -- --start-minikube
+
+Running on openshift:
+> ginkgo --skip=*minikube*
+
+Test names should include one of prefixes "all:", "minikube:", "openshift:" to describe valid platforms.
