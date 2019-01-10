@@ -11,7 +11,7 @@ describe('Workload Page Test', () => {
     Util.validateMonitorCountGte(3);
     WorkloadDetails.validateNodePodContainerCount(1, 3, 3);
     WorkloadDetails.validateServiceType(['akka', 'kubernetes']);
-    WorkloadDetails.validateLabelsContains('namespace', 'default');
+    WorkloadDetails.validateLabelsContains('namespace', 'lightbend');
     WorkloadDetails.validateLabelsContains('node_name', 'minikube');
   });
 

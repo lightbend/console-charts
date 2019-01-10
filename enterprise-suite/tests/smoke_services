@@ -7,7 +7,7 @@ source smokecommon
 #set -x
 
 # Base URL for access via NodePort setup
-CONSOLE_NODE_BASE=$( busy_wait nodeport expose-es-console )
+CONSOLE_NODE_BASE=$( busy_wait nodeport )
 
 # Base URLs for access to services via console using nginx location directives
 GRAFANA_VIA_CONSOLE=${CONSOLE_NODE_BASE}/service/grafana

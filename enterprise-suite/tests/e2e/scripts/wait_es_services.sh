@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
 # wait es_services are ready. polling es-prom-server/es-console/es-grafana
 SERVICES=$(minikube service list)
 CURL='curl --connect-timeout 1 --max-time 1 --output /dev/null --silent'

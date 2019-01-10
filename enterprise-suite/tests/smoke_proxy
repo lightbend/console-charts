@@ -22,16 +22,16 @@ cleanup() {
 trap cleanup 0
 
 # Make sure the services are ready
-CONSOLE_NODE_BASE=$( busy_wait nodeport console-server )
+CONSOLE_NODE_BASE=$( busy_wait nodeport )
 
 # Get port for service in kubernetes.  $1 is service
 getport() {
-    kubectl get -n lightbend services $1 -o json | jq '.spec.ports[0].port'
+    kubectl get -n ${NAMESPACE} services $1 -o json | jq '.spec.ports[0].port'
 }
 
 # returns base URL to access service $1 at port $2 via the proxy
 getproxyUrl() {
-    echo "http://127.0.0.1:$PROXY_PORT/api/v1/namespaces/lightbend/services/$1:$2/proxy"
+    echo "http://127.0.0.1:$PROXY_PORT/api/v1/namespaces/${NAMESPACE}/services/$1:$2/proxy"
 }
 
 # Fire up the proxy

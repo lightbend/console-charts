@@ -11,6 +11,8 @@ spec:
   strategy:
     # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
     type: Recreate
+    # Needed for helm upgrade to succeed.
+    rollingUpdate: null
 
   template:
     metadata:
@@ -35,7 +37,7 @@ spec:
             cpu: {{ default .Values.defaultCPURequest .Values.esGrafanaCPURequest }}
             memory: {{ default .Values.defaultMemoryRequest .Values.esGrafanaMemoryRequest }}
         env:
-          # The following env variables set up anonymous access to grafana with editor access.
+          # The next two env variables set up anonymous access to grafana with editor access.
           - name: GF_AUTH_ANONYMOUS_ENABLED
             value: "true"
           - name: GF_AUTH_ANONYMOUS_ORG_ROLE
@@ -44,6 +46,10 @@ spec:
             value: "/service/grafana/"
           - name: GF_SERVER_ROUTER_LOGGING
             value: "true"
+          - name: GF_ANALYTICS_REPORTING_ENABLED
+            value: "false"
+          - name: GF_ANALYTICS_CHECK_FOR_UPDATES
+            value: "false"
         ports:
           - containerPort: 3000
         lifecycle:

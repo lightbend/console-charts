@@ -26,7 +26,7 @@ export CONSOLE_REMOTE_PORT="8080"
 # Fire up the port forwarding
 (
     # Forwarding to an ephemeral port to avoid collisions
-    kubectl port-forward -n lightbend deployment/es-console :$CONSOLE_REMOTE_PORT 1>$TMPPIPE &
+    kubectl port-forward -n ${NAMESPACE} deployment/es-console :$CONSOLE_REMOTE_PORT 1>$TMPPIPE &
     KUBECTL_PID=$!
     # This eliminates the annoying message from the outer shell when killing the process
     wait $KUBECTL_PID 2>/dev/null 1>&2

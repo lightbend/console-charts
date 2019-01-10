@@ -9,7 +9,7 @@ set -o nounset
 
 source timeout.fn
 
-: "${CURRENT_CONTEXT:=minikube}"
+: "${TEST_CONTEXT:=minikube}"
 
 # error msg
 # print msg to stderr and exit with error
@@ -108,13 +108,13 @@ test_summary() {
     exit $TEST_FAILURES
 }
 
-# Get URL for NodePort assignment
+# Get URL for accessing console externally
 # nodeport <name>
 nodeport() {
-  if [[ $CURRENT_CONTEXT == "minishift" ]]; then
-    oc get route -o json  | jq ".items[]|select(.metadata.name==\"$1\")|.spec.host" | tr -d '"'
+  if [[ "$TEST_CONTEXT" == "openshift" ]]; then
+    oc get route -o json  | jq ".items[]|select(.metadata.name==\"console-server\")|.spec.host" | tr -d '"'
   else
-    minikube service --namespace=lightbend --url $1
+    minikube service --namespace=${NAMESPACE} --url expose-es-console
   fi
 }
 
@@ -134,7 +134,7 @@ curl_headers() {
 
 # Used with busy_wait to determine if the console is ready for requests
 es_console_ready() {
-    [ "Running" = $(kubectl get pod -l run=es-console -n lightbend -o go-template --template="{{ (index .items 0).status.phase }}") ]
+    [ "Running" = $(kubectl get pod -l run=es-console -n ${NAMESPACE} -o go-template --template="{{ (index .items 0).status.phase }}") ]
 }
 
 # Lightbend Console access test
@@ -143,7 +143,7 @@ test_es_console_responding() {
   CONSOLE_URL=$1
   shift
   es_console_responding() {
-      curl_query $CONSOLE_URL "" "$@" | fgrep -q '<title>Enterprise Suite Reactive Console</title>'
+      curl_query $CONSOLE_URL "" "$@" | fgrep -q '<title>Enterprise Suite Lightbend Console</title>'
   }
   timeout es_console_responding "$@"
   T $? Lightbend Console accessible via $CONSOLE_URL "$@"

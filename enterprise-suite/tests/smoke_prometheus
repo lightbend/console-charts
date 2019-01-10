@@ -9,8 +9,7 @@ source smokecommon
 #
 
 set -e
-NAMESPACE="smoketest-prometheus"
-kubectl create namespace $NAMESPACE
+NAMESPACE=${NAMESPACE:=lightbend}
 for app in resources/app*.yaml; do
   kubectl apply -f "$app" -n $NAMESPACE
 done
@@ -19,7 +18,6 @@ cleanup() {
   for app in resources/app*.yaml; do
     kubectl delete -f "$app" -n $NAMESPACE
   done
-  kubectl delete namespace $NAMESPACE
 }
 
 trap cleanup 0
@@ -29,7 +27,7 @@ set +e
 # prometheus fetchers
 #
 
-ES_CONSOLE=$( busy_wait nodeport expose-es-console )
+ES_CONSOLE=$( busy_wait nodeport )
 PROM="$ES_CONSOLE/service/prometheus"
 ES_MONITOR_API="$ES_CONSOLE/service/es-monitor-api"
 
@@ -65,13 +63,13 @@ model_exists() {
 #
 
 kube_state_metrics_logs() {
-  kubectl logs --tail=100 --namespace=lightbend -l app=prometheus,component=kube-state-metrics
+  kubectl logs --tail=100 --namespace=${NAMESPACE} -l app=prometheus,component=kube-state-metrics
 }
 prom_logs() {
-  kubectl logs --tail=100 --namespace=lightbend -l app=prometheus,component=server -c prometheus-server
+  kubectl logs --tail=100 --namespace=${NAMESPACE} -l app=prometheus,component=server -c prometheus-server
 }
 node_exporter_logs() {
-  kubectl logs --tail=100 --namespace=lightbend -l app=prometheus,component=node-exporter
+  kubectl logs --tail=100 --namespace=${NAMESPACE} -l app=prometheus,component=node-exporter
 }
 
 
@@ -116,7 +114,8 @@ PROM_LOGS=$( prom_logs )
 ! echo "$PROM_LOGS" | grep -qi warn
 T $? 'Prometheus "warn" logs'
 
-! echo "$PROM_LOGS" | grep -qi err
+# It's okay if the reload fails, due to prometheus-server sometimes taking a little while to start up.
+! echo "$PROM_LOGS" | grep -qi err | grep -v -e 'reload: context deadline exceeded'
 T $? 'Prometheus "err" logs'
 
 # grep prometheus_ rules.json | jq -r '.parameters.metric'
@@ -250,7 +249,7 @@ prom_has_data "$app_instances"
 
 # make_monitor "type/name" "metric"
 make_monitor() {
-  curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+  curl -s -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
     "$ES_MONITOR_API/monitors/$1" \
     --data @- <<EOF
     {

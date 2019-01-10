@@ -8,7 +8,7 @@ import { Health } from '../support/health';
 
 describe('Local Prometheus Health Test', () => {
   beforeEach(() => {
-    Navigation.goMonitorPage('default', 'es-demo', 'akka_inbox_growth');
+    Navigation.goMonitorPage('lightbend', 'es-demo', 'akka_inbox_growth');
     Action.editMonitor();
     Form.validateMetricName('akka_actor_mailbox_size');
   });

@@ -23,7 +23,7 @@ kind: Service
 metadata:
   name: es-test-via-service
   annotations:
-    prometheus.io/scrape: "true"
+    consolebackende2e.io/scrape: "true"
 spec:
   ports:
     - port: 80
