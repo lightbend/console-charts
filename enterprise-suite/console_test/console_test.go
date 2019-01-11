@@ -22,7 +22,7 @@ import (
 var k8sClient *kubernetes.Clientset
 var consoleAddr string
 var prometheusAddr string
-var monitorApiAddr string
+var monitorAPIAddr string
 
 var _ = BeforeSuite(func() {
 	// Start minikube if --start-minikube arg was given
@@ -56,7 +56,7 @@ var _ = BeforeSuite(func() {
 
 		consoleAddr = fmt.Sprintf("http://%v:30080", ip)
 		prometheusAddr = fmt.Sprintf("%v/service/prometheus", consoleAddr)
-		monitorApiAddr = fmt.Sprintf("%v/service/es-monitor-api", consoleAddr)
+		monitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", consoleAddr)
 	} else {
 		// TODO: Setup addresses for openshift
 	}

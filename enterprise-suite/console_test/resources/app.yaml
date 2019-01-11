@@ -1,0 +1,23 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: es-test
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: es-test
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+        # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
+        - name: es-test
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: metrics

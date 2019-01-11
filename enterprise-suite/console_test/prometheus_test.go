@@ -5,6 +5,7 @@ import (
 
 	"github.com/lightbend/console_test/util"
 	"github.com/lightbend/console_test/util/kube"
+	"github.com/lightbend/console_test/util/monitor"
 	"github.com/lightbend/console_test/util/prometheus"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -19,12 +20,14 @@ const promTestNamespace = "smoketest-prometheus"
 var _ = Describe("all:prometheus", func() {
 	// Resource yaml file to deployment name map
 	appYamls := map[string]string{
+		"./resources/app.yaml":                             "es-test",
 		"./resources/app_with_service.yaml":                "es-test-via-service",
 		"./resources/app_service_with_only_endpoints.yaml": "",
 		"./resources/app_with_multiple_ports.yaml":         "es-test-with-multiple-ports",
 	}
 
 	var prom *prometheus.Connection
+	var esMonitor *monitor.Connection
 	var namespace *apiv1.Namespace
 
 	// BeforeEach and AfterEach are used as single-time setup/teardown here because we have a
@@ -67,6 +70,9 @@ var _ = Describe("all:prometheus", func() {
 		}
 
 		prom, err = prometheus.NewConnection(prometheusAddr)
+		Expect(err).To(Succeed())
+
+		esMonitor, err = monitor.NewConnection(monitorAPIAddr)
 		Expect(err).To(Succeed())
 	})
 
@@ -112,7 +118,7 @@ var _ = Describe("all:prometheus", func() {
 		}
 
 		for _, metric := range promMetrics {
-			Expect(prom.HasData(metric)).To(Equal(true))
+			Expect(prom.HasData(metric)).To(BeTrue())
 		}
 
 		promHealth := []string{
@@ -127,30 +133,101 @@ var _ = Describe("all:prometheus", func() {
 		}
 
 		for _, metric := range promHealth {
-			Expect(prom.HasData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Equal(true))
-			Expect(prom.HasData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Equal(true))
+			Expect(prom.HasData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(BeTrue())
+			Expect(prom.HasData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(BeTrue())
 		}
 
 		// Coherency
 
 		// Data with "es_workload" should also have a "namespace" label
-		Expect(prom.HasData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(Equal(false))
+		Expect(prom.HasData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(BeFalse())
 		// Health should have "es_workload" label, with a few known exceptions
-		Expect(prom.HasData("health{es_workload=\"\", name!~\"node.*|kube_node.*|prometheus_target_down|scrape_time\"}")).To(Equal(false))
+		Expect(prom.HasData("health{es_workload=\"\", name!~\"node.*|kube_node.*|prometheus_target_down|scrape_time\"}")).To(BeFalse())
 		// kube_pod_info must have es_workload labels
-		Expect(prom.HasData("kube_pod_info{es_workload=~\".+\"}")).To(Equal(true))
-		Expect(prom.HasData("kube_pod_info{es_workload=\"\"}")).To(Equal(false))
+		Expect(prom.HasData("kube_pod_info{es_workload=~\".+\"}")).To(BeTrue())
+		Expect(prom.HasData("kube_pod_info{es_workload=\"\"}")).To(BeFalse())
 		// kube data mapped pod to workload labels
-		Expect(prom.HasData("{__name__=~ \"kube_.+\", pod!=\"\", es_workload=\"\"}")).To(Equal(false))
+		Expect(prom.HasData("{__name__=~ \"kube_.+\", pod!=\"\", es_workload=\"\"}")).To(BeFalse())
 		// All container data have a workload label
-		Expect(prom.HasData("{__name__=~\"container_.+\", es_workload=\"\"}")).To(Equal(false))
+		Expect(prom.HasData("{__name__=~\"container_.+\", es_workload=\"\"}")).To(BeFalse())
 		// All targets should be reachable
-		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(Equal(true))
-		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 0")).To(Equal(false))
+		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(BeTrue())
+		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 0")).To(BeFalse())
 
-		// TODO:
 		// kube-state-metrics
+
+		kubeStateMetrics := []string{
+			"kube_pod_info",
+			"kube_pod_ready",
+			"kube_pod_container_restarts_rate",
+			"kube_pod_failed",
+			"kube_pod_not_running",
+			"kube_workload_generation_lag",
+		}
+
+		for _, metric := range kubeStateMetrics {
+			Expect(prom.HasData(metric)).To(BeTrue())
+		}
+
+		kubeStateHealth := []string{
+			"kube_container_restarts",
+			"kube_pod_not_ready",
+			"kube_pod_not_running",
+			"kube_workload_generation_lag",
+		}
+
+		for _, metric := range kubeStateHealth {
+			Expect(prom.HasData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(BeTrue())
+			Expect(prom.HasData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(BeTrue())
+		}
+
+		// TODO: Check kube-state-metrics logs
+
 		// node-exporter
-		// app tests
+
+		nodeMetrics := []string{
+			"node_cpu",
+			"node_memory_MemAvailable",
+			"node_filesystem_free",
+			"node_network_transmit_errs",
+		}
+
+		for _, metric := range nodeMetrics {
+			Expect(prom.HasData(metric)).To(BeTrue())
+		}
+
+		// TODO: Check node-exporter logs
+
+		// App tests
+
+		// App via 'Pod' service discovery
+		appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", promTestNamespace)
+		err := util.WaitUntilTrue(func() bool {
+			return prom.HasData(appInstancesQuery)
+		})
+		Expect(err).To(Succeed())
+
+		// Pod discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
+		Expect(esMonitor.Make("es-test/my_custom_monitor", "up")).To(Succeed())
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasModel("my_custom_monitor")
+		})
+		Expect(err).To(Succeed())
+
+		// App via 'Pod' service discovery with multiple metric ports
+		appInstancesWithMultiplePortsQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", promTestNamespace)
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasData(appInstancesWithMultiplePortsQuery)
+		})
+		Expect(err).To(Succeed())
+
+		// App via 'Service' service discovery
+		appInstancesViaServiceQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", promTestNamespace)
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasData(appInstancesViaServiceQuery)
+		})
+		Expect(err).To(Succeed())
+
+		// TODO: Rest of app tests
 	})
 })

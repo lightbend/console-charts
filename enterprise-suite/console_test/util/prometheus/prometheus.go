@@ -22,6 +22,7 @@ type Response struct {
 	Warnings  []string `json:"warnings,omitempty"`
 }
 
+// Connection to prometheus server
 type Connection struct {
 	url string
 }
@@ -54,6 +55,7 @@ func (p *Connection) Query(query string) (*Response, error) {
 
 func (p *Connection) HasData(query string) bool {
 	resp, err := p.Query(query)
+
 	if err != nil {
 		return false
 	}
