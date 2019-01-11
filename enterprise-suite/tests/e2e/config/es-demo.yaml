@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       annotations:
-        prometheus.io/scrape: "true"
+        consolebackende2e.io/scrape: "true"
       labels:
         app: es-demo
     spec:

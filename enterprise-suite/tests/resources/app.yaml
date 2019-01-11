@@ -10,8 +10,8 @@ spec:
       labels:
         app: es-test
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
+        consolebackende2e.io/scrape: "true"
+        consolebackende2e.io/port: "8080"
     spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
