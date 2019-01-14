@@ -228,7 +228,6 @@ var _ = Describe("all:prometheus", func() {
 		})
 		Expect(err).To(Succeed())
 
-		// TODO: Rest of app tests
 		// 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
 		Expect(esMonitor.Make("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
 		err = util.WaitUntilTrue(func() bool {
