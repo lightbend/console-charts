@@ -229,5 +229,37 @@ var _ = Describe("all:prometheus", func() {
 		Expect(err).To(Succeed())
 
 		// TODO: Rest of app tests
+		// 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
+		Expect(esMonitor.Make("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasModel("my_custom_monitor_for_service")
+		})
+		Expect(err).To(Succeed())
+		Expect(prom.HasData("up{es_workload=\"es-test-via-service\", es_monitor_type=\"es-test-via-service\"}")).To(BeTrue())
+
+		// 'Service' discovery with only endpoints
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasData(fmt.Sprintf("count( count by (instance) (up{ "+
+				"job=\"kubernetes-services\", kubernetes_name=\"es-test-service-with-only-endpoints\", namespace=\"%v\""+
+				"}) ) == 1", promTestNamespace))
+		})
+		Expect(err).To(Succeed())
+
+		// kubernetes-cadvisor metrics should have an es_monitor_type label.
+		Expect(esMonitor.Make("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasModel("es-monitor-type-test")
+		})
+		Expect(err).To(Succeed())
+
+		// Specific test for regression of es-backend/issues/430.
+		Expect(prom.HasData("{job=\"kubernetes-cadvisor\",es_monitor_type=\"es-test\"}")).To(BeTrue())
+
+		// Succeeds if all data for the workload es-test  has a matching es_monitor_type
+		// Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
+		err = util.WaitUntilTrue(func() bool {
+			return prom.HasData("{es_workload=\"es-test\", es_monitor_type!=\"es-test\", __name__!=\"health\"}")
+		})
+		Expect(err).To(Succeed())
 	})
 })
