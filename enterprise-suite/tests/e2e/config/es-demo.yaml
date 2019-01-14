@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       annotations:
-        consolebackende2e.io/scrape: "true"
+        console-backend-e2e.io/scrape: "true"
       labels:
         app: es-demo
     spec:
