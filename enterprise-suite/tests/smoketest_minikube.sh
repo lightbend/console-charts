@@ -32,7 +32,7 @@ function setup() {
 	kubectl config set-context minikube --namespace=${NAMESPACE}
 
 	${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
-		--set podUID=10001,usePersistentVolumes=true,prometheusDomain=consolebackende2e.io \
+		--set podUID=10001,usePersistentVolumes=true,prometheusDomain=console-backend-e2e.io \
 		--set exposeServices=NodePort,esConsoleExposePort=30080 \
 		--wait
 }
