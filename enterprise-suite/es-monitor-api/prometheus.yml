@@ -1,7 +1,7 @@
 {{/*
    * Note to Helm devs: this is NOT a Helm template, but rather a plain go template used
    * in es-monitor-api to generate the final prometheus.yml.
-   * dot2underscore is a function in es-monitor-api that replaces "." with "_"
+   * sanitizeForPrometheusLabel is a function in es-monitor-api that replaces [.-] with "_"
    */}}
 global:
   # dev mode
@@ -221,25 +221,25 @@ scrape_configs:
         action: drop
 
       # _scrape _scheme _path _port annotation triggers:
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_scrape]
         action: keep
         regex: true
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_scheme]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_scheme]
         action: replace
         target_label: __scheme__
         regex: (https?)
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_path]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_path]
         action: replace
         target_label: __metrics_path__
         regex: (.+)
 
       # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
-      - source_labels: [__meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_endpoint_port_name]
+      - source_labels: [__meta_kubernetes_service_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_port, __meta_kubernetes_endpoint_port_name]
         action: keep
         regex: ^(.+;.*)|(;.*metrics)$
 
       # Set port from prometheus.io/port if it's set.
-      - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_port]
         action: replace
         # Extract IP from address. Address might not contain a port in some cases.
         regex: ([^:]+):?(?:\d*);(\d+)
@@ -297,23 +297,23 @@ scrape_configs:
     relabel_configs:
 
       # Only scrape pods with prometheus.io/scrape=true.
-      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_scrape]
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_scrape]
         action: keep
         regex: true
 
       # Set scrape path from prometheus.io/path.
-      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_path]
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_path]
         action: replace
         target_label: __metrics_path__
         regex: (.+)
 
       # Keep only the ports ending in the suffix `metrics` if prometheus.io/port is unspecified.
-      - source_labels: [__meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
+      - source_labels: [__meta_kubernetes_pod_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_port, __meta_kubernetes_pod_container_port_name]
         action: keep
         regex: ^(.+;.*)|(;.*metrics)$
 
       # Set port from prometheus.io/port if it's set.
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ dot2underscore .PrometheusDomain }}_port]
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_{{ sanitizeForPrometheusLabel .PrometheusDomain }}_port]
         action: replace
         # Extract IP from address. Address might not contain a port in some cases.
         regex: ([^:]+):?(?:\d*);(\d+)
