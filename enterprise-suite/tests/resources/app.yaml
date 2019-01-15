@@ -10,8 +10,8 @@ spec:
       labels:
         app: es-test
       annotations:
-        consolebackende2e.io/scrape: "true"
-        consolebackende2e.io/port: "8080"
+        console-backend-e2e.io/scrape: "true"
+        console-backend-e2e.io/port: "8080"
     spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
