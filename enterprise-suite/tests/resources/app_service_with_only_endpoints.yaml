@@ -15,7 +15,7 @@ kind: Service
 metadata:
   name: es-test-service-with-only-endpoints
   annotations:
-    "consolebackende2e.io/scrape": "true"
+    "console-backend-e2e.io/scrape": "true"
 spec:
   ports:
     - name: metrics
