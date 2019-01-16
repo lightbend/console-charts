@@ -11,8 +11,15 @@ source smokecommon
 set -e
 NAMESPACE=${NAMESPACE:=lightbend}
 for app in resources/app*.yaml; do
-  kubectl apply -f "$app" -n $NAMESPACE
+  kubectl apply -f "$app" -n $NAMESPACE --wait
 done
+
+deployments_up() {
+  results=$( kubectl get pods --no-headers | awk '{print $3;}' | grep -v Running | wc -l )
+  [[ results -eq 0 ]]
+}
+
+busy_wait deployments_up
 
 cleanup() {
   for app in resources/app*.yaml; do
