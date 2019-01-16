@@ -9,6 +9,14 @@ data:
       server_name localhost;
       set $base /usr/share/nginx/html;
 
+      # common security headers
+
+      more_clear_headers "Server";
+      more_set_headers
+        "X-Frame-Options: DENY"
+        "Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';"
+        "X-XSS-Protection 1";
+
       # use external resolver to lookup backends, cache for 30 seconds
 
       resolver 127.0.0.1:5353 ipv6=off valid=30s;
@@ -37,8 +45,9 @@ data:
       set $nocache 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
 
       location ~ (.*/service/prometheus)(/.*) {
+        set_escape_uri $encoded_base $1;
         proxy_pass http://$prometheus$2$is_args$args;
-        sub_filter '="/' '="$1/';
+        sub_filter '="/' '="$encoded_base/';
         sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/graph"))';
         proxy_redirect '/' ' $1/';
       }
@@ -50,10 +59,11 @@ data:
 
       # our injected plugin should never cache...
       location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
+        set_escape_uri $encoded_base $1;
         proxy_pass http://$grafana:3000$2$is_args$args;
         sub_filter_types *;
-        sub_filter '/service/grafana' '$1';
-        proxy_cookie_path '/service/grafana' '$1';
+        sub_filter '/service/grafana' '$encoded_base';
+        proxy_cookie_path '/service/grafana' '$encoded_base';
         proxy_redirect '/' ' $1/';
         # no-cache
         add_header Last-Modified $date_gmt;
@@ -64,10 +74,11 @@ data:
       }
 
       location ~ (.*/service/grafana)(/.*) {
+        set_escape_uri $encoded_base $1;
         proxy_pass http://$grafana:3000$2$is_args$args;
         sub_filter_types *;
-        sub_filter '/service/grafana' '$1';
-        proxy_cookie_path '/service/grafana' '$1';
+        sub_filter '/service/grafana' '$encoded_base';
+        proxy_cookie_path '/service/grafana' '$encoded_base';
         proxy_redirect '/' ' $1/';
       }
 
@@ -109,8 +120,9 @@ data:
       # console entry point
 
       location ~ (.*/)index.html {
+        set_escape_uri $encoded_base $1;
         alias $base/index.html;
-        sub_filter 'base href="/"' 'base href="$1"';
+        sub_filter 'base href="/"' 'base href="$encoded_base"';
         # no-cache
         add_header Last-Modified $date_gmt;
         add_header Cache-Control $nocache;
@@ -123,9 +135,10 @@ data:
       # (for our single page app, these should reload index.html but keep the path)
 
       location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
+        set_escape_uri $encoded_base $1;
         alias $base/index.html;
         default_type text/html;
-        sub_filter 'base href="/"' 'base href="$1"';
+        sub_filter 'base href="/"' 'base href="$encoded_base"';
         # kill cache
         add_header Last-Modified $date_gmt;
         add_header Cache-Control $nocache;
