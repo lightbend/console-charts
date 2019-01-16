@@ -8,6 +8,8 @@ spec:
     metadata:
       annotations:
         console-backend-e2e.io/scrape: "true"
+        # So people can use es-demo.yaml manually. This is not used by the tests, so no effect if this is changed.
+        prometheus.io/scrape: "true"
       labels:
         app: es-demo
     spec:
