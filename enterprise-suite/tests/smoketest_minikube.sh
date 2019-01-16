@@ -23,7 +23,7 @@ function diagnostics() {
 
 function setup() {
 	local es_console_version; es_console_version=''
-	[[ -n $ES_CONSOLE_VERSION ]] && es_console_version="esConsoleVersion=$ES_CONSOLE_VERSION,"
+	[[ -n "${ES_CONSOLE_VERSION:-}" ]] && es_console_version=",esConsoleVersion=${ES_CONSOLE_VERSION}"
 	kubectl create namespace ${NAMESPACE}
 	kubectl create namespace ${TILLER_NAMESPACE}
 	kubectl create serviceaccount --namespace ${TILLER_NAMESPACE} tiller
@@ -35,7 +35,7 @@ function setup() {
 
 	${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
 		--set podUID=10001,usePersistentVolumes=true,prometheusDomain=console-backend-e2e.io \
-		--set exposeServices=NodePort,${es_console_version}esConsoleExposePort=30080 \
+		--set exposeServices=NodePort,esConsoleExposePort=30080${es_console_version} \
 		--wait
 }
 
