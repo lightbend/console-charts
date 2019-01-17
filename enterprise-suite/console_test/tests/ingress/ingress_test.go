@@ -1,15 +1,16 @@
-package console
+package ingress
 
 import (
 	"fmt"
 	"net/http"
-	"time"
+	"testing"
 
 	extv1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/lightbend/console_test/args"
+	"github.com/lightbend/console_test/testenv"
 
 	"github.com/lightbend/console_test/util/minikube"
 
@@ -23,16 +24,27 @@ const consoleServiceName = "expose-es-console"
 // Name of Ingress that this test creates
 const testIngressName = "console-test-ingress"
 
+var _ = BeforeSuite(func() {
+	testenv.InitEnv()
+})
+
+var _ = AfterSuite(func() {
+	testenv.CloseEnv()
+})
+
 // TODO(mitkus): Make this test work. On my machine both this and bash e2e smoke_ingress
 // stopped working after minikube update.
 var _ = XDescribe("minikube:ingress", func() {
 	It("responds to requests", func() {
+		coreAPI := testenv.K8sClient.CoreV1()
+		extAPI := testenv.K8sClient.ExtensionsV1beta1()
+
 		// On repeated test runs the ingress might already exist, so check before creating a new one
-		_, err := k8sClient.ExtensionsV1beta1().Ingresses(args.ConsoleNamespace).Get(testIngressName, metav1.GetOptions{})
+		_, err := extAPI.Ingresses(args.ConsoleNamespace).Get(testIngressName, metav1.GetOptions{})
 		if err != nil {
 
 			// Figure out which port expose-es-console service uses
-			consoleService, err := k8sClient.CoreV1().Services(args.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
+			consoleService, err := coreAPI.Services(args.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
 			Expect(err).To(Succeed())
 			servicePort := consoleService.Spec.Ports[0].Port
 
@@ -65,11 +77,8 @@ var _ = XDescribe("minikube:ingress", func() {
 					},
 				},
 			}
-			_, err = k8sClient.ExtensionsV1beta1().Ingresses(args.ConsoleNamespace).Create(ingress)
+			_, err = extAPI.Ingresses(args.ConsoleNamespace).Create(ingress)
 			Expect(err).To(Succeed())
-
-			// TODO: Proper waiting here
-			time.Sleep(time.Minute)
 		}
 
 		ip, err := minikube.Ip()
@@ -85,3 +94,8 @@ var _ = XDescribe("minikube:ingress", func() {
 		Expect(resp.StatusCode).To(Equal(200))
 	})
 })
+
+func TestIngress(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Ingress Suite")
+}

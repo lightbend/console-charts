@@ -33,6 +33,8 @@ func Cmd(name string, args ...string) *CmdBuilder {
 		timeout:              DefaultTimeout,
 		expectZeroExitStatus: true,
 		panicOnError:         false,
+		printStdout:          false,
+		printStderr:          false,
 	}
 }
 
@@ -97,66 +99,66 @@ func (cb *CmdBuilder) Run() (int, error) {
 	var exitcode int
 	var cmderr error
 
-	// Setup stdout/sterr pipes
-	cmdstderr, err := cmd.StderrPipe()
-	if err != nil {
-		exitcode, cmderr = -100, err
-	}
 	cmdstdout, err := cmd.StdoutPipe()
 	if err != nil {
-		exitcode, cmderr = -200, err
+		panic("unable to get command stdout pipe")
 	}
 
-	if cmderr == nil {
-		// Run the command
-		if err := cmd.Start(); err != nil {
-			// Arbitrary exit code for other errors
-			exitcode, cmderr = -300, err
-		} else {
-			var stdoutWriters []io.Writer
-			var stderrWriters []io.Writer
+	cmdstderr, err := cmd.StderrPipe()
+	if err != nil {
+		panic("unable to get command stderr pipe")
+	}
 
-			// Add string.Builder outputs
-			if cb.captureStdout != nil {
-				stdoutWriters = append(stdoutWriters, cb.captureStdout)
-			}
-			if cb.captureStderr != nil {
-				stderrWriters = append(stderrWriters, cb.captureStderr)
-			}
+	// Run the command
+	if err := cmd.Start(); err != nil {
+		panic("unable to execute command")
+	} else {
+		var stdoutWriters []io.Writer
+		var stderrWriters []io.Writer
 
-			// Add OS outputs
-			if cb.printStdout {
-				stdoutWriters = append(stdoutWriters, os.Stdout)
-			}
-			if cb.printStderr {
-				stderrWriters = append(stderrWriters, os.Stderr)
-			}
+		// Add string.Builder outputs
+		if cb.captureStdout != nil {
+			stdoutWriters = append(stdoutWriters, cb.captureStdout)
+		}
+		if cb.captureStderr != nil {
+			stderrWriters = append(stderrWriters, cb.captureStderr)
+		}
 
-			// Hook up command stdout/stderr to potential destinations
-			if len(stdoutWriters) > 0 {
-				io.Copy(io.MultiWriter(stdoutWriters...), cmdstdout)
-			}
-			if len(stderrWriters) > 0 {
-				io.Copy(io.MultiWriter(stderrWriters...), cmdstderr)
-			}
+		// Add OS outputs
+		if cb.printStdout {
+			stdoutWriters = append(stdoutWriters, os.Stdout)
+		}
+		if cb.printStderr {
+			stderrWriters = append(stderrWriters, os.Stderr)
+		}
 
-			// Wait for command to finish
-			if err := cmd.Wait(); err != nil {
-				// Any non-zero return code results in an error, handle that here
-				if exiterr, ok := err.(*exec.ExitError); ok {
-					if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-						exitcode = status.ExitStatus()
-					}
-				} else {
-					exitcode, cmderr = -400, err
+		// Hook up command stdout/stderr to potential destinations
+		_, err = io.Copy(io.MultiWriter(stdoutWriters...), cmdstdout)
+		if err != nil {
+			panic("unable to copy stdout command pipe to io.MultiWriter")
+		}
+
+		_, err = io.Copy(io.MultiWriter(stderrWriters...), cmdstderr)
+		if err != nil {
+			panic("unable to copy stderr command pipe to io.MultiWriter")
+		}
+
+		// Wait for command to finish
+		if err := cmd.Wait(); err != nil {
+			// Any non-zero return code results in an error, handle that here
+			if exiterr, ok := err.(*exec.ExitError); ok {
+				if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+					exitcode = status.ExitStatus()
 				}
+			} else {
+				exitcode, cmderr = -400, err
 			}
 		}
 	}
 
 	// Make an error on non-zero exit
 	if cb.expectZeroExitStatus && cmderr == nil && exitcode != 0 {
-		cmderr = errors.New(fmt.Sprintf("'%v %v' return status %v", cb.name, strings.Join(cb.args[:], " "), exitcode))
+		cmderr = fmt.Errorf("'%v %v' return status %v", cb.name, strings.Join(cb.args[:], " "), exitcode)
 	}
 
 	if cb.panicOnError && cmderr != nil {
@@ -166,24 +168,41 @@ func (cb *CmdBuilder) Run() (int, error) {
 	return exitcode, cmderr
 }
 
-const maxRepeats = 100
-const failureSleep = 500 * time.Millisecond
+const maxRepeats = 30
+const firstSleepMs = 20
+const maxSleepMs = 10000
 
-// Repeatedly runs a function, sleeping for a bit after each time, until it returns true or reaches maxRepeats
-func WaitUntilTrue(f func() bool) error {
+// Repeatedly runs a function, sleeping for a bit after each time, until it returns true or reaches maxRepeats.
+// failMsg will be printed in the result error in case of timeout, can be empty.
+func WaitUntilTrue(f func() bool, failMsg string) error {
+	sleepTimeMs := firstSleepMs
 	for i := 0; i < maxRepeats; i++ {
-		if f() == true {
+		if f() {
 			return nil
 		}
-		time.Sleep(failureSleep)
+		// Exponential backoff
+		sleepTimeMs = sleepTimeMs * 2
+		if sleepTimeMs > maxSleepMs {
+			sleepTimeMs = maxSleepMs
+		}
+		time.Sleep(time.Duration(sleepTimeMs) * time.Millisecond)
 	}
-	return errors.New("WaitUntilTrue reached maximum repeats without f() returning true")
+
+	timeoutMsg := "WaitUntilTrue reached maximum repeats without f() returning true"
+	if failMsg != "" {
+		return fmt.Errorf("%s: %s", timeoutMsg, failMsg)
+	}
+	return errors.New(timeoutMsg)
 }
 
 // Repeatedly runs a function, sleeping for a bit after each time, until it succeeds or reaches maxRepeats
 func WaitUntilSuccess(f func() error) error {
-	if WaitUntilTrue(func() bool { return f() == nil }) != nil {
-		return errors.New("WaitUntilSuccess reached maximum repeats without f() succeeding")
+	var lastErr error
+	if WaitUntilTrue(func() bool {
+		lastErr = f()
+		return lastErr == nil
+	}, "") != nil {
+		return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
 	}
 	return nil
 }

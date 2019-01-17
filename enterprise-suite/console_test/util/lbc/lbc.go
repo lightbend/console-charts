@@ -6,8 +6,8 @@ import (
 	"github.com/lightbend/console_test/util"
 )
 
-const localChartPath = "../."
-const lbcPath = "../scripts/lbc.py"
+const localChartPath = "../../../."
+const lbcPath = "../../../scripts/lbc.py"
 
 func Install(namespace string) error {
 	cmd := util.Cmd(lbcPath, "install", "--local-chart", localChartPath,
