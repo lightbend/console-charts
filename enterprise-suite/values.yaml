@@ -122,3 +122,16 @@ prometheusVolumeSize: 256Gi
 alertmanagerVolumeSize: 32Gi
 # Grafana volume size - used for storing users, custom dashboards, and plugins.
 esGrafanaVolumeSize: 32Gi
+
+#################################################
+# Grafana environment variables
+#
+# Any additional configuration for Grafana, using environment variables as specified at
+# http://docs.grafana.org/installation/configuration/#using-environment-variables.
+#
+esGrafanaEnvVars:
+#  for example...
+#  GF_SMTP_ENABLED: true
+#  GF_SMTP_HOST: smtp.gmail.com:465
+#  GF_SMTP_USER: username
+#  GF_SMTP_PASSWORD: password

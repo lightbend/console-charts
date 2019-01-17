@@ -50,6 +50,10 @@ spec:
             value: "false"
           - name: GF_ANALYTICS_CHECK_FOR_UPDATES
             value: "false"
+          {{- range $key, $val := .Values.esGrafanaEnvVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end }}
         ports:
           - containerPort: 3000
         lifecycle:
