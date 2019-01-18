@@ -11,9 +11,9 @@ type Connection struct {
 	url string
 }
 
-// Make adds a simple threshold metric with non-configurable parameters.
+// MakeMonitor adds a simple threshold metric with non-configurable parameters.
 // TODO: Make this more configurable!
-func (m *Connection) Make(name string, metric string) error {
+func (m *Connection) MakeMonitor(name string, metric string) error {
 	url := fmt.Sprintf("%v/monitors/%v", m.url, name)
 
 	json := fmt.Sprintf(`

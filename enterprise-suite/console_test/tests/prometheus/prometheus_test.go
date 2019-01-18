@@ -180,7 +180,7 @@ var _ = Describe("all:prometheus", func() {
 			Expect(err).To(Succeed())
 
 			// Pod discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
-			Expect(esMonitor.Make("es-test/my_custom_monitor", "up")).To(Succeed())
+			Expect(esMonitor.MakeMonitor("es-test/my_custom_monitor", "up")).To(Succeed())
 			err = util.WaitUntilTrue(func() bool {
 				return prom.HasModel("my_custom_monitor")
 			}, "monitor my_custom_monitor wasn't created correctly")
@@ -203,7 +203,7 @@ var _ = Describe("all:prometheus", func() {
 			Expect(err).To(Succeed())
 
 			// 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
-			Expect(esMonitor.Make("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
+			Expect(esMonitor.MakeMonitor("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
 			err = util.WaitUntilTrue(func() bool {
 				return prom.HasModel("my_custom_monitor_for_service")
 			}, "monitor my_custom_monitor_for_service wasn't created correctly")
@@ -222,7 +222,7 @@ var _ = Describe("all:prometheus", func() {
 
 		It("kubernetes-cadvisor metrics", func() {
 			// kubernetes-cadvisor metrics should have an es_monitor_type label.
-			Expect(esMonitor.Make("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
+			Expect(esMonitor.MakeMonitor("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
 			err := util.WaitUntilTrue(func() bool {
 				return prom.HasModel("es-monitor-type-test")
 			}, "monitor es-monitor-type-test wasn't created correctly")
