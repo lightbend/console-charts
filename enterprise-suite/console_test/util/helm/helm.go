@@ -9,8 +9,8 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/lightbend/console_test/args"
 	"github.com/lightbend/console_test/util"
+	"github.com/lightbend/console_test/util/kube"
 )
 
 const ServiceAccountName = "tiller"
@@ -23,14 +23,17 @@ func IsInstalled() bool {
 	return true
 }
 
-func Install(k8sClient *kubernetes.Clientset) error {
+func Install(k8sClient *kubernetes.Clientset, namespace string) error {
+	// Create namespace, ignore the error because it might already be created
+	_ = kube.CreateNamespace(k8sClient, namespace);
+
 	// Create ServiceAccount
 	serviceAccount := &apiv1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ServiceAccountName,
 		},
 	}
-	if _, err := k8sClient.CoreV1().ServiceAccounts(args.ConsoleNamespace).Create(serviceAccount); err != nil {
+	if _, err := k8sClient.CoreV1().ServiceAccounts(namespace).Create(serviceAccount); err != nil {
 		return err
 	}
 
@@ -47,7 +50,7 @@ func Install(k8sClient *kubernetes.Clientset) error {
 			rbacv1.Subject{
 				Kind:      "ServiceAccount",
 				Name:      ServiceAccountName,
-				Namespace: args.ConsoleNamespace,
+				Namespace: namespace,
 			},
 		},
 	}
@@ -56,7 +59,7 @@ func Install(k8sClient *kubernetes.Clientset) error {
 	}
 
 	// Do `helm init`
-	cmd := util.Cmd("helm", "init", "--wait", "--service-account", ServiceAccountName, "--upgrade", "--tiller-namespace", args.ConsoleNamespace)
+	cmd := util.Cmd("helm", "init", "--wait", "--service-account", ServiceAccountName, "--upgrade", "--tiller-namespace", namespace)
 	if _, err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
 		return err
 	}

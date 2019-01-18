@@ -52,7 +52,11 @@ func InitEnv() {
 
 	// If we started minikube, install helm as well
 	if args.StartMinikube {
-		if err := helm.Install(K8sClient); err != nil {
+		// NOTE(mitkus): This installs helm to the default kube-system namespace,
+		// any other namespace will require to add additional helm parameter to every command
+		// so that will make lbc.py not work correctly. This is only supposed to be used for
+		// test runs on local machine.
+		if err := helm.Install(K8sClient, "kube-system"); err != nil {
 			panic(err.Error())
 		}
 	}
