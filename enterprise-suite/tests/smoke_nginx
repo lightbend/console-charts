@@ -73,10 +73,10 @@ securitay() {
   T $? "$1" has no Server header
 
   check_header "$headers" "X-Frame-Options" "DENY"
-  T $? "$1" has X-Frame-Options
+  T $? "$1" has X-Frame-Options DENY
 
   check_header "$headers" "X-XSS-Protection" "1"
-  T $? "$1" has X-XSS-Protection
+  T $? "$1" has X-XSS-Protection 1
 }
 
 csp() {
