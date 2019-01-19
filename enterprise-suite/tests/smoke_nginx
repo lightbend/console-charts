@@ -48,3 +48,63 @@ test_no_cache() {
 test_no_cache "${CONSOLE}/cluster"
 test_no_cache "${CONSOLE}/workloads/prometheus-server"
 test_no_cache "${CONSOLE}/service/grafana/dashboard/script/exporter-async.js?service-type=cluster"
+
+#
+# security headers
+#
+
+check_header() {
+  val=$( echo "$1" | awk -F ': ' '$1=="'"$2"'"{print $2}' )
+  if [[ -z $val ]]; then
+    echo "missing $2 header"
+    return 1
+  fi
+  if [[ $val != "$3" ]]; then
+    echo "expecting $2: $3, got \"$val\""
+    return 1
+  fi
+  return 0
+}
+
+securitay() {
+  headers=$( curl_headers "$1" )
+
+  ! echo "$headers" | grep -q "^Server: "
+  T $? "$1" has no Server header
+
+  check_header "$headers" "X-Frame-Options" "DENY"
+  T $? "$1" has X-Frame-Options DENY
+
+  check_header "$headers" "X-XSS-Protection" "1"
+  T $? "$1" has X-XSS-Protection 1
+}
+
+csp() {
+  check_header "$headers" "Content-Security-Policy" "default-src 'self'; style-src 'self' 'unsafe-inline';"
+  T $? "$1" has Content-Security-Policy
+}
+
+securitay "${CONSOLE}/cluster"
+csp       "${CONSOLE}/cluster"
+securitay "${CONSOLE}/workloads/prometheus-server"
+csp       "${CONSOLE}/workloads/prometheus-server"
+securitay "${CONSOLE}/service/prometheus/"
+securitay "${CONSOLE}/service/grafana/"
+securitay "${CONSOLE}/service/alertmanager/"
+securitay "${CONSOLE}/service/es-monitor-api/"
+
+#
+# xss guard
+# this tries to inject a quote to break html string injected into base href
+# the guard works if base href is a normal string with two quotes
+# like: "/cluster%22/%3E%3Cscript%3Ealert(789)%3C/"
+# and fails if something with extra quote marks
+# like: "/cluster"/><script>alert(789)</script>/"
+
+quote_count=$( curl -s "${CONSOLE}/cluster%22/%3E%3Cscript%3Ealert(789)%3C/script%3E" |
+  grep base |
+  sed -e 's/.*<base href=//' -e 's/><meta .*//' |
+  tr -d -c '"' |
+  wc -c )
+[[ $quote_count -eq 2 ]]
+T $? guards against xss quote injection
