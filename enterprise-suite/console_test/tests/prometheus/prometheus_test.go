@@ -62,10 +62,6 @@ var _ = BeforeSuite(func() {
 			return threeScrapes("kube_pod_info")
 		}, "no kube_pod_info metric scrapes found")
 		Expect(err).To(Succeed())
-		err = util.WaitUntilTrue(func() bool {
-			return threeScrapes("node_cpu")
-		}, "no node_cpu metric scrapes found")
-		Expect(err).To(Succeed())
 	})
 
 var _ =	AfterSuite(func() {
@@ -157,19 +153,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("kube_workload_generation_lag"),
 	)
 
-	DescribeTable("node exporter metrics",
-		func(metric string) {
-			Expect(prom.HasData(metric)).To(BeTrue())
-		},
-		Metric("node_cpu"),
-		Metric("node_memory_MemAvailable"),
-		Metric("node_filesystem_free"),
-		Metric("node_network_transmit_errs"),
-	)
-
 	// TODO: Check kube-state-metrics logs
-
-	// TODO: Check node-exporter logs
 
 	Context("app discovery", func() {
 		It("'Pod' service", func() {
