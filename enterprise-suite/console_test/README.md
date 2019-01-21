@@ -22,4 +22,4 @@ Running a single test suite:
 `ginkgo tests/prometheus`
 
 Test names should include one of prefixes `all:`, `minikube:`, `openshift:` to describe valid platforms.
-For example `all:prometheus` should be testing in all environment, while `minikube:ingress` only in minikube environment.
+For example `all:prometheus` should be testing in all platforms, while `minikube:ingress` only in minikube.
