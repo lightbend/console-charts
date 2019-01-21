@@ -3,7 +3,7 @@
 Depends on having ginkgo installed:
 `go get github.com/onsi/ginkgo/ginkgo`
 
-Test suites assume that a Kubernetes cluster is running with Helm Tiller installed, but without Lightbend Console. Apropriate sequence of commands to acomplish that locally with minikube is this:
+Test suites assume that a Kubernetes cluster is running with Helm Tiller installed, but without Lightbend Console. Appropriate sequence of commands to accomplish that locally with minikube is this:
 ```
 minikube start --cpus=3 --memory=6000
 kubectl create serviceaccount --namespace kube-system tiller
