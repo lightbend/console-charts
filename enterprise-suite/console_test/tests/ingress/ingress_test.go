@@ -12,6 +12,7 @@ import (
 	"github.com/lightbend/console_test/args"
 	"github.com/lightbend/console_test/testenv"
 
+	"github.com/lightbend/console_test/util"
 	"github.com/lightbend/console_test/util/minikube"
 
 	. "github.com/onsi/ginkgo"
@@ -32,9 +33,7 @@ var _ = AfterSuite(func() {
 	testenv.CloseEnv()
 })
 
-// TODO(mitkus): Make this test work. On my machine both this and bash e2e smoke_ingress
-// stopped working after minikube update.
-var _ = XDescribe("minikube:ingress", func() {
+var _ = Describe("minikube:ingress", func() {
 	It("responds to requests", func() {
 		coreAPI := testenv.K8sClient.CoreV1()
 		extAPI := testenv.K8sClient.ExtensionsV1beta1()
@@ -89,8 +88,12 @@ var _ = XDescribe("minikube:ingress", func() {
 		Expect(err).To(Succeed())
 
 		req.Host = "minikube.ingress.test"
-		resp, err := httpClient.Do(req)
-		Expect(err).To(Succeed())
+
+		var resp *http.Response
+		util.WaitUntilSuccess(func() error {
+			resp, err = httpClient.Do(req)
+			return err
+		})
 		Expect(resp.StatusCode).To(Equal(200))
 	})
 })
