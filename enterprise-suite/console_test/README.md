@@ -3,11 +3,20 @@
 Depends on having ginkgo installed:
 `go get github.com/onsi/ginkgo/ginkgo`
 
-Running tests locally with no minikube or helm running:
-`ginkgo -r --skip=*openshift* -- --start-minikube`
+Test suites assume that a Kubernetes cluster is running with Helm Tiller installed, but without Lightbend Console. Apropriate sequence of commands to acomplish that locally with minikube is this:
+```
+minikube start --cpus=3 --memory=6000
+kubectl create serviceaccount --namespace kube-system tiller
+kubectl create clusterrolebinding kube-system:tiller --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+helm init --wait --service-account tiller --tiller-namespace=kube-system
+```
 
-Running on openshift:
+Running all tests locally:
+`ginkgo -r`
+
+Running only minikube or openshift:
 `ginkgo -r --skip=*minikube*`
+`ginkgo -r --skip=*openshift*`
 
 Running a single test suite:
 `ginkgo tests/prometheus`

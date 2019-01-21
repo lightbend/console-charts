@@ -8,7 +8,6 @@ import (
 
 	"github.com/lightbend/console_test/args"
 
-	"github.com/lightbend/console_test/util/helm"
 	"github.com/lightbend/console_test/util/lbc"
 	"github.com/lightbend/console_test/util/minikube"
 )
@@ -30,16 +29,6 @@ func InitEnv() {
 		return
 	}
 
-	// Start minikube if --start-minikube arg was given
-	if args.StartMinikube {
-		if minikube.IsRunning() {
-			panic("minikube appears to be already running, try running without --start-minikube flag")
-		}
-		if err := minikube.Start(3, 6000); err != nil {
-			panic(err.Error())
-		}
-	}
-
 	// Setup k8s client
 	config, err := clientcmd.BuildConfigFromFlags("", args.Kubeconfig)
 	if err != nil {
@@ -48,17 +37,6 @@ func InitEnv() {
 	K8sClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
-	}
-
-	// If we started minikube, install helm as well
-	if args.StartMinikube {
-		// NOTE(mitkus): This installs helm to the default kube-system namespace,
-		// any other namespace will require to add additional helm parameter to every command
-		// so that will make lbc.py not work correctly. This is only supposed to be used for
-		// test runs on local machine.
-		if err := helm.Install(K8sClient, "kube-system"); err != nil {
-			panic(err.Error())
-		}
 	}
 
 	// Install console
@@ -91,15 +69,6 @@ func CloseEnv() {
 
 	if err := lbc.Uninstall(); err != nil {
 		panic(err.Error())
-	}
-
-	if args.StartMinikube {
-		if !minikube.IsRunning() {
-			panic("expected minikube to be running")
-		}
-		if err := minikube.Delete(); err != nil {
-			panic(err.Error())
-		}
 	}
 
 	testEnvInitialized = false
