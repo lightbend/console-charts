@@ -6,10 +6,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/console_test/args"
+	"github.com/lightbend/go_tests/args"
 
-	"github.com/lightbend/console_test/util/lbc"
-	"github.com/lightbend/console_test/util/minikube"
+	"github.com/lightbend/go_tests/util/lbc"
+	"github.com/lightbend/go_tests/util/minikube"
 )
 
 var (

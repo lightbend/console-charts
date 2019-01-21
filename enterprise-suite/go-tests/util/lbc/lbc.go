@@ -3,7 +3,7 @@ package lbc
 import (
 	"time"
 
-	"github.com/lightbend/console_test/util"
+	"github.com/lightbend/go_tests/util"
 )
 
 const localChartPath = "../../../."
@@ -12,7 +12,7 @@ const lbcPath = "../../../scripts/lbc.py"
 func Install(namespace string) error {
 	cmd := util.Cmd(lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", namespace, "--set exposeServices=NodePort", "--wait")
-	if _, err := cmd.PrintOutput().Timeout(time.Minute * 4).Run(); err != nil {
+	if _, err := cmd.Timeout(time.Minute * 4).Run(); err != nil {
 		return err
 	}
 
@@ -29,7 +29,7 @@ func Verify(namespace string) error {
 
 func Uninstall() error {
 	cmd := util.Cmd(lbcPath, "uninstall")
-	if _, err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
+	if _, err := cmd.Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 

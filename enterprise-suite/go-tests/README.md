@@ -23,3 +23,7 @@ Running a single test suite:
 
 Test names should include one of prefixes `all:`, `minikube:`, `openshift:` to describe valid platforms.
 For example `all:prometheus` should be testing in all platforms, while `minikube:ingress` only in minikube.
+
+Tracking of dependencies is done using Go 1.11 module system. To add a dependency, simply write an import
+statement in the code, nothing else needs to be done. Updating is done using `go get`, more about it in the 
+[golang wiki](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies).
