@@ -17,13 +17,6 @@ spec:
       - name: commercial-credentials
 
       containers:
-      - name: dnsmasq
-        image: {{ .Values.goDnsmasqImage }}:{{ .Values.goDnsmasqVersion }}
-        args:
-          - --listen
-          - "127.0.0.1:5353"
-          - --verbose
-          - --enable-search
       - name: es-console
         image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}

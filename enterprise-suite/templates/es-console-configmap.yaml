@@ -16,15 +16,6 @@ data:
         "X-Frame-Options: DENY"
         "X-XSS-Protection: 1";
 
-      # use external resolver to lookup backends, cache for 30 seconds
-
-      resolver 127.0.0.1:5353 ipv6=off valid=30s;
-
-      set $prometheus "prometheus-server";
-      set $monitorapi "es-monitor-api";
-      set $grafana "grafana-server";
-      set $alertmanager {{ splitList "," .Values.alertManagers | first | quote }};
-
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
       #   nginx uses longest path match to decide which location handler to use
@@ -54,7 +45,7 @@ data:
         array_map_op set_escape_uri $encoded_base;
         array_join '/' $encoded_base;
         # proxy to prometheus
-        proxy_pass http://$prometheus$2$is_args$args;
+        proxy_pass http://prometheus-server$2$is_args$args;
         # rewrite base path in response content, and redirect headers
         sub_filter '="/' '="$encoded_base/';
         sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/graph"))';
@@ -63,7 +54,7 @@ data:
 
       # es-monitor-api
       location ~ (.*/service/es-monitor-api)(/.*) {
-        proxy_pass http://$monitorapi$2$is_args$args;
+        proxy_pass http://es-monitor-api$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
 
@@ -74,7 +65,7 @@ data:
         array_map_op set_escape_uri $encoded_base;
         array_join '/' $encoded_base;
         # proxy to grafana
-        proxy_pass http://$grafana:3000$2$is_args$args;
+        proxy_pass http://grafana-server:3000$2$is_args$args;
         # rewrite base path in response content, cookies, and redirect headers
         sub_filter_types *;
         sub_filter '/service/grafana' '$encoded_base';
@@ -95,7 +86,7 @@ data:
         array_map_op set_escape_uri $encoded_base;
         array_join '/' $encoded_base;
         # proxy to grafana
-        proxy_pass http://$grafana:3000$2$is_args$args;
+        proxy_pass http://grafana-server:3000$2$is_args$args;
         # rewrite base path in response content, cookies, and redirect headers
         sub_filter_types *;
         sub_filter '/service/grafana' '$encoded_base';
@@ -105,7 +96,7 @@ data:
 
       # alertmanager ui
       location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager$2$is_args$args;
+        proxy_pass http://{{ splitList "," .Values.alertManagers | first | quote }}$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
 
