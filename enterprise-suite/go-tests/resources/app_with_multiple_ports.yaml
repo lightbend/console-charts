@@ -10,7 +10,7 @@ spec:
       labels:
         app: es-test
       annotations:
-        prometheus.io/scrape: "true"
+        console-backend-e2e.io/scrape: "true"
     spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
