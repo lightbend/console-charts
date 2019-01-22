@@ -173,7 +173,7 @@ spec:
           configMap:
             name: es-monitor-api
         - name: prometheus-data-volume
-          {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
+          {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
             claimName: prometheus-storage
           {{ else }}

@@ -404,10 +404,10 @@ def install(creds_file):
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
-            createPVs = len(filter(lambda x: 'createPersistentVolumes=false' in x, sys.argv)) == 0
+            createPVs = len(filter(lambda x: 'managePersistentVolumes=false' in x, sys.argv)) == 0
             if createPVs and are_pvcs_created(args.namespace):
                 printerr('info: Found existing PVCs from a previous console installation.')
-                printerr('info: Please remove them with `kubectl delete pvc`, or pass --set createPersistentVolumes=false.')
+                printerr('info: Please remove them with `kubectl delete pvc`, or pass --set managePersistentVolumes=false.')
                 printerr('info: Otherwise, the install may fail.')
 
             execute('helm install {} --name {} --namespace {} {} {} {}'
