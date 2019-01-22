@@ -32,6 +32,7 @@ jobs:
   - name: Backend E2E Go Tests - Minikube
     script:
     - scripts/setup-minikube-for-linux.sh || travis_terminate 1
+    - go get github.com/onsi/ginkgo/ginkgo || travis_terminate 1
     - make -C enterprise-suite go-tests
 
   - name: Backend E2E Tests - Minikube Latest
