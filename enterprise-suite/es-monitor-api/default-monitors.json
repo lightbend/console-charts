@@ -104,6 +104,24 @@
           "description": "{{$labels.instance}} has anomalous scrape_duration_seconds"
         }
       },
+      "lightbend_monitor_api_errors": {
+        "monitorVersion": "1",
+        "model": "threshold",
+        "parameters": {
+          "metric": "es_monitor_api_last_error",
+          "window": "1m",
+          "confidence": "1",
+          "severity": {
+            "warning": {
+              "comparator": ">",
+              "threshold": "0"
+            }
+          },
+          "summary": "lightbend console monitor errors",
+          "description": "Lightbend console api on {{$labels.instance}} has monitor errors"
+        }
+      },
+
       "akka_inbox_growth": {
         "monitorVersion": "1",
         "model": "growth",
