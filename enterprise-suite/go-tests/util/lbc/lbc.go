@@ -11,7 +11,10 @@ const lbcPath = "../../../scripts/lbc.py"
 
 func Install(namespace string) error {
 	cmd := util.Cmd(lbcPath, "install", "--local-chart", localChartPath,
-		"--namespace", namespace, "--set exposeServices=NodePort", "--wait")
+		"--namespace", namespace,
+		"--set exposeServices=NodePort",
+		"--set prometheusDomain=console-backend-e2e.io",
+		"--wait")
 	if _, err := cmd.Timeout(time.Minute * 4).Run(); err != nil {
 		return err
 	}
