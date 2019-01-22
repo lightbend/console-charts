@@ -12,11 +12,12 @@ import (
 	"time"
 )
 
-const DefaultTimeout = 3 * time.Second
+const DefaultTimeout = 5 * time.Second
 
 type CmdBuilder struct {
 	name                 string
 	args                 []string
+	envVars              []string
 	timeout              time.Duration
 	expectZeroExitStatus bool
 	panicOnError         bool
@@ -30,6 +31,7 @@ func Cmd(name string, args ...string) *CmdBuilder {
 	return &CmdBuilder{
 		name:                 name,
 		args:                 args,
+		envVars:              nil,
 		timeout:              DefaultTimeout,
 		expectZeroExitStatus: true,
 		panicOnError:         false,
@@ -84,6 +86,11 @@ func (cb *CmdBuilder) CaptureStderr(out *strings.Builder) *CmdBuilder {
 	return cb
 }
 
+func (cb *CmdBuilder) Env(name string, value string) *CmdBuilder {
+	cb.envVars = append(cb.envVars, fmt.Sprintf("%v=%v", name, value))
+	return cb
+}
+
 func (cb *CmdBuilder) Run() (int, error) {
 	var cmd *exec.Cmd
 
@@ -94,6 +101,14 @@ func (cb *CmdBuilder) Run() (int, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), cb.timeout)
 		cmd = exec.CommandContext(ctx, cb.name, cb.args...)
 		defer cancel()
+	}
+
+	// Set up env variables
+	if len(cb.envVars) > 0 {
+		cmd.Env = os.Environ()
+		for _, envVar := range cb.envVars {
+			cmd.Env = append(cmd.Env, envVar)
+		}
 	}
 
 	var exitcode int

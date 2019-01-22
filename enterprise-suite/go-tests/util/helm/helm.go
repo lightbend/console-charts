@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/lightbend/go_tests/args"
 	"github.com/lightbend/go_tests/util"
 	"github.com/lightbend/go_tests/util/kube"
 )
@@ -16,7 +17,11 @@ import (
 const ServiceAccountName = "tiller"
 
 func IsInstalled() bool {
-	if _, err := util.Cmd("helm", "version").Run(); err != nil {
+	cmd := util.Cmd("helm", "version")
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
+	if _, err := cmd.Run(); err != nil {
 		return false
 	}
 
@@ -25,7 +30,7 @@ func IsInstalled() bool {
 
 func Install(k8sClient *kubernetes.Clientset, namespace string) error {
 	// Create namespace, ignore the error because it might already be created
-	_ = kube.CreateNamespace(k8sClient, namespace);
+	_ = kube.CreateNamespace(k8sClient, namespace)
 
 	// Create ServiceAccount
 	serviceAccount := &apiv1.ServiceAccount{

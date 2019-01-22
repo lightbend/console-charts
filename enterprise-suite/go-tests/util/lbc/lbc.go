@@ -3,6 +3,7 @@ package lbc
 import (
 	"time"
 
+	"github.com/lightbend/go_tests/args"
 	"github.com/lightbend/go_tests/util"
 )
 
@@ -15,6 +16,9 @@ func Install(namespace string) error {
 		"--set exposeServices=NodePort",
 		"--set prometheusDomain=console-backend-e2e.io",
 		"--wait")
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
 	if _, err := cmd.Timeout(time.Minute * 4).Run(); err != nil {
 		return err
 	}
@@ -23,7 +27,11 @@ func Install(namespace string) error {
 }
 
 func Verify(namespace string) error {
-	if _, err := util.Cmd(lbcPath, "verify", "--namespace", namespace).Run(); err != nil {
+	cmd := util.Cmd(lbcPath, "verify", "--namespace", namespace)
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
+	if _, err := cmd.Run(); err != nil {
 		return err
 	}
 
@@ -32,6 +40,9 @@ func Verify(namespace string) error {
 
 func Uninstall() error {
 	cmd := util.Cmd(lbcPath, "uninstall")
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
 	if _, err := cmd.Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
