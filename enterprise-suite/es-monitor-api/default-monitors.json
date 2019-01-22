@@ -228,7 +228,7 @@
             }
           },
           "summary": "Prometheus target over limit",
-          "description": "Prometheus target at {{labels.instance}} has too many metrics"
+          "description": "Prometheus target at {{$labels.instance}} has too many metrics"
         }
       },
       "prometheus_tsdb_reloads_failures": {
@@ -367,7 +367,7 @@
             }
           },
           "summary": "Zookeeper open file descriptor growth",
-          "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}"
+          "description": "Zookeeper open file descriptors in {{$labels.es_workload}} is not normal in {{$labels.instance}}"
         }
       },
       "cassandra_write_latency": {
@@ -421,7 +421,7 @@
             }
           },
           "summary": "Redis key space miss ratio growth",
-          "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}"
+          "description": "Observing shifts in Redis key space ratio on {{$labels.es_workload}} in {{$labels.instance}}"
         }
       },
       "redis_evictions": {
@@ -457,7 +457,7 @@
             }
           },
           "summary": "Redis command processed",
-          "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}"
+          "description": "Redis commands processed on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
         }
       },
       "redis_connections": {
@@ -493,7 +493,7 @@
             }
           },
           "summary": "Kafka incoming message rate is not normal",
-          "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}"
+          "description": "Kafka incoming message rate on {{$labels.es_workload}} is not normal for topic {{$labels.topic}}"
         }
       },
       "kafka_offline_partition": {
@@ -510,7 +510,7 @@
             }
           },
           "summary": "Kafka offline partition is not zero",
-          "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}"
+          "description": "Kafka offline partition is high on {{$labels.es_workload}} in {{$labels.instance}}"
         }
       },
       "kafka_under_replicated_partitions": {
@@ -527,7 +527,7 @@
             }
           },
           "summary": "Kafka under replicated partitions is up",
-          "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}"
+          "description": "Kafka under replicated partitions is high on {{$labels.es_workload}} in {{$labels.instance}}"
         }
       },
       "memcached_miss_ratio": {

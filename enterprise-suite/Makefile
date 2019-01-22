@@ -3,6 +3,7 @@ CHART ?= enterprise-suite
 
 RELEASE_NAME := es
 NAMESPACE := lightbend
+TILLER_NAMESPACE := $(NAMESPACE)
 
 define banner
 	$(info === $@)
@@ -92,14 +93,30 @@ $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(R
 	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
 	helm --namespace=$(NAMESPACE) template $< --set exposeServices=NodePort > $@
 
+.PHONY: install-helm
+install-helm:
+	-kubectl create namespace $(TILLER_NAMESPACE)
+	-kubectl create serviceaccount --namespace $(TILLER_NAMESPACE) tiller
+	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin \
+		--serviceaccount=$(TILLER_NAMESPACE):tiller
+	helm init --wait --service-account tiller --upgrade --tiller-namespace=$(TILLER_NAMESPACE)
+
 .PHONY: install-dev
-install-dev: ## Install local chart directory to a local minikube.
-	-kubectl create namespace lightbend
-	-kubectl create serviceaccount --namespace lightbend tiller
-	-kubectl create clusterrolebinding lightbend:tiller --clusterrole=cluster-admin \
-		--serviceaccount=lightbend:tiller
-	helm init --wait --service-account tiller --upgrade --tiller-namespace=lightbend
-	TILLER_NAMESPACE=lightbend scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
+install-dev: install-helm ## Install local chart directory to a local minikube.
+	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
+
+.PHONY: start-minikube
+start-minikube:
+	-minikube start --cpus=3 --memory=6000
+
+GO_TESTS_DIR := $(CHART_DIR)/go-tests
+.PHONY: go-tests
+go-tests: TILLER_NAMESPACE=lightbend-test
+go-tests: install-helm
+	cd $(GO_TESTS_DIR); ginkgo -r -- --tiller-namespace=$(TILLER_NAMESPACE)
+
+.PHONY: go-tests-start-minikube
+go-tests-start-minikube: start-minikube go-tests
 
 .PHONY: help
 help:  ## Print help for targets

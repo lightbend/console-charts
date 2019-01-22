@@ -457,7 +457,7 @@ def check_install(external_alertmanager=False):
                                  .format(args.namespace, name))
         if returncode == 0:
             # Skip first (deployment name) and last (running time) items
-            cols = [int(col) for col in stdout.split()[1:-1]]
+            cols = [int(col) for col in stdout.replace('/', ' ').split()[1:-1]]
             desired, current, up_to_date, available = cols[0], cols[1], cols[2], cols[3]
             if desired <= 0:
                 printinfo('failed')

@@ -22,19 +22,20 @@ function diagnostics() {
 }
 
 function setup() {
-	kubectl create namespace ${NAMESPACE}
-	kubectl create namespace ${TILLER_NAMESPACE}
-	kubectl create serviceaccount --namespace ${TILLER_NAMESPACE} tiller
-	kubectl create clusterrolebinding ${TILLER_NAMESPACE}:tiller --clusterrole=cluster-admin \
-	    --serviceaccount=${TILLER_NAMESPACE}:tiller
-	helm init --wait --service-account tiller --upgrade --tiller-namespace=${TILLER_NAMESPACE}
+    kubectl create namespace ${NAMESPACE}
+    kubectl create namespace ${TILLER_NAMESPACE}
+    kubectl create serviceaccount --namespace ${TILLER_NAMESPACE} tiller
+    kubectl create clusterrolebinding ${TILLER_NAMESPACE}:tiller --clusterrole=cluster-admin \
+        --serviceaccount=${TILLER_NAMESPACE}:tiller
+    helm init --wait --service-account tiller --upgrade --tiller-namespace=${TILLER_NAMESPACE}
 
-	kubectl config set-context minikube --namespace=${NAMESPACE}
+    kubectl config set-context minikube --namespace=${NAMESPACE}
 
-	${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
-		--set podUID=10001,usePersistentVolumes=true,prometheusDomain=console-backend-e2e.io \
-		--set exposeServices=NodePort,esConsoleExposePort=30080 \
-		--wait
+    ${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
+        --set podUID=10001,usePersistentVolumes=true,prometheusDomain=console-backend-e2e.io \
+        --set exposeServices=NodePort,esConsoleExposePort=30080 \
+        ${ES_CONSOLE_VERSION+--set esConsoleVersion=${ES_CONSOLE_VERSION}} \
+        --wait
 }
 
 function cleanup() {
