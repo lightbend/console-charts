@@ -18,12 +18,12 @@ data:
 
       # use external resolver to lookup backends, cache for 30 seconds
 
-      resolver 127.0.0.1:5353 ipv6=off valid=30s;
+      resolver $KUBE_RESOLVER ipv6=off valid=30s;
 
-      set $prometheus "prometheus-server";
-      set $monitorapi "es-monitor-api";
-      set $grafana "grafana-server";
-      set $alertmanager {{ splitList "," .Values.alertManagers | first | quote }};
+      set $prometheus "prometheus-server.$KUBE_DOMAIN";
+      set $monitorapi "es-monitor-api.$KUBE_DOMAIN";
+      set $grafana "grafana-server.$KUBE_DOMAIN";
+      set $alertmanager {{ print (splitList "," .Values.alertManagers | first) `.$KUBE_DOMAIN:9093` | quote }};
 
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
