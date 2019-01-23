@@ -1,4 +1,4 @@
-{{ if .Values.createAlertManager and .Values.managePersistentVolumes }}
+{{ if (and .Values.createAlertManager .Values.managePersistentVolumes) }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
