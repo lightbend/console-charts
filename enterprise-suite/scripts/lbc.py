@@ -174,6 +174,13 @@ def check_kubectl(minishift=False):
             msg = msg + ". Did you do 'eval $(minishift oc-env)'?"
         fail(msg)
 
+def is_int(s):
+  try:
+    int(s)
+    return True
+  except:
+    return False
+
 def check_credentials(creds):
     registry = 'https://lightbend-docker-commercial-registry.bintray.io/v2'
     api_url = registry + '/enterprise-suite/es-monitor-api/tags/list'
@@ -183,7 +190,7 @@ def check_credentials(creds):
     if returncode == 0:
         stdout, returncode = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
             .format(creds[0], creds[1], api_url), DEFAULT_TIMEOUT, show_stderr=True)
-        return int(stdout) == 200
+        return is_int(stdout) and int(stdout) == 200
 
     # Set up basic auth with given creds
     req = url.Request(api_url)
