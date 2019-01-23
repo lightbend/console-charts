@@ -1,7 +1,7 @@
 package kube
 
 import (
-	"github.com/lightbend/go_tests/util"
+	"github.com/lightbend/gotests/util"
 
 	"k8s.io/client-go/kubernetes"
 

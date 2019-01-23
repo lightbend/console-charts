@@ -109,7 +109,7 @@ install-dev: install-helm ## Install local chart directory to a local minikube.
 start-minikube:
 	-minikube start --cpus=3 --memory=6000
 
-GO_TESTS_DIR := $(CHART_DIR)/go-tests
+GO_TESTS_DIR := $(CHART_DIR)/gotests
 .PHONY: go-tests
 go-tests: TILLER_NAMESPACE=lightbend-test
 go-tests: install-helm

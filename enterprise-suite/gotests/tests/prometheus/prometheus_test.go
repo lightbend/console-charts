@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lightbend/go_tests/args"
-	"github.com/lightbend/go_tests/testenv"
-	"github.com/lightbend/go_tests/util"
-	"github.com/lightbend/go_tests/util/kube"
-	"github.com/lightbend/go_tests/util/monitor"
-	"github.com/lightbend/go_tests/util/prometheus"
+	"github.com/lightbend/gotests/args"
+	"github.com/lightbend/gotests/testenv"
+	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/gotests/util/kube"
+	"github.com/lightbend/gotests/util/monitor"
+	"github.com/lightbend/gotests/util/prometheus"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"

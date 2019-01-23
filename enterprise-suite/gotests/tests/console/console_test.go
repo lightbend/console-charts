@@ -3,12 +3,12 @@ package console
 import (
 	"testing"
 
-	"github.com/lightbend/go_tests/args"
-	"github.com/lightbend/go_tests/testenv"
+	"github.com/lightbend/gotests/args"
+	"github.com/lightbend/gotests/testenv"
 
-	"github.com/lightbend/go_tests/util/helm"
-	"github.com/lightbend/go_tests/util/lbc"
-	"github.com/lightbend/go_tests/util/minikube"
+	"github.com/lightbend/gotests/util/helm"
+	"github.com/lightbend/gotests/util/lbc"
+	"github.com/lightbend/gotests/util/minikube"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

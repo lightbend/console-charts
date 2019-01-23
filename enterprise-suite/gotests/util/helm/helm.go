@@ -9,9 +9,9 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/lightbend/go_tests/args"
-	"github.com/lightbend/go_tests/util"
-	"github.com/lightbend/go_tests/util/kube"
+	"github.com/lightbend/gotests/args"
+	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/gotests/util/kube"
 )
 
 const ServiceAccountName = "tiller"
