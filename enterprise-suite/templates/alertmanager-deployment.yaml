@@ -89,7 +89,7 @@ spec:
           configMap:
             name: {{ .Values.alertManagerConfigMap }}
         - name: data-volume
-          {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
+          {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
             claimName: alertmanager-storage
           {{ else }}

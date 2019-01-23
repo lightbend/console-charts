@@ -108,12 +108,11 @@ prometheusMemoryRequest: 250Mi
 #################################################
 # Persistent Volumes
 #
-# Deprecated value - set to false to disable emptyDir and use persistent volumes. Prefer `usePersistentVolumes`.
-useEmptyDirVolumes: true
 # Set to true to use persistent volumes, otherwise emptyDir volumes are used.
 usePersistentVolumes: false
-# If true, the chart creates persistent volumes using PVCs. Set to false to reuse previously created persistent volumes.
-createPersistentVolumes: true
+# If true, the chart manages persistent volumes by creating PVCs. Set to false to not manage PVCs at all.
+# Warning: If you "unmanage" PVCs that helm is managing by setting this to false, helm will delete those PVCs.
+managePersistentVolumes: true
 # Default StorageClass to use for persistent volumes
 defaultStorageClass: standard
 # Prometheus volume size - used for storing metrics data.

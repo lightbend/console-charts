@@ -1,5 +1,4 @@
-{{- $shouldCreatePVCs := and (or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes)) (.Values.createPersistentVolumes) }}
-{{ if $shouldCreatePVCs }}
+{{ if .Values.managePersistentVolumes }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:

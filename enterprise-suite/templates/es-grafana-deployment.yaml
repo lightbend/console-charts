@@ -80,7 +80,7 @@ spec:
         configMap:
           name: grafana-datasource-cm
       - name: grafana-data
-        {{ if or .Values.usePersistentVolumes (not .Values.useEmptyDirVolumes) }}
+        {{ if .Values.usePersistentVolumes }}
         persistentVolumeClaim:
           claimName: es-grafana-storage
         {{ else }}
