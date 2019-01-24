@@ -20,9 +20,9 @@ data:
 
       resolver $KUBE_RESOLVER ipv6=off valid=30s;
 
-      set $prometheus "prometheus-server.$KUBE_DOMAIN";
-      set $monitorapi "es-monitor-api.$KUBE_DOMAIN";
-      set $grafana "grafana-server.$KUBE_DOMAIN";
+      set $prometheus "prometheus-server.$KUBE_CONSOLE_DOMAIN";
+      set $monitorapi "es-monitor-api.$KUBE_CONSOLE_DOMAIN";
+      set $grafana "grafana-server.$KUBE_CONSOLE_DOMAIN";
       set $alertmanager {{ splitList "," .Values.alertManagers | first | quote }};
 
       # nginx config primer:
