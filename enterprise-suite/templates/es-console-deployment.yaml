@@ -41,6 +41,14 @@ spec:
           - name: nginx-template
             mountPath: /template
 
+        {{ if .Values.podUID }}
+        # Run init container as root so it can install gettext. This should be okay since it's a transient one-off
+        # container without any external access.
+        securityContext:
+          runAsUser: 0
+        {{ end }}
+
+
       containers:
       - name: es-console
         image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
