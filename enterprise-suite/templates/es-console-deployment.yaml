@@ -48,7 +48,6 @@ spec:
           runAsUser: 0
         {{ end }}
 
-
       containers:
       - name: es-console
         image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
