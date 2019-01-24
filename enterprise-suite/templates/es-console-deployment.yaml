@@ -16,14 +16,34 @@ spec:
       imagePullSecrets:
       - name: commercial-credentials
 
-      containers:
-      - name: dnsmasq
-        image: {{ .Values.goDnsmasqImage }}:{{ .Values.goDnsmasqVersion }}
+      initContainers:
+      - name: setup-nginx-dns
+        image: {{ .Values.alpineImage }}:{{ .Values.alpineVersion }}
+        resources:
+          requests:
+            cpu: {{ default .Values.defaultCPURequest }}
+            memory: {{ default .Values.defaultMemoryRequest }}
+        command:
+        - /bin/sh
+        - -c
         args:
-          - --listen
-          - "127.0.0.1:5353"
-          - --verbose
-          - --enable-search
+        - >-
+          export KUBE_RESOLVER=$(awk '$1 == "nameserver" { print $2 }' /etc/resolv.conf) &&
+          export KUBE_CONSOLE_DOMAIN=$(awk '$1 == "search" { print $2 }' /etc/resolv.conf) &&
+          echo "resolver=$KUBE_RESOLVER console_domain=$KUBE_CONSOLE_DOMAIN" &&
+          cat /template/default.conf
+          | sed "s/\$KUBE_RESOLVER/$KUBE_RESOLVER/g"
+          | sed "s/\$KUBE_CONSOLE_DOMAIN/$KUBE_CONSOLE_DOMAIN/g"
+          > /etc/nginx/conf.d/default.conf &&
+          echo "done templating /etc/nginx/conf.d/default.conf"
+
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/nginx/conf.d
+          - name: nginx-template
+            mountPath: /template
+
+      containers:
       - name: es-console
         image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -39,5 +59,7 @@ spec:
 
       volumes:
       - name: config-volume
+        emptyDir: {}
+      - name: nginx-template
         configMap:
           name: es-console
