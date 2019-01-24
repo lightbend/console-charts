@@ -28,11 +28,13 @@ spec:
         - -c
         args:
         - >-
-          apk add gettext &&
           export KUBE_RESOLVER=$(awk '$1 == "nameserver" { print $2 }' /etc/resolv.conf) &&
           export KUBE_CONSOLE_DOMAIN=$(awk '$1 == "search" { print $2 }' /etc/resolv.conf) &&
           echo "resolver=$KUBE_RESOLVER console_domain=$KUBE_CONSOLE_DOMAIN" &&
-          cat /template/default.conf | envsubst '$KUBE_RESOLVER $KUBE_CONSOLE_DOMAIN' > /etc/nginx/conf.d/default.conf &&
+          cat /template/default.conf
+          | sed "s/\$KUBE_RESOLVER/$KUBE_RESOLVER/g"
+          | sed "s/\$KUBE_CONSOLE_DOMAIN/$KUBE_CONSOLE_DOMAIN/g"
+          > /etc/nginx/conf.d/default.conf &&
           echo "done templating /etc/nginx/conf.d/default.conf"
 
         volumeMounts:
@@ -40,13 +42,6 @@ spec:
             mountPath: /etc/nginx/conf.d
           - name: nginx-template
             mountPath: /template
-
-        {{ if .Values.podUID }}
-        # Run init container as root so it can install gettext. This should be okay since it's a transient one-off
-        # container without any external access.
-        securityContext:
-          runAsUser: 0
-        {{ end }}
 
       containers:
       - name: es-console
