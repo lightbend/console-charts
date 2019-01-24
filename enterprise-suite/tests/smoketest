@@ -18,6 +18,11 @@ function log_debug() {
     echo "Deployment details:"
     echo
     for pod in $pods; do
+        if [[ "$pod" =~ ^tiller-deploy.*$ ]]; then
+            # tiller is too noisy - skip it
+            # if tiller has an issue, it should have failed in setup
+            continue
+        fi
         echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         echo "Describe $pod:"
         echo
