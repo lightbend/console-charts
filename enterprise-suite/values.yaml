@@ -16,9 +16,9 @@ configMapReloadVersion: v0.2.2
 # gcr.io/google_containers/kube-state-metrics
 kubeStateMetricsVersion: v1.2.0
 # alpine
-alpineVersion: 3.8
+alpineVersion: "3.8"
 # busybox
-busyboxVersion: 1.30
+busyboxVersion: "1.30"
 
 #################################################
 # Image names to use. Combined with the versions above, gives the fully qualified docker image name.
