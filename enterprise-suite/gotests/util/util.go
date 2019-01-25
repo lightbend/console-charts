@@ -124,14 +124,20 @@ func (cb *CmdBuilder) Run() (int, error) {
 		panic("unable to get command stderr pipe")
 	}
 
+	// Always capture stdout and stderr to these string builders so that
+	// we can print them out in case of errors
+	var errStdoutBuilder strings.Builder
+	var errStderrBuilder strings.Builder
+
 	// Run the command
 	if err := cmd.Start(); err != nil {
 		panic("unable to execute command")
 	} else {
-		var stdoutWriters []io.Writer
-		var stderrWriters []io.Writer
+		// These keep all stdout/stderr capture destinations
+		stdoutWriters := []io.Writer{&errStdoutBuilder}
+		stderrWriters := []io.Writer{&errStderrBuilder}
 
-		// Add string.Builder outputs
+		// Add external string.Builder outputs
 		if cb.captureStdout != nil {
 			stdoutWriters = append(stdoutWriters, cb.captureStdout)
 		}
@@ -173,7 +179,9 @@ func (cb *CmdBuilder) Run() (int, error) {
 
 	// Make an error on non-zero exit
 	if cb.expectZeroExitStatus && cmderr == nil && exitcode != 0 {
-		cmderr = fmt.Errorf("'%v %v' return status %v", cb.name, strings.Join(cb.args[:], " "), exitcode)
+		cmderr = fmt.Errorf("'%v %v'\nreturn status: %v\nstdout: %v\nstderr: %v\n",
+			cb.name, strings.Join(cb.args[:], " "),
+			exitcode, errStdoutBuilder.String(), errStderrBuilder.String())
 	}
 
 	if cb.panicOnError && cmderr != nil {
