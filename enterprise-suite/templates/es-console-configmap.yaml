@@ -17,13 +17,17 @@ data:
         "X-XSS-Protection: 1";
 
       # use external resolver to lookup backends, cache for 30 seconds
-
       resolver $KUBE_RESOLVER ipv6=off valid=30s;
 
       set $prometheus "prometheus-server.$KUBE_CONSOLE_DOMAIN";
       set $monitorapi "es-monitor-api.$KUBE_CONSOLE_DOMAIN";
       set $grafana "grafana-server.$KUBE_CONSOLE_DOMAIN";
+      {{ if .Values.alertManagers }}
       set $alertmanager {{ splitList "," .Values.alertManagers | first | quote }};
+      {{ else }}
+      # Use bundled alertmanager.
+      set $alertmanager "alertmanager.$KUBE_CONSOLE_DOMAIN:9093";
+      {{ end }}
 
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }

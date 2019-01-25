@@ -70,8 +70,9 @@ imageCredentials:
 # If true, an alertmanager will be deployed. Set to false and modify `alertManagers` list to use existing alertmanager(s).
 createAlertManager: true
 
-# Comma separated list of alertmanager addresses (can be k8s local DNS service names)
-alertManagers: alertmanager.$KUBE_CONSOLE_DOMAIN:9093
+# Comma separated list of alertmanager addresses to use. Set this if you want to integrate with an existing alertmanager.
+# Leave blank to use the bundled alertmanager.
+alertManagers:
 
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
