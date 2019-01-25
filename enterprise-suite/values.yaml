@@ -15,6 +15,10 @@ alertManagerVersion: v0.15.1
 configMapReloadVersion: v0.2.2
 # gcr.io/google_containers/kube-state-metrics
 kubeStateMetricsVersion: v1.2.0
+# prom/node-exporter
+nodeExporterVersion: v0.15.2
+# janeczku/go-dnsmasq
+goDnsmasqVersion: release-1.0.7
 # alpine
 alpineVersion: 3.8
 # busybox
@@ -37,6 +41,10 @@ alertManagerImage: prom/alertmanager
 configMapReloadImage: jimmidyson/configmap-reload
 # kube-state-metrics image
 kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
+# node-exporter image
+nodeExporterImage: prom/node-exporter
+# go-dnsmasq image
+goDnsmasqImage: janeczku/go-dnsmasq
 # alpine image
 alpineImage: alpine
 # busybox image
@@ -71,7 +79,7 @@ imageCredentials:
 createAlertManager: true
 
 # Comma separated list of alertmanager addresses (can be k8s local DNS service names)
-alertManagers: alertmanager.$KUBE_CONSOLE_DOMAIN:9093
+alertManagers: alertmanager:9093
 
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
