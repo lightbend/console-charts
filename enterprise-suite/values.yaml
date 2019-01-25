@@ -71,7 +71,7 @@ imageCredentials:
 createAlertManager: true
 
 # Comma separated list of alertmanager addresses (can be k8s local DNS service names)
-alertManagers: alertmanager.$KUBE_CONSOLE_DOMAIN:9093
+alertManagers: alertmanager:9093
 
 # Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
 alertManagerConfigMap: alertmanager-default
