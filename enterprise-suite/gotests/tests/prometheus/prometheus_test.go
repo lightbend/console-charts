@@ -218,7 +218,8 @@ var _ = Describe("all:prometheus", func() {
 			Expect(prom.HasData("{job=\"kubernetes-cadvisor\",es_monitor_type=\"es-test\"}")).To(BeTrue())
 		})
 
-		It("metric data has es_monitor_type", func() {
+		// The following is disabled due to flakyness
+		XIt("metric data has es_monitor_type", func() {
 			// Succeeds if all data for the workload es-test  has a matching es_monitor_type
 			// Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
 			err := util.WaitUntilTrue(func() bool {
