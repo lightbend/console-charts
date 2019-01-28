@@ -2,23 +2,21 @@
 
 # A collection of prometheus-related smoke tests
 
+NAMESPACE=${NAMESPACE:=lightbend}
+
 source smokecommon
+source prometheus_common
 
 #
 # launch test apps
 #
 
 set -e
-NAMESPACE=${NAMESPACE:=lightbend}
 for app in resources/app*.yaml; do
   kubectl apply -f "$app" -n $NAMESPACE --wait
 done
 
-deployments_up() {
-  results=$( kubectl get pods --no-headers | awk '{print $3;}' | grep -v Running | wc -l )
-  [[ results -eq 0 ]]
-}
-
+# Wait until all deployments are up and running
 busy_wait deployments_up
 
 cleanup() {
@@ -30,83 +28,10 @@ cleanup() {
 trap cleanup 0
 set +e
 
-#
-# prometheus fetchers
-#
-
-ES_CONSOLE=$( busy_wait nodeport )
-PROM="$ES_CONSOLE/service/prometheus"
-ES_MONITOR_API="$ES_CONSOLE/service/es-monitor-api"
-
-prom_query() {
-  curl -fsG "$PROM/api/v1/query" --data-urlencode "query=$*"
-}
-
-prom_has_data() {
-  test_prom_has_data () {
-    results=$( prom_query "$@" | jq '.data.result | length' )
-    ! [[ results -eq 0 ]]
-  }
-  timeout test_prom_has_data "$@"
-  T $? timeseries: "$*"
-}
-
-prom_has_no_data() {
-  test_prom_has_data () {
-    results=$( prom_query "$@" | jq '.data.result | length' )
-    [[ results -eq 0 ]]
-  }
-  timeout test_prom_has_data "$@"
-  T $? timeseries: "$*"
-}
-
-model_exists() {
-  results=$( prom_query "model{name=\"$1\"}" | jq '.data.result | length' )
-  ! [[ results -eq 0 ]]
-}
-
-#
-# log fetchers
-#
-
-kube_state_metrics_logs() {
-  kubectl logs --tail=100 --namespace=${NAMESPACE} -l app=prometheus,component=kube-state-metrics
-}
-prom_logs() {
-  kubectl logs --tail=100 --namespace=${NAMESPACE} -l app=prometheus,component=server -c prometheus-server
-}
-
-
-# this might be useful? dunno
-# prom_interval() {
-#   prom_query "prometheus_target_interval_length_seconds" |
-#    jq -r '.data.result[0].metric.interval' |
-#    sed -e 's/[^0-9.]//g'
-# }
-# PROM_INTERVAL=$( busy_wait prom_interval )
-
-# prom_three_scrapes  waits until we've seen three scrapes of given metric
-#  two scrapes is needed to compute a rate, then three is needed for rate of rate
-
-prom_three_scrapes() {
-  results=$( prom_query "count_over_time($1[10m]) > 2" | jq '.data.result | length' )
-  ! [[ results -eq 0 ]]
-}
-
 busy_wait prom_three_scrapes kube_pod_info
 T $? Prometheus kube-state-metrics has at least three scrapes
 
-
-#
-# prometheus
-#
-
-prom_scrapes() {
-  prom_query "sum(up)" |
-   jq -r '.data.result[0].value[1]'
-}
 PROM_SCRAPES=$( prom_scrapes )
-
 [[ PROM_SCRAPES -ge 4 ]]
 T $? "Prometheus scraping $PROM_SCRAPES targets"
 
@@ -208,15 +133,9 @@ T $? 'kube-state-metrics "warn" logs'
 ! echo "$KSM_LOGS" | grep -qi err
 T $? 'kube-state-metrics "err" logs'
 
-
 # app tests
-# app via 'Pod' service discovery
 app_instances='count( count by (instance) (ohai{es_workload="es-test", namespace="'$NAMESPACE'"}) ) == 2'
-app_data() {
-  results=$( prom_query "$app_instances" | jq '.data.result | length' )
-  ! [[ results -eq 0 ]]
-}
-busy_wait app_data
+busy_wait app_data "$app_instances"
 
 prom_has_data "$app_instances"
 
