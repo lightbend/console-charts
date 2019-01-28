@@ -2,15 +2,15 @@
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v0.1.13
+esConsoleVersion: v0.1.14
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
-esMonitorVersion: v1.0.5
+esMonitorVersion: v1.0.6
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.2.0
 # prom/prometheus
-prometheusVersion: v2.7.0-rc.0
+prometheusVersion: v2.7.0
 # prom/alertmanager
-alertManagerVersion: v0.15.1
+alertManagerVersion: v0.16.0
 # jimmidyson/configmap-reload
 configMapReloadVersion: v0.2.2
 # gcr.io/google_containers/kube-state-metrics
@@ -18,9 +18,9 @@ kubeStateMetricsVersion: v1.2.0
 # lightbend/go-dnsmasq
 goDnsmasqVersion: v0.1.7-1
 # alpine
-alpineVersion: 3.8
+alpineVersion: "3.8"
 # busybox
-busyboxVersion: 1.29
+busyboxVersion: "1.30"
 
 #################################################
 # Image names to use. Combined with the versions above, gives the fully qualified docker image name.

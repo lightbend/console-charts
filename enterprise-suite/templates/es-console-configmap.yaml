@@ -143,7 +143,7 @@ data:
 
       location ~ (.*/)index.html {
         # Console CSP
-        add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline';";
+        add_header Content-Security-Policy "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';";
         # encode base path
         array_split '/' $1 to=$encoded_base;
         array_map_op set_escape_uri $encoded_base;
