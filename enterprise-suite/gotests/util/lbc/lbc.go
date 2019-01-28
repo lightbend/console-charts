@@ -3,8 +3,8 @@ package lbc
 import (
 	"time"
 
-	"github.com/lightbend/go_tests/args"
-	"github.com/lightbend/go_tests/util"
+	"github.com/lightbend/gotests/args"
+	"github.com/lightbend/gotests/util"
 )
 
 const localChartPath = "../../../."

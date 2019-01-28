@@ -1,4 +1,6 @@
 language: go
+go:
+  - "1.11.x"
 sudo: required
 dist: xenial
 
@@ -28,6 +30,12 @@ jobs:
     script:
       - scripts/setup-openshift.sh || travis_terminate 1
       - make -C enterprise-suite openshift-backend-tests
+
+  - name: Backend E2E Go Tests - Minikube
+    script:
+    - scripts/setup-minikube-for-linux.sh || travis_terminate 1
+    - go get github.com/onsi/ginkgo/ginkgo || travis_terminate 1
+    - GO111MODULE=on make -C enterprise-suite go-tests
 
   - name: Backend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.

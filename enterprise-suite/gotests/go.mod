@@ -1,4 +1,4 @@
-module github.com/lightbend/go_tests
+module github.com/lightbend/gotests
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
