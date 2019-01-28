@@ -34,7 +34,7 @@ var _ = BeforeSuite(func() {
 
 		// Create test app deployments + services
 		for res, depName := range appYamls {
-			err = kube.ApplyYaml(res, args.ConsoleNamespace)
+			err = kube.ApplyYaml(args.ConsoleNamespace, res)
 			Expect(err).To(Succeed())
 
 			// Wait for deployment to become ready
@@ -67,7 +67,7 @@ var _ = BeforeSuite(func() {
 var _ =	AfterSuite(func() {
 	// Delete test app deployments + services
 	for res := range appYamls {
-		kube.DeleteYaml(res, args.ConsoleNamespace)
+		kube.DeleteYaml(args.ConsoleNamespace, res)
 
 		// Ignore failures for now because deleting
 		// 'es-test-service-with-only-endpoints' fails for some reason
