@@ -6,10 +6,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/go_tests/args"
+	"github.com/lightbend/gotests/args"
 
-	"github.com/lightbend/go_tests/util/lbc"
-	"github.com/lightbend/go_tests/util/minikube"
+	"github.com/lightbend/gotests/util/lbc"
+	"github.com/lightbend/gotests/util/minikube"
+	"github.com/lightbend/gotests/util/kube"
 )
 
 var (
@@ -67,8 +68,17 @@ func CloseEnv() {
 		return
 	}
 
+	// Uninstall Console using helm
 	if err := lbc.Uninstall(); err != nil {
 		panic(err.Error())
+	}
+
+	// Delete PVCs which are left after helm uninstall
+	pvcs := []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
+	for _, pvc := range pvcs {
+		if err := kube.DeletePvc(args.ConsoleNamespace, pvc); err != nil {
+			panic(err.Error())
+		}
 	}
 
 	testEnvInitialized = false

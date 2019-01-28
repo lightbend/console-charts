@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	. "github.com/onsi/ginkgo"
 )
 
 const DefaultTimeout = 5 * time.Second
@@ -128,10 +130,13 @@ func (cb *CmdBuilder) Run() (int, error) {
 	if err := cmd.Start(); err != nil {
 		panic("unable to execute command")
 	} else {
-		var stdoutWriters []io.Writer
-		var stderrWriters []io.Writer
+		// These keep all stdout/stderr capture destinations.
+		// Always print stdout/stderr to GinkgoWriter so that we can see
+		// all output in verbose mode and when test fails.
+		stdoutWriters := []io.Writer{GinkgoWriter}
+		stderrWriters := []io.Writer{GinkgoWriter}
 
-		// Add string.Builder outputs
+		// Add external string.Builder outputs
 		if cb.captureStdout != nil {
 			stdoutWriters = append(stdoutWriters, cb.captureStdout)
 		}
@@ -173,7 +178,9 @@ func (cb *CmdBuilder) Run() (int, error) {
 
 	// Make an error on non-zero exit
 	if cb.expectZeroExitStatus && cmderr == nil && exitcode != 0 {
-		cmderr = fmt.Errorf("'%v %v' return status %v", cb.name, strings.Join(cb.args[:], " "), exitcode)
+		cmderr = fmt.Errorf("'%v %v'\nreturn status: %v\n",
+			cb.name, strings.Join(cb.args[:], " "),
+			exitcode)
 	}
 
 	if cb.panicOnError && cmderr != nil {

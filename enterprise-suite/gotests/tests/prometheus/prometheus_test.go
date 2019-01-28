@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lightbend/go_tests/args"
-	"github.com/lightbend/go_tests/testenv"
-	"github.com/lightbend/go_tests/util"
-	"github.com/lightbend/go_tests/util/kube"
-	"github.com/lightbend/go_tests/util/monitor"
-	"github.com/lightbend/go_tests/util/prometheus"
+	"github.com/lightbend/gotests/args"
+	"github.com/lightbend/gotests/testenv"
+	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/gotests/util/kube"
+	"github.com/lightbend/gotests/util/monitor"
+	"github.com/lightbend/gotests/util/prometheus"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -34,7 +34,7 @@ var _ = BeforeSuite(func() {
 
 		// Create test app deployments + services
 		for res, depName := range appYamls {
-			err = kube.ApplyYaml(res, args.ConsoleNamespace)
+			err = kube.ApplyYaml(args.ConsoleNamespace, res)
 			Expect(err).To(Succeed())
 
 			// Wait for deployment to become ready
@@ -67,7 +67,7 @@ var _ = BeforeSuite(func() {
 var _ =	AfterSuite(func() {
 	// Delete test app deployments + services
 	for res := range appYamls {
-		kube.DeleteYaml(res, args.ConsoleNamespace)
+		kube.DeleteYaml(args.ConsoleNamespace, res)
 
 		// Ignore failures for now because deleting
 		// 'es-test-service-with-only-endpoints' fails for some reason
@@ -218,7 +218,8 @@ var _ = Describe("all:prometheus", func() {
 			Expect(prom.HasData("{job=\"kubernetes-cadvisor\",es_monitor_type=\"es-test\"}")).To(BeTrue())
 		})
 
-		It("metric data has es_monitor_type", func() {
+		// The following is disabled due to flakyness
+		XIt("metric data has es_monitor_type", func() {
 			// Succeeds if all data for the workload es-test  has a matching es_monitor_type
 			// Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
 			err := util.WaitUntilTrue(func() bool {
