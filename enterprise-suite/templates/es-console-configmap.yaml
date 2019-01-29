@@ -15,6 +15,7 @@ data:
       more_set_headers
         "X-Frame-Options: DENY"
         "X-XSS-Protection: 1";
+      set $app_csp "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';";
 
       # use external resolver to lookup backends, cache for 30 seconds
 
@@ -143,7 +144,7 @@ data:
 
       location ~ (.*/)index.html {
         # Console CSP
-        add_header Content-Security-Policy "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';";
+        add_header Content-Security-Policy $app_csp;
         # encode base path
         array_split '/' $1 to=$encoded_base;
         array_map_op set_escape_uri $encoded_base;
@@ -165,7 +166,7 @@ data:
 
       location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
         # Console CSP
-        add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline';";
+        add_header Content-Security-Policy $app_csp;
         # encode base path
         array_split '/' $1 to=$encoded_base;
         array_map_op set_escape_uri $encoded_base;
