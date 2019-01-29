@@ -1,0 +1,122 @@
+#!/bin/bash
+
+#set -x
+
+## Test alerting
+
+NAMESPACE=${NAMESPACE:=lightbend}
+
+source smokecommon
+source prometheus_common
+
+# 1. Create new configmap for alertmanager deployment
+# 2. Cache existing configmap setting in deployment
+# 3. Update alertmanager deployment configs to use new configmap
+# 4. run tests
+# 5. Put original configmap back in place
+
+export alertmanager_smoke_config_dir=$(mktemp -d -t configmap.XXX)
+
+# As per https://developer.lightbend.com/docs/console/current/installation/alertmanager.html#2-create-the-configmap
+make_alertmanager_configmap() {
+  cp resources/alertmanager.yml $alertmanager_smoke_config_dir
+  cp ../alertmanager/*.tmpl $alertmanager_smoke_config_dir
+  kubectl -n $NAMESPACE create configmap alertmanager-smoke-config --from-file=$alertmanager_smoke_config_dir --dry-run -o yaml | kubectl apply -f -
+}
+
+make_alertmanager_configmap
+ORIGINAL_AM_CONFIGMAP=$( kubectl get deployment prometheus-alertmanager -n $NAMESPACE -o go-template --template="{{ (index .spec.template.spec.volumes 0).configMap.name }}" )
+kubectl patch deployment prometheus-alertmanager -n $NAMESPACE -p '{"spec":{"template":{"spec":{"volumes":[{"name":"config-volume", "configMap":{"name":"alertmanager-smoke-config"}}]}}}}'
+
+#
+# launch test apps
+#
+
+set -e
+for app in resources/alert-*.yaml ; do
+  kubectl apply -f "$app" -n $NAMESPACE --wait
+done
+
+# Wait until all deployments are up and running
+busy_wait deployments_up
+
+cleanup() {
+  for app in resources/alert-*.yaml ; do
+    kubectl delete -f "$app" -n $NAMESPACE
+  done
+  # Put alertmanager configmap back.
+  if [ -n "$ORIGINAL_AM_CONFIGMAP" ] ; then
+    kubectl patch deployment prometheus-alertmanager -n $NAMESPACE -p '{"spec":{"template":{"spec":{"volumes":[{"name":"config-volume", "configMap":{"name":"'$ORIGINAL_AM_CONFIGMAP'"}}]}}}}'
+  fi
+  if [ -n "$alertmanager_smoke_config_dir" ] ; then
+    rm -rf $alertmanager_smoke_config_dir
+  fi
+}
+
+trap cleanup 0
+set +e
+
+busy_wait prom_three_scrapes kube_pod_info
+T $? Prometheus kube-state-metrics has at least three scrapes
+
+PROM_SCRAPES=$( prom_scrapes )
+[[ PROM_SCRAPES -ge 4 ]]
+T $? "Prometheus scraping $PROM_SCRAPES targets"
+
+# app tests
+app_instances='count( count by (instance) (ohai{es_workload="es-alert-test", namespace="'$NAMESPACE'"}) ) == 1'
+busy_wait app_data "$app_instances"
+
+busy_wait prom_has_data "$app_instances"
+
+make_alerting_monitor() {
+  curl -XPOST -H "Content-Type: application/json" -H 'Author-Name: Me' -H 'Author-Email: me@lightbend.com' -H 'Message: testing!' \
+    "$ES_MONITOR_API/monitors/$1" \
+    --data @- <<EOF
+{
+  "monitorVersion": "1",
+  "model": "threshold",
+  "parameters": {
+    "metric": "$2",
+    "window": "1m",
+    "confidence": "5e-324",
+    "severity": {
+      "warning": {
+        "comparator": "!=",
+        "threshold": "3"
+      }
+    },
+    "summary": "Testing.  This should always alert.",
+    "description": "Simple monitor that should constantly alert"
+  }
+}
+EOF
+}
+
+make_alerting_monitor "es-alert-test/my_custom_monitor" "up"
+
+busy_wait model_exists my_custom_monitor
+
+alert_query='ALERTS{alertname="my_custom_monitor",alertstate="firing",severity="warning"}'
+
+prom_has_data "$alert_query"
+
+# At this point could scrape
+# http://192.168.99.101:30080/service/alertmanager/#/alerts
+# for a link like
+# http://prometheus-server-7d97556545-fqfct:9090/graph?g0.expr=health%7Bes_monitor_type%3D%22es-test%22%2Cname%3D%22my_custom_monitor%22%2Cseverity%3D%22warning%22%7D+%3E+0&g0.tab=1
+# That should use es_consle_url business if it was set.
+
+nc_pod=$( kubectl get pods -l app=nc-pod --no-headers -n $NAMESPACE | awk '{print $1}' )
+
+# If alerts are getting routed properly, we'll see them here...
+check_alert () {
+  kubectl logs -n $NAMESPACE $nc_pod | grep -q -e '"status":"firing".*"alertname":"my_custom_monitor"'
+}
+
+busy_wait check_alert
+T $? Alert getting fired by Alertmanager
+
+# Could scrape alert here to see that link to prometheus uses es_console_url
+
+test_summary
