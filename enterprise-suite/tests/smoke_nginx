@@ -80,7 +80,7 @@ securitay() {
 }
 
 csp() {
-  check_header "$headers" "Content-Security-Policy" "default-src 'self'; style-src 'self' 'unsafe-inline';"
+  check_header "$headers" "Content-Security-Policy" "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
   T $? "$1" has Content-Security-Policy
 }
 
