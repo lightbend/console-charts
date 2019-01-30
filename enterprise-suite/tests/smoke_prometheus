@@ -38,12 +38,11 @@ PROM_SCRAPES=$( prom_scrapes )
 [[ PROM_SCRAPES -ge 4 ]]
 T $? "Prometheus scraping $PROM_SCRAPES targets"
 
-PROM_LOGS=$( prom_logs )
+PROM_LOGS=$( prom_logs | grep -v "reload: context deadline exceeded" | grep -v "different value but same timestamp")
 ! echo "$PROM_LOGS" | grep -qi warn
 T $? 'Prometheus "warn" logs'
 
-# It's okay if the reload fails, due to prometheus-server sometimes taking a little while to start up.
-! echo "$PROM_LOGS" | grep -qi err | grep -v -e 'reload: context deadline exceeded'
+! echo "$PROM_LOGS" | grep -qi err
 T $? 'Prometheus "err" logs'
 
 # grep prometheus_ rules.json | jq -r '.parameters.metric'
