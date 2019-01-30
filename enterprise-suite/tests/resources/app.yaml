@@ -9,6 +9,7 @@ spec:
     metadata:
       labels:
         app: es-test
+        test: prometheus-test
       annotations:
         console-backend-e2e.io/scrape: "true"
         console-backend-e2e.io/port: "8080"

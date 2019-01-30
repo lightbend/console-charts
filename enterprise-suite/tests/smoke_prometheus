@@ -16,8 +16,11 @@ for app in resources/app*.yaml; do
   kubectl apply -f "$app" -n $NAMESPACE --wait
 done
 
-# Wait until all deployments are up and running
-busy_wait deployments_up
+# Wait until all pods are up and running
+# Two instances per deployment with the "test:prometheus-test" label
+num_pods=$(( $(find resources -name 'app*.yaml' -exec grep 'test: prometheus-test' {} \; | wc -l ) * 2 ))
+busy_wait pods_exist "test=prometheus-test" $num_pods
+busy_wait pods_up
 
 cleanup() {
   for app in resources/app*.yaml; do
