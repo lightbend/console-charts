@@ -34,7 +34,7 @@ set +e
 busy_wait prom_three_scrapes prometheus_notifications_dropped_rate
 T $? Prometheus itself has at least three scrapes
 
-busy_wait prom_has_data 'health{name="prometheus_notifications_dropped"}'
+busy_wait prom_three_scrapes 'health{name="prometheus_notifications_dropped"}'
 T $? Prometheus health is reporting
 
 busy_wait prom_three_scrapes kube_pod_info
