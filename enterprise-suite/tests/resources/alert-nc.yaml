@@ -19,6 +19,7 @@ spec:
     metadata:
       labels:
         app: nc-pod
+        test: alert-test
     spec:
       containers:
       - name: nc-pod

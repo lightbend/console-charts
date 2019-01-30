@@ -1,6 +1,12 @@
 # functions common to smoke_prometheus and smoke_alert
 
-deployments_up() {
+# Searches for pods with label $1, and succeeds if there are $2 of them.
+pods_exist() {
+  results=$( kubectl get pods -n $NAMESPACE --no-headers -l "$1" | wc -l )
+  [[ results -eq $2 ]]
+}
+
+pods_up() {
   results=$( kubectl get pods -n $NAMESPACE --no-headers | awk '{print $3;}' | grep -v Running | wc -l )
   [[ results -eq 0 ]]
 }
