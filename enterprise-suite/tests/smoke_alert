@@ -37,8 +37,10 @@ for app in resources/alert-*.yaml ; do
   kubectl apply -f "$app" -n $NAMESPACE --wait
 done
 
-# Wait until all deployments are up and running
-busy_wait deployments_up
+# Wait until all pods are up and running
+num_pods=$(ls -1 resources/alert-*.yaml | wc -l)
+busy_wait pods_exist "test=alert-test" $num_pods
+busy_wait pods_up
 
 cleanup() {
   for app in resources/alert-*.yaml ; do

@@ -4,7 +4,6 @@
 
 # exit on (errors,) errors in pipelines, and unset vars:
 #set -e
-set -o pipefail
 set -o nounset
 
 source timeout.fn
