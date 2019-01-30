@@ -41,7 +41,7 @@ PROM_SCRAPES=$( prom_scrapes )
 [[ PROM_SCRAPES -ge 4 ]]
 T $? "Prometheus scraping $PROM_SCRAPES targets"
 
-PROM_LOGS=$( prom_logs | grep -v "reload: context deadline exceeded" | grep -v "different value but same timestamp")
+PROM_LOGS=$( prom_logs | grep -v "context deadline exceeded" | grep -v "different value but same timestamp")
 ! echo "$PROM_LOGS" | grep -qi warn
 T $? 'Prometheus "warn" logs'
 
