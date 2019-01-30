@@ -174,7 +174,7 @@ make_monitor "es-test/my_custom_monitor" "up"
 
 busy_wait model_exists my_custom_monitor
 
-prom_has_data 'up{es_workload="es-test", es_monitor_type="es-test"}'
+busy_wait prom_has_data 'up{es_workload="es-test", es_monitor_type="es-test"}'
 
 # app via 'Pod' service discovery with multiple metric ports
 app_instances_with_multiple_ports='count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="'$NAMESPACE'"}) ) == 4'
