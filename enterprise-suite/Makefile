@@ -109,9 +109,9 @@ install-dev: install-helm ## Install local chart directory to a local minikube.
 start-minikube:
 	-minikube start --cpus=3 --memory=6000
 
-GO_TESTS_DIR := $(CHART_DIR)/gotests
 .PHONY: gotests
 gotests:
+	$(MAKE) -C $@ setup-tools
 	$(MAKE) -C $@ check
 	$(MAKE) -C $@ run-tests TILLER_NAMESPACE=$(TILLER_NAMESPACE)
 

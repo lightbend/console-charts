@@ -31,3 +31,9 @@ run-tests:
 .PHONY: format
 format:
 	goimports -w $(files)
+
+.PHONY: setup-tools
+setup-tools:
+	go get -u golang.org/x/lint/golint
+	go get -u golang.org/x/tools/cmd/goimports
+	go get -u github.com/onsi/ginkgo/ginkgo
