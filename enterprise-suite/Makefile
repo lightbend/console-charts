@@ -113,7 +113,7 @@ start-minikube:
 gotests:
 	$(MAKE) -C $@ setup-tools
 	$(MAKE) -C $@ check
-	$(MAKE) -C $@ run-tests TILLER_NAMESPACE=$(TILLER_NAMESPACE)
+	$(MAKE) -C $@ run-tests NAMESPACE=$(NAMESPACE)
 
 .PHONY: go-tests-start-minikube
 go-tests-start-minikube: start-minikube go-tests

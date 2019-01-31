@@ -26,7 +26,7 @@ lint:
 
 .PHONY: go-tests
 run-tests:
-	ginkgo -r -- --namespace=$(TILLER_NAMESPACE) --tiller-namespace=$(TILLER_NAMESPACE)
+	ginkgo -r -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 
 .PHONY: format
 format:
