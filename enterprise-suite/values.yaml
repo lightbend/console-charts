@@ -8,7 +8,7 @@ esMonitorVersion: v1.0.6
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.2.0
 # prom/prometheus
-prometheusVersion: v2.7.0
+prometheusVersion: v2.7.1
 # prom/alertmanager
 alertManagerVersion: v0.16.0
 # jimmidyson/configmap-reload
@@ -58,7 +58,7 @@ daemonSetApiVersion: apps/v1beta2
 # Settings
 #
 # default image pull  policy
-imagePullPolicy: IfNotPresent
+imagePullPolicy: Always
 # prometheus annotation domain, e.g. `domain/scrape=true`
 prometheusDomain: prometheus.io
 # (deprecated) minikube debug resources - use exposeServices=NodePort instead

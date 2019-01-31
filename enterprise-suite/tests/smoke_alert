@@ -95,11 +95,11 @@ make_alerting_monitor() {
 EOF
 }
 
-make_alerting_monitor "es-alert-test/my_custom_monitor" "up"
+make_alerting_monitor "es-alert-test/my_custom_monitor_for_alert" "up"
 
-busy_wait model_exists my_custom_monitor
+busy_wait model_exists my_custom_monitor_for_alert
 
-alert_query='ALERTS{alertname="my_custom_monitor",alertstate="firing",severity="warning"}'
+alert_query='ALERTS{alertname="my_custom_monitor_for_alert",alertstate="firing",severity="warning"}'
 
 prom_has_data "$alert_query"
 
@@ -113,7 +113,7 @@ nc_pod=$( kubectl get pods -l app=nc-pod --no-headers -n $NAMESPACE | awk '{prin
 
 # If alerts are getting routed properly, we'll see them here...
 check_alert () {
-  kubectl logs -n $NAMESPACE $nc_pod | grep -q -e '"status":"firing".*"alertname":"my_custom_monitor"'
+  kubectl logs -n $NAMESPACE $nc_pod | grep -q -e '"status":"firing".*"alertname":"my_custom_monitor_for_alert"'
 }
 
 busy_wait check_alert
