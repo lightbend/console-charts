@@ -44,11 +44,13 @@ PROM_SCRAPES=$( prom_scrapes )
 [[ PROM_SCRAPES -ge 4 ]]
 T $? "Prometheus scraping $PROM_SCRAPES targets"
 
-PROM_LOGS=$( prom_logs | grep -v "context deadline exceeded" | grep -v "different value but same timestamp")
+# Some of the omitted "errors" are just warnings.  Some only happen during a config reload.
+# Could refine this in the future...
+PROM_LOGS=$( prom_logs | grep -v "context deadline exceeded" | grep -v "different value but same timestamp" | grep -v "informer unable to sync cache")
 ! echo "$PROM_LOGS" | grep -qi warn
 T $? 'Prometheus "warn" logs'
 
-! echo "$PROM_LOGS" | grep -qi err
+! echo "$PROM_LOGS" | grep -qi "^level=error"
 T $? 'Prometheus "err" logs'
 
 # grep prometheus_ rules.json | jq -r '.parameters.metric'
