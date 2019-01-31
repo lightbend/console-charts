@@ -45,8 +45,15 @@ PROM_SCRAPES=$( prom_scrapes )
 T $? "Prometheus scraping $PROM_SCRAPES targets"
 
 # Some of the omitted "errors" are just warnings.  Some only happen during a config reload.
+# alert-related one is due to race with smoke_alert
 # Could refine this in the future...
-PROM_LOGS=$( prom_logs | grep -v "context deadline exceeded" | grep -v "different value but same timestamp" | grep -v "informer unable to sync cache")
+PROM_LOGS=$( prom_logs \
+    | grep -v "context deadline exceeded" \
+    | grep -v "different value but same timestamp" \
+    | grep -v "informer unable to sync cache" \
+    | grep -v "Error sending alert.*connect: no route to host" \
+)
+
 ! echo "$PROM_LOGS" | grep -qi warn
 T $? 'Prometheus "warn" logs'
 
