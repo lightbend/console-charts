@@ -57,12 +57,12 @@ var _ = Describe("minikube:ingress", func() {
 				},
 				Spec: extv1.IngressSpec{
 					Rules: []extv1.IngressRule{
-						extv1.IngressRule{
-							"minikube.ingress.test",
-							extv1.IngressRuleValue{
-								&extv1.HTTPIngressRuleValue{
+						{
+							Host: "minikube.ingress.test",
+							IngressRuleValue: extv1.IngressRuleValue{
+								HTTP: &extv1.HTTPIngressRuleValue{
 									Paths: []extv1.HTTPIngressPath{
-										extv1.HTTPIngressPath{
+										{
 											Path: "/es-console",
 											Backend: extv1.IngressBackend{
 												ServiceName: consoleServiceName,

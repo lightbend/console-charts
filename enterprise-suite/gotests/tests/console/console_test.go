@@ -15,11 +15,11 @@ import (
 )
 
 var _ = BeforeSuite(func() {
-	testenv.InitEnv()	
+	testenv.InitEnv()
 })
 
 var _ = AfterSuite(func() {
-	testenv.CloseEnv()	
+	testenv.CloseEnv()
 })
 
 // The most basic verification tests
@@ -32,7 +32,7 @@ var _ = Describe("minikube:verify", func() {
 	})
 })
 
-var _ = Describe("all:verify", func() { 
+var _ = Describe("all:verify", func() {
 	Context("Helm", func() {
 		It("is installed", func() {
 			Expect(helm.IsInstalled()).Should(BeTrue())

@@ -10,8 +10,8 @@ import (
 )
 
 type Data struct {
-	ResultType string      `json:resultType,omitempty`
-	Result     interface{} `json:result,omitempty`
+	ResultType string      `json:"resultType,omitempty"`
+	Result     interface{} `json:"result,omitempty"`
 }
 
 type Response struct {

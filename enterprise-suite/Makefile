@@ -109,11 +109,11 @@ install-dev: install-helm ## Install local chart directory to a local minikube.
 start-minikube:
 	-minikube start --cpus=3 --memory=6000
 
-GO_TESTS_DIR := $(CHART_DIR)/gotests
-.PHONY: go-tests
-go-tests: TILLER_NAMESPACE=lightbend-test
-go-tests: install-helm
-	cd $(GO_TESTS_DIR); ginkgo -r -- --tiller-namespace=$(TILLER_NAMESPACE)
+.PHONY: gotests
+gotests:
+	$(MAKE) -C $@ setup-tools
+	$(MAKE) -C $@ check
+	$(MAKE) -C $@ run-tests NAMESPACE=$(NAMESPACE)
 
 .PHONY: go-tests-start-minikube
 go-tests-start-minikube: start-minikube go-tests

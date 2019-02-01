@@ -20,7 +20,7 @@ var prom *prometheus.Connection
 var esMonitor *monitor.Connection
 
 // Resource yaml file to deployment name map
-var	appYamls = map[string]string{
+var appYamls = map[string]string{
 	"../../resources/app.yaml":                             "es-test",
 	"../../resources/app_with_service.yaml":                "es-test-via-service",
 	"../../resources/app_service_with_only_endpoints.yaml": "",
@@ -28,43 +28,43 @@ var	appYamls = map[string]string{
 }
 
 var _ = BeforeSuite(func() {
-		testenv.InitEnv()
+	testenv.InitEnv()
 
-		var err error
+	var err error
 
-		// Create test app deployments + services
-		for res, depName := range appYamls {
-			err = kube.ApplyYaml(args.ConsoleNamespace, res)
+	// Create test app deployments + services
+	for res, depName := range appYamls {
+		err = kube.ApplyYaml(args.ConsoleNamespace, res)
+		Expect(err).To(Succeed())
+
+		// Wait for deployment to become ready
+		if len(depName) > 0 {
+			err = util.WaitUntilTrue(func() bool {
+				return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, depName)
+			}, fmt.Sprintf("deployment %v did not become available", depName))
 			Expect(err).To(Succeed())
-
-			// Wait for deployment to become ready
-			if len(depName) > 0 {
-				err = util.WaitUntilTrue(func() bool {
-					return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, depName)
-				}, fmt.Sprintf("deployment %v did not become available", depName))
-				Expect(err).To(Succeed())
-			}
 		}
+	}
 
-		prom, err = prometheus.NewConnection(testenv.PrometheusAddr)
-		Expect(err).To(Succeed())
+	prom, err = prometheus.NewConnection(testenv.PrometheusAddr)
+	Expect(err).To(Succeed())
 
-		esMonitor, err = monitor.NewConnection(testenv.MonitorAPIAddr)
-		Expect(err).To(Succeed())
-		
-		// Returns true if there were at least three scrapes of a given metric
-		threeScrapes := func(metric string) bool {
-			return prom.HasData(fmt.Sprintf("count_over_time(%v[10m]) > 2", metric))
-		}
+	esMonitor, err = monitor.NewConnection(testenv.MonitorAPIAddr)
+	Expect(err).To(Succeed())
 
-		// Wait until there's some scrapes finished
-		err = util.WaitUntilTrue(func() bool {
-			return threeScrapes("kube_pod_info")
-		}, "no kube_pod_info metric scrapes found")
-		Expect(err).To(Succeed())
-	})
+	// Returns true if there were at least three scrapes of a given metric
+	threeScrapes := func(metric string) bool {
+		return prom.HasData(fmt.Sprintf("count_over_time(%v[10m]) > 2", metric))
+	}
 
-var _ =	AfterSuite(func() {
+	// Wait until there's some scrapes finished
+	err = util.WaitUntilTrue(func() bool {
+		return threeScrapes("kube_pod_info")
+	}, "no kube_pod_info metric scrapes found")
+	Expect(err).To(Succeed())
+})
+
+var _ = AfterSuite(func() {
 	// Delete test app deployments + services
 	for res := range appYamls {
 		kube.DeleteYaml(args.ConsoleNamespace, res)

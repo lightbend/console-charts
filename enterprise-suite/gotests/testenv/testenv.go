@@ -8,19 +8,19 @@ import (
 
 	"github.com/lightbend/gotests/args"
 
+	"github.com/lightbend/gotests/util/kube"
 	"github.com/lightbend/gotests/util/lbc"
 	"github.com/lightbend/gotests/util/minikube"
-	"github.com/lightbend/gotests/util/kube"
 )
 
 var (
 	// The following variables are used accross tests to access kubernetes
 	// and make requests on Console components.
-	K8sClient *kubernetes.Clientset
-	ConsoleAddr string
+	K8sClient      *kubernetes.Clientset
+	ConsoleAddr    string
 	PrometheusAddr string
 	MonitorAPIAddr string
-	GrafanaAddr string
+	GrafanaAddr    string
 
 	testEnvInitialized = false
 )
