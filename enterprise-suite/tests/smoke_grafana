@@ -1,0 +1,13 @@
+#!/bin/bash
+
+NAMESPACE=${NAMESPACE:=lightbend}
+source smokecommon
+
+CONSOLE=$( busy_wait nodeport)
+
+test_grafana_responding "${CONSOLE}/service/grafana/"
+
+LOGS=$( kubectl logs --tail=9999 --namespace=${NAMESPACE} -l app=grafana,component=server )
+
+! echo "$LOGS" | grep "lvl=eror"
+T $? 'Grafana has no "lvl=eror" logs'
