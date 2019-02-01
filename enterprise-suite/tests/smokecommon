@@ -1,3 +1,4 @@
+#!/bin/bash
 # Note that parts of this depend on minikube at this time.
 
 #set -x

@@ -3,10 +3,11 @@
 NAMESPACE=${NAMESPACE:=lightbend}
 source smokecommon
 
-LOGS=$( kubectl logs --tail=1000 --namespace=${NAMESPACE} -l app=grafana,component=server )
+CONSOLE=$( busy_wait nodeport)
+
+test_grafana_responding "${CONSOLE}/service/grafana/"
+
+LOGS=$( kubectl logs --tail=9999 --namespace=${NAMESPACE} -l app=grafana,component=server )
 
 ! echo "$LOGS" | grep "lvl=eror"
 T $? 'Grafana has no "lvl=eror" logs'
-
-echo "$LOGS" | grep "logger=plugins" | grep -q 'dashboard="Strimzi Kafka"'
-T $? 'Grafana has Strimzi Kafka dashboard'
