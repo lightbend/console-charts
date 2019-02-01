@@ -1,0 +1,12 @@
+#!/bin/bash
+
+NAMESPACE=${NAMESPACE:=lightbend}
+source smokecommon
+
+LOGS=$( kubectl logs --tail=1000 --namespace=${NAMESPACE} -l app=grafana,component=server )
+
+! echo "$LOGS" | grep "lvl=eror"
+T $? 'Grafana has no "lvl=eror" logs'
+
+echo "$LOGS" | grep "logger=plugins" | grep -q 'dashboard="Strimzi Kafka"'
+T $? 'Grafana has Strimzi Kafka dashboard'
