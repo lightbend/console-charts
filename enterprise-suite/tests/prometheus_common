@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # functions common to smoke_prometheus and smoke_alert
 
 # Searches for pods with label $1, and succeeds if there are $2 of them.
