@@ -411,7 +411,7 @@
         "model": "sma",
         "parameters": {
           "metric": "redis_keyspace_miss_ratio",
-          "period": "15m",
+          "period": "10m",
           "minval": "1",
           "window": "10m",
           "confidence": "1",
@@ -429,7 +429,7 @@
         "model": "sma",
         "parameters": {
           "metric": "redis_evicted_keys_total",
-          "period": "15m",
+          "period": "10m",
           "minval": "1",
           "window": "10m",
           "confidence": "1",
@@ -447,7 +447,7 @@
         "model": "sma",
         "parameters": {
           "metric": "redis_commands_processed_total",
-          "period": "10m",
+          "period": "5m",
           "minval": "10",
           "window": "5m",
           "confidence": "1",
@@ -483,7 +483,7 @@
         "model": "sma",
         "parameters": {
           "metric": "kafka_incoming_messages_rate",
-          "period": "5m",
+          "period": "10m",
           "minval": "10",
           "window": "10m",
           "confidence": "1",
