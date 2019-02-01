@@ -27,7 +27,7 @@ ALL_YAML ?= all.yaml
 
 .PHONY: all build
 all: lint build  ## lint then build chart
-build: init package allyaml  ## Build chart package (and all.yaml)
+build: package allyaml  ## Build chart package (and all.yaml)
 
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 .PHONY: package
