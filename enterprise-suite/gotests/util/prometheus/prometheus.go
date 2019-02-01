@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 )
 
 type Data struct {
@@ -53,23 +54,27 @@ func (p *Connection) Query(query string) (*Response, error) {
 	return nil, errors.New(fmt.Sprintf("prometheus response status %v", resp.StatusCode))
 }
 
-func (p *Connection) HasData(query string) bool {
+func (p *Connection) HasData(query string) error {
 	resp, err := p.Query(query)
 
 	if err != nil {
-		return false
+		return fmt.Errorf("%q returned an error: %v", query, err)
 	}
 
 	// Cast result to array of anything
 	arr, ok := resp.Data.Result.([]interface{})
-	if ok {
-		return len(arr) > 0
+	if !ok {
+		return fmt.Errorf("%q - expected array of values, but was %v", query, reflect.TypeOf(resp.Data.Result))
 	}
 
-	return false
+	if len(arr) == 0 {
+		return fmt.Errorf("%q returned 0 results", query)
+	}
+
+	return nil
 }
 
-func (p *Connection) HasModel(model string) bool {
+func (p *Connection) HasModel(model string) error {
 	return p.HasData(fmt.Sprintf("model{name=\"%v\"}", model))
 }
 

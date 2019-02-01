@@ -1,5 +1,7 @@
 files := $(shell find . -path ./vendor -prune -o -name '*.go' -print)
 
+NAMESPACE := lightbend
+
 .PHONY: all
 all: check
 
@@ -24,7 +26,7 @@ vet:
 lint:
 	golint -set_exit_status $(go list ./...)
 
-.PHONY: go-tests
+.PHONY: run-tests
 run-tests:
 	ginkgo -r -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 

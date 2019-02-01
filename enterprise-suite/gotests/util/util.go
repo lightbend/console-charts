@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -195,11 +194,11 @@ const firstSleepMs = 20
 const maxSleepMs = 10000
 
 // Repeatedly runs a function, sleeping for a bit after each time, until it returns true or reaches maxRepeats.
-// failMsg will be printed in the result error in case of timeout, can be empty.
-func WaitUntilTrue(f func() bool, failMsg string) error {
+func WaitUntilTrue(f func() error) error {
 	sleepTimeMs := firstSleepMs
+	var lastErr error
 	for i := 0; i < maxRepeats; i++ {
-		if f() {
+		if lastErr = f(); lastErr == nil {
 			return nil
 		}
 		// Exponential backoff
@@ -210,21 +209,5 @@ func WaitUntilTrue(f func() bool, failMsg string) error {
 		time.Sleep(time.Duration(sleepTimeMs) * time.Millisecond)
 	}
 
-	timeoutMsg := "WaitUntilTrue reached maximum repeats without f() returning true"
-	if failMsg != "" {
-		return fmt.Errorf("%s: %s", timeoutMsg, failMsg)
-	}
-	return errors.New(timeoutMsg)
-}
-
-// Repeatedly runs a function, sleeping for a bit after each time, until it succeeds or reaches maxRepeats
-func WaitUntilSuccess(f func() error) error {
-	var lastErr error
-	if WaitUntilTrue(func() bool {
-		lastErr = f()
-		return lastErr == nil
-	}, "") != nil {
-		return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
-	}
-	return nil
+	return fmt.Errorf("WaitUntilTrue reached maximum repeats without f() succeeding: %v", lastErr)
 }
