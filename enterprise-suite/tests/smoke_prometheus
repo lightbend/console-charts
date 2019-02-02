@@ -104,9 +104,6 @@ prom_has_no_data 'kube_pod_info{es_workload=""}'
 prom_has_no_data '{__name__=~ "kube_.+", pod!="", es_workload=""}'
 # all container data have a workload label
 prom_has_no_data '{__name__=~"container_.+", es_workload=""}'
-# all targets should be reachable
-prom_has_data 'up{kubernetes_name != "es-test-service-with-only-endpoints"} == 1'
-prom_has_no_data 'up{kubernetes_name != "es-test-service-with-only-endpoints"} == 0'
 
 #
 # kube-state-metrics
