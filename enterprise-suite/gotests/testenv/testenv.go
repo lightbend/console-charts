@@ -8,6 +8,7 @@ import (
 
 	"github.com/lightbend/gotests/args"
 	"github.com/lightbend/gotests/util/kube"
+	"github.com/lightbend/gotests/util/oc"
 	"github.com/lightbend/gotests/util/lbc"
 	"github.com/lightbend/gotests/util/minikube"
 
@@ -15,8 +16,9 @@ import (
 )
 
 var (
-	// The following variables are used accross tests to access kubernetes
+	// The following variables are used across tests to access kubernetes
 	// and make requests on Console components.
+
 	K8sClient      *kubernetes.Clientset
 	ConsoleAddr    string
 	PrometheusAddr string
@@ -29,6 +31,13 @@ var (
 func InitEnv() {
 	if testEnvInitialized {
 		return
+	}
+
+	// This detection is not 100% accurate, but should be enough for testing on two different platforms
+	isMinikube := minikube.IsRunning()
+	isOpenshift := oc.IsRunning()
+	if isMinikube && isOpenshift {
+		panic("Could not determine which kubernetes platform is being used")
 	}
 
 	// Setup k8s client
@@ -46,20 +55,34 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 
-	// Setup addresses for making requests to Console components
-	if minikube.IsRunning() {
+	// Setup console address for making requests to Console components
+	if isMinikube {
 		ip, err := minikube.Ip()
 		if err != nil {
 			Expect(err).To(Succeed(), "unable to get minikube ip")
 		}
 
 		ConsoleAddr = fmt.Sprintf("http://%v:30080", ip)
-		PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
-		MonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
-		GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
+
 	} else {
-		// TODO: Setup addresses for openshift
+		if isOpenshift {
+			err := oc.Expose("console-server")
+			if err != nil {
+				panic(fmt.Sprintf("unable to expose openshift service: %v", err))
+			}
+
+			addr, err := oc.Address("console-server")
+			if err != nil {
+				panic(fmt.Sprintf("unable to get openshift address: %v", err))
+			}
+
+			ConsoleAddr = addr
+		}
 	}
+
+	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
+	MonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
+	GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
 
 	testEnvInitialized = true
 }
