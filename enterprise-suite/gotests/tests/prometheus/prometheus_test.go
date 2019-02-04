@@ -39,7 +39,7 @@ var _ = BeforeSuite(func() {
 
 		// Wait for deployment to become ready
 		if len(depName) > 0 {
-			err = util.WaitUntilTrue(func() error {
+			err = util.WaitUntilSuccess(func() error {
 				return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, depName)
 			})
 			Expect(err).To(Succeed())
@@ -58,7 +58,7 @@ var _ = BeforeSuite(func() {
 	}
 
 	// Wait until there's some scrapes finished
-	err = util.WaitUntilTrue(func() error {
+	err = util.WaitUntilSuccess(func() error {
 		return threeScrapes("kube_pod_info")
 	})
 	Expect(err).To(Succeed())
@@ -160,7 +160,7 @@ var _ = Describe("all:prometheus", func() {
 	Context("k8s service discovery", func() {
 		It("can discover a pod", func() {
 			appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				return prom.HasData(appInstancesQuery)
 			})
 			Expect(err).To(Succeed())
@@ -168,12 +168,12 @@ var _ = Describe("all:prometheus", func() {
 
 		It("can create monitors on automatic metrics for Pods, aka `up`", func() {
 			Expect(esMonitor.MakeMonitor("es-test/my_custom_monitor", "up")).To(Succeed())
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				return prom.HasModel("my_custom_monitor")
 			})
 			Expect(err).To(Succeed())
 
-			err = util.WaitUntilTrue(func() error {
+			err = util.WaitUntilSuccess(func() error {
 				return prom.HasData(`up{es_workload="es-test", es_monitor_type="es-test"}`)
 			})
 			Expect(err).To(Succeed())
@@ -181,7 +181,7 @@ var _ = Describe("all:prometheus", func() {
 
 		It("can discover a pod with multiple ports", func() {
 			appInstancesWithMultiplePortsQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", args.ConsoleNamespace)
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				return prom.HasData(appInstancesWithMultiplePortsQuery)
 			})
 			Expect(err).To(Succeed())
@@ -189,7 +189,7 @@ var _ = Describe("all:prometheus", func() {
 
 		It("can discover k8s `Service` resources", func() {
 			appInstancesViaServiceQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				if err := prom.HasData(appInstancesViaServiceQuery); err != nil {
 					return fmt.Errorf("unable to discover app via 'Service' service discovery: %v", err)
 				}
@@ -201,19 +201,19 @@ var _ = Describe("all:prometheus", func() {
 		It("can create monitors on automatic metrics for Services, aka `up`", func() {
 			// 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
 			Expect(esMonitor.MakeMonitor("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				return prom.HasModel("my_custom_monitor_for_service")
 			})
 			Expect(err).To(Succeed())
 
-			err = util.WaitUntilTrue(func() error {
+			err = util.WaitUntilSuccess(func() error {
 				return prom.HasData("up{es_workload=\"es-test-via-service\", es_monitor_type=\"es-test-via-service\"}")
 			})
 			Expect(err).To(Succeed())
 		})
 
 		It("can discover Services without any pods, only endpoints, to support external redirection", func() {
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				return prom.HasData(fmt.Sprintf("count( count by (instance) (up{ "+
 					"job=\"kubernetes-services\", kubernetes_name=\"es-test-service-with-only-endpoints\", namespace=\"%v\""+
 					"}) ) == 1", args.ConsoleNamespace))
@@ -224,12 +224,12 @@ var _ = Describe("all:prometheus", func() {
 		It("kubelet cadvisor metrics should have a es_monitor_type label", func() {
 			// kubernetes-cadvisor metrics should have an es_monitor_type label.
 			Expect(esMonitor.MakeMonitor("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				return prom.HasModel("es-monitor-type-test")
 			})
 			Expect(err).To(Succeed())
 
-			err = util.WaitUntilTrue(func() error {
+			err = util.WaitUntilSuccess(func() error {
 				return prom.HasData(`{job="kubernetes-cadvisor", es_monitor_type="es-test"}`)
 			})
 			Expect(err).To(Succeed())
@@ -238,7 +238,7 @@ var _ = Describe("all:prometheus", func() {
 		XIt("metric data has es_monitor_type", func() {
 			// Succeeds if all data for the workload es-test  has a matching es_monitor_type
 			// Note we're currently ignoring health metrics because 'bad' data can stick around for 15m given their time window.
-			err := util.WaitUntilTrue(func() error {
+			err := util.WaitUntilSuccess(func() error {
 				if err := prom.HasData(`{es_workload="es-test", es_monitor_type!="es-test", __name__!="health"}`); err != nil {
 					return fmt.Errorf("es-test workload data is missing es_monitor_type label: %v", err)
 				}

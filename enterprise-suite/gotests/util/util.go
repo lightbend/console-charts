@@ -193,8 +193,8 @@ const maxRepeats = 30
 const firstSleepMs = 20
 const maxSleepMs = 10000
 
-// Repeatedly runs a function, sleeping for a bit after each time, until it returns true or reaches maxRepeats.
-func WaitUntilTrue(f func() error) error {
+// Repeatedly runs a function, sleeping for a bit after each time, until it returns nil or reaches maxRepeats.
+func WaitUntilSuccess(f func() error) error {
 	sleepTimeMs := firstSleepMs
 	var lastErr error
 	for i := 0; i < maxRepeats; i++ {
@@ -209,5 +209,5 @@ func WaitUntilTrue(f func() error) error {
 		time.Sleep(time.Duration(sleepTimeMs) * time.Millisecond)
 	}
 
-	return fmt.Errorf("WaitUntilTrue reached maximum repeats without f() succeeding: %v", lastErr)
+	return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
 }
