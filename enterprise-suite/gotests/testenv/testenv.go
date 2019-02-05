@@ -50,8 +50,17 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
+	var additionalArgs []string
+	if isMinikube {
+		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
+	}
+	if isOpenshift {
+		additionalArgs = append(additionalArgs, "--set usePersistentVolumes=true,defaultStorageClass=gp2")
+		//additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
+	}
+
 	// Install console
-	if err := lbc.Install(args.ConsoleNamespace); err != nil {
+	if err := lbc.Install(args.ConsoleNamespace, additionalArgs...); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 
