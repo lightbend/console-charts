@@ -55,7 +55,12 @@ func InitEnv() {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 	}
 	if isOpenshift {
-		additionalArgs = append(additionalArgs, "--set usePersistentVolumes=true,defaultStorageClass=gp2")
+		if args.Minishift {
+			// Minishift doesn't have any default storage classes, revert to using emptyDir
+			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
+		} else {
+			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=true,defaultStorageClass=gp2")
+		}
 	}
 
 	// Install console
@@ -104,11 +109,13 @@ func CloseEnv() {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 
-	// Delete PVCs which are left after helm uninstall
-	pvcs := []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
-	for _, pvc := range pvcs {
-		if err := kube.DeletePvc(args.ConsoleNamespace, pvc); err != nil {
-			Expect(err).To(Succeed(), "delete PVCs")
+	if !args.Minishift {
+		// Delete PVCs which are left after helm uninstall
+		pvcs := []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
+		for _, pvc := range pvcs {
+			if err := kube.DeletePvc(args.ConsoleNamespace, pvc); err != nil {
+				Expect(err).To(Succeed(), "delete PVCs")
+			}
 		}
 	}
 
