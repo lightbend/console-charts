@@ -34,7 +34,7 @@ jobs:
   - name: Backend E2E Go Tests - Minikube
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
-    - GO111MODULE=on make -C enterprise-suite install-helm gotests
+    - GO111MODULE=on make -C enterprise-suite install-helm gotests-minikube
 
   - name: Backend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.

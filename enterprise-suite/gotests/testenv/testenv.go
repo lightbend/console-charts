@@ -8,8 +8,8 @@ import (
 
 	"github.com/lightbend/gotests/args"
 	"github.com/lightbend/gotests/util/kube"
-	"github.com/lightbend/gotests/util/oc"
 	"github.com/lightbend/gotests/util/lbc"
+	"github.com/lightbend/gotests/util/oc"
 	"github.com/lightbend/gotests/util/minikube"
 
 	. "github.com/onsi/gomega"
@@ -25,6 +25,11 @@ var (
 	MonitorAPIAddr string
 	GrafanaAddr    string
 
+	isMinikube  bool
+	isOpenshift bool
+
+	openshiftConsoleService = "console-server"
+
 	testEnvInitialized = false
 )
 
@@ -34,8 +39,8 @@ func InitEnv() {
 	}
 
 	// This detection is not 100% accurate, but should be enough for testing on two different platforms
-	isMinikube := minikube.IsRunning()
-	isOpenshift := oc.IsRunning()
+	isMinikube = minikube.IsRunning()
+	isOpenshift = oc.IsRunning()
 	if isMinikube && isOpenshift {
 		panic("Could not determine which kubernetes platform is being used")
 	}
@@ -77,14 +82,14 @@ func InitEnv() {
 
 		ConsoleAddr = fmt.Sprintf("http://%v:30080", ip)
 
-	} 
+	}
 	if isOpenshift {
-		err := oc.Expose("console-server")
+		err := oc.Expose(openshiftConsoleService)
 		if err != nil {
 			panic(fmt.Sprintf("unable to expose openshift service: %v", err))
 		}
 
-		addr, err := oc.Address("console-server")
+		addr, err := oc.Address(openshiftConsoleService)
 		if err != nil {
 			panic(fmt.Sprintf("unable to get openshift address: %v", err))
 		}
@@ -102,6 +107,10 @@ func InitEnv() {
 func CloseEnv() {
 	if !testEnvInitialized {
 		return
+	}
+
+	if isOpenshift {
+		oc.Unexpose(openshiftConsoleService)
 	}
 
 	// Uninstall Console using helm

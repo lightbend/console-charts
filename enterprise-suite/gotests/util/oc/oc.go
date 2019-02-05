@@ -56,6 +56,13 @@ func Expose(service string) error {
 	return nil
 }
 
+func Unexpose(service string) error {
+	if _, err := util.Cmd("oc", "delete", "route", service).Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func Address(service string) (string, error) {
 	var stdout strings.Builder
 

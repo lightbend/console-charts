@@ -26,9 +26,13 @@ vet:
 lint:
 	golint -set_exit_status $(go list ./...)
 
-.PHONY: run-tests
-run-tests:
-	ginkgo -r -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+.PHONY: run-tests-minikube
+run-tests-minikube:
+	ginkgo -r --skip=.*openshift.* -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+
+.PHONY: run-tests-openshift
+run-tests-openshift:
+	ginkgo -r --skip=.*minikube.* -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 
 .PHONY: format
 format:
