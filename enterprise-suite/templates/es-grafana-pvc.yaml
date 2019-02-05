@@ -1,10 +1,8 @@
-{{ if .Values.managePersistentVolumes }}
+{{ if .Values.usePersistentVolumes }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: es-grafana-storage
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
   storageClassName: {{ default .Values.defaultStorageClass .Values.esGrafanaStorageClass }}
   accessModes:

@@ -106,12 +106,18 @@ prometheusMemoryRequest: 250Mi
 # Persistent Volumes
 #
 # Set to true to use persistent volumes, otherwise emptyDir volumes are used.
-usePersistentVolumes: false
+usePersistentVolumes: true
 # If true, the chart manages persistent volumes by creating PVCs. Set to false to not manage PVCs at all.
 # Warning: If you "unmanage" PVCs that helm is managing by setting this to false, helm will delete those PVCs.
-managePersistentVolumes: true
+#managePersistentVolumes: true
 # Default StorageClass to use for persistent volumes
 defaultStorageClass: standard
+# Application-specific storage classes. If unspecified (and usePersistentVolumes is true), the application-specific
+# PVCs will use the defaultStorageClass setting.
+#prometheusStorageClass:
+#esAlertmanagerStorageClass:
+#esGrafanaStorageClass:
+
 # Prometheus volume size - used for storing metrics data.
 prometheusVolumeSize: 256Gi
 # Alertmanager volume size - used for storing silences.

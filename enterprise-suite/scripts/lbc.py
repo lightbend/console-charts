@@ -320,6 +320,10 @@ def check_resource_list(cmd, expected, fail_msg):
         return all_found
     return False
 
+# Don't care about PVCs as much as PVs.  If PVs have a reclaim policy of 'delete', then deleting the PVC will also
+# delete the data.  We should warn about deleting the PVC's in this case.  If the PV reclaim policy isn't 'delete'
+# then we should be okay deleting the PVCs.
+
 # Checks for console PVCs
 def are_pvcs_created(namespace):
     return check_resource_list(
@@ -447,11 +451,11 @@ def install(creds_file):
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
-            createPVs = len(filter(lambda x: 'managePersistentVolumes=false' in x, sys.argv)) == 0
-            if createPVs and are_pvcs_created(args.namespace):
-                printerr('info: Found existing PVCs from a previous console installation.')
-                printerr('info: Please remove them with `kubectl delete pvc`, or pass --set managePersistentVolumes=false.')
-                printerr('info: Otherwise, the install may fail.')
+            # createPVs = len(filter(lambda x: 'managePersistentVolumes=false' in x, sys.argv)) == 0
+            # if createPVs and are_pvcs_created(args.namespace):
+            #     printerr('info: Found existing PVCs from a previous console installation.')
+            #     printerr('info: Please remove them with `kubectl delete pvc`, or pass --set managePersistentVolumes=false.')
+            #     printerr('info: Otherwise, the install may fail.')
 
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
