@@ -56,7 +56,6 @@ func InitEnv() {
 	}
 	if isOpenshift {
 		additionalArgs = append(additionalArgs, "--set usePersistentVolumes=true,defaultStorageClass=gp2")
-		//additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
 	}
 
 	// Install console
@@ -73,20 +72,19 @@ func InitEnv() {
 
 		ConsoleAddr = fmt.Sprintf("http://%v:30080", ip)
 
-	} else {
-		if isOpenshift {
-			err := oc.Expose("console-server")
-			if err != nil {
-				panic(fmt.Sprintf("unable to expose openshift service: %v", err))
-			}
-
-			addr, err := oc.Address("console-server")
-			if err != nil {
-				panic(fmt.Sprintf("unable to get openshift address: %v", err))
-			}
-
-			ConsoleAddr = addr
+	} 
+	if isOpenshift {
+		err := oc.Expose("console-server")
+		if err != nil {
+			panic(fmt.Sprintf("unable to expose openshift service: %v", err))
 		}
+
+		addr, err := oc.Address("console-server")
+		if err != nil {
+			panic(fmt.Sprintf("unable to get openshift address: %v", err))
+		}
+
+		ConsoleAddr = fmt.Sprintf("http://%v", addr)
 	}
 
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
