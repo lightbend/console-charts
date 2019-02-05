@@ -9,39 +9,39 @@ import (
 )
 
 type Routes struct {
-	apiVersion string
-	items      []Route
-	kind       string
-	metadata   interface{}
+	ApiVersion string      `json:"apiVersion,omitempty"`
+	Items      []Route     `json:"items,omitempty"`
+	Kind       string      `json:"kind,omitempty"`
+	Metadata   interface{} `json:"metadata,omitempty"`
 }
 
 type Route struct {
-	apiVersion string
-	kind       string
-	metadata   RouteMetadata
-	spec       RouteSpec
-	status     RouteStatus
+	ApiVersion string        `json:"apiVersion,omitempty"`
+	Kind       string        `json:"kind,omitempty"`
+	Metadata   RouteMetadata `json:"metadata,omitempty"`
+	Spec       RouteSpec     `json:"spec,omitempty"`
+	Status     RouteStatus   `json:"status,omitempty"`
 }
 
 type RouteMetadata struct {
-	annotations       map[string]string
-	creationTimestamp string
-	name              string
-	namespace         string
-	resourceVersion   string
-	selfLink          string
-	uid               string
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	CreationTimestamp string            `json:"creationTimestamp,omitempty"`
+	Name              string            `json:"name,omitempty"`
+	Namespace         string            `json:"namespace,omitempty"`
+	ResourceVersion   string            `json:"resourceVersion,omitempty"`
+	SelfLink          string            `json:"selfLink,omitempty"`
+	Uid               string            `json:"uid,omitempty"`
 }
 
 type RouteSpec struct {
-	host           string
-	port           map[string]string
-	to             map[string]string
-	wildcardPolicy string
+	Host           string                 `json:"host,omitempty"`
+	Port           map[string]string      `json:"port,omitempty"`
+	To             map[string]interface{} `json:"to,omitempty"`
+	WildcardPolicy string                 `json:"wildcardPolicy,omitempty"`
 }
 
 type RouteStatus struct {
-	ingress []interface{}
+	Ingress []interface{} `json:"ingress,omitempty"`
 }
 
 func IsRunning() bool {
@@ -58,6 +58,7 @@ func Expose(service string) error {
 
 func Address(service string) (string, error) {
 	var stdout strings.Builder
+
 	cmd := util.Cmd("oc", "get", "route", "-o", "json").CaptureStdout(&stdout)
 	if _, err := cmd.Run(); err != nil {
 		return "", err
@@ -68,11 +69,11 @@ func Address(service string) (string, error) {
 		return "", err
 	}
 
-	for _, r := range routes.items {
-		if r.metadata.name == service {
-			return r.spec.host, nil
+	for _, r := range routes.Items {
+		if r.Metadata.Name == service {
+			return r.Spec.Host, nil
 		}
 	}
 
-	return "", fmt.Errorf("didn't find route for service %v", service)
+	return "", fmt.Errorf("didn't find routes for service %v", service)
 }
