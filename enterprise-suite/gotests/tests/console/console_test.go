@@ -38,7 +38,7 @@ var _ = Describe("all:verify", func() {
 			Expect(helm.IsInstalled()).Should(BeTrue())
 		})
 	})
-	
+
 	Context("Console", func() {
 		It("is verified", func() {
 			Expect(lbc.Verify(args.ConsoleNamespace)).Should(Succeed())
