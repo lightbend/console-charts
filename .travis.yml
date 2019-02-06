@@ -28,8 +28,8 @@ jobs:
 
   - name: Backend E2E Tests - Openshift
     script:
-      - travis_retry scripts/setup-openshift.sh
-      - make -C enterprise-suite openshift-backend-tests
+    - travis_retry scripts/setup-openshift.sh ${OC_TOKEN}
+    - make -C enterprise-suite openshift-backend-tests
 
   - name: Backend E2E Go Tests - Minikube
     script:
@@ -38,8 +38,8 @@ jobs:
 
   - name: Backend E2E Go Tests - Openshift
     script:
-      - scripts/setup-openshift-for-gotests.sh || travis_terminate 1
-      - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    - scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN} || travis_terminate 1
+    - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
 
   - name: Backend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
