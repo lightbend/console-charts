@@ -114,7 +114,7 @@ var _ = Describe("all:prometheus", func() {
 	)
 
 	It("coherency", func() {
-		// Data with "es_workload" should also have a "namespace" label
+		// PromData with "es_workload" should also have a "namespace" label
 		Expect(prom.HasData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).ToNot(Succeed())
 		// Health should have "es_workload" label, with a few known exceptions
 		Expect(prom.HasData("health{es_workload=\"\", name!~\"node.*|kube_node.*|prometheus_target_down|scrape_time\"}")).ToNot(Succeed())

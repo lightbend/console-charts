@@ -211,3 +211,10 @@ func WaitUntilSuccess(f func() error) error {
 
 	return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
 }
+
+func Close(closer io.Closer) {
+	if err := closer.Close(); err != nil {
+		// we never expect close to fail
+		panic(err)
+	}
+}
