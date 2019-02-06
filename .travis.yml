@@ -39,7 +39,7 @@ jobs:
   - name: Backend E2E Go Tests - Openshift
     script:
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
-    - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    - GO111MODULE=on make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
 
   - name: Backend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
