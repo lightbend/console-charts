@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/lightbend/gotests/args"
+	"github.com/lightbend/gotests/util/helm"
 	"github.com/lightbend/gotests/util/kube"
 	"github.com/lightbend/gotests/util/lbc"
 	"github.com/lightbend/gotests/util/minikube"
@@ -29,6 +30,8 @@ var (
 	isOpenshift bool
 
 	openshiftConsoleService = "console-server"
+	helmReleaseName         = "enterprise-suite"
+	consolePVCs             = []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
 
 	foundStorageClass  = false
 	testEnvInitialized = false
@@ -56,12 +59,24 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
+	// In case helm release or PVCs were left from the previous run - clean them up now
+	anyPVCFound := false
+	for _, pvc := range consolePVCs {
+		if kube.PVCExists(K8sClient, args.ConsoleNamespace, pvc) {
+			anyPVCFound = true
+		}
+	}
+	if helm.ReleaseExists(helmReleaseName) || anyPVCFound {
+		// Cleanup with allowFailures=true
+		cleanup(true)
+	}
+
 	var additionalArgs []string
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 	}
 
-	// Look for expected storage classes, run with emptyDir if they dont exist
+	// Look for expected storage classes, run with emptyDir if they don't exist
 	for _, storageClass := range []string{"standard", "gp2"} {
 		if kube.StorageClassExists(K8sClient, storageClass) {
 			foundStorageClass = true
@@ -115,24 +130,33 @@ func CloseEnv() {
 		return
 	}
 
+	if args.NoCleanup {
+		return
+	}
+
+	cleanup(false)
+
+	testEnvInitialized = false
+}
+
+func cleanup(allowFailures bool) {
 	if isOpenshift {
-		oc.Unexpose(openshiftConsoleService)
+		if err := oc.Unexpose(openshiftConsoleService); err != nil && !allowFailures {
+			Expect(err).To(Succeed(), "oc delete route")
+		}
 	}
 
 	// Uninstall Console using helm
-	if err := lbc.Uninstall(); err != nil {
+	if err := lbc.Uninstall(); err != nil && !allowFailures {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 
 	if foundStorageClass {
 		// Delete PVCs which are left after helm uninstall
-		pvcs := []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
-		for _, pvc := range pvcs {
-			if err := kube.DeletePvc(args.ConsoleNamespace, pvc); err != nil {
+		for _, pvc := range consolePVCs {
+			if err := kube.DeletePvc(args.ConsoleNamespace, pvc); err != nil && !allowFailures {
 				Expect(err).To(Succeed(), "delete PVCs")
 			}
 		}
 	}
-
-	testEnvInitialized = false
 }

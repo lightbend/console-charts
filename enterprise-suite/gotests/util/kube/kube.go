@@ -38,6 +38,11 @@ func DeletePvc(namespace string, name string) error {
 	return nil
 }
 
+func PVCExists(k8sClient *kubernetes.Clientset, namespace string, name string) bool {
+	_, err := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(name, metav1.GetOptions{})
+	return err == nil
+}
+
 func StorageClassExists(k8sClient *kubernetes.Clientset, name string) bool {
 	_, err := k8sClient.StorageV1().StorageClasses().Get(name, metav1.GetOptions{})
 	return err == nil
