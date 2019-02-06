@@ -38,6 +38,11 @@ func DeletePvc(namespace string, name string) error {
 	return nil
 }
 
+func StorageClassExists(k8sClient *kubernetes.Clientset, name string) bool {
+	_, err := k8sClient.StorageV1().StorageClasses().Get(name, metav1.GetOptions{})
+	return err == nil
+}
+
 func CreateNamespace(k8sClient *kubernetes.Clientset, name string) error {
 	namespace := &apiv1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{

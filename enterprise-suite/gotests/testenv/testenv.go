@@ -59,13 +59,19 @@ func InitEnv() {
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 	}
-	if isOpenshift {
-		if args.Minishift {
-			// Minishift doesn't have any default storage classes, revert to using emptyDir
-			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
-		} else {
-			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=true,defaultStorageClass=gp2")
+
+	// Look for default storage classes, run with emptyDir if they dont exist
+	foundStorageClass := false
+	for _, storageClass := range []string{"default", "gp2"} {
+		if kube.StorageClassExists(K8sClient, storageClass) {
+			foundStorageClass = true
+			additionalArgs = append(additionalArgs,
+				fmt.Sprintf("--set usePersistentVolumes=true,defaultStorageClass=%v", storageClass))
+			break
 		}
+	}
+	if !foundStorageClass {
+		additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
 	}
 
 	// Install console
