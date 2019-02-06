@@ -40,7 +40,7 @@ func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) e
 	return nil
 }
 
-func PVCExists(k8sClient *kubernetes.Clientset, namespace string, name string) bool {
+func PvcExists(k8sClient *kubernetes.Clientset, namespace string, name string) bool {
 	_, err := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(name, metav1.GetOptions{})
 	return err == nil
 }

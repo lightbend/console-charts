@@ -64,7 +64,7 @@ func InitEnv() {
 	// In case helm release or PVCs were left from the previous run - clean them up now
 	anyPVCFound := false
 	for _, pvc := range consolePVCs {
-		if kube.PVCExists(K8sClient, args.ConsoleNamespace, pvc) {
+		if kube.PvcExists(K8sClient, args.ConsoleNamespace, pvc) {
 			anyPVCFound = true
 		}
 	}
