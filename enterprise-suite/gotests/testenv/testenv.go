@@ -9,8 +9,8 @@ import (
 	"github.com/lightbend/gotests/args"
 	"github.com/lightbend/gotests/util/kube"
 	"github.com/lightbend/gotests/util/lbc"
-	"github.com/lightbend/gotests/util/oc"
 	"github.com/lightbend/gotests/util/minikube"
+	"github.com/lightbend/gotests/util/oc"
 
 	. "github.com/onsi/gomega"
 )
