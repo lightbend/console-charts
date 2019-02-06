@@ -36,6 +36,11 @@ jobs:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - GO111MODULE=on make -C enterprise-suite install-helm gotests-minikube
 
+  - name: Backend E2E Go Tests - Openshift
+    script:
+      - scripts/setup-openshift-for-gotests.sh || travis_terminate 1
+      - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+
   - name: Backend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
