@@ -30,6 +30,7 @@ var (
 
 	openshiftConsoleService = "console-server"
 
+	foundStorageClass  = false
 	testEnvInitialized = false
 )
 
@@ -60,9 +61,8 @@ func InitEnv() {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 	}
 
-	// Look for default storage classes, run with emptyDir if they dont exist
-	foundStorageClass := false
-	for _, storageClass := range []string{"default", "gp2"} {
+	// Look for expected storage classes, run with emptyDir if they dont exist
+	for _, storageClass := range []string{"standard", "gp2"} {
 		if kube.StorageClassExists(K8sClient, storageClass) {
 			foundStorageClass = true
 			additionalArgs = append(additionalArgs,
@@ -124,7 +124,7 @@ func CloseEnv() {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 
-	if !args.Minishift {
+	if foundStorageClass {
 		// Delete PVCs which are left after helm uninstall
 		pvcs := []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
 		for _, pvc := range pvcs {
