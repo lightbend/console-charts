@@ -30,19 +30,18 @@ var _ = Describe("minikube:verify", func() {
 			Expect(minikube.IsRunning()).Should(BeTrue())
 		})
 	})
-
-	// lbc.py verify currently doesn't work on openshift
-	Context("Console", func() {
-		It("is verified", func() {
-			Expect(lbc.Verify(args.ConsoleNamespace)).Should(Succeed())
-		})
-	})
 })
 
 var _ = Describe("all:verify", func() {
 	Context("Helm", func() {
 		It("is installed", func() {
 			Expect(helm.IsInstalled()).Should(BeTrue())
+		})
+	})
+	
+	Context("Console", func() {
+		It("is verified", func() {
+			Expect(lbc.Verify(args.ConsoleNamespace)).Should(Succeed())
 		})
 	})
 })
