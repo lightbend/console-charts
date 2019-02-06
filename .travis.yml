@@ -38,7 +38,7 @@ jobs:
 
   - name: Backend E2E Go Tests - Openshift
     script:
-    - scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN} || travis_terminate 1
+    - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
     - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
 
   - name: Backend E2E Tests - Minikube Latest
