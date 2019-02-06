@@ -44,8 +44,10 @@ func InitEnv() {
 
 	// This detection is not 100% accurate, but should be enough for testing on two different platforms
 	isMinikube = minikube.IsRunning()
-	isOpenshift = oc.IsRunning()
-	if isMinikube && isOpenshift {
+	if !isMinikube {
+		isOpenshift = oc.IsRunning()
+	}
+	if !isMinikube && !isOpenshift {
 		panic("Could not determine which kubernetes platform is being used")
 	}
 
@@ -74,19 +76,20 @@ func InitEnv() {
 	var additionalArgs []string
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
-	}
-
-	// Look for expected storage classes, run with emptyDir if they don't exist
-	for _, storageClass := range []string{"standard", "gp2"} {
-		if kube.StorageClassExists(K8sClient, storageClass) {
-			foundStorageClass = true
-			additionalArgs = append(additionalArgs,
-				fmt.Sprintf("--set usePersistentVolumes=true,defaultStorageClass=%v", storageClass))
-			break
+		foundStorageClass = true
+	} else {
+		// Look for expected storage classes, run with emptyDir if they don't exist
+		for _, storageClass := range []string{"standard", "gp2"} {
+			if kube.StorageClassExists(K8sClient, storageClass) {
+				foundStorageClass = true
+				additionalArgs = append(additionalArgs,
+					fmt.Sprintf("--set usePersistentVolumes=true,defaultStorageClass=%v", storageClass))
+				break
+			}
 		}
-	}
-	if !foundStorageClass {
-		additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
+		if !foundStorageClass {
+			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
+		}
 	}
 
 	// Install console
@@ -154,7 +157,7 @@ func cleanup(allowFailures bool) {
 	if foundStorageClass {
 		// Delete PVCs which are left after helm uninstall
 		for _, pvc := range consolePVCs {
-			if err := kube.DeletePvc(args.ConsoleNamespace, pvc); err != nil && !allowFailures {
+			if err := kube.DeletePvc(K8sClient, args.ConsoleNamespace, pvc); err != nil && !allowFailures {
 				Expect(err).To(Succeed(), "delete PVCs")
 			}
 		}

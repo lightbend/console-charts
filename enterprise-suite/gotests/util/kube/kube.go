@@ -30,9 +30,11 @@ func DeleteYaml(namespace string, filepath string) error {
 	return nil
 }
 
-func DeletePvc(namespace string, name string) error {
-	if _, err := util.Cmd("kubectl", "-n", namespace, "delete", "pvc", name).Run(); err != nil {
-		return err
+func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) error {
+	pvcClient := k8sClient.CoreV1().PersistentVolumeClaims(namespace)
+
+	if err := pvcClient.Delete(name, &metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("unable to delete pvc %v: %v", name, err)
 	}
 
 	return nil
