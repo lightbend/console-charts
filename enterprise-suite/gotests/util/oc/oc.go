@@ -45,7 +45,7 @@ type RouteStatus struct {
 }
 
 func IsRunning() bool {
-	retcode, err := util.Cmd("oc", "status").Run()
+	retcode, err := util.Cmd("oc", "status").AnyExitStatus().Run()
 	return retcode == 0 && err == nil
 }
 

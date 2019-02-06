@@ -127,7 +127,13 @@ func (cb *CmdBuilder) Run() (int, error) {
 
 	// Run the command
 	if err := cmd.Start(); err != nil {
-		panic("unable to execute command")
+		// If command is unvailable on the system we end up here
+		if cb.panicOnError {
+			panic("unable to execute command")
+		} else {
+			return -1, fmt.Errorf("unable to execute command '%v %v'",
+				cb.name, strings.Join(cb.args[:], " "))
+		}
 	} else {
 		// These keep all stdout/stderr capture destinations.
 		// Always print stdout/stderr to GinkgoWriter so that we can see
