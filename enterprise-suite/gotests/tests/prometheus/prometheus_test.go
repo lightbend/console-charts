@@ -70,10 +70,6 @@ var _ = AfterSuite(func() {
 		if err := kube.DeleteYaml(args.ConsoleNamespace, res); err != nil {
 			panic(err)
 		}
-
-		// Ignore failures for now because deleting
-		// 'es-test-service-with-only-endpoints' fails for some reason
-		//Expect(err).To(Succeed())
 	}
 
 	testenv.CloseEnv()

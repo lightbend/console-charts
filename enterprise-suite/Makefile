@@ -105,18 +105,18 @@ install-helm:
 install-dev: install-helm ## Install local chart directory to a local minikube.
 	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
 
-.PHONY: start-minikube
-start-minikube:
-	-minikube start --cpus=3 --memory=6000
+.PHONE: preflight-check
+preflight-check:
+	$(MAKE) -C gotests setup-tools
+	$(MAKE) -C gotests check
 
-.PHONY: gotests
-gotests:
-	$(MAKE) -C $@ setup-tools
-	$(MAKE) -C $@ check
-	$(MAKE) -C $@ run-tests NAMESPACE=$(NAMESPACE)
+.PHONY: gotests-minikube
+gotests-minikube: preflight-check
+	$(MAKE) -C gotests run-tests-minikube NAMESPACE=$(NAMESPACE)
 
-.PHONY: go-tests-start-minikube
-go-tests-start-minikube: start-minikube go-tests
+.PHONY: gotests-openshift
+gotests-openshift: preflight-check
+	$(MAKE) -C gotests run-tests-openshift NAMESPACE=$(NAMESPACE)
 
 .PHONY: help
 help:  ## Print help for targets

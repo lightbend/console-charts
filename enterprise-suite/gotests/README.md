@@ -23,8 +23,8 @@ If Tiller is installed in other namespace than `kube-system`, you can specify th
 Note: this is not a ginkgo flag, but a custom flag in the test suites so it comes after `--`.
 
 Running only minikube or openshift:
-`ginkgo -r --skip=*minikube*`
-`ginkgo -r --skip=*openshift*`
+`ginkgo -r --skip=.*minikube.*`
+`ginkgo -r --skip=.*openshift.*`
 
 Running a single test suite:
 `ginkgo tests/prometheus`

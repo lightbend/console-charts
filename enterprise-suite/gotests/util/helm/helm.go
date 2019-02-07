@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"strings"
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -26,6 +27,20 @@ func IsInstalled() bool {
 	}
 
 	return true
+}
+
+// ReleaseExists returns true if given helm release name is present in any state - deployed, pending or failed
+func ReleaseExists(name string) bool {
+	var output strings.Builder
+	cmd := util.Cmd("helm", "list", "--all", "--short", name).CaptureStdout(&output)
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
+
+	if _, err := cmd.Run(); err != nil {
+		return strings.Trim(output.String(), " \n") == name
+	}
+	return false
 }
 
 func Install(k8sClient *kubernetes.Clientset, namespace string) error {
