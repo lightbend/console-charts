@@ -184,6 +184,29 @@ data:
         etag off;
       }
 
+      # pipelines ui
+
+      location ~ (.*/)(pipelines/.*) {
+        # Console CSP
+        add_header Content-Security-Policy $app_csp;
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # serve the app
+        alias $base/index.html;
+        default_type text/html;
+        # replace base href
+        sub_filter 'base href="/"' 'base href="$encoded_base"';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+
       # static files
 
       location ~ (.*)(/assets/.*) {
