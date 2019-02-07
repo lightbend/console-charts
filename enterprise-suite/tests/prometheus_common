@@ -36,7 +36,7 @@ prom_has_data() {
 }
 
 prom_any_data() {
-  prom_has_data "count_over_time( (\"${*}\") [10m:] )"
+  prom_has_data "count_over_time( (${*}) [10m:] )"
 }
 
 prom_has_no_data() {
