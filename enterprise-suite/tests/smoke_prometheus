@@ -84,12 +84,12 @@ prom_health=(
 )
 
 for m in "${prom_metrics[@]}"; do
-  prom_has_data "$m"
+  prom_any_data "$m"
 done
 
 for m in "${prom_health[@]}"; do
-  prom_has_data "model{name=\"$m\"}"
-  prom_has_data "health{name=\"$m\"}"
+  prom_any_data "model{name=\"$m\"}"
+  prom_any_data "health{name=\"$m\"}"
 done
 
 # coherency tests
@@ -128,12 +128,12 @@ kube_state_health=(
 )
 
 for m in "${kube_state_metrics[@]}"; do
-  prom_has_data "$m"
+  prom_any_data "$m"
 done
 
 for m in "${kube_state_health[@]}"; do
-  prom_has_data "model{name=\"$m\"}"
-  prom_has_data "health{name=\"$m\"}"
+  prom_any_data "model{name=\"$m\"}"
+  prom_any_data "health{name=\"$m\"}"
 done
 
 KSM_LOGS=$( kube_state_metrics_logs )
