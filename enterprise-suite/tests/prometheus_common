@@ -35,6 +35,10 @@ prom_has_data() {
   T $? timeseries: "$*"
 }
 
+prom_any_data() {
+  prom_has_data "count_over_time( (\"${*}\") [10m:] )"
+}
+
 prom_has_no_data() {
   test_prom_has_data () {
     results=$( prom_query "$@" | jq '.data.result | length' )
