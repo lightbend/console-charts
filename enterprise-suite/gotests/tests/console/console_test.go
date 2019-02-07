@@ -9,6 +9,7 @@ import (
 	"github.com/lightbend/gotests/util/helm"
 	"github.com/lightbend/gotests/util/lbc"
 	"github.com/lightbend/gotests/util/minikube"
+	"github.com/lightbend/gotests/util/oc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,6 +29,14 @@ var _ = Describe("minikube:verify", func() {
 	Context("Minikube", func() {
 		It("is running", func() {
 			Expect(minikube.IsRunning()).Should(BeTrue())
+		})
+	})
+})
+
+var _ = Describe("openshift:verify", func() {
+	Context("Openshift", func() {
+		It("is running", func() {
+			Expect(oc.IsRunning()).Should(BeTrue())
 		})
 	})
 })
