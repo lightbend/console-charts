@@ -2,12 +2,13 @@ package ingress
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"testing"
 
 	extv1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	intstr "k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/lightbend/gotests/args"
 	"github.com/lightbend/gotests/testenv"
@@ -57,12 +58,12 @@ var _ = Describe("minikube:ingress", func() {
 				},
 				Spec: extv1.IngressSpec{
 					Rules: []extv1.IngressRule{
-						extv1.IngressRule{
-							"minikube.ingress.test",
-							extv1.IngressRuleValue{
-								&extv1.HTTPIngressRuleValue{
+						{
+							Host: "minikube.ingress.test",
+							IngressRuleValue: extv1.IngressRuleValue{
+								HTTP: &extv1.HTTPIngressRuleValue{
 									Paths: []extv1.HTTPIngressPath{
-										extv1.HTTPIngressPath{
+										{
 											Path: "/es-console",
 											Backend: extv1.IngressBackend{
 												ServiceName: consoleServiceName,
@@ -89,10 +90,18 @@ var _ = Describe("minikube:ingress", func() {
 
 		req.Host = "minikube.ingress.test"
 
-		err = util.WaitUntilTrue(func() bool {
+		err = util.WaitUntilSuccess(func() error {
 			resp, err := httpClient.Do(req)
-			return err == nil && resp.StatusCode == 200
-		}, "console not accessible through minikube ingress")
+			if err != nil {
+				return fmt.Errorf("console not accessible through ingress: %v", err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != 200 {
+				body, _ := ioutil.ReadAll(resp.Body)
+				return fmt.Errorf("wanted 200 response, got %d: %s", resp.StatusCode, string(body))
+			}
+			return nil
+		})
 		Expect(err).To(Succeed())
 	})
 })

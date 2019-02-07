@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # functions common to smoke_prometheus and smoke_alert
 
 # Searches for pods with label $1, and succeeds if there are $2 of them.
@@ -38,7 +41,7 @@ prom_has_no_data() {
     [[ results -eq 0 ]]
   }
   timeout test_prom_has_data "$@"
-  T $? timeseries: "$*"
+  T $? timeseries: "expecting no data for: $*"
 }
 
 model_exists() {

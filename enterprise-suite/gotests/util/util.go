@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -128,7 +127,13 @@ func (cb *CmdBuilder) Run() (int, error) {
 
 	// Run the command
 	if err := cmd.Start(); err != nil {
-		panic("unable to execute command")
+		// If command is unvailable on the system we end up here
+		if cb.panicOnError {
+			panic("unable to execute command")
+		} else {
+			return -1, fmt.Errorf("unable to execute command '%v %v'",
+				cb.name, strings.Join(cb.args[:], " "))
+		}
 	} else {
 		// These keep all stdout/stderr capture destinations.
 		// Always print stdout/stderr to GinkgoWriter so that we can see
@@ -194,12 +199,12 @@ const maxRepeats = 30
 const firstSleepMs = 20
 const maxSleepMs = 10000
 
-// Repeatedly runs a function, sleeping for a bit after each time, until it returns true or reaches maxRepeats.
-// failMsg will be printed in the result error in case of timeout, can be empty.
-func WaitUntilTrue(f func() bool, failMsg string) error {
+// Repeatedly runs a function, sleeping for a bit after each time, until it returns nil or reaches maxRepeats.
+func WaitUntilSuccess(f func() error) error {
 	sleepTimeMs := firstSleepMs
+	var lastErr error
 	for i := 0; i < maxRepeats; i++ {
-		if f() {
+		if lastErr = f(); lastErr == nil {
 			return nil
 		}
 		// Exponential backoff
@@ -210,21 +215,12 @@ func WaitUntilTrue(f func() bool, failMsg string) error {
 		time.Sleep(time.Duration(sleepTimeMs) * time.Millisecond)
 	}
 
-	timeoutMsg := "WaitUntilTrue reached maximum repeats without f() returning true"
-	if failMsg != "" {
-		return fmt.Errorf("%s: %s", timeoutMsg, failMsg)
-	}
-	return errors.New(timeoutMsg)
+	return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
 }
 
-// Repeatedly runs a function, sleeping for a bit after each time, until it succeeds or reaches maxRepeats
-func WaitUntilSuccess(f func() error) error {
-	var lastErr error
-	if WaitUntilTrue(func() bool {
-		lastErr = f()
-		return lastErr == nil
-	}, "") != nil {
-		return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
+func Close(closer io.Closer) {
+	if err := closer.Close(); err != nil {
+		// we never expect close to fail
+		panic(err)
 	}
-	return nil
 }

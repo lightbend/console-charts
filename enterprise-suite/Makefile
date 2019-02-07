@@ -27,7 +27,7 @@ ALL_YAML ?= all.yaml
 
 .PHONY: all build
 all: lint build  ## lint then build chart
-build: init package allyaml  ## Build chart package (and all.yaml)
+build: package allyaml  ## Build chart package (and all.yaml)
 
 # This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
 .PHONY: package
@@ -105,18 +105,18 @@ install-helm:
 install-dev: install-helm ## Install local chart directory to a local minikube.
 	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
 
-.PHONY: start-minikube
-start-minikube:
-	-minikube start --cpus=3 --memory=6000
+.PHONE: preflight-check
+preflight-check:
+	$(MAKE) -C gotests setup-tools
+	$(MAKE) -C gotests check
 
-GO_TESTS_DIR := $(CHART_DIR)/gotests
-.PHONY: go-tests
-go-tests: TILLER_NAMESPACE=lightbend-test
-go-tests: install-helm
-	cd $(GO_TESTS_DIR); ginkgo -r -- --tiller-namespace=$(TILLER_NAMESPACE)
+.PHONY: gotests-minikube
+gotests-minikube: preflight-check
+	$(MAKE) -C gotests run-tests-minikube NAMESPACE=$(NAMESPACE)
 
-.PHONY: go-tests-start-minikube
-go-tests-start-minikube: start-minikube go-tests
+.PHONY: gotests-openshift
+gotests-openshift: preflight-check
+	$(MAKE) -C gotests run-tests-openshift NAMESPACE=$(NAMESPACE)
 
 .PHONY: help
 help:  ## Print help for targets

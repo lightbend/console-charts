@@ -8,7 +8,7 @@
 #        to the helm-charts/docs directory.
 #     - 'test':  Typically run by Travis to test the release.  That could be as simple
 #        doing nothing, to firing up minikube and installing/running the package.
-# 
+#
 # The 'common.mk' file can be used to provide these targets if desired.
 
 # Collection of charts to process.

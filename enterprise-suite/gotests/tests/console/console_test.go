@@ -9,17 +9,18 @@ import (
 	"github.com/lightbend/gotests/util/helm"
 	"github.com/lightbend/gotests/util/lbc"
 	"github.com/lightbend/gotests/util/minikube"
+	"github.com/lightbend/gotests/util/oc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = BeforeSuite(func() {
-	testenv.InitEnv()	
+	testenv.InitEnv()
 })
 
 var _ = AfterSuite(func() {
-	testenv.CloseEnv()	
+	testenv.CloseEnv()
 })
 
 // The most basic verification tests
@@ -32,7 +33,15 @@ var _ = Describe("minikube:verify", func() {
 	})
 })
 
-var _ = Describe("all:verify", func() { 
+var _ = Describe("openshift:verify", func() {
+	Context("Openshift", func() {
+		It("is running", func() {
+			Expect(oc.IsRunning()).Should(BeTrue())
+		})
+	})
+})
+
+var _ = Describe("all:verify", func() {
 	Context("Helm", func() {
 		It("is installed", func() {
 			Expect(helm.IsInstalled()).Should(BeTrue())

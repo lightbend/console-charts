@@ -2,21 +2,24 @@ package prometheus
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
+
+	"github.com/lightbend/gotests/util"
 )
 
-type Data struct {
-	ResultType string      `json:resultType,omitempty`
-	Result     interface{} `json:result,omitempty`
+type PromData struct {
+	ResultType string      `json:"resultType,omitempty"`
+	Result     interface{} `json:"result,omitempty"`
 }
 
-type Response struct {
+type PromResponse struct {
+	Original  string
 	Status    string   `json:"status"`
-	Data      Data     `json:"data,omitempty"`
+	Data      PromData `json:"data,omitempty"`
 	ErrorType string   `json:"errorType,omitempty"`
 	Error     string   `json:"error,omitempty"`
 	Warnings  []string `json:"warnings,omitempty"`
@@ -27,7 +30,7 @@ type Connection struct {
 	url string
 }
 
-func (p *Connection) Query(query string) (*Response, error) {
+func (p *Connection) Query(query string) (*PromResponse, error) {
 	addr := fmt.Sprintf("%v/api/v1/query?query=%v", p.url, url.QueryEscape(query))
 
 	resp, err := http.Get(addr)
@@ -35,6 +38,7 @@ func (p *Connection) Query(query string) (*Response, error) {
 		return nil, err
 	}
 
+	defer util.Close(resp.Body)
 	// Prometheus docs say 2XX codes are used for success, not just 200
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		content, err := ioutil.ReadAll(resp.Body)
@@ -42,34 +46,39 @@ func (p *Connection) Query(query string) (*Response, error) {
 			return nil, err
 		}
 
-		var resp Response
-		if err := json.Unmarshal(content, &resp); err != nil {
+		var promResp PromResponse
+		if err := json.Unmarshal(content, &promResp); err != nil {
 			return nil, err
 		} else {
-			return &resp, nil
+			promResp.Original = string(content)
+			return &promResp, nil
 		}
 	}
 
-	return nil, errors.New(fmt.Sprintf("prometheus response status %v", resp.StatusCode))
+	return nil, fmt.Errorf("prometheus response status %v", resp.StatusCode)
 }
 
-func (p *Connection) HasData(query string) bool {
+func (p *Connection) HasData(query string) error {
 	resp, err := p.Query(query)
 
 	if err != nil {
-		return false
+		return fmt.Errorf("%q returned an error: %v", query, err)
 	}
 
 	// Cast result to array of anything
 	arr, ok := resp.Data.Result.([]interface{})
-	if ok {
-		return len(arr) > 0
+	if !ok {
+		return fmt.Errorf("%q - expected array of values, but was %v: %s", query, reflect.TypeOf(resp.Data.Result), resp.Original)
 	}
 
-	return false
+	if len(arr) == 0 {
+		return fmt.Errorf("%q returned 0 results: %s", query, resp.Original)
+	}
+
+	return nil
 }
 
-func (p *Connection) HasModel(model string) bool {
+func (p *Connection) HasModel(model string) error {
 	return p.HasData(fmt.Sprintf("model{name=\"%v\"}", model))
 }
 

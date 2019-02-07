@@ -1,7 +1,357 @@
 ---
-# Source: enterprise-suite-latest/templates/es-grafana.yaml
+# Source: enterprise-suite-latest/templates/alertmanager-configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: alertmanager
+  name: alertmanager-default
+data:
+  alertmanager.yml: |
+    # Example Lightbend Console Alertmanager config.
+  
+    global:
+  
+    # Routing rules.
+    route:
+      # Default receiver.
+      receiver: team1-slack
+      # Resend unresolved alerts at this interval.
+      repeat_interval: 4h
+      # Wait for any other alerts in the same group before sending.
+      group_wait: 30s
+      # Wait before sending a new alert for a group.
+      group_interval: 5m
+      # Group alerts by namespace and workload.
+      group_by: [namespace, es_workload, severity]
+      routes:
+      # team1 Slack
+      - match:
+          es_workload: workload1
+          severity: warning
+        receiver: team1-slack
+  
+      # team1 PagerDuty
+      - match:
+          es_workload: workload1
+          severity: critical
+        receiver: team1-pagerduty
+  
+      # team2 PagerDuty
+      - match:
+          es_workload: workload2
+          severity: critical
+        receiver: team2-slack
+  
+    # Don't alert on warnings if the same alert is already critical.
+    inhibit_rules:
+    - source_match:
+        severity: critical
+      target_match:
+        severity: warning
+      equal: [alertname, namespace, es_workload]
+  
+    templates:
+    # Slack notification templates.
+    - '/etc/config/slack.tmpl'
+  
+    # Receivers.
+    receivers:
+    - name: team1-slack
+      slack_configs:
+      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#team1-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  
+    - name: team1-pagerduty
+      pagerduty_configs:
+      - routing_key: my_secret_routing_key
+        # Remove this in actual usage. It's added to prevent sending PagerDuty alerts from local development environments.
+        url: https://pagerduty.localhost/api
+  
+    - name: team2-slack
+      slack_configs:
+      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
+      - api_url: https://slack.localhost/services/somewhere
+        channel: '#team2-alerts'
+        title: '{{ template "title.slack" . }}'
+        text: '{{ template "text.slack" . }}'
+        send_resolved: true
+  slack.tmpl: |
+    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .GroupLabels.severity | toUpper }}]{{ end }}
+    {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
+    {{ end }}{{- end -}}
+  
+
 
 ---
+# Source: enterprise-suite-latest/templates/es-console-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: es-console
+data:
+  default.conf: |-
+    server {
+      listen 8080;
+      server_name localhost;
+      set $base /usr/share/nginx/html;
+
+      # common security headers
+
+      more_clear_headers "Server";
+      more_set_headers
+        "X-Frame-Options: DENY"
+        "X-XSS-Protection: 1";
+      set $app_csp "default-src 'self' 'unsafe-eval' 'unsafe-inline';";
+
+      # use external resolver to lookup backends, cache for 30 seconds
+
+      resolver 127.0.0.1:5353 ipv6=off valid=30s;
+
+      set $prometheus "prometheus-server";
+      set $monitorapi "es-monitor-api";
+      set $grafana "grafana-server";
+      set $alertmanager "alertmanager:9093";
+
+      # nginx config primer:
+      # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
+      #   nginx uses longest path match to decide which location handler to use
+      #   the result of a location handler can then match and enter another location handler
+      # proxy_pass http://$variable triggers re-resolve mode, otherwise would have fixed IP
+      # proxy_redirect 'match' 'replace' fixups for Location header, if any
+      #   magic 'replace' value ' $1/' with a space prefix tells nginx to not add server and port
+      # sub_filter 'match' 'replace'
+      #   rewrites backend content, which we use for inserting the base path
+      # proxy_cookie_path 'match' 'replace'
+      #   fixes session cookie Path attribute, for Grafana
+      # xss guard for injected uris, preserving slash delimiters
+      #   array_split '/' $1 to=$encoded_base;
+      #   array_map_op set_escape_uri $encoded_base;
+      #   array_join '/' $encoded_base;
+
+      # proxy_pass backends with dynamic base url
+
+      sub_filter_once off;
+
+      set $nocache 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+
+      # prometheus UI and api endpoints
+      location ~ (.*/service/prometheus)(/.*) {
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # proxy to prometheus
+        proxy_pass http://$prometheus$2$is_args$args;
+        # rewrite base path in response content, and redirect headers
+        sub_filter '="/' '="$encoded_base/';
+        sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/graph"))';
+        proxy_redirect '/' ' $1/';
+      }
+
+      # es-monitor-api
+      location ~ (.*/service/es-monitor-api)(/.*) {
+        proxy_pass http://$monitorapi$2$is_args$args;
+        proxy_redirect '/' ' $1/';
+      }
+
+      # grafana plugin
+      location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # proxy to grafana
+        proxy_pass http://$grafana:3000$2$is_args$args;
+        # rewrite base path in response content, cookies, and redirect headers
+        sub_filter_types *;
+        sub_filter '/service/grafana' '$encoded_base';
+        proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+      # grafana ui
+      location ~ (.*/service/grafana)(/.*) {
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # proxy to grafana
+        proxy_pass http://$grafana:3000$2$is_args$args;
+        # rewrite base path in response content, cookies, and redirect headers
+        sub_filter_types *;
+        sub_filter '/service/grafana' '$encoded_base';
+        proxy_cookie_path '/service/grafana' '$1';
+        proxy_redirect '/' ' $1/';
+      }
+
+      # alertmanager ui
+      location ~ (.*/service/alertmanager)(/.*) {
+        proxy_pass http://$alertmanager$2$is_args$args;
+        proxy_redirect '/' ' $1/';
+      }
+
+      # redirect /service/prometheus -> /service/prometheus/
+      # redirect /service/grafana -> /service/grafana/
+      # redirect /service/alertmanager -> /service/alertmanager/
+
+      location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
+        return 301 ' $1/';
+      }
+
+      # version
+
+      location ~ (.*)/version$ {
+        return 200 '{
+          "description": "Lightbend Console",
+          "version": "1.0.0-rc.7",
+          "alertManagerConfigMap": "alertmanager-default",
+          "alertManagerImage": "prom/alertmanager",
+          "alertManagerVersion": "v0.16.0",
+          "alertManagers": "alertmanager:9093",
+          "alertmanagerVolumeSize": "32Gi",
+          "alpineImage": "alpine",
+          "alpineVersion": "3.8",
+          "apiGroupVersion": "rbac.authorization.k8s.io",
+          "busyboxImage": "busybox",
+          "busyboxVersion": "1.30",
+          "configMapReloadImage": "jimmidyson/configmap-reload",
+          "configMapReloadVersion": "v0.2.2",
+          "createAlertManager": "true",
+          "daemonSetApiVersion": "apps/v1beta2",
+          "defaultCPURequest": "100m",
+          "defaultMemoryRequest": "50Mi",
+          "defaultStorageClass": "standard",
+          "deploymentApiVersion": "apps/v1beta2",
+          "esConsoleExposePort": "30080",
+          "esConsoleImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console",
+          "esConsoleVersion": "latest",
+          "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
+          "esGrafanaVersion": "latest",
+          "esGrafanaVolumeSize": "32Gi",
+          "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api",
+          "esMonitorVersion": "latest",
+          "exposeServices": "NodePort",
+          "goDnsmasqImage": "lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq",
+          "goDnsmasqVersion": "v0.1.7-1",
+          "imageCredentials": { "registry": "lightbend-docker-commercial-registry.bintray.io" },
+          "imagePullPolicy": "Always",
+          "kubeStateMetricsImage": "gcr.io/google_containers/kube-state-metrics",
+          "kubeStateMetricsVersion": "v1.2.0",
+          "managePersistentVolumes": "true",
+          "prometheusDomain": "prometheus.io",
+          "prometheusImage": "prom/prometheus",
+          "prometheusMemoryRequest": "250Mi",
+          "prometheusVersion": "v2.7.1",
+          "prometheusVolumeSize": "256Gi",
+          "rbacApiVersion": "rbac.authorization.k8s.io/v1",
+          "name": "enterprise-suite-latest"
+        }';
+        default_type application/json;
+      }
+
+      # console entry point
+
+      location ~ (.*/)index.html {
+        # Console CSP
+        add_header Content-Security-Policy $app_csp;
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # serve the app
+        alias $base/index.html;
+        # replace base href
+        sub_filter 'base href="/"' 'base href="$encoded_base"';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+      # bookmarks and reloads in the /workloads/ path
+      # (for our single page app, these should reload index.html but keep the path)
+
+      location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
+        # Console CSP
+        add_header Content-Security-Policy $app_csp;
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # serve the app
+        alias $base/index.html;
+        default_type text/html;
+        # replace base href
+        sub_filter 'base href="/"' 'base href="$encoded_base"';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+
+      # static files
+
+      location ~ (.*)(/assets/.*) {
+        alias $base$2;
+      }
+
+      location ~ (.*)(/.*) {
+        root $base;
+        index index.html;
+        try_files $2 $1/index.html;
+      }
+
+    }
+
+---
+# Source: enterprise-suite-latest/templates/es-grafana-configmap-datasource.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: grafana-datasource-cm
+data:
+  prometheus-server-datasource.yaml: |
+    # config file version
+    apiVersion: 1
+
+    # list of datasources to insert/update depending
+    datasources:
+      # <string, required> name of the datasource. Required
+    - name: Cinnamon Prometheus
+      # <string, required> datasource type. Required
+      type: prometheus
+      # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
+      access: proxy
+      # <int> org id. will default to orgId 1 if not specified
+      orgId: 1
+      # <string> url
+      url: http://prometheus-server
+      #
+      basicAuth: false
+      #
+      isDefault: true
+      editable: true
+
+---
+# Source: enterprise-suite-latest/templates/es-grafana-configmap-plugin.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -207,11 +557,48 @@ data:
     ]
   cluster-exporter.json: |
     [
-       {"graphName": "CPU Percent", "promQL":["node_cpu_percent"]},
-       {"graphName": "Memory Available Percent", "promQL":["node_memory_usable_percent"]},
-       {"graphName": "File System Free Percent", "promQL":["node_filesystem_free_percent"]},
-       {"graphName": "Bytes Received Per Second", "promQL":["sum by (instance) (irate(node_network_receive_bytes[1m]))"]},
-       {"graphName": "Bytes Transmitted Per Second", "promQL":["sum by (instance) (irate(node_network_transmit_bytes[1m]))"]}
+       {
+          "graphName": "CPUs Used",
+          "promQL": [
+             "sum by (namespace) (rate(container_cpu_system_seconds_total[1m]) + rate(container_cpu_user_seconds_total[1m]))"
+          ]
+       },
+       {
+          "graphName": "Memory Used",
+          "promQL": [
+             "sum by (namespace) (container_memory_usage_bytes)"
+          ],
+          "yaxes": {
+             "format": "bytes"
+          }
+       },
+       {
+          "graphName": "File System Used",
+          "promQL": [
+             "sum by (namespace) (container_fs_usage_bytes)"
+          ],
+          "yaxes": {
+             "format": "bytes"
+          }
+       },
+       {
+          "graphName": "Bytes Received Per Second",
+          "promQL": [
+             "sum by (namespace) (rate(container_network_receive_bytes_total[1m]))"
+          ],
+          "yaxes": {
+             "format": "bytes"
+          }
+       },
+       {
+          "graphName": "Bytes Transmitted Per Second",
+          "promQL": [
+             "sum by (namespace) (rate(container_network_transmit_bytes_total[1m]))"
+          ],
+          "yaxes": {
+             "format": "bytes"
+          }
+       }
     ]
   jvm-exporter.json: |
     [
@@ -534,503 +921,8 @@ data:
     ]
   
 
-# Job to add data-source to grafana
-# 1. wait till grafana is up
-# 2. add prometheus data source to grafana-server.
-# Note: The IPaddress here is the address provided by minikube service list
-# this IP address is not static, even for minikube
-# Please note, browser should be able reach this IP-Address, it cannot be some internal IP address within kubernetes.
-# like prometheus-server.lightbend will not work
-#
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  name: grafana-datasource-cm
-data:
-  prometheus-server-datasource.yaml: |
-    # config file version
-    apiVersion: 1
-
-    # list of datasources to insert/update depending
-    datasources:
-      # <string, required> name of the datasource. Required
-    - name: Cinnamon Prometheus
-      # <string, required> datasource type. Required
-      type: prometheus
-      # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
-      access: proxy
-      # <int> org id. will default to orgId 1 if not specified
-      orgId: 1
-      # <string> url
-      url: http://prometheus-server
-      #
-      basicAuth: false
-      #
-      isDefault: true
-      editable: true
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: grafana
-    component: "server"
-  name: grafana-server
-spec:
-  ports:
-    - name: http
-      port: 3000
-      protocol: TCP
-      targetPort: 3000
-  selector:
-    app: grafana
-    component: "server"
-  type: "ClusterIP"
-
----
-
-
----
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: grafana-server
-  labels:
-    app: grafana
-    component: server
-spec:
-  replicas: 1
-
-  strategy:
-    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
-    type: Recreate
-
-  template:
-    metadata:
-      labels:
-        app: grafana
-        component: server
-    spec:
-      
-
-      imagePullSecrets:
-      - name: commercial-credentials
-
-      containers:
-      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:latest
-        imagePullPolicy: Always
-        name: grafana-server
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-        env:
-          # The following env variables set up anonymous access to grafana with editor access.
-          - name: GF_AUTH_ANONYMOUS_ENABLED
-            value: "true"
-          - name: GF_AUTH_ANONYMOUS_ORG_ROLE
-            value: "Editor"
-          - name: GF_SERVER_ROOT_URL
-            value: "/service/grafana/"
-          - name: GF_SERVER_ROUTER_LOGGING
-            value: "true"
-        ports:
-          - containerPort: 3000
-        lifecycle:
-          postStart:
-            exec:
-              command: ["/bin/sh", "-c", "echo \"Waiting for grafana to enable cinnamon plugin...\"; until curl --output /dev/null --silent --head --fail curl http://127.0.0.1:3000; do echo -n '.' ;  sleep 2; done ; curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
-        readinessProbe:
-          httpGet:
-            path: /login
-            port: 3000
-        volumeMounts:
-        - name: grafana-dashboards
-          mountPath: /usr/share/grafana/public/conf
-        - name: grafana-datasources
-          mountPath: /etc/grafana/provisioning/datasources/
-        - name: grafana-data
-          mountPath: /var/lib/grafana
-
-      volumes:
-      - name: grafana-dashboards
-        configMap:
-          name: exporter-graphs-cm
-      - name: grafana-datasources
-        configMap:
-          name: grafana-datasource-cm
-      - name: grafana-data
-        
-        emptyDir: {}
-        
-
----
-# Source: enterprise-suite-latest/templates/node-exporter.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-node-exporter
-
----
-apiVersion: apps/v1beta2
-kind: DaemonSet
-metadata:
-  labels:
-    app: prometheus
-    component: node-exporter
-  name: prometheus-node-exporter
-spec:
-  updateStrategy:
-    type: OnDelete
-  selector:
-    matchLabels:
-      app: prometheus
-      component: node-exporter
-  template:
-    metadata:
-      labels:
-        app: prometheus
-        component: node-exporter
-    spec:
-      serviceAccountName: "prometheus-node-exporter"
-      
-      containers:
-        - name: prometheus-node-exporter
-          image: prom/node-exporter:v0.15.2
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          args:
-            - --path.procfs=/host/proc
-            - --path.sysfs=/host/sys
-            - --collector.netdev.ignored-devices=^veth.*
-            - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|host|var)($|/)
-            - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
-            - --no-collector.netstat
-            - --no-collector.vmstat
-          ports:
-            - name: metrics
-              containerPort: 9100
-              hostPort: 9100
-          volumeMounts:
-            - name: proc
-              mountPath: /host/proc
-              readOnly:  true
-            - name: sys
-              mountPath: /host/sys
-              readOnly: true
-      hostNetwork: true
-      hostPID: true
-      volumes:
-        - name: proc
-          hostPath:
-            path: /proc
-        - name: sys
-          hostPath:
-            path: /sys
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    prometheus.io/scrape: "true"
-  labels:
-    app: prometheus
-    component: "node-exporter"
-  name: prometheus-node-exporter
-spec:
-  clusterIP: None
-  ports:
-    - name: metrics
-      port: 9100
-      protocol: TCP
-      targetPort: 9100
-  selector:
-    app: prometheus
-    component: "node-exporter"
-  type: "ClusterIP"
-
-
----
-# Source: enterprise-suite-latest/templates/prometheus.yaml
-
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: prometheus-server
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: lightbend:prometheus-server
-rules:
-- apiGroups: [""]
-  resources:
-  - nodes
-  - nodes/proxy
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs: ["get", "list", "watch"]
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: lightbend:prometheus-server
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: lightbend:prometheus-server
-subjects:
-- kind: ServiceAccount
-  name: prometheus-server
-  namespace: lightbend
-
----
-
----
-kind: Deployment
-apiVersion: apps/v1beta2
-metadata:
-  labels:
-    app: prometheus
-    component: server
-  name: prometheus-server
-spec:
-  replicas: 1
-
-  strategy:
-    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
-    type: Recreate
-
-  selector:
-    matchLabels:
-      app: prometheus
-      component: server
-  template:
-    metadata:
-      labels:
-        app: prometheus
-        component: server
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-    spec:
-      serviceAccountName: prometheus-server
-
-      securityContext:
-      
-
-      initContainers:
-        - name: setup
-          image: alpine:3.8
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          command:
-            - /bin/sh
-            - -c
-          args:
-            - mkdir -p /etc/config/rules;
-              cp /etc/bare/prometheus.yml /etc/config/
-          volumeMounts:
-            - mountPath: /etc/config
-              name: config-volume
-            - mountPath: /etc/bare
-              name: bare-prometheus
-
-        # For vanilla K8s clusters, we need to match prometheus-data permissions to the prometheus user.
-        # In prometheus 2.x, this is `65534`.
-        # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
-        - name: change-prometheus-data-volume-ownership
-          image: busybox:1.29
-          command:
-            - sh
-            - -c
-            - "chown -Rc 65534:65534 /data || true"
-          volumeMounts:
-            - name: prometheus-data-volume
-              mountPath: /data
-              subPath: prometheus-data
-
-      imagePullSecrets:
-        - name: commercial-credentials
-
-      containers:
-        - name: es-monitor-api
-          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api:latest
-          imagePullPolicy: Always
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          args:
-            - --configPath=/etc/config/
-            - --storagePath=/monitor-data/
-            - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
-            - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
-            - --prometheusDomain=prometheus.io
-            - --alertmanagers=alertmanager:9093
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-            - name: es-monitor-api-volume
-              mountPath: /etc/es-monitor-api
-            - name: prometheus-data-volume
-              mountPath: /monitor-data
-              subPath: monitor-data
-          ports:
-            - containerPort: 8180
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /status
-              port: 8180
-              scheme: HTTP
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /status
-              port: 8180
-              scheme: HTTP
-            initialDelaySeconds: 30
-
-        - name: es-monitor-api-configmap-reload
-          image: jimmidyson/configmap-reload:v0.2.2
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          args:
-          - --volume-dir=/etc/es-monitor-api
-          - --webhook-url=http://127.0.0.1:8180/reload
-          volumeMounts:
-          - name: es-monitor-api-volume
-            mountPath: /etc/es-monitor-api
-
-        - name: prometheus-server
-          image: prom/prometheus:v2.2.1
-
-          resources:
-            requests:
-              cpu: 100m
-              memory: 250Mi
-
-          args:
-            - --config.file=/etc/config/prometheus.yml
-            - --storage.tsdb.path=/data
-            - --web.console.libraries=/etc/prometheus/console_libraries
-            - --web.console.templates=/etc/prometheus/consoles
-            - --web.enable-lifecycle
-            
-          ports:
-            - containerPort: 9090
-
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 9090
-            timeoutSeconds: 30
-
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9090
-            timeoutSeconds: 30
-            initialDelaySeconds: 30
-
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
-              readOnly: true
-            - name: prometheus-data-volume
-              mountPath: /data
-              subPath: prometheus-data
-
-      terminationGracePeriodSeconds: 300
-      volumes:
-        - name: config-volume
-          emptyDir: {}
-        - name: es-monitor-api-volume
-          configMap:
-            name: es-monitor-api
-        - name: prometheus-data-volume
-          
-          emptyDir: {}
-          
-        - name: bare-prometheus
-          configMap:
-            name: bare-prometheus
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: prometheus-server
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 9090
-  selector:
-    app: prometheus
-    component: server
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: es-monitor-api
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8180
-  selector:
-    app: prometheus
-    component: server
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: server
-  name: bare-prometheus
-data:
-  prometheus.yml: |-
-    # this is a placeholder to keep prometheus running while it awaits the real config
-    global:
-      scrape_interval:     99m
-      evaluation_interval: 99m
-    scrape_configs:
-      - job_name: wait
-        static_configs:
-          - targets: ['localhost:9090']
-        metric_relabel_configs:
-        - source_labels: [__name__]
-          regex: .+
-          action: drop
-
----
+# Source: enterprise-suite-latest/templates/prometheus-configmap-api.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1146,6 +1038,24 @@ data:
               "description": "{{$labels.instance}} has anomalous scrape_duration_seconds"
             }
           },
+          "lightbend_monitor_api_errors": {
+            "monitorVersion": "1",
+            "model": "threshold",
+            "parameters": {
+              "metric": "es_monitor_api_last_error",
+              "window": "1m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "comparator": ">",
+                  "threshold": "0"
+                }
+              },
+              "summary": "lightbend console monitor errors",
+              "description": "Lightbend console api on {{$labels.instance}} has monitor errors"
+            }
+          },
+  
           "akka_inbox_growth": {
             "monitorVersion": "1",
             "model": "growth",
@@ -1252,7 +1162,7 @@ data:
                 }
               },
               "summary": "Prometheus target over limit",
-              "description": "Prometheus target at {{labels.instance}} has too many metrics"
+              "description": "Prometheus target at {{$labels.instance}} has too many metrics"
             }
           },
           "prometheus_tsdb_reloads_failures": {
@@ -1391,7 +1301,7 @@ data:
                 }
               },
               "summary": "Zookeeper open file descriptor growth",
-              "description": "Zookeeper open file descriptors in ${{labels.es_workload}} is not normal in ${{labels.instance}}"
+              "description": "Zookeeper open file descriptors in {{$labels.es_workload}} is not normal in {{$labels.instance}}"
             }
           },
           "cassandra_write_latency": {
@@ -1435,7 +1345,7 @@ data:
             "model": "sma",
             "parameters": {
               "metric": "redis_keyspace_miss_ratio",
-              "period": "15m",
+              "period": "10m",
               "minval": "1",
               "window": "10m",
               "confidence": "1",
@@ -1445,7 +1355,7 @@ data:
                 }
               },
               "summary": "Redis key space miss ratio growth",
-              "description": "Observing shifts in Redis key space ratio on ${{labels.es_workload}} in ${{labels.instance}}"
+              "description": "Observing shifts in Redis key space ratio on {{$labels.es_workload}} in {{$labels.instance}}"
             }
           },
           "redis_evictions": {
@@ -1453,7 +1363,7 @@ data:
             "model": "sma",
             "parameters": {
               "metric": "redis_evicted_keys_total",
-              "period": "15m",
+              "period": "10m",
               "minval": "1",
               "window": "10m",
               "confidence": "1",
@@ -1471,7 +1381,7 @@ data:
             "model": "sma",
             "parameters": {
               "metric": "redis_commands_processed_total",
-              "period": "10m",
+              "period": "5m",
               "minval": "10",
               "window": "5m",
               "confidence": "1",
@@ -1481,7 +1391,7 @@ data:
                 }
               },
               "summary": "Redis command processed",
-              "description": "Redis commands processed on {{$labels.es_workload}} is not normal in ${{labels.instance}}"
+              "description": "Redis commands processed on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
             }
           },
           "redis_connections": {
@@ -1507,7 +1417,7 @@ data:
             "model": "sma",
             "parameters": {
               "metric": "kafka_incoming_messages_rate",
-              "period": "5m",
+              "period": "10m",
               "minval": "10",
               "window": "10m",
               "confidence": "1",
@@ -1517,7 +1427,7 @@ data:
                 }
               },
               "summary": "Kafka incoming message rate is not normal",
-              "description": "Kafka incoming message rate on ${{labels.es_workload}} is not normal for topic ${{labels.topic}}"
+              "description": "Kafka incoming message rate on {{$labels.es_workload}} is not normal for topic {{$labels.topic}}"
             }
           },
           "kafka_offline_partition": {
@@ -1534,7 +1444,7 @@ data:
                 }
               },
               "summary": "Kafka offline partition is not zero",
-              "description": "Kafka offline partition is high on ${{labels.es_workload}} in ${{labels.instance}}"
+              "description": "Kafka offline partition is high on {{$labels.es_workload}} in {{$labels.instance}}"
             }
           },
           "kafka_under_replicated_partitions": {
@@ -1551,7 +1461,7 @@ data:
                 }
               },
               "summary": "Kafka under replicated partitions is up",
-              "description": "Kafka under replicated partitions is high on ${{labels.es_workload}} in ${{labels.instance}}"
+              "description": "Kafka under replicated partitions is high on {{$labels.es_workload}} in {{$labels.instance}}"
             }
           },
           "memcached_miss_ratio": {
@@ -1878,32 +1788,6 @@ data:
   
     {{ .MonitorTypeRules | indent 6 }}
   
-      - job_name: 'node-exporter'
-        kubernetes_sd_configs:
-          - role: endpoints
-  
-        honor_labels: true
-  
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_endpoints_name]
-            regex: prometheus-node-exporter
-            action: keep
-          - action: labelmap
-            regex: __meta_kubernetes_service_label_(.+)
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: namespace
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_service_name]
-            action: replace
-            target_label: kubernetes_name
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            action: replace
-            target_label: node_name
-          - source_labels: [__meta_kubernetes_pod_host_ip]
-            action: replace
-            target_label: node_ip
-  
       # Scrape config for service endpoints.
       #
       # The relabeling allows the actual service scrape endpoint to be configured
@@ -2068,26 +1952,6 @@ data:
   
     {{ .MonitorTypeRules | indent 6 }}
   static-rules.yml: |
-    # node-exporter metrics
-    - record: node_cpu_percent
-      expr: 100 - avg by (es_workload, node_ip) (irate(node_cpu{mode="idle"}[5m]) * 100)
-  
-    - record: node_memory_usable_percent
-      expr: avg by (es_workload, node_ip) (node_memory_MemAvailable / node_memory_MemTotal) * 100
-  
-    - record: node_filesystem_free_percent
-      expr: avg by (es_workload, device, node_ip) ((node_filesystem_free{device=~"/.*"} / node_filesystem_size * 100) and (node_filesystem_size > 0))
-  
-    - record: node_network_error_rate
-      expr: sum by(es_workload, node_ip) (rate(node_network_transmit_errs[5m]) + rate(node_network_receive_errs[5m]) + rate( node_network_receive_drop[5m]) + rate(node_network_transmit_drop[5m]))
-  
-    # include all nodes in the pod info, so the UI can query a single metric
-    # Not supported, yet.
-    #- record: kube_pod_info
-    #  expr: kube_node_info
-    #  labels:
-    #    pod: cluster-node
-  
     - record: kube_node_pressure
       expr: avg by (es_workload, condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
   
@@ -2157,8 +2021,99 @@ data:
   
 
 ---
-# Source: enterprise-suite-latest/templates/kube-state-metrics.yaml
+# Source: enterprise-suite-latest/templates/prometheus-configmap-prom.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: server
+  name: bare-prometheus
+data:
+  prometheus.yml: |-
+    # this is a placeholder to keep prometheus running while it awaits the real config
+    global:
+      scrape_interval:     99m
+      evaluation_interval: 99m
+    scrape_configs:
+      - job_name: wait
+        static_configs:
+          - targets: ['localhost:9090']
+        metric_relabel_configs:
+        - source_labels: [__name__]
+          regex: .+
+          action: drop
+
 ---
+# Source: enterprise-suite-latest/templates/alertmanager-pvc.yaml
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: alertmanager-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+
+
+---
+# Source: enterprise-suite-latest/templates/es-grafana-pvc.yaml
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: es-grafana-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+
+
+---
+# Source: enterprise-suite-latest/templates/prometheus-pvc.yaml
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: prometheus-storage
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Gi
+
+
+---
+# Source: enterprise-suite-latest/templates/kube-state-metrics-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-kube-state-metrics
+
+---
+# Source: enterprise-suite-latest/templates/prometheus-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-server
+
+---
+# Source: enterprise-suite-latest/templates/kube-state-metrics-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -2198,7 +2153,32 @@ rules:
   resources:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
+
 ---
+# Source: enterprise-suite-latest/templates/prometheus-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lightbend:prometheus-server
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+# Source: enterprise-suite-latest/templates/kube-state-metrics-rolebind.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -2213,48 +2193,93 @@ subjects:
   namespace: lightbend
 
 ---
-apiVersion: v1
-kind: ServiceAccount
+# Source: enterprise-suite-latest/templates/prometheus-rolebind.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
-  name: prometheus-kube-state-metrics
+  name: lightbend:prometheus-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lightbend:prometheus-server
+subjects:
+- kind: ServiceAccount
+  name: prometheus-server
+  namespace: lightbend
 
 ---
-apiVersion: apps/v1beta2
-kind: Deployment
+# Source: enterprise-suite-latest/templates/alertmanager-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+spec:
+  ports:
+  - name: http
+    port: 9093
+    targetPort: 9093
+  selector:
+    app: prometheus
+    component: alertmanager
+  type: ClusterIP
+
+
+---
+# Source: enterprise-suite-latest/templates/es-console-expose.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: expose-es-console
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30080
+  selector:
+    run: es-console
+  type: NodePort
+
+
+---
+# Source: enterprise-suite-latest/templates/es-console-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: console-server
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    run: es-console
+  type: ClusterIP
+
+---
+# Source: enterprise-suite-latest/templates/es-grafana-service.yaml
+apiVersion: v1
+kind: Service
 metadata:
   labels:
-    app: prometheus
-    component: kube-state-metrics
-  name: prometheus-kube-state-metrics
+    app: grafana
+    component: "server"
+  name: grafana-server
 spec:
-  replicas: 1
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
   selector:
-    matchLabels:
-      app: prometheus
-      component: kube-state-metrics
-  template:
-    metadata:
-      labels:
-        app: prometheus
-        component: kube-state-metrics
-    spec:
-      
-      serviceAccountName: prometheus-kube-state-metrics
-      containers:
-        - name: prometheus-kube-state-metrics
-          image: gcr.io/google_containers/kube-state-metrics:v1.2.0
-          args:
-            - --port=8080
-            - --telemetry-port=8081
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-          ports:
-            - name: metrics
-              containerPort: 8080
+    app: grafana
+    component: "server"
+  type: "ClusterIP"
 
 ---
+# Source: enterprise-suite-latest/templates/kube-state-metrics-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -2277,12 +2302,38 @@ spec:
   type: "ClusterIP"
 
 ---
-# Source: enterprise-suite-latest/templates/alertmanager.yaml
+# Source: enterprise-suite-latest/templates/prometheus-service-api.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: es-monitor-api
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8180
+  selector:
+    app: prometheus
+    component: server
 
 ---
-
+# Source: enterprise-suite-latest/templates/prometheus-service-prom.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-server
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 9090
+  selector:
+    app: prometheus
+    component: server
 
 ---
+# Source: enterprise-suite-latest/templates/alertmanager-deployment.yaml
+
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -2296,6 +2347,8 @@ spec:
   strategy:
     # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
     type: Recreate
+    # Needed for helm upgrade to succeed.
+    rollingUpdate: null
 
   selector:
     matchLabels:
@@ -2311,7 +2364,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: prometheus-alertmanager
-          image: prom/alertmanager:v0.15.1
+          image: prom/alertmanager:v0.16.0
           resources:
             requests:
               cpu: 100m
@@ -2369,114 +2422,9 @@ spec:
           emptyDir: {}
           
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: alertmanager
-spec:
-  ports:
-  - name: http
-    port: 9093
-    targetPort: 9093
-  selector:
-    app: prometheus
-    component: alertmanager
-  type: ClusterIP
 
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    app: prometheus
-    component: alertmanager
-  name: alertmanager-default
-data:
-  alertmanager.yml: |
-    # Example Lightbend Console Alertmanager config.
-  
-    global:
-  
-    # Routing rules.
-    route:
-      # Default receiver.
-      receiver: team1-slack
-      # Resend unresolved alerts at this interval.
-      repeat_interval: 4h
-      # Wait for any other alerts in the same group before sending.
-      group_wait: 30s
-      # Wait before sending a new alert for a group.
-      group_interval: 5m
-      # Group alerts by namespace and workload.
-      group_by: [namespace, es_workload, severity]
-      routes:
-      # team1 Slack
-      - match:
-          es_workload: workload1
-          severity: warning
-        receiver: team1-slack
-  
-      # team1 PagerDuty
-      - match:
-          es_workload: workload1
-          severity: critical
-        receiver: team1-pagerduty
-  
-      # team2 PagerDuty
-      - match:
-          es_workload: workload2
-          severity: critical
-        receiver: team2-slack
-  
-    # Don't alert on warnings if the same alert is already critical.
-    inhibit_rules:
-    - source_match:
-        severity: critical
-      target_match:
-        severity: warning
-      equal: [alertname, namespace, es_workload]
-  
-    templates:
-    # Slack notification templates.
-    - '/etc/config/slack.tmpl'
-  
-    # Receivers.
-    receivers:
-    - name: team1-slack
-      slack_configs:
-      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
-      - api_url: https://slack.localhost/services/somewhere
-        channel: '#team1-alerts'
-        title: '{{ template "title.slack" . }}'
-        text: '{{ template "text.slack" . }}'
-        send_resolved: true
-  
-    - name: team1-pagerduty
-      pagerduty_configs:
-      - routing_key: my_secret_routing_key
-        # Remove this in actual usage. It's added to prevent sending PagerDuty alerts from local development environments.
-        url: https://pagerduty.localhost/api
-  
-    - name: team2-slack
-      slack_configs:
-      # Use Slack integrations to find the webhook at https://typesafe.slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0.
-      - api_url: https://slack.localhost/services/somewhere
-        channel: '#team2-alerts'
-        title: '{{ template "title.slack" . }}'
-        text: '{{ template "text.slack" . }}'
-        send_resolved: true
-  slack.tmpl: |
-    {{ define "title.slack" }}{{ .GroupLabels.namespace}}/{{ .GroupLabels.es_workload }} [{{ .Status | toUpper }}][{{ .GroupLabels.severity | toUpper }}]{{ end }}
-    {{ define "text.slack" }}{{ range .Alerts }}_{{ .Labels.name }}_
-    {{ end }}{{- end -}}
-  
-
-
----
-# Source: enterprise-suite-latest/templates/es-console.yaml
-
----
+# Source: enterprise-suite-latest/templates/es-console-deployment.yaml
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -2494,7 +2442,7 @@ spec:
 
       containers:
       - name: dnsmasq
-        image: janeczku/go-dnsmasq:release-1.0.7
+        image: lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq:v0.1.7-1
         args:
           - --listen
           - "127.0.0.1:5353"
@@ -2518,219 +2466,304 @@ spec:
         configMap:
           name: es-console
 
-
 ---
-apiVersion: v1
-kind: Service
+# Source: enterprise-suite-latest/templates/es-grafana-deployment.yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
 metadata:
-  name: expose-es-console
+  name: grafana-server
+  labels:
+    app: grafana
+    component: server
 spec:
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 8080
-    nodePort: 30080
-  selector:
-    run: es-console
-  type: NodePort
+  replicas: 1
 
+  strategy:
+    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
+    type: Recreate
+    # Needed for helm upgrade to succeed.
+    rollingUpdate: null
+
+  template:
+    metadata:
+      labels:
+        app: grafana
+        component: server
+    spec:
+      
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
+      containers:
+      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:latest
+        imagePullPolicy: Always
+        name: grafana-server
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        env:
+          # The next two env variables set up anonymous access to grafana with editor access.
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: "Editor"
+          - name: GF_SERVER_ROOT_URL
+            value: "/service/grafana/"
+          - name: GF_SERVER_ROUTER_LOGGING
+            value: "true"
+          - name: GF_ANALYTICS_REPORTING_ENABLED
+            value: "false"
+          - name: GF_ANALYTICS_CHECK_FOR_UPDATES
+            value: "false"
+        ports:
+          - containerPort: 3000
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "echo \"Waiting for grafana to enable cinnamon plugin...\"; until curl --output /dev/null --silent --head --fail curl http://127.0.0.1:3000; do echo -n '.' ;  sleep 2; done ; curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: 3000
+        volumeMounts:
+        - name: grafana-dashboards
+          mountPath: /usr/share/grafana/public/conf
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources/
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+
+      volumes:
+      - name: grafana-dashboards
+        configMap:
+          name: exporter-graphs-cm
+      - name: grafana-datasources
+        configMap:
+          name: grafana-datasource-cm
+      - name: grafana-data
+        
+        emptyDir: {}
+        
 
 ---
-apiVersion: v1
-kind: Service
+# Source: enterprise-suite-latest/templates/kube-state-metrics-deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
 metadata:
-  name: console-server
+  labels:
+    app: prometheus
+    component: kube-state-metrics
+  name: prometheus-kube-state-metrics
 spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
+  replicas: 1
   selector:
-    run: es-console
-  type: ClusterIP
+    matchLabels:
+      app: prometheus
+      component: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: kube-state-metrics
+    spec:
+      
+      serviceAccountName: prometheus-kube-state-metrics
+      containers:
+        - name: prometheus-kube-state-metrics
+          image: gcr.io/google_containers/kube-state-metrics:v1.2.0
+          args:
+            - --port=8080
+            - --telemetry-port=8081
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          ports:
+            - name: metrics
+              containerPort: 8080
+
 
 ---
-apiVersion: v1
-kind: ConfigMap
+# Source: enterprise-suite-latest/templates/prometheus-deployment.yaml
+kind: Deployment
+apiVersion: apps/v1beta2
 metadata:
-  name: es-console
-data:
-  default.conf: |-
-    server {
-      listen 8080;
-      server_name localhost;
-      set $base /usr/share/nginx/html;
+  labels:
+    app: prometheus
+    component: server
+  name: prometheus-server
+spec:
+  replicas: 1
 
-      # use external resolver to lookup backends, cache for 30 seconds
+  strategy:
+    # Always Recreate to ensure the PVs get released. It's not possible to have two replicas sharing a PV during deployment.
+    type: Recreate
+    # Needed for helm upgrade to succeed.
+    rollingUpdate: null
 
-      resolver 127.0.0.1:5353 ipv6=off valid=30s;
+  selector:
+    matchLabels:
+      app: prometheus
+      component: server
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: server
+      annotations:
+        prometheus.io/scrape: "true"
+    spec:
+      serviceAccountName: prometheus-server
 
-      set $prometheus "prometheus-server";
-      set $monitorapi "es-monitor-api";
-      set $grafana "grafana-server";
-      set $alertmanager "alertmanager:9093";
+      securityContext:
+      
 
-      # nginx config primer:
-      # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
-      #   nginx uses longest path match to decide which location handler to use
-      #   the result of a location handler can then match and enter another location handler
-      # proxy_pass http://$variable triggers re-resolve mode, otherwise would have fixed IP
-      # proxy_redirect 'match' 'replace'
-      #   magic 'replace' value ' $1/' with a space prefix tells nginx to not add server and port
-      # sub_filter 'match' 'replace'
-      #   rewrites backend content, which we use for inserting the base path
-      # proxy_cookie_path 'match' 'replace'
-      #   fixes session cookie Path attribute, for Grafana
+      initContainers:
+        - name: setup
+          image: alpine:3.8
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - mkdir -p /etc/config/rules;
+              cp /etc/bare/prometheus.yml /etc/config/
+          volumeMounts:
+            - mountPath: /etc/config
+              name: config-volume
+            - mountPath: /etc/bare
+              name: bare-prometheus
 
-      # proxy_pass backends with dynamic base url
+        # For vanilla K8s clusters, we need to match prometheus-data permissions to the prometheus user.
+        # In prometheus 2.x, this is `65534`.
+        # For Openshift the below will fail, but we can safely ignore it as Openshift remaps the user itself.
+        - name: change-prometheus-data-volume-ownership
+          image: busybox:1.30
+          command:
+            - sh
+            - -c
+            - "chown -Rc 65534:65534 /data || true"
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: /data
+              subPath: prometheus-data
 
-      sub_filter_once off;
+      imagePullSecrets:
+        - name: commercial-credentials
 
-      set $nocache 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+      containers:
+        - name: es-monitor-api
+          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+            - --configPath=/etc/config/
+            - --storagePath=/monitor-data/
+            - --staticConfig=/etc/es-monitor-api/static-rules.yml
+            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
+            - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
+            - --prometheusDomain=prometheus.io
+            - --alertmanagers=alertmanager:9093
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: es-monitor-api-volume
+              mountPath: /etc/es-monitor-api
+            - name: prometheus-data-volume
+              mountPath: /monitor-data
+              subPath: monitor-data
+          ports:
+            - name: metrics
+              containerPort: 8180
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8180
+              scheme: HTTP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 8180
+              scheme: HTTP
+            initialDelaySeconds: 30
 
-      location ~ (.*/service/prometheus)(/.*) {
-        proxy_pass http://$prometheus$2$is_args$args;
-        sub_filter '="/' '="$1/';
-        sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/graph"))';
-        proxy_redirect '/' ' $1/';
-      }
+        - name: es-monitor-api-configmap-reload
+          image: jimmidyson/configmap-reload:v0.2.2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+          args:
+          - --volume-dir=/etc/es-monitor-api
+          - --webhook-url=http://127.0.0.1:8180/reload
+          volumeMounts:
+          - name: es-monitor-api-volume
+            mountPath: /etc/es-monitor-api
 
-      location ~ (.*/service/es-monitor-api)(/.*) {
-        proxy_pass http://$monitorapi$2$is_args$args;
-        proxy_redirect '/' ' $1/';
-      }
+        - name: prometheus-server
+          image: prom/prometheus:v2.7.1
 
-      # our injected plugin should never cache...
-      location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
-        proxy_pass http://$grafana:3000$2$is_args$args;
-        sub_filter_types *;
-        sub_filter '/service/grafana' '$1';
-        proxy_cookie_path '/service/grafana' '$1';
-        proxy_redirect '/' ' $1/';
-        # no-cache
-        add_header Last-Modified $date_gmt;
-        add_header Cache-Control $nocache;
-        if_modified_since off;
-        expires off;
-        etag off;
-      }
+          resources:
+            requests:
+              cpu: 100m
+              memory: 250Mi
 
-      location ~ (.*/service/grafana)(/.*) {
-        proxy_pass http://$grafana:3000$2$is_args$args;
-        sub_filter_types *;
-        sub_filter '/service/grafana' '$1';
-        proxy_cookie_path '/service/grafana' '$1';
-        proxy_redirect '/' ' $1/';
-      }
+          args:
+            - --config.file=/etc/config/prometheus.yml
+            - --storage.tsdb.path=/data
+            - --web.console.libraries=/etc/prometheus/console_libraries
+            - --web.console.templates=/etc/prometheus/consoles
+            - --web.enable-lifecycle
+            
+          ports:
+            - name: metrics
+              containerPort: 9090
 
-      location ~ (.*/service/alertmanager)(/.*) {
-        proxy_pass http://$alertmanager$2$is_args$args;
-        proxy_redirect '/' ' $1/';
-      }
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            timeoutSeconds: 30
 
-      # redirect /service/prometheus -> /service/prometheus/
-      # redirect /service/grafana -> /service/grafana/
-      # redirect /service/alertmanager -> /service/alertmanager/
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            timeoutSeconds: 30
+            initialDelaySeconds: 30
 
-      location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
-        return 301 ' $1/';
-      }
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+            - name: prometheus-data-volume
+              mountPath: /data
+              subPath: prometheus-data
 
-      # version
-
-      location ~ (.*)/version$ {
-        return 200 '{
-          "description": "Lightbend Console",
-          "version": "1.0.0-rc.6",
-          "alertManagerConfigMap": "alertmanager-default",
-          "alertManagerImage": "prom/alertmanager",
-          "alertManagerVersion": "v0.15.1",
-          "alertManagers": "alertmanager:9093",
-          "alertmanagerVolumeSize": "32Gi",
-          "alpineImage": "alpine",
-          "alpineVersion": "3.8",
-          "apiGroupVersion": "rbac.authorization.k8s.io",
-          "busyboxImage": "busybox",
-          "busyboxVersion": "1.29",
-          "configMapReloadImage": "jimmidyson/configmap-reload",
-          "configMapReloadVersion": "v0.2.2",
-          "createAlertManager": "true",
-          "createPersistentVolumes": "true",
-          "daemonSetApiVersion": "apps/v1beta2",
-          "defaultCPURequest": "100m",
-          "defaultMemoryRequest": "50Mi",
-          "defaultStorageClass": "standard",
-          "deploymentApiVersion": "apps/v1beta2",
-          "esConsoleExposePort": "30080",
-          "esConsoleImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console",
-          "esConsoleVersion": "latest",
-          "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
-          "esGrafanaVersion": "latest",
-          "esGrafanaVolumeSize": "32Gi",
-          "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api",
-          "esMonitorVersion": "latest",
-          "exposeServices": "NodePort",
-          "goDnsmasqImage": "janeczku/go-dnsmasq",
-          "goDnsmasqVersion": "release-1.0.7",
-          "imageCredentials": { "registry": "lightbend-docker-commercial-registry.bintray.io" },
-          "imagePullPolicy": "Always",
-          "kubeStateMetricsImage": "gcr.io/google_containers/kube-state-metrics",
-          "kubeStateMetricsVersion": "v1.2.0",
-          "nodeExporterImage": "prom/node-exporter",
-          "nodeExporterVersion": "v0.15.2",
-          "prometheusDomain": "prometheus.io",
-          "prometheusImage": "prom/prometheus",
-          "prometheusMemoryRequest": "250Mi",
-          "prometheusVersion": "v2.2.1",
-          "prometheusVolumeSize": "256Gi",
-          "rbacApiVersion": "rbac.authorization.k8s.io/v1",
-          "useEmptyDirVolumes": "true",
-          "name": "enterprise-suite-latest"
-        }';
-        default_type application/json;
-      }
-
-      # console entry point
-
-      location ~ (.*/)index.html {
-        alias $base/index.html;
-        sub_filter 'base href="/"' 'base href="$1"';
-        # no-cache
-        add_header Last-Modified $date_gmt;
-        add_header Cache-Control $nocache;
-        if_modified_since off;
-        expires off;
-        etag off;
-      }
-
-      # bookmarks / reloads in the /workloads/ path
-      # (for our single page app, these should reload index.html but keep the path)
-
-      location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
-        alias $base/index.html;
-        default_type text/html;
-        sub_filter 'base href="/"' 'base href="$1"';
-        # kill cache
-        add_header Last-Modified $date_gmt;
-        add_header Cache-Control $nocache;
-        if_modified_since off;
-        expires off;
-        etag off;
-      }
-
-      # static files
-
-      location ~ (.*)(/assets/.*) {
-        alias $base$2;
-      }
-
-      location ~ (.*)(/.*) {
-        root $base;
-        index index.html;
-        try_files $2 $1/index.html;
-      }
-
-    }
+      terminationGracePeriodSeconds: 300
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+        - name: es-monitor-api-volume
+          configMap:
+            name: es-monitor-api
+        - name: prometheus-data-volume
+          
+          emptyDir: {}
+          
+        - name: bare-prometheus
+          configMap:
+            name: bare-prometheus
 
 ---
 # Source: enterprise-suite-latest/templates/commercial-credentials.yaml
