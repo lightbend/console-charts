@@ -320,9 +320,35 @@ def check_resource_list(cmd, expected, fail_msg):
         return all_found
     return False
 
-# Don't care about PVCs as much as PVs.  If PVs have a reclaim policy of 'delete', then deleting the PVC will also
-# delete the data.  We should warn about deleting the PVC's in this case.  If the PV reclaim policy isn't 'delete'
-# then we should be okay deleting the PVCs.
+# This is the behavior we'll have to implement to be in line with the thinking of
+# https://github.com/lightbend/es-backend/issues/572
+
+# // This first case would be typical for a dev/demo.  Chances are we're okay losing the data.
+# If    we're changing from usePersistentVolumes=false to usePersistentVolumes=true
+#       (which means going from emptyDir volume to PV)
+#    or
+#       we're about to "helm delete" and usePersistentVolumes was false
+# then
+#    warn user that they will lose their Console data
+#    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
+##
+# // This case is the nasty one.  Chance of losing real data here.
+# If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
+#       (which means going from PV to emptyDir volume)
+#    or
+#       we're about to "helm delete" and usePersistentVolumes was true
+# then
+#    if PVC reclaim policy is not Retain
+#       warn user that they will lose their Console data
+#    else
+#       warn that their data will not be deleted but they'll have to do some manual steps
+#       - if they want to reuse it, or
+#       - if they actually want to delete it
+#
+# For either of those cases, I suppose "--force" could mean "just do it and don't warn"
+#
+# We may also want to look for orphaned PVs that appear associated with Console.  They'll
+# probably want to either reuse or delete these.
 
 # Checks for console PVCs
 def are_pvcs_created(namespace):
@@ -451,6 +477,9 @@ def install(creds_file):
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
+            # Marco has commented this out for testing.  We'll have to rewrite this bit.
+            # See new comments above.
+
             # createPVs = len(filter(lambda x: 'managePersistentVolumes=false' in x, sys.argv)) == 0
             # if createPVs and are_pvcs_created(args.namespace):
             #     printerr('info: Found existing PVCs from a previous console installation.')
