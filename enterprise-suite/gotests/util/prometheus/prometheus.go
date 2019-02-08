@@ -78,6 +78,11 @@ func (p *Connection) HasData(query string) error {
 	return nil
 }
 
+// find any instance of query over past 10 minutes
+func (p *Connection) AnyData(query string) error {
+	return p.HasData(fmt.Sprintf("count_over_time( (%v) [10m:] )", query))
+}
+
 func (p *Connection) HasModel(model string) error {
 	return p.HasData(fmt.Sprintf("model{name=\"%v\"}", model))
 }

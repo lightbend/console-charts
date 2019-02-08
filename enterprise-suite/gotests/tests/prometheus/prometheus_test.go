@@ -83,7 +83,7 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("basic metrics available",
 		func(metric string) {
-			Expect(prom.HasData(metric)).To(Succeed())
+			Expect(prom.AnyData(metric)).To(Succeed())
 		},
 		Metric("prometheus_notifications_dropped_rate"),
 		Metric("prometheus_notification_queue_percent"),
@@ -96,8 +96,8 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("health metrics available",
 		func(metric string) {
-			Expect(prom.HasData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
-			Expect(prom.HasData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
 		},
 		Metric("prometheus_notifications_dropped"),
 		Metric("prometheus_notification_queue"),
@@ -130,7 +130,7 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("kube state metrics",
 		func(metric string) {
-			Expect(prom.HasData(metric)).To(Succeed())
+			Expect(prom.AnyData(metric)).To(Succeed())
 		},
 		Metric("kube_pod_info"),
 		Metric("kube_pod_ready"),
@@ -142,8 +142,8 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("kube state health",
 		func(metric string) {
-			Expect(prom.HasData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
-			Expect(prom.HasData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
 		},
 		Metric("kube_container_restarts"),
 		Metric("kube_pod_not_ready"),
