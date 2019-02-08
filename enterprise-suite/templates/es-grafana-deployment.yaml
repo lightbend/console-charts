@@ -22,6 +22,8 @@ spec:
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
         {{ .Values.prometheusDomain }}/port: "3000"
+        checksum/datasource-config: {{ include (print $.Template.BasePath "/es-grafana-configmap-datasource.yaml") . | sha256sum }}
+        checksum/plugin-config: {{ (.Files.Glob "es-grafana/*").AsConfig | sha256sum }}
     spec:
       {{ if .Values.podUID }}
       securityContext:
