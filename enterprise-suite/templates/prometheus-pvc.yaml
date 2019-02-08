@@ -4,7 +4,9 @@ apiVersion: v1
 metadata:
   name: prometheus-storage
 spec:
+  {{ if or .Values.defaultStorageClass .Values.prometheusStorageClass }}
   storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
+  {{ end }}
   accessModes:
   - ReadWriteOnce
   resources:

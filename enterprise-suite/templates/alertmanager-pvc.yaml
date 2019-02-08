@@ -4,7 +4,9 @@ apiVersion: v1
 metadata:
   name: alertmanager-storage
 spec:
+  {{ if or .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
   storageClassName: {{ default .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
+  {{ end }}
   accessModes:
   - ReadWriteOnce
   resources:
