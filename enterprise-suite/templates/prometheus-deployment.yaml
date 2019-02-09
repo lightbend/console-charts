@@ -19,7 +19,6 @@ spec:
       app: prometheus
       component: server
   template:
-
     metadata:
       labels:
         app: prometheus
