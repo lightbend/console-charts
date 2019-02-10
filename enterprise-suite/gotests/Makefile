@@ -28,11 +28,11 @@ lint:
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
-	ginkgo -r --skip=.*openshift.* -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+	ginkgo -r --skip=.*openshift.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 
 .PHONY: run-tests-openshift
 run-tests-openshift:
-	ginkgo -r --skip=.*minikube.* -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+	ginkgo -r --skip=.*minikube.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 
 .PHONY: format
 format:
