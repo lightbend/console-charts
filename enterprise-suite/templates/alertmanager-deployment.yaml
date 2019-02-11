@@ -21,6 +21,8 @@ spec:
       component: alertmanager
   template:
     metadata:
+      annotations:
+        checksum/alertmanager-config: {{ (.Files.Glob "alertmanager/*").AsConfig | sha256sum }}
       labels:
         app: prometheus
         component: alertmanager

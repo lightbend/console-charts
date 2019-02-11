@@ -25,6 +25,8 @@ spec:
         component: server
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
+        checksum/es-monitor-api-config: {{ (.Files.Glob "es-monitor-api/*").AsConfig | sha256sum }}
+        checksum/bare-prometheus-config: {{ include (print $.Template.BasePath "/prometheus-configmap-prom.yaml") . | sha256sum }}
     spec:
       serviceAccountName: prometheus-server
 
