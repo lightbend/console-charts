@@ -7,19 +7,17 @@ dist: xenial
 services:
 - docker
 
-install:
-- travis_retry scripts/setup-tools-for-ubuntu.sh
-- travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
-
 jobs:
   include:
   - stage: Tests
     name: Unit tests
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - make test
 
   - name: Backend E2E Tests - Minikube
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite minikube-backend-tests
     # update whitesource docker image CVE report based on above images
@@ -28,16 +26,19 @@ jobs:
 
   - name: Backend E2E Tests - Openshift
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry scripts/setup-openshift.sh ${OC_TOKEN}
     - make -C enterprise-suite openshift-backend-tests
 
   - name: Backend E2E Go Tests - Minikube
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry scripts/setup-minikube-for-linux.sh
     - GO111MODULE=on make -C enterprise-suite install-helm gotests-minikube
 
   - name: Backend E2E Go Tests - Openshift
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
     - GO111MODULE=on make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
 
@@ -45,6 +46,7 @@ jobs:
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite-latest minikube-backend-tests
 
@@ -55,6 +57,8 @@ jobs:
         - ~/.cache
     node_js: 9.4.0
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite frontend-tests
     after_script:
@@ -70,6 +74,8 @@ jobs:
         - ~/.cache
     node_js: 9.4.0
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite-latest frontend-tests
     after_script:
@@ -79,6 +85,7 @@ jobs:
 
   - name: Reactive-sandbox test
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     - make test CHARTS=reactive-sandbox
 
   - stage: deploy
@@ -86,6 +93,7 @@ jobs:
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api)
     script:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     # Decrypt credentials for GCS system account helmchart@es-repo.iam.gserviceaccount.com
     - mkdir -p /tmp/resources || travis_terminate 1
     - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out /tmp/resources/es-repo-7c1fefe17951.json -d || travis_terminate 1
