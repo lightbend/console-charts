@@ -58,7 +58,7 @@ jobs:
       -v /var/run/docker.sock:/var/run/docker.sock
       -v ${PWD}:/console/console-charts
       ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
-      ./console-charts/scripts/console-test-minikube.sh ${OC_GOTESTS_TOKEN}
+      ./console-charts/scripts/console-test-openshift.sh ${OC_GOTESTS_TOKEN}
     after_script:
     - docker logout ${DOCKER_REGISTRY}
 
