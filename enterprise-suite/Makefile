@@ -1,9 +1,10 @@
 # Using ?= cuz enterprise-suite-latest overrides this
 CHART ?= enterprise-suite
 
-RELEASE_NAME := es
-NAMESPACE := lightbend
-TILLER_NAMESPACE := $(NAMESPACE)
+# Caller can override these with env vars if desired.  e.g. "export NAMESPACE=custom ; make "
+RELEASE_NAME ?= es
+NAMESPACE ?= lightbend
+TILLER_NAMESPACE ?= $(NAMESPACE)
 
 define banner
 	$(info === $@)
@@ -103,7 +104,10 @@ install-helm:
 
 .PHONY: install-dev
 install-dev: install-helm ## Install local chart directory to a local minikube.
-	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
+	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- \
+	    --namespace $(NAMESPACE) \
+	    --set exposeServices=NodePort \
+	    --wait
 
 .PHONE: preflight-check
 preflight-check:
