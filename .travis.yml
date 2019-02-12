@@ -7,6 +7,10 @@ dist: xenial
 services:
 - docker
 
+env:
+  - DOCKER_REGISTRY=lightbend-docker-commercial-registry.bintray.io
+  - GOTESTS_CONTAINER=enterprise-suite/console-test:latest
+
 jobs:
   include:
   - stage: Tests
@@ -31,16 +35,31 @@ jobs:
     - make -C enterprise-suite openshift-backend-tests
 
   - name: Backend E2E Go Tests - Minikube
+    before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
+    - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v .:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
-    - travis_retry scripts/setup-tools-for-ubuntu.sh
-    - travis_retry scripts/setup-minikube-for-linux.sh
+    - cd console-charts
+    - minikube start --vm-driver=none
+    - minikube addons enable ingress
     - GO111MODULE=on make -C enterprise-suite install-helm gotests-minikube
+    after_script:
+    - exit
+    - docker logout ${DOCKER_REGISTRY}
 
   - name: Backend E2E Go Tests - Openshift
+    before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
+    - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v .:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
-    - travis_retry scripts/setup-tools-for-ubuntu.sh
-    - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
+    - oc login https://centralpark.lightbend.com --token=${OC_GOTESTS_TOKEN}
+    - oc status && oc project && oc get pods
     - GO111MODULE=on make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    after_script:
+    - exit
+    - docker logout ${DOCKER_REGISTRY}
 
   - name: Backend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
