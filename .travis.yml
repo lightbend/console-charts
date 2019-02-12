@@ -37,7 +37,6 @@ jobs:
     script:
     - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER} ./console-charts/scripts/console-test-minikube.sh
     after_script:
-    - exit
     - docker logout ${DOCKER_REGISTRY}
 
   - name: Backend E2E Go Tests - Openshift
