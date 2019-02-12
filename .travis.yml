@@ -44,10 +44,9 @@ jobs:
   - name: Backend E2E Go Tests - Minikube
     before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
-    - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
     - >
-      docker run --rm
+      docker run
       -e LIGHTBEND_COMMERCIAL_USERNAME=${LIGHTBEND_COMMERCIAL_USERNAME}
       -e LIGHTBEND_COMMERCIAL_PASSWORD=${LIGHTBEND_COMMERCIAL_PASSWORD}
       -v /var/run/docker.sock:/var/run/docker.sock
@@ -60,10 +59,9 @@ jobs:
   - name: Backend E2E Go Tests - Openshift
     before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
-    - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
     - >
-      docker run --rm
+      docker run
       -e LIGHTBEND_COMMERCIAL_USERNAME=${LIGHTBEND_COMMERCIAL_USERNAME}
       -e LIGHTBEND_COMMERCIAL_PASSWORD=${LIGHTBEND_COMMERCIAL_PASSWORD}
       -v /var/run/docker.sock:/var/run/docker.sock
