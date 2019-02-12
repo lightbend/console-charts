@@ -34,7 +34,7 @@ jobs:
     before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
     - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v .:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
     - cd console-charts
     - minikube start --vm-driver=none
@@ -48,7 +48,7 @@ jobs:
     before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
     - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v .:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
     - oc login https://centralpark.lightbend.com --token=${OC_GOTESTS_TOKEN}
     - oc status && oc project && oc get pods
