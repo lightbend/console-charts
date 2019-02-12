@@ -7,10 +7,6 @@ dist: xenial
 services:
 - docker
 
-env:
-  - DOCKER_REGISTRY=lightbend-docker-commercial-registry.bintray.io
-  - GOTESTS_CONTAINER=enterprise-suite/console-test:latest
-
 jobs:
   include:
   - stage: Tests
