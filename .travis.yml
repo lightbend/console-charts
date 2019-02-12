@@ -45,7 +45,7 @@ jobs:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
     - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER} ./console-charts/scripts/console-test-openshift ${OC_GOTESTS_TOKEN}
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER} ./console-charts/scripts/console-test-openshift.sh ${OC_GOTESTS_TOKEN}
     after_script:
     - docker logout ${DOCKER_REGISTRY}
 
