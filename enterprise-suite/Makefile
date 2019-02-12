@@ -95,7 +95,7 @@ $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(R
 	helm --namespace=$(NAMESPACE) template $< --set exposeServices=NodePort > $@
 
 .PHONY: install-helm
-install-helm:
+install-helm:  ## Install helm (tiller)
 	-kubectl create namespace $(TILLER_NAMESPACE)
 	-kubectl create serviceaccount --namespace $(TILLER_NAMESPACE) tiller
 	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin \
@@ -103,8 +103,8 @@ install-helm:
 	helm init --wait --service-account tiller --upgrade --tiller-namespace=$(TILLER_NAMESPACE)
 
 .PHONY: install-dev
-install-dev: install-helm ## Install local chart directory to a local minikube.
-	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- \
+install-dev:  ## Install local chart directory
+	TILLER_NAMESPACE=$(TILLER_NAMESPACE) $(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) -- \
 	    --namespace $(NAMESPACE) \
 	    --set exposeServices=NodePort \
 	    --wait
