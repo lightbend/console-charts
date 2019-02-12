@@ -34,12 +34,8 @@ jobs:
     before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
     - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
-    - cd console-charts
-    - minikube start --vm-driver=none
-    - minikube addons enable ingress
-    - GO111MODULE=on make -C enterprise-suite install-helm gotests-minikube
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER} ./console-charts/scripts/console-test-minikube.sh
     after_script:
     - exit
     - docker logout ${DOCKER_REGISTRY}
@@ -48,13 +44,9 @@ jobs:
     before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${DOCKER_REGISTRY}
     - travis_retry docker pull ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts -it ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER}
     script:
-    - oc login https://centralpark.lightbend.com --token=${OC_GOTESTS_TOKEN}
-    - oc status && oc project && oc get pods
-    - GO111MODULE=on make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}:/console/console-charts ${DOCKER_REGISTRY}/${GOTESTS_CONTAINER} ./console-charts/scripts/console-test-openshift ${OC_GOTESTS_TOKEN}
     after_script:
-    - exit
     - docker logout ${DOCKER_REGISTRY}
 
   - name: Backend E2E Tests - Minikube Latest
