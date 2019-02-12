@@ -22,7 +22,7 @@ func IsInstalled() bool {
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
-	if _, err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return false
 	}
 
@@ -37,7 +37,7 @@ func ReleaseExists(name string) bool {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 
-	if _, err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return strings.Trim(output.String(), " \n") == name
 	}
 	return false
@@ -80,7 +80,7 @@ func Install(k8sClient *kubernetes.Clientset, namespace string) error {
 
 	// Do `helm init`
 	cmd := util.Cmd("helm", "init", "--wait", "--service-account", ServiceAccountName, "--upgrade", "--tiller-namespace", namespace)
-	if _, err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
+	if err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 

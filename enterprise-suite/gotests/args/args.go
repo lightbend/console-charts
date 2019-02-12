@@ -24,5 +24,5 @@ func init() {
 	flag.StringVar(&Kubeconfig, "kubeconfig", filepath.Join(homeDir, ".kube", "config"), "absolute path to the kubeconfig file")
 	flag.StringVar(&ConsoleNamespace, "namespace", "lightbend-test", "kubernetes namespace where tests will run")
 	flag.StringVar(&TillerNamespace, "tiller-namespace", "", "kubernetes namespace where tiller is installed, leave default if kube-system")
-	flag.BoolVar(&NoCleanup, "no-cleanup", false, "prevent test suites from cleaning up after themselves so that cluster state can be inspected")
+	flag.BoolVar(&NoCleanup, "no-cleanup", true, "prevent test suites from cleaning up after themselves so that cluster state can be inspected")
 }

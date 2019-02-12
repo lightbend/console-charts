@@ -45,19 +45,18 @@ type RouteStatus struct {
 }
 
 func IsRunning() bool {
-	retcode, err := util.Cmd("oc", "status").AnyExitStatus().Run()
-	return retcode == 0 && err == nil
+	return util.Cmd("oc", "status").Run() == nil
 }
 
 func Expose(service string) error {
-	if _, err := util.Cmd("oc", "expose", "service", service).Run(); err != nil {
+	if err := util.Cmd("oc", "expose", "service", service).Run(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func Unexpose(service string) error {
-	if _, err := util.Cmd("oc", "delete", "route", service).Run(); err != nil {
+	if err := util.Cmd("oc", "delete", "route", service).Run(); err != nil {
 		return err
 	}
 	return nil
@@ -67,7 +66,7 @@ func Address(service string) (string, error) {
 	var stdout strings.Builder
 
 	cmd := util.Cmd("oc", "get", "route", "-o", "json").CaptureStdout(&stdout)
-	if _, err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return "", err
 	}
 

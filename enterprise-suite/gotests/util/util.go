@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 )
 
 const DefaultTimeout = 5 * time.Second
@@ -21,23 +22,24 @@ type CmdBuilder struct {
 	envVars              []string
 	timeout              time.Duration
 	expectZeroExitStatus bool
-	panicOnError         bool
 	printStdout          bool
 	printStderr          bool
+	cmd                  *exec.Cmd
+	cancelFunc           context.CancelFunc
+	cmdStdout            io.ReadCloser
+	cmdStderr            io.ReadCloser
 	captureStdout        *strings.Builder
 	captureStderr        *strings.Builder
 }
 
 func Cmd(name string, args ...string) *CmdBuilder {
 	return &CmdBuilder{
-		name:                 name,
-		args:                 args,
-		envVars:              nil,
-		timeout:              DefaultTimeout,
-		expectZeroExitStatus: true,
-		panicOnError:         false,
-		printStdout:          false,
-		printStderr:          false,
+		name:        name,
+		args:        args,
+		envVars:     nil,
+		timeout:     DefaultTimeout,
+		printStdout: false,
+		printStderr: false,
 	}
 }
 
@@ -48,16 +50,6 @@ func (cb *CmdBuilder) Timeout(t time.Duration) *CmdBuilder {
 
 func (cb *CmdBuilder) NoTimeout() *CmdBuilder {
 	cb.timeout = 0
-	return cb
-}
-
-func (cb *CmdBuilder) AnyExitStatus() *CmdBuilder {
-	cb.expectZeroExitStatus = false
-	return cb
-}
-
-func (cb *CmdBuilder) PanicOnError() *CmdBuilder {
-	cb.panicOnError = true
 	return cb
 }
 
@@ -92,107 +84,128 @@ func (cb *CmdBuilder) Env(name string, value string) *CmdBuilder {
 	return cb
 }
 
-func (cb *CmdBuilder) Run() (int, error) {
-	var cmd *exec.Cmd
+func (cb *CmdBuilder) start() error {
+	if cb.cmd != nil {
+		panic("attempted to start the same command multiple times")
+	}
 
 	// Set up timeout context if needed
 	if cb.timeout == 0 {
-		cmd = exec.Command(cb.name, cb.args...)
+		cb.cmd = exec.Command(cb.name, cb.args...)
+		cb.cancelFunc = func() {}
 	} else {
 		ctx, cancel := context.WithTimeout(context.Background(), cb.timeout)
-		cmd = exec.CommandContext(ctx, cb.name, cb.args...)
-		defer cancel()
+		cb.cmd = exec.CommandContext(ctx, cb.name, cb.args...)
+		cb.cancelFunc = cancel
 	}
 
 	// Set up env variables
 	if len(cb.envVars) > 0 {
-		cmd.Env = os.Environ()
+		cb.cmd.Env = os.Environ()
 		for _, envVar := range cb.envVars {
-			cmd.Env = append(cmd.Env, envVar)
+			cb.cmd.Env = append(cb.cmd.Env, envVar)
 		}
 	}
 
-	var exitcode int
-	var cmderr error
-
-	cmdstdout, err := cmd.StdoutPipe()
+	cmdStdout, err := cb.cmd.StdoutPipe()
 	if err != nil {
 		panic("unable to get command stdout pipe")
 	}
 
-	cmdstderr, err := cmd.StderrPipe()
+	cmdStderr, err := cb.cmd.StderrPipe()
 	if err != nil {
 		panic("unable to get command stderr pipe")
 	}
 
+	cb.cmdStdout = cmdStdout
+	cb.cmdStderr = cmdStderr
+
 	// Run the command
-	if err := cmd.Start(); err != nil {
-		// If command is unvailable on the system we end up here
-		if cb.panicOnError {
-			panic("unable to execute command")
-		} else {
-			return -1, fmt.Errorf("unable to execute command '%v %v'",
-				cb.name, strings.Join(cb.args[:], " "))
-		}
-	} else {
-		// These keep all stdout/stderr capture destinations.
-		// Always print stdout/stderr to GinkgoWriter so that we can see
-		// all output in verbose mode and when test fails.
-		stdoutWriters := []io.Writer{GinkgoWriter}
-		stderrWriters := []io.Writer{GinkgoWriter}
-
-		// Add external string.Builder outputs
-		if cb.captureStdout != nil {
-			stdoutWriters = append(stdoutWriters, cb.captureStdout)
-		}
-		if cb.captureStderr != nil {
-			stderrWriters = append(stderrWriters, cb.captureStderr)
-		}
-
-		// Add OS outputs
-		if cb.printStdout {
-			stdoutWriters = append(stdoutWriters, os.Stdout)
-		}
-		if cb.printStderr {
-			stderrWriters = append(stderrWriters, os.Stderr)
-		}
-
-		// Hook up command stdout/stderr to potential destinations
-		_, err = io.Copy(io.MultiWriter(stdoutWriters...), cmdstdout)
-		if err != nil {
-			panic("unable to copy stdout command pipe to io.MultiWriter")
-		}
-
-		_, err = io.Copy(io.MultiWriter(stderrWriters...), cmdstderr)
-		if err != nil {
-			panic("unable to copy stderr command pipe to io.MultiWriter")
-		}
-
-		// Wait for command to finish
-		if err := cmd.Wait(); err != nil {
-			// Any non-zero return code results in an error, handle that here
-			if exiterr, ok := err.(*exec.ExitError); ok {
-				if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-					exitcode = status.ExitStatus()
-				}
-			} else {
-				exitcode, cmderr = -400, err
-			}
-		}
+	if err := cb.cmd.Start(); err != nil {
+		// If command is unavailable on the system we end up here
+		return fmt.Errorf("unable to execute command '%v %v'",
+			cb.name, strings.Join(cb.args[:], " "))
 	}
 
-	// Make an error on non-zero exit
-	if cb.expectZeroExitStatus && cmderr == nil && exitcode != 0 {
-		cmderr = fmt.Errorf("'%v %v'\nreturn status: %v\n",
-			cb.name, strings.Join(cb.args[:], " "),
-			exitcode)
+	return nil
+}
+
+func (cb *CmdBuilder) wait() error {
+	if cb == nil || cb.cmd == nil {
+		return errors.New("tried to Wait() for a command that was never started")
+	}
+	// Ensure we clean up the golang command context.
+	defer cb.cancelFunc()
+
+	// Copy stdout/stderr to potential destinations
+	// Always print stdout/stderr to GinkgoWriter so that we can see all output in verbose mode and when test fails.
+	stdoutWriters := []io.Writer{ginkgo.GinkgoWriter}
+	stderrWriters := []io.Writer{ginkgo.GinkgoWriter}
+
+	// Add external string.Builder outputs
+	if cb.captureStdout != nil {
+		stdoutWriters = append(stdoutWriters, cb.captureStdout)
+	}
+	if cb.captureStderr != nil {
+		stderrWriters = append(stderrWriters, cb.captureStderr)
 	}
 
-	if cb.panicOnError && cmderr != nil {
-		panic(cmderr)
+	// Add OS outputs
+	if cb.printStdout {
+		stdoutWriters = append(stdoutWriters, os.Stdout)
+	}
+	if cb.printStderr {
+		stderrWriters = append(stderrWriters, os.Stderr)
 	}
 
-	return exitcode, cmderr
+	if _, err := io.Copy(io.MultiWriter(stdoutWriters...), cb.cmdStdout); err != nil {
+		panic(err)
+	}
+
+	if _, err := io.Copy(io.MultiWriter(stderrWriters...), cb.cmdStderr); err != nil {
+		panic(err)
+	}
+
+	return cb.cmd.Wait()
+}
+
+// Run starts and then waits for a process to finish.
+func (cb *CmdBuilder) Run() error {
+	if err := cb.start(); err != nil {
+		return nil
+	}
+	return cb.wait()
+}
+
+// StartAsync starts the process without waiting for its results. It will check it hasn't immediately died.
+// Use StopAsync() to stop and wait for the results.
+func (cb *CmdBuilder) StartAsync() error {
+	if err := cb.start(); err != nil {
+		return nil
+	}
+	// Check that process hasn't immediately died
+	time.Sleep(100 * time.Millisecond)
+	if cb.cmd.ProcessState != nil && cb.cmd.ProcessState.Exited() {
+		return cb.wait()
+	}
+	return nil
+}
+
+// StopAsync stops a process started with StartAsync(). It will send a SIGTERM and ensure the process stops.
+// It will only return an error if the process fails to stop.
+func (cb *CmdBuilder) StopAsync() error {
+	if cb == nil || cb.cmd == nil {
+		return errors.New("can't stop what wasn't started")
+	}
+	if err := cb.cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		panic(err)
+	}
+	err := cb.wait()
+	if _, ok := err.(*exec.ExitError); ok {
+		// We don't care as long as it exited.
+		return nil
+	}
+	return err
 }
 
 const maxRepeats = 30

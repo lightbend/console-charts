@@ -68,7 +68,7 @@ func InitEnv() {
 			anyPVCFound = true
 		}
 	}
-	if helm.ReleaseExists(helmReleaseName) || anyPVCFound {
+	if !args.NoCleanup && (helm.ReleaseExists(helmReleaseName) || anyPVCFound) {
 		// Cleanup with allowFailures=true
 		cleanup(true)
 	}
@@ -143,6 +143,7 @@ func CloseEnv() {
 }
 
 func cleanup(allowFailures bool) {
+	fmt.Println("Cleaning up old installation...")
 	if isOpenshift {
 		if err := oc.Unexpose(openshiftConsoleService); err != nil && !allowFailures {
 			Expect(err).To(Succeed(), "oc delete route")
@@ -154,12 +155,11 @@ func cleanup(allowFailures bool) {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 
-	if foundStorageClass {
-		// Delete PVCs which are left after helm uninstall
-		for _, pvc := range consolePVCs {
-			if err := kube.DeletePvc(K8sClient, args.ConsoleNamespace, pvc); err != nil && !allowFailures {
-				Expect(err).To(Succeed(), "delete PVCs")
-			}
+	// Delete PVCs which are left after helm uninstall
+	for _, pvc := range consolePVCs {
+		if err := kube.DeletePvc(K8sClient, args.ConsoleNamespace, pvc); err != nil && !allowFailures {
+			Expect(err).To(Succeed(), "delete PVCs")
 		}
 	}
+	fmt.Println("Done cleaning up old installation")
 }

@@ -20,7 +20,7 @@ func Install(namespace string, additionalArgs ...string) error {
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
-	if _, err := cmd.Timeout(time.Minute * 6).Run(); err != nil {
+	if err := cmd.Timeout(time.Minute * 6).Run(); err != nil {
 		return err
 	}
 
@@ -32,7 +32,7 @@ func Verify(namespace string) error {
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
-	if _, err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
@@ -44,7 +44,7 @@ func Uninstall() error {
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
-	if _, err := cmd.Timeout(time.Minute).Run(); err != nil {
+	if err := cmd.Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 

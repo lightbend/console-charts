@@ -15,7 +15,7 @@ import (
 // A change to parse yaml and use client-go is needed to make that work.
 
 func ApplyYaml(namespace string, filepath string) error {
-	if _, err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
+	if err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
 		return err
 	}
 
@@ -23,7 +23,7 @@ func ApplyYaml(namespace string, filepath string) error {
 }
 
 func DeleteYaml(namespace string, filepath string) error {
-	if _, err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
+	if err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
 		return err
 	}
 
