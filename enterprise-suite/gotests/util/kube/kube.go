@@ -33,8 +33,14 @@ func DeleteYaml(namespace string, filepath string) error {
 func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) error {
 	pvcClient := k8sClient.CoreV1().PersistentVolumeClaims(namespace)
 
-	if err := pvcClient.Delete(name, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("unable to delete pvc %v: %v", name, err)
+	claim, err := pvcClient.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("unable to query for pvc %v: %v", name, err)
+	}
+	if claim != nil {
+		if err := pvcClient.Delete(name, &metav1.DeleteOptions{}); err != nil {
+			return fmt.Errorf("unable to delete pvc %v: %v", name, err)
+		}
 	}
 
 	return nil
