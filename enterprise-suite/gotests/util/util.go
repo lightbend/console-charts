@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -84,9 +83,13 @@ func (cb *CmdBuilder) Env(name string, value string) *CmdBuilder {
 	return cb
 }
 
+func (cb *CmdBuilder) String() string {
+	return fmt.Sprintf("%v %v", cb.name, strings.Join(cb.args, " "))
+}
+
 func (cb *CmdBuilder) start() error {
 	if cb.cmd != nil {
-		panic("attempted to start the same command multiple times")
+		panic(fmt.Sprintf("%v: attempted to start the same command multiple times", cb))
 	}
 
 	// Set up timeout context if needed
@@ -109,12 +112,12 @@ func (cb *CmdBuilder) start() error {
 
 	cmdStdout, err := cb.cmd.StdoutPipe()
 	if err != nil {
-		panic("unable to get command stdout pipe")
+		panic(fmt.Sprintf("%v: unable to get command stdout pipe", cb))
 	}
 
 	cmdStderr, err := cb.cmd.StderrPipe()
 	if err != nil {
-		panic("unable to get command stderr pipe")
+		panic(fmt.Sprintf("%v: unable to get command stderr pipe", cb))
 	}
 
 	cb.cmdStdout = cmdStdout
@@ -123,8 +126,7 @@ func (cb *CmdBuilder) start() error {
 	// Run the command
 	if err := cb.cmd.Start(); err != nil {
 		// If command is unavailable on the system we end up here
-		return fmt.Errorf("unable to execute command '%v %v'",
-			cb.name, strings.Join(cb.args[:], " "))
+		return fmt.Errorf("%v: unable to execute: %v", cb, err)
 	}
 
 	return nil
@@ -132,7 +134,7 @@ func (cb *CmdBuilder) start() error {
 
 func (cb *CmdBuilder) wait() error {
 	if cb == nil || cb.cmd == nil {
-		return errors.New("tried to Wait() for a command that was never started")
+		return fmt.Errorf("%v: tried to Wait() for a command that was never started", cb)
 	}
 	// Ensure we clean up the golang command context.
 	defer cb.cancelFunc()
@@ -159,14 +161,17 @@ func (cb *CmdBuilder) wait() error {
 	}
 
 	if _, err := io.Copy(io.MultiWriter(stdoutWriters...), cb.cmdStdout); err != nil {
-		panic(fmt.Errorf("unable to copy process %v stdout: %v", cb.cmd.Path, err))
+		panic(fmt.Errorf("%v: unable to copy process stdout: %v", cb, err))
 	}
 
 	if _, err := io.Copy(io.MultiWriter(stderrWriters...), cb.cmdStderr); err != nil {
-		panic(fmt.Errorf("unable to copy process %v stderr: %v", cb.cmd.Path, err))
+		panic(fmt.Errorf("%v: unable to copy process stderr: %v", cb, err))
 	}
 
-	return cb.cmd.Wait()
+	if err := cb.cmd.Wait(); err != nil {
+		return fmt.Errorf("%v: %v", cb, err)
+	}
+	return nil
 }
 
 // Run starts and then waits for a process to finish.
@@ -195,17 +200,17 @@ func (cb *CmdBuilder) StartAsync() error {
 // It will only return an error if the process fails to stop.
 func (cb *CmdBuilder) StopAsync() error {
 	if cb == nil || cb.cmd == nil {
-		return errors.New("can't stop what wasn't started")
+		return fmt.Errorf("%v: can't stop what wasn't started", cb)
 	}
 	if err := cb.cmd.Process.Signal(syscall.SIGTERM); err != nil {
-		panic(err)
+		panic(fmt.Sprintf("%v: unable to send SIGTERM: %v", cb, err))
 	}
 	err := cb.wait()
 	if _, ok := err.(*exec.ExitError); ok {
 		// We don't care as long as it exited.
 		return nil
 	}
-	return err
+	return fmt.Errorf("%v: %v", cb, err)
 }
 
 const maxRepeats = 30
