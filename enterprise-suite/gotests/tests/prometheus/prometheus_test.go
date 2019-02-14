@@ -37,7 +37,7 @@ var _ = BeforeSuite(func() {
 		err = kube.ApplyYaml(args.ConsoleNamespace, res)
 		Expect(err).To(Succeed())
 
-		// Wait for deployment to become ready
+		// wait for deployment to become ready
 		if len(depName) > 0 {
 			err = util.WaitUntilSuccess(func() error {
 				return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, depName)
@@ -57,7 +57,7 @@ var _ = BeforeSuite(func() {
 		return prom.HasData(fmt.Sprintf("count_over_time(%v[10m]) > 2", metric))
 	}
 
-	// Wait until there's some scrapes finished
+	// wait until there's some scrapes finished
 	err = util.WaitUntilSuccess(func() error {
 		return threeScrapes("kube_pod_info")
 	})
