@@ -61,8 +61,7 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
-	// Cleanup if args.NoCleanup is false.
-	if !args.NoCleanup && (helm.ReleaseExists(helmReleaseName)) {
+	if args.Cleanup && (helm.ReleaseExists(helmReleaseName)) {
 		// Cleanup with allowFailures=true
 		cleanup(true)
 	}
@@ -127,11 +126,9 @@ func CloseEnv() {
 		return
 	}
 
-	if args.NoCleanup {
-		return
+	if args.Cleanup {
+		cleanup(false)
 	}
-
-	cleanup(false)
 
 	testEnvInitialized = false
 }
