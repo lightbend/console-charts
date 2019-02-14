@@ -335,7 +335,7 @@ def pvsRetainedOrNot():
             # pvc-accccc27-2ef8-11e9-a408-080027c68b7b   32Gi       RWO            Delete           Bound    ariano-console/alertmanager-storage   standard                24h
             claim = args.namespace + '/' + pvc
 
-            match = re.search(r'^([\w-]+)\s+\w+\s+\w+\s+(\w+)\s+Bound\s+('+claim+')\s', stdout, re.MULTILINE)
+            match = re.search(r'^([\w-]+)\s+\w+\s+\w+\s+(\w+)\s+Bound\s+('+claim+r')\s', stdout, re.MULTILINE)
 
             if match:
                 if match.group(2) == 'Retain':
@@ -346,7 +346,7 @@ def pvsRetainedOrNot():
 
     return (retained, notRetained)
 
-def checkPVthings():
+def checkPVthings(aboutToUninstall=False):
     stdout, returncode = run('helm get ' + args.helm_name,
                             DEFAULT_TIMEOUT, show_stderr=False)
     # Don't fail here?...
@@ -358,25 +358,23 @@ def checkPVthings():
     # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
     wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
 
-    printerr("hasPVs: {}, wantsPVs: {}'".format(hasPVs, wantsPVs))
+    # debug.  remove
+    printerr("hasPVs: {}, wantsPVs: {}".format(hasPVs, wantsPVs))
 
-    # Need to set this dynamically
-    aboutToDelete = False
-
-    if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToDelete)):
+    if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
         # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
         #    warn user that they will lose their Console data
         #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
-        printerr("Given the current and desired configs, continued installation will result in the loss of Console data.")
-        printerr("Stopping.  Invoke again with '--force' to proceed anyway, but save your data first if so desired")
-    elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToDelete)):
+        printerr("WARNING: usePersistentVolumes was false, now true. Continued installation will result in the loss of Console data.")
+        fail("Stopping.  Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
+    elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
         retainedPVs, notRetainedPVs = pvsRetainedOrNot()
 
         if len(notRetainedPVs) > 0:
             printerr("WARNING: Given the current and desired configs, continued installation will result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
-            printerr("Stopping.  Invoke again with '--force' to proceed anyway, but save your data first if so desired")
+            fail("Stopping.  Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
 
         if len(retainedPVs) > 0:
             printerr("WARNING: Given the current and desired configs, continued installation will orphan existing Console data.")
@@ -384,7 +382,7 @@ def checkPVthings():
             printerr("See associated documentation at blahdiblah.")
             for pv in retainedPVs:
                 printerr("info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
-            printerr("Stopping.  Invoke again with '--force' to proceed anyway.")
+            fail("Stopping.  Invoke again with '--nowarn' to proceed anyway.")
 
 # This is the behavior we'll have to implement to be in line with the thinking of
 # https://github.com/lightbend/es-backend/issues/572
@@ -522,7 +520,6 @@ def install(creds_file):
         status = install_status(args.helm_name)
         if status == 'deployed':
             if args.force_install:
-                # calling uninstall here.  Should warn about PV deletion stuff.  Here or in uninstall?
                 uninstall(status=status)
             else:
                 should_upgrade = True
@@ -539,27 +536,18 @@ def install(creds_file):
         if args.wait:
             helm_args += ' --wait'
 
-        checkPVthings()
+        if not args.nowarn:
+            checkPVthings()
 
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
-            # Marco has commented this out for testing.  We'll have to rewrite this bit.
-            # See new comments above.
-
-            # createPVs = len(filter(lambda x: 'managePersistentVolumes=false' in x, sys.argv)) == 0
-            # if createPVs and are_pvcs_created(args.namespace):
-            #     printerr('info: Found existing PVCs from a previous console installation.')
-            #     printerr('info: Please remove them with `kubectl delete pvc`, or pass --set managePersistentVolumes=false.')
-            #     printerr('info: Otherwise, the install may fail.')
-
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
                         version_arg, creds_arg, helm_args))
 
-# add a check for --force here
 def uninstall(status=None):
     if status == None:
         status = install_status(args.helm_name)
@@ -569,6 +557,9 @@ def uninstall(status=None):
     elif status == 'deleting':
         fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
     else:
+        if not args.nowarn:
+            checkPVthings(aboutToUninstall=True)
+
         printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
         execute('helm delete --purge ' + args.helm_name)
         printerr(('warning: helm delete does not wait for resources to be removed'
@@ -743,7 +734,6 @@ def setup_args(argv):
                         action='store_true')
 
     # Install arguments
-    # maybe change (add) this to --force and use in uninstall too.  See common args stuff below
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
@@ -768,6 +758,8 @@ def setup_args(argv):
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
+        subparser.add_argument('--nowarn', help='ignore warnings about PVs and proceed anyway. CAUTION!',
+                            action='store_true')
         subparser.add_argument('--dry-run', help='only print out the commands that will be executed',
                                action='store_true')
         subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
