@@ -24,6 +24,7 @@ import zipfile
 import datetime
 import base64
 import urllib2 as url
+import time
 from distutils.version import LooseVersion
 
 # Required dependency versions
@@ -215,11 +216,41 @@ def check_credentials(creds):
         else:
             printerr('error: check_credentials failed: {}'.format(err))
     finally:
-        return success 
+        return success
 
-def preinstall_check(creds, minikube=False, minishift=False):
+
+
+url_http_timeout=3 # 3 seconds
+installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
+warning_display_timeout=2 # 2 seconds
+
+# compare the contents of current running installer and remote installer.
+# if they are different print warning a new installer is present
+def check_new_install_script():
+    try:
+        response=url.urlopen(installer_url, timeout=url_http_timeout)
+        if response == None:
+            return
+        remote_installer_contents=response.read()
+    except url.URLError as e:
+        # if we cannot connect to remote server, ignore for now...
+        return
+
+    # read the contents of the current file
+    with open(os.path.abspath(__file__)) as f:
+        current_installer_contents = f.read()
+
+    if remote_installer_contents != current_installer_contents:
+        printinfo("\nThe installer you are running is out of date...")
+        printinfo("New installer is available, use the following command to download it")
+        printinfo (" curl -O " + installer_url + "\n")
+        time.sleep(warning_display_timeout)
+
+def preinstall_checkpreinstall_check(creds, minikube=False, minishift=False):
     check_helm()
     check_kubectl()
+    check_new_install_script()
+    return
 
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
@@ -653,6 +684,8 @@ def setup_args(argv):
 def main(argv):
     global args
     args = setup_args(argv)
+
+    check_new_install_script()
 
     force_verify = False
     if args.subcommand == 'install':
