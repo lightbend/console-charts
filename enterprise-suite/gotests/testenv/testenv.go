@@ -2,6 +2,7 @@ package testenv
 
 import (
 	"fmt"
+	"github.com/onsi/ginkgo"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -134,7 +135,7 @@ func CloseEnv() {
 }
 
 func cleanup(allowFailures bool) {
-	fmt.Println("Cleaning up old installation...")
+	fmt.Fprintf(ginkgo.GinkgoWriter, "Cleaning up old installation...")
 	if isOpenshift {
 		if err := oc.Unexpose(openshiftConsoleService); err != nil && !allowFailures {
 			Expect(err).To(Succeed(), "oc delete route")
@@ -152,5 +153,5 @@ func cleanup(allowFailures bool) {
 			Expect(err).To(Succeed(), "delete PVCs")
 		}
 	}
-	fmt.Println("Done cleaning up old installation")
+	fmt.Fprintln(ginkgo.GinkgoWriter, "Done cleaning up old installation")
 }

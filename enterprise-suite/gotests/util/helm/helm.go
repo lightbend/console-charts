@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -38,9 +39,10 @@ func ReleaseExists(name string) bool {
 	}
 
 	if err := cmd.Run(); err != nil {
-		return strings.Trim(output.String(), " \n") == name
+		fmt.Printf("Unexpected error when running helm list: %v\n", err)
+		return false
 	}
-	return false
+	return strings.Trim(output.String(), " \n") == name
 }
 
 func Install(k8sClient *kubernetes.Clientset, namespace string) error {
