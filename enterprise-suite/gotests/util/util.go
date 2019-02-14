@@ -132,7 +132,7 @@ func (cb *CmdBuilder) start() error {
 	return nil
 }
 
-func (cb *CmdBuilder) wait() error {
+func (cb *CmdBuilder) wait(ignoreExitErr bool) error {
 	if cb == nil || cb.cmd == nil {
 		return fmt.Errorf("%v: tried to Wait() for a command that was never started", cb)
 	}
@@ -169,6 +169,10 @@ func (cb *CmdBuilder) wait() error {
 	}
 
 	if err := cb.cmd.Wait(); err != nil {
+		if _, ok := err.(*exec.ExitError); ok && ignoreExitErr {
+			// We don't care as long as it exited.
+			return nil
+		}
 		return fmt.Errorf("%v: %v", cb, err)
 	}
 	return nil
@@ -179,7 +183,7 @@ func (cb *CmdBuilder) Run() error {
 	if err := cb.start(); err != nil {
 		return err
 	}
-	return cb.wait()
+	return cb.wait(false)
 }
 
 // StartAsync starts the process without waiting for its results. It will check it hasn't immediately died.
@@ -191,7 +195,7 @@ func (cb *CmdBuilder) StartAsync() error {
 	// Check that process hasn't immediately died
 	time.Sleep(100 * time.Millisecond)
 	if cb.cmd.ProcessState != nil && cb.cmd.ProcessState.Exited() {
-		return cb.wait()
+		return cb.wait(false)
 	}
 	return nil
 }
@@ -205,7 +209,7 @@ func (cb *CmdBuilder) StopAsync() error {
 	if err := cb.cmd.Process.Signal(syscall.SIGTERM); err != nil {
 		panic(fmt.Sprintf("%v: unable to send SIGTERM: %v", cb, err))
 	}
-	err := cb.wait()
+	err := cb.wait(true)
 	if _, ok := err.(*exec.ExitError); ok {
 		// We don't care as long as it exited.
 		return nil
