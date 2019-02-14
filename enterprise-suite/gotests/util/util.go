@@ -209,12 +209,10 @@ func (cb *CmdBuilder) StopAsync() error {
 	if err := cb.cmd.Process.Signal(syscall.SIGTERM); err != nil {
 		panic(fmt.Sprintf("%v: unable to send SIGTERM: %v", cb, err))
 	}
-	err := cb.wait(true)
-	if _, ok := err.(*exec.ExitError); ok {
-		// We don't care as long as it exited.
-		return nil
+	if err := cb.wait(true); err != nil {
+		return fmt.Errorf("%v: %v", cb, err)
 	}
-	return fmt.Errorf("%v: %v", cb, err)
+	return nil
 }
 
 const maxRepeats = 30
