@@ -35,7 +35,6 @@ $(HELM_CHARTS_DIR)/docs/$(filter %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS
 	./scripts/munge-to-latest.sh $(HELM_CHARTS_DIR)/build/$(CHART)
 	helm package -d $(HELM_CHARTS_DIR)/docs $(HELM_CHARTS_DIR)/build/$(CHART)
 
+.PHONY: clean
 clean::
 	rm -rf $(HELM_CHARTS_DIR)/build/$(CHART)
-
-.PHONY: clean

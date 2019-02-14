@@ -26,7 +26,7 @@ import urllib2 as url
 import time
 from distutils.version import LooseVersion
 
-# Required dependency versions
+# Minimum required dependency versions
 REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
 REQ_VER_MINIKUBE = '0.29'
@@ -44,7 +44,7 @@ CONSOLE_DEPLOYMENTS = [
 # Alertmanager deployment, this check can be turned off with --external-alertmanager
 CONSOLE_ALERTMANAGER_DEPLOYMENT = 'prometheus-alertmanager'
 
-# Install checks if these are already created, tries to reuse them if so
+# PVCs we need to pay attention to.
 CONSOLE_PVCS = [
     'alertmanager-storage',
     'es-grafana-storage',
@@ -103,7 +103,7 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
 
 # Executes a command if dry_run=False,
 # prints it to stdout or stderr, handles failure status
-# codes by exiting with and error if can_fail=False.
+# codes by exiting with an error if can_fail=False.
 def execute(cmd, can_fail=False, print_to_stdout=False):
     printerr(cmd)
     if not args.dry_run:
@@ -280,7 +280,7 @@ def install_status(release_name):
     stdout, returncode = run('helm status ' + release_name,
                             DEFAULT_TIMEOUT, show_stderr=False)
     if returncode != 0:
-        return 'notfound' 
+        return 'notfound'
     
     if 'STATUS: DEPLOYED' in stdout or (stdout == ''):
         return 'deployed'
@@ -319,6 +319,72 @@ def check_resource_list(cmd, expected, fail_msg):
 
         return all_found
     return False
+
+# Returns two lists.  For each of the PVC types we care about, the associated PV
+# is in the first or second list if the reclaim policy is RETAIN or not respectively.
+# Each list element is a tuple of PV name and claim.
+def pvsRetainedOrNot():
+    stdout, returncode = run('kubectl --namespace {} get pv --no-headers'
+                             .format(args.namespace))
+    retained = []
+    notRetained = []
+
+    if returncode == 0:
+        for pvc in CONSOLE_PVCS:
+            # We might want to do this by parsing yaml instead...
+            # pvc-accccc27-2ef8-11e9-a408-080027c68b7b   32Gi       RWO            Delete           Bound    ariano-console/alertmanager-storage   standard                24h
+            claim = args.namespace + '/' + pvc
+
+            match = re.search(r'^([\w-]+)\s+\w+\s+\w+\s+(\w+)\s+Bound\s+('+claim+')\s', stdout, re.MULTILINE)
+
+            if match:
+                if match.group(2) == 'Retain':
+                    list = retained
+                else:
+                    list = notRetained
+                list.append((match.group(1), match.group(3)))
+
+    return (retained, notRetained)
+
+def checkPVthings():
+    stdout, returncode = run('helm get ' + args.helm_name,
+                            DEFAULT_TIMEOUT, show_stderr=False)
+    # Don't fail here?...
+    if returncode != 0:
+        return 'helm get failed'
+
+    hasPVs = 'usePersistentVolumes: true' in stdout
+
+    # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
+    wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
+
+    printerr("hasPVs: {}, wantsPVs: {}'".format(hasPVs, wantsPVs))
+
+    # Need to set this dynamically
+    aboutToDelete = False
+
+    if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToDelete)):
+        # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
+        #    warn user that they will lose their Console data
+        #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
+        printerr("Given the current and desired configs, continued installation will result in the loss of Console data.")
+        printerr("Stopping.  Invoke again with '--force' to proceed anyway, but save your data first if so desired")
+    elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToDelete)):
+        retainedPVs, notRetainedPVs = pvsRetainedOrNot()
+
+        if len(notRetainedPVs) > 0:
+            printerr("WARNING: Given the current and desired configs, continued installation will result in the loss of Console data.")
+            for pv in notRetainedPVs:
+                printerr("info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
+            printerr("Stopping.  Invoke again with '--force' to proceed anyway, but save your data first if so desired")
+
+        if len(retainedPVs) > 0:
+            printerr("WARNING: Given the current and desired configs, continued installation will orphan existing Console data.")
+            printerr("Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+            printerr("See associated documentation at blahdiblah.")
+            for pv in retainedPVs:
+                printerr("info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
+            printerr("Stopping.  Invoke again with '--force' to proceed anyway.")
 
 # This is the behavior we'll have to implement to be in line with the thinking of
 # https://github.com/lightbend/es-backend/issues/572
@@ -417,7 +483,7 @@ def install(creds_file):
         chart_ref = 'es-repo/' + args.chart
     
     if args.export_yaml != None:
-        # Tilerless path - renders kubernetes resources and prints to stdout
+        # Tillerless path - renders kubernetes resources and prints to stdout
 
         creds_exec_arg = ''
         if args.export_yaml == 'creds':
@@ -456,6 +522,7 @@ def install(creds_file):
         status = install_status(args.helm_name)
         if status == 'deployed':
             if args.force_install:
+                # calling uninstall here.  Should warn about PV deletion stuff.  Here or in uninstall?
                 uninstall(status=status)
             else:
                 should_upgrade = True
@@ -471,6 +538,8 @@ def install(creds_file):
 
         if args.wait:
             helm_args += ' --wait'
+
+        checkPVthings()
 
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
@@ -490,6 +559,7 @@ def install(creds_file):
                 .format(chart_ref, args.helm_name, args.namespace,
                         version_arg, creds_arg, helm_args))
 
+# add a check for --force here
 def uninstall(status=None):
     if status == None:
         status = install_status(args.helm_name)
@@ -673,6 +743,7 @@ def setup_args(argv):
                         action='store_true')
 
     # Install arguments
+    # maybe change (add) this to --force and use in uninstall too.  See common args stuff below
     install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
