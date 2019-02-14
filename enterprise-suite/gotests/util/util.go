@@ -159,11 +159,11 @@ func (cb *CmdBuilder) wait() error {
 	}
 
 	if _, err := io.Copy(io.MultiWriter(stdoutWriters...), cb.cmdStdout); err != nil {
-		panic(err)
+		panic(fmt.Errorf("unable to copy process %v stdout: %v", cb.cmd.Path, err))
 	}
 
 	if _, err := io.Copy(io.MultiWriter(stderrWriters...), cb.cmdStderr); err != nil {
-		panic(err)
+		panic(fmt.Errorf("unable to copy process %v stderr: %v", cb.cmd.Path, err))
 	}
 
 	return cb.cmd.Wait()
@@ -172,7 +172,7 @@ func (cb *CmdBuilder) wait() error {
 // Run starts and then waits for a process to finish.
 func (cb *CmdBuilder) Run() error {
 	if err := cb.start(); err != nil {
-		return nil
+		return err
 	}
 	return cb.wait()
 }

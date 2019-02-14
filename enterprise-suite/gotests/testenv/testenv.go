@@ -61,14 +61,8 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
-	// In case helm release or PVCs were left from the previous run - clean them up now
-	anyPVCFound := false
-	for _, pvc := range consolePVCs {
-		if kube.PvcExists(K8sClient, args.ConsoleNamespace, pvc) {
-			anyPVCFound = true
-		}
-	}
-	if !args.NoCleanup && (helm.ReleaseExists(helmReleaseName) || anyPVCFound) {
+	// Cleanup if args.NoCleanup is false.
+	if !args.NoCleanup && (helm.ReleaseExists(helmReleaseName)) {
 		// Cleanup with allowFailures=true
 		cleanup(true)
 	}
