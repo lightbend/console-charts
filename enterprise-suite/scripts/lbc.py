@@ -346,6 +346,8 @@ def pvsRetainedOrNot():
 
     return (retained, notRetained)
 
+# This is the behavior as described at
+# https://github.com/lightbend/es-backend/issues/572
 def checkPVthings(aboutToUninstall=False):
     stdout, returncode = run('helm get ' + args.helm_name,
                             DEFAULT_TIMEOUT, show_stderr=False)
@@ -363,18 +365,26 @@ def checkPVthings(aboutToUninstall=False):
 
     if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
         # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
-        #    warn user that they will lose their Console data
         #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
         printerr("WARNING: usePersistentVolumes was false, now true. Continued installation will result in the loss of Console data.")
         fail("Stopping.  Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
     elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
+        # This case is the nasty one.  Chance of losing real data here.
+        # If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
+        #       (which means going from PV to emptyDir volume)
+        #    or
+        #       we're about to "helm delete" and usePersistentVolumes was true
+
         retainedPVs, notRetainedPVs = pvsRetainedOrNot()
+
+        stop = False
 
         if len(notRetainedPVs) > 0:
             printerr("WARNING: Given the current and desired configs, continued installation will result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
-            fail("Stopping.  Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
+            printerr("Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
+            stop = True
 
         if len(retainedPVs) > 0:
             printerr("WARNING: Given the current and desired configs, continued installation will orphan existing Console data.")
@@ -382,38 +392,15 @@ def checkPVthings(aboutToUninstall=False):
             printerr("See associated documentation at blahdiblah.")
             for pv in retainedPVs:
                 printerr("info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
-            fail("Stopping.  Invoke again with '--nowarn' to proceed anyway.")
+            printerr("Invoke again with '--nowarn' to proceed anyway.")
+            stop = True
 
-# This is the behavior we'll have to implement to be in line with the thinking of
-# https://github.com/lightbend/es-backend/issues/572
+        if stop:
+            fail("Stopping")
 
-# // This first case would be typical for a dev/demo.  Chances are we're okay losing the data.
-# If    we're changing from usePersistentVolumes=false to usePersistentVolumes=true
-#       (which means going from emptyDir volume to PV)
-#    or
-#       we're about to "helm delete" and usePersistentVolumes was false
-# then
-#    warn user that they will lose their Console data
-#    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
-##
-# // This case is the nasty one.  Chance of losing real data here.
-# If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
-#       (which means going from PV to emptyDir volume)
-#    or
-#       we're about to "helm delete" and usePersistentVolumes was true
-# then
-#    if PVC reclaim policy is not Retain
-#       warn user that they will lose their Console data
-#    else
-#       warn that their data will not be deleted but they'll have to do some manual steps
-#       - if they want to reuse it, or
-#       - if they actually want to delete it
-#
-# For either of those cases, I suppose "--force" could mean "just do it and don't warn"
-#
-# We may also want to look for orphaned PVs that appear associated with Console.  They'll
+# We may also want to look for orphaned PVs that appear associated with Console.  The user will
 # probably want to either reuse or delete these.
-
+#
 # Checks for console PVCs
 def are_pvcs_created(namespace):
     return check_resource_list(
