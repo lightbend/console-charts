@@ -167,7 +167,7 @@ def check_kubectl(minishift=False):
     require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
 
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
-    stdout, returncode = run('kubectl version', DEFAULT_TIMEOUT)
+    _, returncode = run('kubectl version', DEFAULT_TIMEOUT)
     if returncode != 0:
         msg = 'Cannot reach cluster with kubectl'
         if minishift:
@@ -264,7 +264,7 @@ def preinstall_check(creds, minikube=False, minishift=False):
         require_version('oc version', REQ_VER_OC)
 
     # Check if helm is set up inside a cluster
-    stdout, returncode = run('helm version', DEFAULT_TIMEOUT)
+    _, returncode = run('helm version', DEFAULT_TIMEOUT)
     if returncode != 0:
         fail('Cannot get helm status. Did you set up helm inside your cluster?')
 
@@ -595,7 +595,7 @@ def check_install(external_alertmanager=False):
         if returncode == 0:
             # Skip first (deployment name) and last (running time) items
             cols = [int(col) for col in stdout.replace('/', ' ').split()[1:-1]]
-            desired, current, up_to_date, available = cols[0], cols[1], cols[2], cols[3]
+            desired, _, _, available = cols[0], cols[1], cols[2], cols[3]
             if desired <= 0:
                 printinfo('failed')
                 printerr('Deployment {} status check: expected to see 1 or more desired replicas, found 0'
