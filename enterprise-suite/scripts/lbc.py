@@ -236,7 +236,7 @@ def check_new_install_script():
         # if we cannot connect to remote server, ignore for now...
         return
 
-    # read the contents of the current file
+    # read the contents of the current installer
     with open(os.path.abspath(__file__)) as f:
         current_installer_contents = f.read()
 
@@ -250,7 +250,6 @@ def preinstall_checkpreinstall_check(creds, minikube=False, minishift=False):
     check_helm()
     check_kubectl()
     check_new_install_script()
-    return
 
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
