@@ -9,15 +9,11 @@ import (
 )
 
 func IsRunning() bool {
-	if status, err := util.Cmd("minikube", "status").AnyExitStatus().Run(); err != nil {
-		return false
-	} else {
-		return status == 0
-	}
+	return util.Cmd("minikube", "status").Run() == nil
 }
 
 func Start(cpus int, mem int) error {
-	_, err := util.Cmd("minikube", "start", fmt.Sprintf("--cpus=%v", cpus), fmt.Sprintf("--memory=%v", mem)).
+	err := util.Cmd("minikube", "start", fmt.Sprintf("--cpus=%v", cpus), fmt.Sprintf("--memory=%v", mem)).
 		Timeout(time.Minute * 4).
 		PrintOutput().
 		Run()
@@ -25,7 +21,7 @@ func Start(cpus int, mem int) error {
 }
 
 func Stop() error {
-	_, err := util.Cmd("minikube", "stop").
+	err := util.Cmd("minikube", "stop").
 		Timeout(time.Minute).
 		PrintOutput().
 		Run()
@@ -33,7 +29,7 @@ func Stop() error {
 }
 
 func Delete() error {
-	_, err := util.Cmd("minikube", "delete").
+	err := util.Cmd("minikube", "delete").
 		Timeout(time.Minute).
 		PrintOutput().
 		Run()
@@ -42,7 +38,7 @@ func Delete() error {
 
 func Ip() (string, error) {
 	var result strings.Builder
-	_, err := util.Cmd("minikube", "ip").
+	err := util.Cmd("minikube", "ip").
 		CaptureStdout(&result).
 		Run()
 

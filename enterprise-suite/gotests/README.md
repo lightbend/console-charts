@@ -15,13 +15,16 @@ Alternatively, you can use `go-tests` and `go-tests-start-minikube` targets in t
 Running all tests locally:
 `ginkgo -r`
 
+or if console-charts is under GOPATH you can do:
+`GOCACHE=on GO111MODULE=on ginkgo -r`
+
 If Tiller is installed in other namespace than `kube-system`, you can specify that with a flag:
 `ginkgo -r -- --tiller-namespace=lightbend-test`
 Note: this is not a ginkgo flag, but a custom flag in the test suites so it comes after `--`.
 
 Running only minikube or openshift:
-`ginkgo -r --skip=*minikube*`
-`ginkgo -r --skip=*openshift*`
+`ginkgo -r --skip=.*minikube.*`
+`ginkgo -r --skip=.*openshift.*`
 
 Running a single test suite:
 `ginkgo tests/prometheus`
@@ -30,5 +33,5 @@ Test names should include one of prefixes `all:`, `minikube:`, `openshift:` to d
 For example `all:prometheus` should be testing in all platforms, while `minikube:ingress` only in minikube.
 
 Tracking of dependencies is done using Go 1.11 module system. To add a dependency, simply write an import
-statement in the code, nothing else needs to be done. Updating is done using `go get`, more about it in the 
+statement in the code, nothing else needs to be done. Updating is done using `go get`, more about it in the
 [golang wiki](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies).

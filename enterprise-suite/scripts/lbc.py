@@ -298,9 +298,9 @@ def are_pvcs_created(namespace):
 #  parse_set_string('am="am01,am02",es=NodePort') -> [('am', 'am01,am02'), ('es', 'NodePort')]
 def parse_set_string(s):
     # Keyval pair with commas allowed
-    keyval_pair_re = re.compile(r'(\w+)=([\w\-\+\*\:\\,]+)')
+    keyval_pair_re = re.compile(r'(\w+)=([\w\-\+\*\:\.\\,]+)')
     # Keyval pair without commas
-    keyval_pair_nc_re = re.compile(r'(\w+)=([\w\-\+\*\:]+)')
+    keyval_pair_nc_re = re.compile(r'(\w+)=([\w\-\+\*\:\.]+)')
     # Keyval pair with quoted value
     keyval_pair_quot_re = re.compile(r'(\w+)="(.*?)"')
 

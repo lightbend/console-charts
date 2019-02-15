@@ -25,6 +25,8 @@ spec:
         component: server
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
+        checksum/es-monitor-api-config: {{ (.Files.Glob "es-monitor-api/*").AsConfig | sha256sum }}
+        checksum/bare-prometheus-config: {{ include (print $.Template.BasePath "/prometheus-configmap-prom.yaml") . | sha256sum }}
     spec:
       serviceAccountName: prometheus-server
 
@@ -60,7 +62,7 @@ spec:
           command:
             - sh
             - -c
-            - "chown -Rc 65534:65534 /data || true"
+            - "chown -Rc 65534:65534 /data 2>/dev/null || true"
           volumeMounts:
             - name: prometheus-data-volume
               mountPath: /data

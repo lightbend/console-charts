@@ -1,6 +1,8 @@
 package helm
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -21,11 +23,26 @@ func IsInstalled() bool {
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
-	if _, err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return false
 	}
 
 	return true
+}
+
+// ReleaseExists returns true if given helm release name is present in any state - deployed, pending or failed
+func ReleaseExists(name string) bool {
+	var output strings.Builder
+	cmd := util.Cmd("helm", "list", "--all", "--short", name).CaptureStdout(&output)
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
+
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Unexpected error when running helm list: %v\n", err)
+		return false
+	}
+	return strings.Trim(output.String(), " \n") == name
 }
 
 func Install(k8sClient *kubernetes.Clientset, namespace string) error {
@@ -65,7 +82,7 @@ func Install(k8sClient *kubernetes.Clientset, namespace string) error {
 
 	// Do `helm init`
 	cmd := util.Cmd("helm", "init", "--wait", "--service-account", ServiceAccountName, "--upgrade", "--tiller-namespace", namespace)
-	if _, err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
+	if err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 

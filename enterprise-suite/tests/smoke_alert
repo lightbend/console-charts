@@ -113,12 +113,28 @@ nc_pod=$( kubectl get pods -l app=nc-pod --no-headers -n $NAMESPACE | awk '{prin
 
 # If alerts are getting routed properly, we'll see them here...
 check_alert () {
-  kubectl logs -n $NAMESPACE $nc_pod | grep -q -e '"status":"firing".*"alertname":"my_custom_monitor_for_alert"'
+  kubectl logs -n $NAMESPACE --since=1m $nc_pod | grep -q -e '"status":"firing".*"alertname":"my_custom_monitor_for_alert"'
 }
 
 busy_wait check_alert
 T $? Alert getting fired by Alertmanager
 
-# Could scrape alert here to see that link to prometheus uses es_console_url
+## Tests for esConsoleURL setting
+# The "console.test.bogus:30080" bit of this depends on esConsoleURL getting that value at install time.
+# See ../scripts/smoketest_{minikube,openshift}.sh
+am_pod=$(kubectl get pods -l app=prometheus,component=alertmanager --no-headers -n $NAMESPACE | awk '{print $1}')
+
+# We run amtool on the alertmanager pod.  Allows us to grab content for an alert.
+prom_link_in_alert=$(kubectl exec -it -n $NAMESPACE -c prometheus-alertmanager $am_pod -- amtool --alertmanager.url=http://localhost:9093 alert query -o json | jq -r '.[0].generatorURL')
+prom_url_prefix=$(echo $prom_link_in_alert | sed 's|^\(http://.*\)/service/prometheus/.*|\1|')
+
+[ "$prom_url_prefix" = "http://console.test.bogus:30080" ]
+T $? "External link to prometheus in alert"
+
+# See if the link to alertmanager in prometheus uses esConsoleURL
+alert_link_in_prom=$(kubectl logs -n $NAMESPACE --since=1m $nc_pod | grep -e '"status":"firing".*"alertname":"my_custom_monitor_for_alert"' | jq -r '.externalURL' | tail -n 1)
+
+[ "$alert_link_in_prom" = "http://console.test.bogus:30080/service/alertmanager" ]
+T $? "External link to alertmanager in prometheus"
 
 test_summary
