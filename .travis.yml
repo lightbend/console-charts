@@ -32,6 +32,10 @@ jobs:
     - make -C enterprise-suite openshift-backend-tests
 
   - name: Backend E2E Go Tests - Minikube
+    cache:
+      directories:
+        - $HOME/.cache/go-build
+        - $HOME/gopath/pkg/mod
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - GO111MODULE=on make -C enterprise-suite install-helm gotests-minikube
@@ -39,6 +43,10 @@ jobs:
     - sleep 5
 
   - name: Backend E2E Go Tests - Openshift
+    cache:
+      directories:
+        - $HOME/.cache/go-build
+        - $HOME/gopath/pkg/mod
     script:
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
     - GO111MODULE=on CLEANUP=true make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests

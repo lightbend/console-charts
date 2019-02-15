@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -243,4 +244,14 @@ func Close(closer io.Closer) {
 		// we never expect close to fail
 		panic(err)
 	}
+}
+
+// Returns a free TCP port on the local machine or an error
+func FindFreePort() (int, error) {
+	conn, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Close()
+	return conn.Addr().(*net.TCPAddr).Port, nil
 }
