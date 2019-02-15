@@ -18,14 +18,17 @@ import (
 const consoleRemotePort = 8080
 const consoleDeployment = "deployment/es-console"
 
-// Hardcode the local port because with random port setup it's currently
-// tricky to get cmd.StartAsync stdout without stopping it first.
-const localPort = 58363
-
-var portForwardCmd *util.CmdBuilder
+var (
+	portForwardCmd *util.CmdBuilder
+	localPort      int
+)
 
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
+
+	var err error
+	localPort, err = util.FindFreePort()
+	Expect(err).To(Succeed())
 
 	portForwardCmd = util.Cmd("kubectl", "port-forward",
 		"-n", args.ConsoleNamespace,
