@@ -216,7 +216,7 @@ data:
       location ~ (.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.0-rc.7",
+          "version": "1.0.0",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
