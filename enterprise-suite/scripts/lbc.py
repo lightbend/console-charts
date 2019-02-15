@@ -412,14 +412,6 @@ def checkPVthings(aboutToUninstall=False, namespace=None):
 
 # We may also want to look for orphaned PVs that appear associated with Console.  The user will
 # probably want to either reuse or delete these.
-#
-# Checks for console PVCs
-def are_pvcs_created(namespace):
-    return check_resource_list(
-        cmd='kubectl get pvc --namespace={} --no-headers'.format(namespace),
-        expected=CONSOLE_PVCS,
-        fail_msg='Found some PVCs ({}) from previous console install, but not all expected: {}.\nTo avoid data loss, please remove them manually'
-    )
 
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
