@@ -31,7 +31,7 @@ def expect_cmd(re_pattern, returncode=0, stdout=''):
 def test_run(cmd, timeout=None, stdin=None, show_stderr=True):
     cmd_re, returncode, stdout = expected_cmds.popleft()
     if re.match(cmd_re, cmd) != None:
-        return stdout, returncode
+        return returncode, stdout, None
     raise UnexpectedCmdException("Expected a command that matches '{}', instead got '{}'"
                                  .format(cmd_re, cmd))
                                 

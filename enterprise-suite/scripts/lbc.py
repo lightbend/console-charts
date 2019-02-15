@@ -74,7 +74,7 @@ def make_tempdir():
     return tempfile.mkdtemp()
 
 # Runs a given command with optional timeout.
-# Returns (stdout, returncode) tuple. If timeout
+# Returns (returncode, stdout, stderr) tuple. If timeout
 # occurred, returncode will be negative (-9 on macOS).
 def run(cmd, timeout=None, stdin=None, show_stderr=True):
     stdout, stderr, returncode, timer = None, None, None, None
@@ -99,7 +99,7 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
     finally:
         if timer != None:
             timer.cancel()
-        return stdout, returncode
+        return returncode, stdout, stderr
 
 # Executes a command if dry_run=False,
 # prints it to stdout or stderr, handles failure status
@@ -107,7 +107,7 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
 def execute(cmd, can_fail=False, print_to_stdout=False):
     printerr(cmd)
     if not args.dry_run:
-        stdout, returncode = run(cmd)
+        returncode, stdout, _ = run(cmd)
         if print_to_stdout:
             printinfo(stdout)
         else:
@@ -123,7 +123,7 @@ def require_version(cmd, required_version):
     name = cmd.partition(' ')[0]
 
     # Use 1s timeout, mainly for docker when DOCKER_HOST is unreachable
-    stdout, returncode = run(cmd, 1)
+    returncode, stdout, _ = run(cmd, 1)
 
     if returncode == None:
         fail("Required program '" + name + "' not found")
@@ -142,18 +142,18 @@ def require_version(cmd, required_version):
     printerr("warning: unable to determine installed version of '" + name + "'")
 
 def is_running_minikube():
-    stdout, returncode = run('minikube status')
+    returncode, stdout, _ = run('minikube status')
     if returncode == 0:
         if ('minikube: Running' in stdout) and ('cluster: Running') in stdout:
-            stdout, returncode = run('kubectl config current-context')
+            returncode, stdout, _ = run('kubectl config current-context')
             return returncode == 0 and stdout == 'minikube'
     return False
 
 def is_running_minishift():
-    stdout, returncode = run('minishift status', show_stderr=False)
+    returncode, stdout, _ = run('minishift status', show_stderr=False)
     if returncode == 0:
         if ('minishift: Running' in stdout) and ('cluster: Running') in stdout:
-            stdout, returncode = run('kubectl config current-context')
+            returncode, stdout, _ = run('kubectl config current-context')
             return returncode == 0 and stdout == 'minishift'
     return False
 
@@ -167,7 +167,7 @@ def check_kubectl(minishift=False):
     require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
 
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
-    _, returncode = run('kubectl version', DEFAULT_TIMEOUT)
+    returncode, _, _ = run('kubectl version', DEFAULT_TIMEOUT)
     if returncode != 0:
         msg = 'Cannot reach cluster with kubectl'
         if minishift:
@@ -187,9 +187,9 @@ def check_credentials(creds):
     api_url = registry + '/enterprise-suite/es-monitor-api/tags/list'
 
     # Use curl for checking credentials by default, only do urllib2 backup in case curl isn't installed
-    stdout, returncode = run('curl --version')
+    returncode, stdout, _ = run('curl --version')
     if returncode == 0:
-        stdout, returncode = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
+        returncode, stdout, _ = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
             .format(creds[0], creds[1], api_url), DEFAULT_TIMEOUT, show_stderr=True)
         return is_int(stdout) and int(stdout) == 200
 
@@ -264,7 +264,7 @@ def preinstall_check(creds, minikube=False, minishift=False):
         require_version('oc version', REQ_VER_OC)
 
     # Check if helm is set up inside a cluster
-    _, returncode = run('helm version', DEFAULT_TIMEOUT)
+    returncode, _, _ = run('helm version', DEFAULT_TIMEOUT)
     if returncode != 0:
         fail('Cannot get helm status. Did you set up helm inside your cluster?')
 
@@ -278,7 +278,7 @@ def preinstall_check(creds, minikube=False, minishift=False):
 # Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    stdout, returncode = run('helm status ' + release_name,
+    returncode, stdout, _ = run('helm status ' + release_name,
                             DEFAULT_TIMEOUT, show_stderr=False)
     namespace = None
     if returncode != 0:
@@ -308,7 +308,7 @@ def install_status(release_name):
 # list was found, False if nothing was found. If some resources were found,
 # but not all, it fails (sys.exit()) with a given message.
 def check_resource_list(cmd, expected, fail_msg):
-    stdout, returncode = run(cmd)
+    returncode, stdout, _ = run(cmd)
     if returncode == 0:
         all_found = True
         found_resources = []
@@ -333,16 +333,17 @@ def check_resource_list(cmd, expected, fail_msg):
 # is in the first or second list if the reclaim policy is RETAIN or not respectively.
 # Each list element is a tuple of PV name and claim.
 def pvsRetainedOrNot(namespace):
-    stdout, returncode = run('kubectl --namespace {} get pv --no-headers'
+    returncode, stdout, _ = run('kubectl --namespace {} get pv --no-headers'
                              .format(namespace))
     retained = []
     notRetained = []
 
-    # Todo:  Need to deal with failure better
-    if returncode == 0:
+    if returncode != 0:
+        printerr("Unable to retrieve PV info.  Proceed with caution.")
+    else:
         for pvc in CONSOLE_PVCS:
             # We might want to do this by parsing yaml instead...
-            # pvc-accccc27-2ef8-11e9-a408-080027c68b7b   32Gi       RWO            Delete           Bound    ariano-console/alertmanager-storage   standard                24h
+            # pvc-accccc27-2ef8-11e9-a408-080027c68b7b   32Gi       RWO            Delete           Bound    lightbend/alertmanager-storage   standard                24h
             claim = namespace + '/' + pvc
 
             match = re.search(r'^([\w-]+)\s+\w+\s+\w+\s+(\w+)\s+Bound\s+('+claim+r')\s', stdout, re.MULTILINE)
@@ -359,11 +360,12 @@ def pvsRetainedOrNot(namespace):
 # This is the behavior as described at
 # https://github.com/lightbend/es-backend/issues/572
 def checkPVthings(aboutToUninstall=False, namespace=None):
-    stdout, returncode = run('helm get ' + args.helm_name,
-                            DEFAULT_TIMEOUT, show_stderr=False)
-    # Todo: Need to deal with failure better here
-    if returncode != 0:
-        return 'helm get failed'
+    returncode, stdout, stderr = run('helm get ' + args.helm_name,
+                            DEFAULT_TIMEOUT, show_stderr=True)
+
+    if (returncode != 0) and not ('Error: release: "{}" not found'.format(args.helm_name) in stderr):
+        printerr("Unable to retrieve PV info.  Proceed with caution.")
+        return
 
     hasPVs = 'usePersistentVolumes: true' in stdout
 
@@ -581,7 +583,7 @@ def import_credentials():
 def check_install(external_alertmanager=False):
     def deployment_running(name):
         printinfo('Checking deployment {} ... '.format(name), end='')
-        stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
+        returncode, stdout, _ = run('kubectl --namespace {} get deploy/{} --no-headers'
                                  .format(args.namespace, name))
         if returncode == 0:
             # Skip first (deployment name) and last (running time) items
@@ -630,7 +632,7 @@ def debug_dump(args):
 
     def get_pod_containers(pod):
         # This magic gives us all the containers in a pod
-        containers, returncode = run("kubectl --namespace {} get pods {} -o jsonpath='{{.spec.containers[*].name}}'"
+        returncode, containers, _ = run("kubectl --namespace {} get pods {} -o jsonpath='{{.spec.containers[*].name}}'"
                                      .format(args.namespace, pod))
         if returncode == 0:
             return containers.split()
@@ -639,7 +641,7 @@ def debug_dump(args):
                  .format(pod))
 
     def write_log(archive, pod, container):
-        stdout, returncode = run('kubectl --namespace {} logs {} -c {}'
+        returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {}'
                                  .format(args.namespace, pod, container),
                                  show_stderr=False)
         if returncode == 0:
@@ -650,7 +652,7 @@ def debug_dump(args):
                      .format(container, pod))
 
         # Try to get previous logs too
-        stdout, returncode = run('kubectl --namespace {} logs {} -c {} -p'
+        returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {} -p'
                                  .format(args.namespace, pod, container),
                                  show_stderr=False)
         if returncode == 0:
@@ -666,7 +668,7 @@ def debug_dump(args):
         archive = zipfile.ZipFile(filename, 'w')
 
     # List all resources in our namespace
-    stdout, returncode = run('kubectl --namespace {} get all'.format(args.namespace),
+    returncode, stdout, _ = run('kubectl --namespace {} get all'.format(args.namespace),
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-get-all.txt', stdout)
@@ -675,7 +677,7 @@ def debug_dump(args):
                 .format(args.namespace))
 
     # Describe all resources
-    stdout, returncode = run('kubectl --namespace {} describe all'.format(args.namespace),
+    returncode, stdout, _ = run('kubectl --namespace {} describe all'.format(args.namespace),
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-describe-all.txt', stdout)
@@ -684,7 +686,7 @@ def debug_dump(args):
                 .format(args.namespace))
 
     # Describe PVCs
-    stdout, returncode = run('kubectl --namespace {} get pvc'.format(args.namespace),
+    returncode, stdout, _ = run('kubectl --namespace {} get pvc'.format(args.namespace),
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-get-pvc.txt', stdout)
@@ -693,7 +695,7 @@ def debug_dump(args):
                 .format(args.namespace))
 
     # Iterate over pods
-    stdout, returncode = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
+    returncode, stdout, _ = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
     if returncode == 0:
         for line in stdout.split('\n'):
             if len(line) > 0:
