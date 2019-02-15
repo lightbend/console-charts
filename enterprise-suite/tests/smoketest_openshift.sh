@@ -20,11 +20,9 @@ function diagnostics() {
 }
 
 function setup() {
-    ${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
-        --set usePersistentVolumes=true,defaultStorageClass=gp2,prometheusDomain=console-backend-e2e.io \
-        --set esConsoleURL=http://console.test.bogus:30080 \
-        --wait
-    oc expose service/console-server --namespace=${NAMESPACE}
+	${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
+		--set usePersistentVolumes=true,defaultStorageClass=gp2,prometheusDomain=console-backend-e2e.io --wait
+	oc expose service/console-server --namespace=${NAMESPACE}
 }
 
 function cleanup() {

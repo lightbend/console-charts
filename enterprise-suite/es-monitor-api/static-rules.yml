@@ -30,16 +30,16 @@
   expr: 100 * prometheus_target_sync_length_seconds{quantile="0.99"} / on (job,instance) group_left(interval) prometheus_target_interval_length_seconds{quantile="0.01"}
 
 - record: prometheus_notifications_dropped_rate
-  expr: irate(prometheus_notifications_dropped_total[5m])
+  expr: rate(prometheus_notifications_dropped_total[10m])
 
 - record: prometheus_rule_evaluation_failures_rate
-  expr: irate(prometheus_rule_evaluation_failures_total[5m])
+  expr: rate(prometheus_rule_evaluation_failures_total[10m])
 
 - record: prometheus_target_scrapes_exceeded_sample_limit_rate
-  expr: irate(prometheus_target_scrapes_exceeded_sample_limit_total[5m])
+  expr: rate(prometheus_target_scrapes_exceeded_sample_limit_total[10m])
 
 - record: prometheus_tsdb_reloads_failures_rate
-  expr: irate(prometheus_tsdb_reloads_failures_total[5m])
+  expr: rate(prometheus_tsdb_reloads_failures_total[10m])
 
 - record: akka_processing_time_seconds
   expr: akka_actor_processing_time_ns{quantile="0.5"} / 1000000000
@@ -51,7 +51,7 @@
   expr: (redis_keyspace_misses_total/redis_keyspace_hits_total) * 100
 
 - record: kafka_incoming_messages_rate
-  expr: sum without (instance) (irate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
+  expr: sum without (instance) (rate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
 
 - record: kafka_active_controllers
   expr: sum by (namespace, es_workload, es_monitor_type) (kafka_controller_kafkacontroller_activecontrollercount)
@@ -60,7 +60,7 @@
   expr: (sum without(command, status) (memcached_commands_total{status="miss"})/sum without(command, status) (memcached_commands_total)) * 100
 
 - record: memcached_evictions_rate
-  expr: irate(memcached_items_evicted_total[5m])
+  expr: rate(memcached_items_evicted_total[5m])
 
 - record: akka_http_http_server_responses_5xx_rate
-  expr: irate(akka_http_http_server_responses_5xx[5m]) and akka_http_http_server_responses_5xx offset 1m
+  expr: rate(akka_http_http_server_responses_5xx[5m])

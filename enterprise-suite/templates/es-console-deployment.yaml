@@ -5,8 +5,6 @@ metadata:
 spec:
   template:
     metadata:
-      annotations:
-        checksum/es-console-config: {{ include (print $.Template.BasePath "/es-console-configmap.yaml") . | sha256sum }}
       labels:
         run: es-console
     spec:

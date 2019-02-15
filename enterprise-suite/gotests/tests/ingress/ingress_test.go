@@ -2,13 +2,12 @@ package ingress
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
 	extv1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/lightbend/gotests/args"
 	"github.com/lightbend/gotests/testenv"
@@ -90,18 +89,10 @@ var _ = Describe("minikube:ingress", func() {
 
 		req.Host = "minikube.ingress.test"
 
-		err = util.WaitUntilSuccess(func() error {
+		err = util.WaitUntilTrue(func() bool {
 			resp, err := httpClient.Do(req)
-			if err != nil {
-				return fmt.Errorf("console not accessible through ingress: %v", err)
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode != 200 {
-				body, _ := ioutil.ReadAll(resp.Body)
-				return fmt.Errorf("wanted 200 response, got %d: %s", resp.StatusCode, string(body))
-			}
-			return nil
-		})
+			return err == nil && resp.StatusCode == 200
+		}, "console not accessible through minikube ingress")
 		Expect(err).To(Succeed())
 	})
 })

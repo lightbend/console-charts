@@ -34,7 +34,6 @@ function setup() {
     ${script_dir}/../scripts/lbc.py install --namespace=${NAMESPACE} --local-chart=${script_dir}/.. -- \
         --set podUID=10001,usePersistentVolumes=true,prometheusDomain=console-backend-e2e.io \
         --set exposeServices=NodePort,esConsoleExposePort=30080 \
-        --set esConsoleURL=http://console.test.bogus:30080 \
         ${ES_CONSOLE_VERSION+--set esConsoleVersion=${ES_CONSOLE_VERSION}} \
         --wait
 }

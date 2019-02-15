@@ -1,8 +1,6 @@
 package kube
 
 import (
-	"fmt"
-
 	"github.com/lightbend/gotests/util"
 
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +13,7 @@ import (
 // A change to parse yaml and use client-go is needed to make that work.
 
 func ApplyYaml(namespace string, filepath string) error {
-	if err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
+	if _, err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
 		return err
 	}
 
@@ -23,37 +21,19 @@ func ApplyYaml(namespace string, filepath string) error {
 }
 
 func DeleteYaml(namespace string, filepath string) error {
-	if err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
+	if _, err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) error {
-	pvcClient := k8sClient.CoreV1().PersistentVolumeClaims(namespace)
-
-	claim, err := pvcClient.Get(name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("unable to query for pvc %v: %v", name, err)
-	}
-	if claim != nil {
-		if err := pvcClient.Delete(name, &metav1.DeleteOptions{}); err != nil {
-			return fmt.Errorf("unable to delete pvc %v: %v", name, err)
-		}
+func DeletePvc(namespace string, name string) error {
+	if _, err := util.Cmd("kubectl", "-n", namespace, "delete", "pvc", name).Run(); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func PvcExists(k8sClient *kubernetes.Clientset, namespace string, name string) bool {
-	_, err := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(name, metav1.GetOptions{})
-	return err == nil
-}
-
-func StorageClassExists(k8sClient *kubernetes.Clientset, name string) bool {
-	_, err := k8sClient.StorageV1().StorageClasses().Get(name, metav1.GetOptions{})
-	return err == nil
 }
 
 func CreateNamespace(k8sClient *kubernetes.Clientset, name string) error {
@@ -66,16 +46,17 @@ func CreateNamespace(k8sClient *kubernetes.Clientset, name string) error {
 	return err
 }
 
-func IsDeploymentAvailable(k8sClient *kubernetes.Clientset, namespace string, name string) error {
+func IsDeploymentAvailable(k8sClient *kubernetes.Clientset, namespace string, name string) bool {
+	// NOTE(mitkus): This might be far from best way to figure out if deployment is available
+
 	dep, err := k8sClient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return false
 	}
-	if len(dep.Status.Conditions) == 0 {
-		return fmt.Errorf("deployment is pending")
+	if len(dep.Status.Conditions) > 0 {
+		if dep.Status.Conditions[0].Type == "Available" {
+			return true
+		}
 	}
-	if dep.Status.Conditions[0].Type != "Available" {
-		return fmt.Errorf("deployment not available: %v", dep.Status.Conditions[0].Type)
-	}
-	return nil
+	return false
 }

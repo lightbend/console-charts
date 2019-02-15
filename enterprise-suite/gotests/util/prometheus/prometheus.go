@@ -2,24 +2,21 @@ package prometheus
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"reflect"
-
-	"github.com/lightbend/gotests/util"
 )
 
-type PromData struct {
+type Data struct {
 	ResultType string      `json:"resultType,omitempty"`
 	Result     interface{} `json:"result,omitempty"`
 }
 
-type PromResponse struct {
-	Original  string
+type Response struct {
 	Status    string   `json:"status"`
-	Data      PromData `json:"data,omitempty"`
+	Data      Data     `json:"data,omitempty"`
 	ErrorType string   `json:"errorType,omitempty"`
 	Error     string   `json:"error,omitempty"`
 	Warnings  []string `json:"warnings,omitempty"`
@@ -30,7 +27,7 @@ type Connection struct {
 	url string
 }
 
-func (p *Connection) Query(query string) (*PromResponse, error) {
+func (p *Connection) Query(query string) (*Response, error) {
 	addr := fmt.Sprintf("%v/api/v1/query?query=%v", p.url, url.QueryEscape(query))
 
 	resp, err := http.Get(addr)
@@ -38,7 +35,6 @@ func (p *Connection) Query(query string) (*PromResponse, error) {
 		return nil, err
 	}
 
-	defer util.Close(resp.Body)
 	// Prometheus docs say 2XX codes are used for success, not just 200
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		content, err := ioutil.ReadAll(resp.Body)
@@ -46,44 +42,34 @@ func (p *Connection) Query(query string) (*PromResponse, error) {
 			return nil, err
 		}
 
-		var promResp PromResponse
-		if err := json.Unmarshal(content, &promResp); err != nil {
+		var resp Response
+		if err := json.Unmarshal(content, &resp); err != nil {
 			return nil, err
 		} else {
-			promResp.Original = string(content)
-			return &promResp, nil
+			return &resp, nil
 		}
 	}
 
-	return nil, fmt.Errorf("prometheus response status %v", resp.StatusCode)
+	return nil, errors.New(fmt.Sprintf("prometheus response status %v", resp.StatusCode))
 }
 
-func (p *Connection) HasData(query string) error {
+func (p *Connection) HasData(query string) bool {
 	resp, err := p.Query(query)
 
 	if err != nil {
-		return fmt.Errorf("%q returned an error: %v", query, err)
+		return false
 	}
 
 	// Cast result to array of anything
 	arr, ok := resp.Data.Result.([]interface{})
-	if !ok {
-		return fmt.Errorf("%q - expected array of values, but was %v: %s", query, reflect.TypeOf(resp.Data.Result), resp.Original)
+	if ok {
+		return len(arr) > 0
 	}
 
-	if len(arr) == 0 {
-		return fmt.Errorf("%q returned 0 results: %s", query, resp.Original)
-	}
-
-	return nil
+	return false
 }
 
-// find any instance of query over past 10 minutes
-func (p *Connection) AnyData(query string) error {
-	return p.HasData(fmt.Sprintf("count_over_time( (%v) [10m:] )", query))
-}
-
-func (p *Connection) HasModel(model string) error {
+func (p *Connection) HasModel(model string) bool {
 	return p.HasData(fmt.Sprintf("model{name=\"%v\"}", model))
 }
 

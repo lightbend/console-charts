@@ -19,11 +19,6 @@ spec:
       labels:
         app: grafana
         component: server
-      annotations:
-        {{ .Values.prometheusDomain }}/scrape: "true"
-        {{ .Values.prometheusDomain }}/port: "3000"
-        checksum/datasource-config: {{ include (print $.Template.BasePath "/es-grafana-configmap-datasource.yaml") . | sha256sum }}
-        checksum/plugin-config: {{ (.Files.Glob "es-grafana/*").AsConfig | sha256sum }}
     spec:
       {{ if .Values.podUID }}
       securityContext:
@@ -67,7 +62,7 @@ spec:
               command: ["/bin/sh", "-c", "echo \"Waiting for grafana to enable cinnamon plugin...\"; until curl --output /dev/null --silent --head --fail curl http://127.0.0.1:3000; do echo -n '.' ;  sleep 2; done ; curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
         readinessProbe:
           httpGet:
-            path: /api/health
+            path: /login
             port: 3000
         volumeMounts:
         - name: grafana-dashboards

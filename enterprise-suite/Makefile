@@ -1,13 +1,9 @@
 # Using ?= cuz enterprise-suite-latest overrides this
 CHART ?= enterprise-suite
 
-# Caller can override these with env vars if desired.  e.g. "export NAMESPACE=custom ; make "
-RELEASE_NAME ?= es
-NAMESPACE ?= lightbend
-TILLER_NAMESPACE ?= $(NAMESPACE)
-
-# If set, HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
-HELM_VALUES_FLAG=$(if $(HELM_VALUES_FILE),--values $(HELM_VALUES_FILE))
+RELEASE_NAME := es
+NAMESPACE := lightbend
+TILLER_NAMESPACE := $(NAMESPACE)
 
 define banner
 	$(info === $@)
@@ -98,7 +94,7 @@ $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(R
 	helm --namespace=$(NAMESPACE) template $< --set exposeServices=NodePort > $@
 
 .PHONY: install-helm
-install-helm:  ## Install helm (tiller)
+install-helm:
 	-kubectl create namespace $(TILLER_NAMESPACE)
 	-kubectl create serviceaccount --namespace $(TILLER_NAMESPACE) tiller
 	-kubectl create clusterrolebinding $(TILLER_NAMESPACE):tiller --clusterrole=cluster-admin \
@@ -106,24 +102,21 @@ install-helm:  ## Install helm (tiller)
 	helm init --wait --service-account tiller --upgrade --tiller-namespace=$(TILLER_NAMESPACE)
 
 .PHONY: install-dev
-install-dev:  ## Install local chart directory
-	TILLER_NAMESPACE=$(TILLER_NAMESPACE) $(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) -- \
-	    --namespace $(NAMESPACE) $(HELM_VALUES_FLAG) \
-	    --set exposeServices=NodePort \
-	    --wait
+install-dev: install-helm ## Install local chart directory to a local minikube.
+	TILLER_NAMESPACE=$(TILLER_NAMESPACE) scripts/lbc.py install --local-chart=. -- --set exposeServices=NodePort --wait
 
-.PHONE: preflight-check
-preflight-check:
-	$(MAKE) -C gotests setup-tools
-	$(MAKE) -C gotests check
+.PHONY: start-minikube
+start-minikube:
+	-minikube start --cpus=3 --memory=6000
 
-.PHONY: gotests-minikube
-gotests-minikube: preflight-check
-	$(MAKE) -C gotests run-tests-minikube NAMESPACE=$(NAMESPACE)
+.PHONY: gotests
+gotests:
+	$(MAKE) -C $@ setup-tools
+	$(MAKE) -C $@ check
+	$(MAKE) -C $@ run-tests NAMESPACE=$(NAMESPACE)
 
-.PHONY: gotests-openshift
-gotests-openshift: preflight-check
-	$(MAKE) -C gotests run-tests-openshift NAMESPACE=$(NAMESPACE)
+.PHONY: go-tests-start-minikube
+go-tests-start-minikube: start-minikube go-tests
 
 .PHONY: help
 help:  ## Print help for targets
