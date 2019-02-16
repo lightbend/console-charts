@@ -332,36 +332,35 @@ def check_resource_list(cmd, expected, fail_msg):
 # Returns two lists.  For each of the PVC types we care about, the associated PV
 # is in the first or second list if the reclaim policy is RETAIN or not respectively.
 # Each list element is a tuple of PV name and claim.
-def pvsRetainedOrNot(namespace):
-    returncode, stdout, _ = run('kubectl --namespace {} get pv --no-headers'
-                             .format(namespace))
+def pvs_retained_and_not(namespace):
+    # returncode, stdout, _ = run('kubectl --namespace {} get pv --no-headers'
+    #                             .format(namespace))
+    claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
+    go_template='{{ range .items }}{{ if eq .spec.claimRef.name '+claimNames+' }}{{ printf "%s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name }}{{ end }}{{ end }}'
+    returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
+                                .format(go_template))
+
     retained = []
     notRetained = []
 
     if returncode != 0:
         printerr("Unable to retrieve PV info.  Proceed with caution.")
     else:
-        for pvc in CONSOLE_PVCS:
-            # We might want to do this by parsing yaml instead...
-            # pvc-accccc27-2ef8-11e9-a408-080027c68b7b   32Gi       RWO            Delete           Bound    lightbend/alertmanager-storage   standard                24h
-            claim = namespace + '/' + pvc
+        for pv in stdout.splitlines():
+            words = pv.split()
 
-            match = re.search(r'^([\w-]+)\s+\w+\s+\w+\s+(\w+)\s+Bound\s+('+claim+r')\s', stdout, re.MULTILINE)
-
-            if match:
-                if match.group(2) == 'Retain':
-                    list = retained
-                else:
-                    list = notRetained
-                list.append((match.group(1), match.group(3)))
+            if words[1] == 'Retain':
+                list = retained
+            else:
+                list = notRetained
+            list.append((words[0], words[2]))
 
     return (retained, notRetained)
 
-# This is the behavior as described at
-# https://github.com/lightbend/es-backend/issues/572
-def checkPVthings(aboutToUninstall=False, namespace=None):
+# Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
+def check_pv_usage(aboutToUninstall=False, namespace=None):
     returncode, stdout, stderr = run('helm get ' + args.helm_name,
-                            DEFAULT_TIMEOUT, show_stderr=True)
+                                    DEFAULT_TIMEOUT, show_stderr=False)
 
     if (returncode != 0) and not ('Error: release: "{}" not found'.format(args.helm_name) in stderr):
         printerr("Unable to retrieve PV info.  Proceed with caution.")
@@ -371,9 +370,6 @@ def checkPVthings(aboutToUninstall=False, namespace=None):
 
     # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
     wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
-
-    # debug.  remove
-    printerr("hasPVs: {}, wantsPVs: {}".format(hasPVs, wantsPVs))
 
     if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
         # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
@@ -389,7 +385,7 @@ def checkPVthings(aboutToUninstall=False, namespace=None):
 
         if namespace == None:
             namespace = args.namespace
-        retainedPVs, notRetainedPVs = pvsRetainedOrNot(namespace)
+        retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
 
         stop = False
 
@@ -530,7 +526,7 @@ def install(creds_file):
             helm_args += ' --wait'
 
         if not args.nowarn:
-            checkPVthings()
+            check_pv_usage()
 
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
@@ -551,7 +547,7 @@ def uninstall(status=None):
         fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
     else:
         if not args.nowarn:
-            checkPVthings(aboutToUninstall=True, namespace=namespace)
+            check_pv_usage(aboutToUninstall=True, namespace=namespace)
 
         printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
         execute('helm delete --purge ' + args.helm_name)
