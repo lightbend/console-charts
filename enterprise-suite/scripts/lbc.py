@@ -362,7 +362,10 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
     returncode, stdout, stderr = run('helm get ' + args.helm_name,
                                     DEFAULT_TIMEOUT, show_stderr=False)
 
-    if (returncode != 0) and not ('Error: release: "{}" not found'.format(args.helm_name) in stderr):
+    if 'Error: release: "{}" not found'.format(args.helm_name) in stderr:
+        # Fresh install so we're good with whatever
+        return
+    elif returncode != 0:
         printerr("Unable to retrieve PV info.  Proceed with caution.")
         return
 
@@ -374,7 +377,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
     if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
         # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
         #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
-        printerr("WARNING: usePersistentVolumes was false, now true. Continued (un)installation will result in the loss of Console data.")
+        printerr("WARNING: usePersistentVolumes was false. Continued (un)installation will result in the loss of Console data.")
         fail("Stopping.  Invoke again with '--unbind' to proceed anyway, but save your data first if so desired")
     elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
         # This case is the nasty one.  Chance of losing real data here.
@@ -387,26 +390,19 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
             namespace = args.namespace
         retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
 
-        stop = False
-
         if len(notRetainedPVs) > 0:
             printerr("WARNING: Given the current and desired configs, continued (un)installation will result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
             printerr("Invoke again with '--unbind' to proceed anyway, but save your data first if so desired")
-            stop = True
+            fail("Stopping")
 
         if len(retainedPVs) > 0:
-            printerr("WARNING: Given the current and desired configs, continued (un)installation will orphan existing Console data.")
+            printerr("WARNING: Given the current and desired configs, this (un)installation will orphan existing Console data.")
             printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
             printerr("         See associated documentation at blahdiblah.")
             for pv in retainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
-            printerr("Invoke again with '--unbind' to proceed anyway.")
-            stop = True
-
-        if stop:
-            fail("Stopping")
 
 # We may also want to look for orphaned PVs that appear associated with Console.  The user will
 # probably want to either reuse or delete these.
