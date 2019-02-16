@@ -375,7 +375,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
         # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
         #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
         printerr("WARNING: usePersistentVolumes was false, now true. Continued (un)installation will result in the loss of Console data.")
-        fail("Stopping.  Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
+        fail("Stopping.  Invoke again with '--unbind' to proceed anyway, but save your data first if so desired")
     elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
         # This case is the nasty one.  Chance of losing real data here.
         # If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
@@ -393,7 +393,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
             printerr("WARNING: Given the current and desired configs, continued (un)installation will result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
-            printerr("Invoke again with '--nowarn' to proceed anyway, but save your data first if so desired")
+            printerr("Invoke again with '--unbind' to proceed anyway, but save your data first if so desired")
             stop = True
 
         if len(retainedPVs) > 0:
@@ -402,7 +402,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
             printerr("         See associated documentation at blahdiblah.")
             for pv in retainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
-            printerr("Invoke again with '--nowarn' to proceed anyway.")
+            printerr("Invoke again with '--unbind' to proceed anyway.")
             stop = True
 
         if stop:
@@ -525,7 +525,7 @@ def install(creds_file):
         if args.wait:
             helm_args += ' --wait'
 
-        if not args.nowarn:
+        if not args.unbind:
             check_pv_usage()
 
         if should_upgrade:
@@ -546,7 +546,7 @@ def uninstall(status=None):
     elif status == 'deleting':
         fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
     else:
-        if not args.nowarn:
+        if not args.unbind:
             check_pv_usage(aboutToUninstall=True, namespace=namespace)
 
         printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
@@ -747,7 +747,7 @@ def setup_args(argv):
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
-        subparser.add_argument('--nowarn', help='ignore warnings about PVs and proceed anyway. CAUTION!',
+        subparser.add_argument('--unbind', help='ignore warnings about PVs and proceed anyway. CAUTION!',
                             action='store_true')
         subparser.add_argument('--dry-run', help='only print out the commands that will be executed',
                                action='store_true')
