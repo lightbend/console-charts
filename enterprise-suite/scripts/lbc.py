@@ -217,35 +217,40 @@ def check_credentials(creds):
     finally:
         return success
 
-
-
-url_http_timeout=3 # 3 seconds
-installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
-warning_display_timeout=2 # 2 seconds
-
 # compare the contents of current running installer and remote installer.
 # if they are different print warning a new installer is present
 def check_new_install_script():
-    try:
-        response=url.urlopen(installer_url, timeout=url_http_timeout)
-        if response == None:
+    connect_timeout=3
+    curl_max_tmeout=5
+    installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
+
+    stdout, returncode = run('curl --version')
+    if returncode == 0:
+        rmt_installer_cnts, returncode = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
+                                                                                                    curl_max_tmeout,
+                                                                                                    installer_url),
+                                             DEFAULT_TIMEOUT, show_stderr=True)
+        if returncode != 0:
             return
-        remote_installer_contents=response.read()
-    except url.URLError as e:
-        # if we cannot connect to remote server, ignore for now...
-        return
+    else:
+        try:
+            response=url.urlopen(installer_url, timeout=connect_timeout)
+            if response == None:
+                return
+            rmt_installer_cnts=response.read()
+        except url.URLError as e:
+            # if we cannot connect to remote server, ignore for now...
+            return
 
     # read the contents of the current installer
     with open(os.path.abspath(__file__)) as f:
         current_installer_contents = f.read()
 
-    if remote_installer_contents != current_installer_contents:
-        printinfo("\nThe installer you are running is out of date...")
-        printinfo("New installer is available, use the following command to download it")
-        printinfo (" curl -O " + installer_url + "\n")
-        time.sleep(warning_display_timeout)
+    if rmt_installer_cnts != current_installer_contents:
+        printinfo("\nNew installer is available, use the following command to download it")
+        printinfo ("    curl -O " + installer_url + "\n")
 
-def preinstall_checkpreinstall_check(creds, minikube=False, minishift=False):
+def preinstall_check(creds, minikube=False, minishift=False):
     check_helm()
     check_kubectl()
     check_new_install_script()
@@ -682,8 +687,6 @@ def setup_args(argv):
 def main(argv):
     global args
     args = setup_args(argv)
-
-    check_new_install_script()
 
     force_verify = False
     if args.subcommand == 'install':
