@@ -190,10 +190,12 @@ func (cb *CmdBuilder) Run() error {
 // StartAsync starts the process without waiting for its results. It will check it hasn't immediately died.
 // Use StopAsync() to stop and wait for the results.
 func (cb *CmdBuilder) StartAsync() error {
+	// We should never timeout async processes.
+	cb.NoTimeout()
 	if err := cb.start(); err != nil {
 		return nil
 	}
-	// Check that process hasn't immediately died
+	// Check that process hasn't immediately died.
 	time.Sleep(100 * time.Millisecond)
 	if cb.cmd.ProcessState != nil && cb.cmd.ProcessState.Exited() {
 		return cb.wait(false)
