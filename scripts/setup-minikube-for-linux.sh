@@ -2,14 +2,15 @@
 
 set -exu
 
+KUBERNETES_VERSION="v1.12.5"
+MINIKUBE_VERSION="v0.34.1"
+
 # Preflight checks
 if ! command -v helm > /dev/null; then
     echo "install helm binary"
     exit 1
 fi
 
-# MINIKUBE_VERSION="latest" -- https://github.com/kubernetes/minikube/issues/2704
-MINIKUBE_VERSION="latest"
 
 # From https://github.com/kubernetes/minikube#linux-continuous-integration-without-vm-support
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo cp minikube /usr/local/bin/ && rm minikube
@@ -22,15 +23,20 @@ mkdir -p $HOME/.kube
 touch $HOME/.kube/config
 
 export KUBECONFIG=$HOME/.kube/config
-sudo -E minikube start --vm-driver=none
+sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION}
 sudo -E minikube addons enable ingress
+sudo chown -R $USER $HOME/.minikube
+sudo chgrp -R $USER $HOME/.minikube
 
 # this for loop waits until kubectl can access the api server that Minikube has created
 set +e
-for i in {1..150}; do # timeout for 5 minutes
-    kubectl get po &> /dev/null
-    if [ $? -ne 1 ]; then
+for i in {1..60}; do # timeout after 2 minutes
+    echo "Waiting for minikube to come up..."
+    kubectl get po
+    res=$?
+    if [ ${res} -eq 0 ]; then
         break
     fi
     sleep 2
 done
+exit ${res}
