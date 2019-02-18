@@ -26,13 +26,15 @@ vet:
 lint:
 	golint -set_exit_status $(go list ./...)
 
+CLEANUP ?= false
+
 .PHONY: run-tests-minikube
 run-tests-minikube:
-	ginkgo -r --skip=.*openshift.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+	ginkgo -r --skip=.*openshift.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
 
 .PHONY: run-tests-openshift
 run-tests-openshift:
-	ginkgo -r --skip=.*minikube.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+	ginkgo -r --skip=.*minikube.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
 
 .PHONY: format
 format:

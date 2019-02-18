@@ -15,7 +15,7 @@ import (
 // A change to parse yaml and use client-go is needed to make that work.
 
 func ApplyYaml(namespace string, filepath string) error {
-	if _, err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
+	if err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
 		return err
 	}
 
@@ -23,7 +23,7 @@ func ApplyYaml(namespace string, filepath string) error {
 }
 
 func DeleteYaml(namespace string, filepath string) error {
-	if _, err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
+	if err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
 		return err
 	}
 
@@ -33,8 +33,14 @@ func DeleteYaml(namespace string, filepath string) error {
 func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) error {
 	pvcClient := k8sClient.CoreV1().PersistentVolumeClaims(namespace)
 
-	if err := pvcClient.Delete(name, &metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("unable to delete pvc %v: %v", name, err)
+	claim, err := pvcClient.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("unable to query for pvc %v: %v", name, err)
+	}
+	if claim != nil {
+		if err := pvcClient.Delete(name, &metav1.DeleteOptions{}); err != nil {
+			return fmt.Errorf("unable to delete pvc %v: %v", name, err)
+		}
 	}
 
 	return nil

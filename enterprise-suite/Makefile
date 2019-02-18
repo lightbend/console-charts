@@ -6,6 +6,9 @@ RELEASE_NAME ?= es
 NAMESPACE ?= lightbend
 TILLER_NAMESPACE ?= $(NAMESPACE)
 
+# If set, HELM_VALUES_FILE will be added as '--values' value to install command, overriding default values.
+HELM_VALUES_FLAG=$(if $(HELM_VALUES_FILE),--values $(HELM_VALUES_FILE))
+
 define banner
 	$(info === $@)
 endef
@@ -105,7 +108,7 @@ install-helm:  ## Install helm (tiller)
 .PHONY: install-dev
 install-dev:  ## Install local chart directory
 	TILLER_NAMESPACE=$(TILLER_NAMESPACE) $(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) -- \
-	    --namespace $(NAMESPACE) \
+	    --namespace $(NAMESPACE) $(HELM_VALUES_FLAG) \
 	    --set exposeServices=NodePort \
 	    --wait
 

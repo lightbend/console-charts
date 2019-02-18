@@ -3,6 +3,8 @@ package testenv
 import (
 	"fmt"
 
+	"github.com/onsi/ginkgo"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -61,14 +63,7 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
-	// In case helm release or PVCs were left from the previous run - clean them up now
-	anyPVCFound := false
-	for _, pvc := range consolePVCs {
-		if kube.PvcExists(K8sClient, args.ConsoleNamespace, pvc) {
-			anyPVCFound = true
-		}
-	}
-	if helm.ReleaseExists(helmReleaseName) || anyPVCFound {
+	if args.Cleanup && (helm.ReleaseExists(helmReleaseName)) {
 		// Cleanup with allowFailures=true
 		cleanup(true)
 	}
@@ -133,16 +128,15 @@ func CloseEnv() {
 		return
 	}
 
-	if args.NoCleanup {
-		return
+	if args.Cleanup {
+		cleanup(false)
 	}
-
-	cleanup(false)
 
 	testEnvInitialized = false
 }
 
 func cleanup(allowFailures bool) {
+	fmt.Fprintf(ginkgo.GinkgoWriter, "Cleaning up old installation...")
 	if isOpenshift {
 		if err := oc.Unexpose(openshiftConsoleService); err != nil && !allowFailures {
 			Expect(err).To(Succeed(), "oc delete route")
@@ -154,12 +148,11 @@ func cleanup(allowFailures bool) {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 
-	if foundStorageClass {
-		// Delete PVCs which are left after helm uninstall
-		for _, pvc := range consolePVCs {
-			if err := kube.DeletePvc(K8sClient, args.ConsoleNamespace, pvc); err != nil && !allowFailures {
-				Expect(err).To(Succeed(), "delete PVCs")
-			}
+	// Delete PVCs which are left after helm uninstall
+	for _, pvc := range consolePVCs {
+		if err := kube.DeletePvc(K8sClient, args.ConsoleNamespace, pvc); err != nil && !allowFailures {
+			Expect(err).To(Succeed(), "delete PVCs")
 		}
 	}
+	fmt.Fprintln(ginkgo.GinkgoWriter, "Done cleaning up old installation")
 }

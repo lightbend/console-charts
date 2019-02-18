@@ -15,8 +15,8 @@ var ConsoleNamespace string
 // TillerNamespace is the namespace where Helm Tiller is installed
 var TillerNamespace string
 
-// NoCleanup prevents test suites cleaning up after themselves so that cluster state can be inspected
-var NoCleanup bool
+// Cleanup if enabled will cause the Console installation to be removed at the end of tests, including any PVCs.
+var Cleanup bool
 
 func init() {
 	homeDir := os.Getenv("HOME")
@@ -24,5 +24,5 @@ func init() {
 	flag.StringVar(&Kubeconfig, "kubeconfig", filepath.Join(homeDir, ".kube", "config"), "absolute path to the kubeconfig file")
 	flag.StringVar(&ConsoleNamespace, "namespace", "lightbend-test", "kubernetes namespace where tests will run")
 	flag.StringVar(&TillerNamespace, "tiller-namespace", "", "kubernetes namespace where tiller is installed, leave default if kube-system")
-	flag.BoolVar(&NoCleanup, "no-cleanup", false, "prevent test suites from cleaning up after themselves so that cluster state can be inspected")
+	flag.BoolVar(&Cleanup, "cleanup", false, "enable for test suites to clean up the console installation")
 }

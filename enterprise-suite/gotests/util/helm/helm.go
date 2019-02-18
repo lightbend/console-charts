@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ func IsInstalled() bool {
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
-	if _, err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return false
 	}
 
@@ -37,10 +38,11 @@ func ReleaseExists(name string) bool {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 
-	if _, err := cmd.Run(); err != nil {
-		return strings.Trim(output.String(), " \n") == name
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Unexpected error when running helm list: %v\n", err)
+		return false
 	}
-	return false
+	return strings.Trim(output.String(), " \n") == name
 }
 
 func Install(k8sClient *kubernetes.Clientset, namespace string) error {
@@ -80,7 +82,7 @@ func Install(k8sClient *kubernetes.Clientset, namespace string) error {
 
 	// Do `helm init`
 	cmd := util.Cmd("helm", "init", "--wait", "--service-account", ServiceAccountName, "--upgrade", "--tiller-namespace", namespace)
-	if _, err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
+	if err := cmd.PrintOutput().Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 
