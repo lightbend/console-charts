@@ -40,7 +40,7 @@ var _ = Describe("all:apiserverproxy", func() {
 			proxyPort, args.ConsoleNamespace, serviceName, servicePath)
 		By(url)
 
-		err := util.WaitUntilSuccess(func() error {
+		err := util.WaitUntilSuccess(util.SmallWait, func() error {
 			resp, err := http.Get(url)
 			if err != nil {
 				return err
@@ -55,7 +55,7 @@ var _ = Describe("all:apiserverproxy", func() {
 			}
 
 			return nil
-		}, util.SmallWait)
+		})
 
 		Expect(err).ToNot(HaveOccurred())
 	},

@@ -231,7 +231,7 @@ const (
 )
 
 // Repeatedly runs a function, sleeping for a bit after each time, until it returns nil or reaches maxRepeats.
-func WaitUntilSuccess(f func() error, maxWait WaitTime) error {
+func WaitUntilSuccess(maxWait WaitTime, f func() error) error {
 	sleepTime := firstSleep
 	var lastErr error
 	for endTime := time.Now().Add(time.Duration(maxWait)); time.Now().Before(endTime); {

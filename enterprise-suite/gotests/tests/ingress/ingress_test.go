@@ -90,7 +90,7 @@ var _ = Describe("minikube:ingress", func() {
 
 		req.Host = "minikube.ingress.test"
 
-		err = util.WaitUntilSuccess(func() error {
+		err = util.WaitUntilSuccess(util.LongWait, func() error {
 			resp, err := httpClient.Do(req)
 			if err != nil {
 				return fmt.Errorf("console not accessible through ingress: %v", err)
@@ -101,7 +101,7 @@ var _ = Describe("minikube:ingress", func() {
 				return fmt.Errorf("wanted 200 response, got %d: %s", resp.StatusCode, string(body))
 			}
 			return nil
-		}, util.LongWait)
+		})
 		Expect(err).To(Succeed())
 	})
 })
