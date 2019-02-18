@@ -218,12 +218,13 @@ def check_credentials(creds):
         return success
 
 # compare the contents of current running installer and remote installer.
-# if they are different print warning a new installer is present
+# Print warning if they are different
 def check_new_install_script():
     connect_timeout=3
     curl_max_tmeout=5
     installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
 
+    # use curl command as first option.
     stdout, returncode = run('curl --version')
     if returncode == 0:
         rmt_installer_cnts, returncode = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
