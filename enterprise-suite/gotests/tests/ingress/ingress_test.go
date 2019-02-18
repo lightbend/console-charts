@@ -101,7 +101,7 @@ var _ = Describe("minikube:ingress", func() {
 				return fmt.Errorf("wanted 200 response, got %d: %s", resp.StatusCode, string(body))
 			}
 			return nil
-		})
+		}, util.LongWait)
 		Expect(err).To(Succeed())
 	})
 })

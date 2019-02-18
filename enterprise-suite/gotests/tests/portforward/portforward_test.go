@@ -26,10 +26,7 @@ var (
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 
-	var err error
-	localPort, err = util.FindFreePort()
-	Expect(err).To(Succeed())
-
+	localPort = util.FindFreePort()
 	portForwardCmd = util.Cmd("kubectl", "port-forward",
 		"-n", args.ConsoleNamespace,
 		consoleDeployment,
@@ -63,8 +60,8 @@ var _ = Describe("all:portforward", func() {
 			}
 
 			return nil
-		})
-		Expect(err).To(Succeed())
+		}, util.SmallWait)
+		Expect(err).ToNot(HaveOccurred())
 	})
 })
 

@@ -2,44 +2,72 @@ package apiserverproxy
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 	"testing"
 
+	"github.com/lightbend/gotests/args"
 	"github.com/lightbend/gotests/util"
 
 	"github.com/lightbend/gotests/testenv"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var (
-	proxyCmd *util.CmdBuilder
+	proxyPort int
+	proxyCmd  *util.CmdBuilder
 )
 
 var _ = BeforeSuite(func() {
-	proxyCmd = util.Cmd("kubectl", "proxy")
+	proxyPort = util.FindFreePort()
+	proxyCmd = util.Cmd("kubectl", "proxy", "-p", strconv.Itoa(proxyPort))
 	testenv.InitEnv()
 	Expect(proxyCmd.StartAsync()).To(Succeed())
 })
 
 var _ = AfterSuite(func() {
-	Expect(proxyCmd.StopAsync()).ShouldNot(HaveOccurred())
+	Expect(proxyCmd.StopAsync()).To(Succeed())
 	testenv.CloseEnv()
 })
 
 var _ = Describe("all:apiserverproxy", func() {
-	It("can access Console", func() {
+	DescribeTable("can access via apiserver proxy", func(serviceName, servicePath string) {
+		url := fmt.Sprintf("http://127.0.0.1:%d/api/v1/namespaces/%s/services/%s:http/proxy%s",
+			proxyPort, args.ConsoleNamespace, serviceName, servicePath)
+		By(url)
 
-	})
+		err := util.WaitUntilSuccess(func() error {
+			resp, err := http.Get(url)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			if resp.StatusCode != 200 {
+				return fmt.Errorf("wanted 200, got %d: %s", resp.StatusCode, string(body))
+			}
+
+			return nil
+		}, util.SmallWait)
+
+		Expect(err).ToNot(HaveOccurred())
+	},
+		Entry("console-server", "console-server", "/"),
+		Entry("es-monitor-api", "es-monitor-api", "/status"),
+		Entry("prometheus-server", "prometheus-server", "/-/healthy"),
+		Entry("grafana-server", "grafana-server", "/api/org"),
+		Entry("alertmanager", "alertmanager", "/-/healthy"),
+	)
 })
 
-func TestIngress(t *testing.T) {
+func TestApiserverProxy(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Ingress Suite")
-}
-
-// Returns base URL to access service $1 at port $2 via the proxy.
-func getProxyURL(kubectlProxyAddr, namespace, service, servicePort string) string {
-	return fmt.Sprintf("http://%s/api/v1/namespaces/%s/services/%s:%s/proxy",
-		kubectlProxyAddr, namespace, service, servicePort)
+	RunSpecs(t, "Apiserver Proxy Suite")
 }

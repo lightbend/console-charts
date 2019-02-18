@@ -41,7 +41,7 @@ var _ = BeforeSuite(func() {
 		if len(depName) > 0 {
 			err = util.WaitUntilSuccess(func() error {
 				return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, depName)
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		}
 	}
@@ -60,7 +60,7 @@ var _ = BeforeSuite(func() {
 	// wait until there's some scrapes finished
 	err = util.WaitUntilSuccess(func() error {
 		return threeScrapes("kube_pod_info")
-	})
+	}, util.LongWait)
 	Expect(err).To(Succeed())
 })
 
@@ -158,7 +158,7 @@ var _ = Describe("all:prometheus", func() {
 			appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(func() error {
 				return prom.HasData(appInstancesQuery)
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -166,12 +166,12 @@ var _ = Describe("all:prometheus", func() {
 			Expect(esMonitor.MakeMonitor("es-test/my_custom_monitor", "up")).To(Succeed())
 			err := util.WaitUntilSuccess(func() error {
 				return prom.HasModel("my_custom_monitor")
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 
 			err = util.WaitUntilSuccess(func() error {
 				return prom.HasData(`up{es_workload="es-test", es_monitor_type="es-test"}`)
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -179,7 +179,7 @@ var _ = Describe("all:prometheus", func() {
 			appInstancesWithMultiplePortsQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(func() error {
 				return prom.HasData(appInstancesWithMultiplePortsQuery)
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -190,7 +190,7 @@ var _ = Describe("all:prometheus", func() {
 					return fmt.Errorf("unable to discover app via 'Service' service discovery: %v", err)
 				}
 				return nil
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -199,12 +199,12 @@ var _ = Describe("all:prometheus", func() {
 			Expect(esMonitor.MakeMonitor("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
 			err := util.WaitUntilSuccess(func() error {
 				return prom.HasModel("my_custom_monitor_for_service")
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 
 			err = util.WaitUntilSuccess(func() error {
 				return prom.HasData("up{es_workload=\"es-test-via-service\", es_monitor_type=\"es-test-via-service\"}")
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -213,7 +213,7 @@ var _ = Describe("all:prometheus", func() {
 				return prom.HasData(fmt.Sprintf("count( count by (instance) (up{ "+
 					"job=\"kubernetes-services\", kubernetes_name=\"es-test-service-with-only-endpoints\", namespace=\"%v\""+
 					"}) ) == 1", args.ConsoleNamespace))
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -222,12 +222,12 @@ var _ = Describe("all:prometheus", func() {
 			Expect(esMonitor.MakeMonitor("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
 			err := util.WaitUntilSuccess(func() error {
 				return prom.HasModel("es-monitor-type-test")
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 
 			err = util.WaitUntilSuccess(func() error {
 				return prom.HasData(`{job="kubernetes-cadvisor", es_monitor_type="es-test"}`)
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 
@@ -239,7 +239,7 @@ var _ = Describe("all:prometheus", func() {
 					return fmt.Errorf("es-test workload data is missing es_monitor_type label: %v", err)
 				}
 				return nil
-			})
+			}, util.LongWait)
 			Expect(err).To(Succeed())
 		})
 	})
