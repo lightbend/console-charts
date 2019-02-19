@@ -23,6 +23,7 @@ import zipfile
 import datetime
 import base64
 import urllib2 as url
+import time
 from distutils.version import LooseVersion
 
 # Required dependency versions
@@ -214,11 +215,46 @@ def check_credentials(creds):
         else:
             printerr('error: check_credentials failed: {}'.format(err))
     finally:
-        return success 
+        return success
+
+# compare the contents of current running installer and remote installer.
+# Print warning if they are different
+def check_new_install_script():
+    connect_timeout=3
+    curl_max_tmeout=5
+    installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
+
+    # use curl command as first option.
+    stdout, returncode = run('curl --version')
+    if returncode == 0:
+        rmt_installer_cnts, returncode = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
+                                                                                                    curl_max_tmeout,
+                                                                                                    installer_url),
+                                             DEFAULT_TIMEOUT, show_stderr=True)
+        if returncode != 0:
+            return
+    else:
+        try:
+            response=url.urlopen(installer_url, timeout=connect_timeout)
+            if response == None:
+                return
+            rmt_installer_cnts=response.read()
+        except url.URLError as e:
+            # if we cannot connect to remote server, ignore for now...
+            return
+
+    # read the contents of the current installer
+    with open(os.path.abspath(__file__)) as f:
+        current_installer_contents = f.read()
+
+    if rmt_installer_cnts != current_installer_contents:
+        printinfo("\nNew installer is available, use the following command to download it")
+        printinfo ("    curl -O " + installer_url + "\n")
 
 def preinstall_check(creds, minikube=False, minishift=False):
     check_helm()
     check_kubectl()
+    check_new_install_script()
 
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
