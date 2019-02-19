@@ -9,4 +9,5 @@ rel_dir=$( dirname $script_dir )
 chart_dir=$rel_dir/$1
 
 cd $chart_dir
-yq r Chart.yaml version
+# Strip off any "-next" suffix
+yq r Chart.yaml version | sed 's/\(.*\)-next/\1/'

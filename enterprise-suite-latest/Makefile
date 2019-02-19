@@ -33,7 +33,7 @@ $(HELM_CHARTS_DIR)/docs/$(filter %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS
 	mkdir -p $(HELM_CHARTS_DIR)/build
 	cp -r ../$(ES_CHART) $(HELM_CHARTS_DIR)/build/$(CHART)
 	./scripts/munge-to-latest.sh $(HELM_CHARTS_DIR)/build/$(CHART)
-	helm package -d $(HELM_CHARTS_DIR)/docs $(HELM_CHARTS_DIR)/build/$(CHART)
+	helm package -d $(HELM_CHARTS_DIR)/docs $(HELM_CHARTS_DIR)/build/$(CHART) --version $(VERSION)
 
 clean::
 	rm -rf $(HELM_CHARTS_DIR)/build/$(CHART)
