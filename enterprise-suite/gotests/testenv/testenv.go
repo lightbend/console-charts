@@ -97,10 +97,13 @@ func InitEnv() {
 		for {
 			select {
 			case <-ticker.C:
-				if _, err := fmt.Fprintf(os.Stderr, "\nlbc.py installation is still ongoing [%fs]...\n", time.Now().Sub(start).Seconds()); err != nil {
+				if _, err := fmt.Fprintf(os.Stderr, "\nlbc.py installation is still ongoing [%fs]...", time.Now().Sub(start).Seconds()); err != nil {
 					panic(err)
 				}
 			case <-done:
+				if _, err := fmt.Fprintf(os.Stderr, "\n"); err != nil {
+					panic(err)
+				}
 				return
 			}
 		}
