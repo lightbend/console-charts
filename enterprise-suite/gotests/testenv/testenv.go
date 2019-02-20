@@ -91,12 +91,15 @@ func InitEnv() {
 
 	// Create an async goroutine to report when install is taking a while.
 	ticker := time.NewTicker(15 * time.Second)
+	start := time.Now()
 	done := make(chan struct{})
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				fmt.Fprintf(os.Stderr, "lbc.py installation is still ongoing, please check your environment if it's taking too long...")
+				if _, err := fmt.Fprintf(os.Stderr, "lbc.py installation is still ongoing [%fs]...", time.Now().Sub(start).Seconds()); err != nil {
+					panic(err)
+				}
 			case <-done:
 				return
 			}
