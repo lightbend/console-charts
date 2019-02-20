@@ -26,10 +26,7 @@ var (
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 
-	var err error
-	localPort, err = util.FindFreePort()
-	Expect(err).To(Succeed())
-
+	localPort = util.FindFreePort()
 	portForwardCmd = util.Cmd("kubectl", "port-forward",
 		"-n", args.ConsoleNamespace,
 		consoleDeployment,
@@ -46,7 +43,7 @@ var _ = Describe("all:portforward", func() {
 	It("forwards 127.0.0.1 requests to console", func() {
 		addr := fmt.Sprintf("http://127.0.0.1:%v", localPort)
 
-		err := util.WaitUntilSuccess(func() error {
+		err := util.WaitUntilSuccess(util.SmallWait, func() error {
 			resp, err := http.Get(addr)
 			if err != nil {
 				return err
@@ -64,7 +61,7 @@ var _ = Describe("all:portforward", func() {
 
 			return nil
 		})
-		Expect(err).To(Succeed())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })
 

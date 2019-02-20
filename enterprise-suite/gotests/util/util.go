@@ -190,10 +190,12 @@ func (cb *CmdBuilder) Run() error {
 // StartAsync starts the process without waiting for its results. It will check it hasn't immediately died.
 // Use StopAsync() to stop and wait for the results.
 func (cb *CmdBuilder) StartAsync() error {
+	// We should never timeout async processes.
+	cb.NoTimeout()
 	if err := cb.start(); err != nil {
 		return nil
 	}
-	// Check that process hasn't immediately died
+	// Check that process hasn't immediately died.
 	time.Sleep(100 * time.Millisecond)
 	if cb.cmd.ProcessState != nil && cb.cmd.ProcessState.Exited() {
 		return cb.wait(false)
@@ -216,27 +218,36 @@ func (cb *CmdBuilder) StopAsync() error {
 	return nil
 }
 
-const maxRepeats = 30
-const firstSleepMs = 20
-const maxSleepMs = 10000
+type WaitTime time.Duration
+
+const (
+	firstSleep = 10 * time.Millisecond
+	maxSleep   = 10 * time.Second
+
+	// Use for operations which are expected to succeed quickly.
+	SmallWait = WaitTime(5 * time.Second)
+	// Use for operations which can take a while to succeed.
+	LongWait = WaitTime(70 * time.Second)
+)
 
 // Repeatedly runs a function, sleeping for a bit after each time, until it returns nil or reaches maxRepeats.
-func WaitUntilSuccess(f func() error) error {
-	sleepTimeMs := firstSleepMs
+func WaitUntilSuccess(maxWait WaitTime, f func() error) error {
+	sleepTime := firstSleep
 	var lastErr error
-	for i := 0; i < maxRepeats; i++ {
+	for endTime := time.Now().Add(time.Duration(maxWait)); time.Now().Before(endTime); {
 		if lastErr = f(); lastErr == nil {
 			return nil
 		}
 		// Exponential backoff
-		sleepTimeMs = sleepTimeMs * 2
-		if sleepTimeMs > maxSleepMs {
-			sleepTimeMs = maxSleepMs
+		sleepTime *= 2
+		if sleepTime > maxSleep {
+			sleepTime = maxSleep
 		}
-		time.Sleep(time.Duration(sleepTimeMs) * time.Millisecond)
+		time.Sleep(sleepTime)
 	}
 
-	return fmt.Errorf("WaitUntilSuccess reached maximum repeats without f() succeeding: %v", lastErr)
+	return fmt.Errorf("WaitUntilSuccess failed: %v", lastErr)
+
 }
 
 func Close(closer io.Closer) {
@@ -247,11 +258,11 @@ func Close(closer io.Closer) {
 }
 
 // Returns a free TCP port on the local machine or an error
-func FindFreePort() (int, error) {
+func FindFreePort() int {
 	conn, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return 0, err
+		panic(fmt.Sprintf("unexpecte error when trying to find free port: %v", err))
 	}
 	defer conn.Close()
-	return conn.Addr().(*net.TCPAddr).Port, nil
+	return conn.Addr().(*net.TCPAddr).Port
 }

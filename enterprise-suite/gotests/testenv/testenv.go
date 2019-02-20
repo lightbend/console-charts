@@ -2,6 +2,8 @@ package testenv
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/onsi/ginkgo"
 
@@ -86,6 +88,28 @@ func InitEnv() {
 			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
 		}
 	}
+
+	// Create an async goroutine to report when install is taking a while.
+	ticker := time.NewTicker(15 * time.Second)
+	start := time.Now()
+	done := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if _, err := fmt.Fprintf(os.Stdout, "\nlbc.py installation is still ongoing [%.0fs]...", time.Now().Sub(start).Seconds()); err != nil {
+					panic(err)
+				}
+			case <-done:
+				if _, err := fmt.Fprintf(os.Stdout, "\n"); err != nil {
+					panic(err)
+				}
+				return
+			}
+		}
+	}()
+	defer close(done)
+	defer ticker.Stop()
 
 	// Install console
 	if err := lbc.Install(args.ConsoleNamespace, additionalArgs...); err != nil {
