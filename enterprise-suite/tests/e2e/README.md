@@ -4,6 +4,8 @@ Assume that es-console is running in http://192.168.99.100:30080/
 
 
 If your es-console is running in different url, please modify file `cypress/config/minikube.json`
+If you do e2e test against http://localhost:4200,  you need to change file `cypress/support/environment.dev.ts` with correct "minikube ip" for "grafanaUrl"
+
 
 To test it with cypress
 
