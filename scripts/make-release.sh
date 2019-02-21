@@ -33,8 +33,14 @@ fi
 echo "=== Releasing $chart"
 cd $chart_dir
 if [ -z "$version" ]; then
-    version=$(yq r Chart.yaml version)
-else
+    version_in_chart=$(yq r Chart.yaml version)
+    version_stripped=$(echo $version_in_chart | sed 's/\(.*\)-next/\1/')
+    # Strip "-next" suffix if it exists
+    if [ "$version_in_chart" != "$version_stripped" ] ; then
+        version=$version_stripped
+    fi
+fi
+if [ -n "$version" ]; then
     echo "setting version to $version"
     yq w -i Chart.yaml version $version
     git add Chart.yaml
@@ -63,17 +69,33 @@ git tag -a $git_tag -m "Release $git_tag"
 echo Tagged release with $git_tag
 
 # Update version for next build
-# Assumes version is in semver form and last number is preceded by a '.' character
+# Increment last number-only component and add '-next' if not already there.
+# e.g. 1.2.3            -->  1.2.4-next
+#      1.2.3-rc.4       -->  1.2.3-rc.5-next
+#      1.2.3-rc.4-next  -->  1.2.3-rc.5-next
 cd $chart_dir
-prefix=${version%.*}
-last_component=${version##*.}
-((last_component++))
-next_version="$prefix.$last_component"
+# This breaks the raw version into           +prefix (ending with '.')
+#                                            |     +number
+#                                            |     |       +suffix   an optional string starting with . or -, followed
+#                                            |     |       |         by alphanumerics (incl. '-') that are not all numbers.
+#                                            |     |       |
+next_version=$( echo $version | sed -E -e 's/(.*\.)([0-9]+)([\.-]([[:alnum:]]*[[:alpha:]-]+[[:alnum:]-]*))?/\1 \2 \3/' \
+        | awk '
+             # Increment number component and put version back together, adding "-next" if not already there.
+             { newver=$2+1
+               if ($3 == ".next") {
+                   printf "%s%d%s\n", $1, newver, $3
+               } else {
+                   printf "%s%d%s-next\n", $1, newver, $3
+               }
+             }
+         '
+     )
 echo
-echo "setting next version to $next_version"
+echo "Setting next version to $next_version"
 yq w -i Chart.yaml version $next_version
 git add Chart.yaml
-git commit -m "Incremented version for next release to $next_version"
+git commit -m "Set version for next release to $next_version"
 
 echo
 echo When ready, do a 'git push --follow-tags' to finish the release.
