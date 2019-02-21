@@ -225,7 +225,7 @@ def check_new_install_script():
     installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
 
     # use curl command as first option.
-    returncode, stdout, _ = run('curl --version')
+    returncode, _, _ = run('curl --version')
     if returncode == 0:
         returncode, rmt_installer_cnts, _ = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
                                                                                                        curl_max_tmeout,
@@ -331,10 +331,12 @@ def check_resource_list(cmd, expected, fail_msg):
 
 # Returns two lists.  For each of the PVC types we care about, the associated PV
 # is in the first or second list if the reclaim policy is RETAIN or not respectively.
-# Each list element is a tuple of PV name and claim.
+# Each list element is a tuple of PV name, claim, and status.
 def pvs_retained_and_not(namespace):
     claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
-    go_template='{{ range .items }}{{ if eq .spec.claimRef.name '+claimNames+' }}{{ printf "%s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name }}{{ end }}{{ end }}'
+    go_template=('{{ range .items }}{{ if eq .spec.claimRef.name '+claimNames+' }}'
+                 '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name .status.phase }}{{ end }}{{ end }}'
+                )
     returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
                                 .format(go_template))
 
@@ -351,7 +353,7 @@ def pvs_retained_and_not(namespace):
                 list = retained
             else:
                 list = notRetained
-            list.append((words[0], words[2]))
+            list.append((words[0], words[2], words[3]))
 
     return (retained, notRetained)
 
@@ -360,20 +362,37 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
     returncode, stdout, stderr = run('helm get ' + args.helm_name,
                                     DEFAULT_TIMEOUT, show_stderr=False)
 
+    if namespace == None:
+        namespace = args.namespace
+
+    # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
+    wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
+
     if 'Error: release: "{}" not found'.format(args.helm_name) in stderr:
-        # Fresh install so we're good with whatever
-        # This would also be the case when the user last uninstalled a Console with Retain'ed PVs.
-        # We may want to look for orphaned PVs that are associated with Console.  The user was
-        # warned about reusing/deleting them at uninstall time though.
+        # Fresh install so we're good with whatever but...
+        retainedPVs, _ = pvs_retained_and_not(namespace)
+        if len(retainedPVs) > 0:
+            # Look for orphaned PVs that are associated with Console.
+            # Even with usePersistentVolumes=true they'll be orphaned if they don't have status of "Available"
+            # (User was warned about this at uninstall time but reminding them...)
+            allAvailable = len([True for i in retainedPVs if i[2] != 'Available']) == 0
+            if ((not wantsPVs) or (wantsPVs and not allAvailable)):
+                printerr("WARNING: Console data exists in orphaned Persistent Volumes.")
+                if (not wantsPVs):
+                    printerr("         Set --usePersistentVolumes=true to reuse data.")
+                elif (wantsPVs and not allAvailable):
+                    printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+                printerr("         Proceeding with installation using new datasets.")
+                printerr("         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+                for pv in retainedPVs:
+                    printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1], pv[2]))
+
         return
     elif returncode != 0:
         printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
         return
 
     hasPVs = 'usePersistentVolumes: true' in stdout
-
-    # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
-    wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
 
     ## Choosing not to warn in this case.  Assume dev knows what they're doing.
     # if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
@@ -389,8 +408,6 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
         #    or
         #       we're about to "helm delete" and usePersistentVolumes was true
 
-        if namespace == None:
-            namespace = args.namespace
         retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
 
         if len(notRetainedPVs) > 0:
