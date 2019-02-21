@@ -64,7 +64,7 @@ test: lint script-tests ## Run unit tests
 # Note: This works for enterprise-suite and allows us to define a latest-specific version in enterprise-suite-latest
 $(HELM_CHARTS_DIR)/docs/$(filter-out %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
 	$(call banner)
-	helm package -d $(HELM_CHARTS_DIR)/docs $(CHART_DIR) --version $(VERSION)
+	helm package -d $(HELM_CHARTS_DIR)/docs $(CHART_DIR)
 
 .PHONY: lint
 lint: lint-helm lint-json lint-promql  ## Run all lint tests on chart files
