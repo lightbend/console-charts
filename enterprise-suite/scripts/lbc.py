@@ -225,11 +225,11 @@ def check_new_install_script():
     installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
 
     # use curl command as first option.
-    stdout, returncode = run('curl --version')
+    returncode, stdout, _ = run('curl --version')
     if returncode == 0:
-        rmt_installer_cnts, returncode = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
-                                                                                                    curl_max_tmeout,
-                                                                                                    installer_url),
+        returncode, rmt_installer_cnts, _ = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
+                                                                                                       curl_max_tmeout,
+                                                                                                       installer_url),
                                              DEFAULT_TIMEOUT, show_stderr=True)
         if returncode != 0:
             return
@@ -248,7 +248,7 @@ def check_new_install_script():
         current_installer_contents = f.read()
 
     if rmt_installer_cnts != current_installer_contents:
-        printinfo("\nNew installer is available, use the following command to download it")
+        printinfo("\nNew installer is available. Use the following command to download it")
         printinfo ("    curl -O " + installer_url + "\n")
 
 def preinstall_check(creds, minikube=False, minishift=False):
@@ -333,8 +333,6 @@ def check_resource_list(cmd, expected, fail_msg):
 # is in the first or second list if the reclaim policy is RETAIN or not respectively.
 # Each list element is a tuple of PV name and claim.
 def pvs_retained_and_not(namespace):
-    # returncode, stdout, _ = run('kubectl --namespace {} get pv --no-headers'
-    #                             .format(namespace))
     claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
     go_template='{{ range .items }}{{ if eq .spec.claimRef.name '+claimNames+' }}{{ printf "%s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name }}{{ end }}{{ end }}'
     returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
@@ -344,7 +342,7 @@ def pvs_retained_and_not(namespace):
     notRetained = []
 
     if returncode != 0:
-        printerr("Unable to retrieve PV info.  Proceed with caution.")
+        printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
     else:
         for pv in stdout.splitlines():
             words = pv.split()
@@ -364,9 +362,12 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
 
     if 'Error: release: "{}" not found'.format(args.helm_name) in stderr:
         # Fresh install so we're good with whatever
+        # This would also be the case when the user last uninstalled a Console with Retain'ed PVs.
+        # We may want to look for orphaned PVs that are associated with Console.  The user was
+        # warned about reusing/deleting them at uninstall time though.
         return
     elif returncode != 0:
-        printerr("Unable to retrieve PV info.  Proceed with caution.")
+        printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
         return
 
     hasPVs = 'usePersistentVolumes: true' in stdout
@@ -374,13 +375,15 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
     # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
     wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
 
-    if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
-        # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
-        #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
-        printerr("WARNING: usePersistentVolumes was false. Continued (un)installation will result in the loss of Console data.")
-        fail("Stopping.  Invoke again with '--unbind' to proceed anyway, but save your data first if so desired")
-    elif ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
-        # This case is the nasty one.  Chance of losing real data here.
+    ## Choosing not to warn in this case.  Assume dev knows what they're doing.
+    # if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
+    #     # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
+    #     #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
+    #     printerr("WARNING: usePersistentVolumes was false. Continued (un)installation will result in the loss of Console data.")
+    #     fail("Stopping.  Invoke again with '--unbind' to proceed anyway, but save your data first if so desired")
+    # elif
+    if ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
+        # Chance of losing real data here.
         # If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
         #       (which means going from PV to emptyDir volume)
         #    or
@@ -400,12 +403,9 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
         if len(retainedPVs) > 0:
             printerr("WARNING: Given the current and desired configs, this (un)installation will orphan existing Console data.")
             printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
-            printerr("         See associated documentation at blahdiblah.")
+            printerr("         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
             for pv in retainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
-
-# We may also want to look for orphaned PVs that appear associated with Console.  The user will
-# probably want to either reuse or delete these.
 
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
