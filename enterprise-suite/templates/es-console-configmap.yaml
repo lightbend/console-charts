@@ -223,10 +223,10 @@ data:
         try_files $2 $1/index.html;
       }
 
-      # If there is a single level path with no trailing slash, rewrite to trailing slash.
+      # If there is a path with no trailing slash that hasn't matched any location yet, rewrite to trailing slash.
       # E.g. "http://consoleurl/monitoring" -> "http://consoleurl/monitoring/".
-      location ~ ^/[^/]+$ {
-        rewrite ^(/[^/]+)$ $1/ last;
+      location ~ ^/.+[^/]$ {
+        rewrite ^(/.+[^/])$ $1/ last;
       }
 
       # Catch all handler that catches "http://consoleurl/prefix1/prefix2/", and redirects to
