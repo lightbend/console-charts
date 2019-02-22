@@ -15,7 +15,7 @@ data:
       more_set_headers
         "X-Frame-Options: DENY"
         "X-XSS-Protection: 1";
-      set $app_csp "default-src 'self' 'unsafe-eval' 'unsafe-inline';";
+      set $app_csp "img-src 'self' data:; default-src 'self' 'unsafe-eval' 'unsafe-inline';";
 
       # use external resolver to lookup backends, cache for 30 seconds
 
