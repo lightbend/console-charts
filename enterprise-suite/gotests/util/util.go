@@ -24,6 +24,7 @@ type CmdBuilder struct {
 	expectZeroExitStatus bool
 	printStdout          bool
 	printStderr          bool
+	printCommand         bool
 	cmd                  *exec.Cmd
 	cancelFunc           context.CancelFunc
 	cmdStdout            io.ReadCloser
@@ -34,12 +35,13 @@ type CmdBuilder struct {
 
 func Cmd(name string, args ...string) *CmdBuilder {
 	return &CmdBuilder{
-		name:        name,
-		args:        args,
-		envVars:     nil,
-		timeout:     DefaultTimeout,
-		printStdout: false,
-		printStderr: false,
+		name:         name,
+		args:         args,
+		envVars:      nil,
+		timeout:      DefaultTimeout,
+		printStdout:  false,
+		printStderr:  false,
+		printCommand: false,
 	}
 }
 
@@ -69,6 +71,12 @@ func (cb *CmdBuilder) PrintOutput() *CmdBuilder {
 	return cb
 }
 
+// PrintCommand will cause the command and its arguments to be printed before it executes.
+func (cb *CmdBuilder) PrintCommand() *CmdBuilder {
+	cb.printCommand = true
+	return cb
+}
+
 func (cb *CmdBuilder) CaptureStdout(out *strings.Builder) *CmdBuilder {
 	cb.captureStdout = out
 	return cb
@@ -91,6 +99,10 @@ func (cb *CmdBuilder) String() string {
 func (cb *CmdBuilder) start() error {
 	if cb.cmd != nil {
 		panic(fmt.Sprintf("%v: attempted to start the same command multiple times", cb))
+	}
+
+	if cb.printCommand {
+		fmt.Fprintf(ginkgo.GinkgoWriter, "%v\n", cb)
 	}
 
 	// Set up timeout context if needed
