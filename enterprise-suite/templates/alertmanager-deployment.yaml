@@ -19,11 +19,18 @@ spec:
     matchLabels:
       app: prometheus
       component: alertmanager
+
   template:
     metadata:
       annotations:
         checksum/alertmanager-config: {{ (.Files.Glob "alertmanager/*").AsConfig | sha256sum }}
       labels:
+        app.kubernetes.io/name: {{ template "name" . }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: alertmanager
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: alertmanager
     spec:

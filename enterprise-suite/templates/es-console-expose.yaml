@@ -10,6 +10,7 @@ spec:
     targetPort: 8080
     nodePort: {{ .Values.esConsoleExposePort }}
   selector:
-    run: es-console
+    app.kubernetes.io/name: {{ template "name" . }}
+    app.kubernetes.io/component: es-console
   type: {{ .Values.exposeServices | default "NodePort" }}
 {{ end }}

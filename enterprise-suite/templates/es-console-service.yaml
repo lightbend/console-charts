@@ -8,5 +8,6 @@ spec:
       port: 80
       targetPort: 8080
   selector:
-    run: es-console
+    app.kubernetes.io/name: {{ template "name" . }}
+    app.kubernetes.io/component: es-console
   type: ClusterIP

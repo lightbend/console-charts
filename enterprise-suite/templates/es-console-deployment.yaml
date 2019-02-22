@@ -3,11 +3,21 @@ kind: Deployment
 metadata:
   name: es-console
 spec:
+  selector:
+    matchLabels:
+      run: es-console
+
   template:
     metadata:
       annotations:
         checksum/es-console-config: {{ include (print $.Template.BasePath "/es-console-configmap.yaml") . | sha256sum }}
       labels:
+        app.kubernetes.io/name: {{ template "name" . }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: es-console
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         run: es-console
     spec:
       {{ if .Values.podUID }}

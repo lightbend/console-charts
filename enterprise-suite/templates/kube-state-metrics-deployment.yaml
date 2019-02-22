@@ -7,15 +7,24 @@ metadata:
   name: prometheus-kube-state-metrics
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: prometheus
       component: kube-state-metrics
+
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: {{ template "name" . }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: kube-state-metrics
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: kube-state-metrics
+
     spec:
       {{ if .Values.podUID }}
       securityContext:
