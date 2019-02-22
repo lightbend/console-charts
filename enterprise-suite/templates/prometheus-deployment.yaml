@@ -18,15 +18,23 @@ spec:
     matchLabels:
       app: prometheus
       component: server
+
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: {{ template "name" . }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: prometheus
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: server
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
         checksum/es-monitor-api-config: {{ (.Files.Glob "es-monitor-api/*").AsConfig | sha256sum }}
         checksum/bare-prometheus-config: {{ include (print $.Template.BasePath "/prometheus-configmap-prom.yaml") . | sha256sum }}
+
     spec:
       serviceAccountName: prometheus-server
 

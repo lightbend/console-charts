@@ -14,9 +14,20 @@ spec:
     # Needed for helm upgrade to succeed.
     rollingUpdate: null
 
+  selector:
+    matchLabels:
+      app: grafana
+      component: server
+
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: {{ template "name" . }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: grafana
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: grafana
         component: server
       annotations:
@@ -24,6 +35,7 @@ spec:
         {{ .Values.prometheusDomain }}/port: "3000"
         checksum/datasource-config: {{ include (print $.Template.BasePath "/es-grafana-configmap-datasource.yaml") . | sha256sum }}
         checksum/plugin-config: {{ (.Files.Glob "es-grafana/*").AsConfig | sha256sum }}
+
     spec:
       {{ if .Values.podUID }}
       securityContext:

@@ -8,5 +8,5 @@ spec:
       port: 80
       targetPort: 8180
   selector:
-    app: prometheus
-    component: server
+    app.kubernetes.io/name: {{ template "name" . }}
+    app.kubernetes.io/component: prometheus
