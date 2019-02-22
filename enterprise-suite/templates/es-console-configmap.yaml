@@ -217,10 +217,16 @@ data:
         alias $base$2;
       }
 
-      # If there is a single level path with no trailing slash, redirect to trailing slash.
-      # E.g. "http://consoleurl/monitoring" -> 301 to "http://consoleurl/monitoring/".
-      location ~ ^/([^/]+)$ {
-        return 301 $scheme://$host$request_uri/;
+      # Handler for application routes and assets not inside of /assets.
+      location ~ ^(.*)(/(cluster|.*\.js|.*\.css|.*\.woff|.*\.woff2|.*\.ttf))$ {
+        root $base;
+        try_files $2 $1/index.html;
+      }
+
+      # If there is a single level path with no trailing slash, rewrite to trailing slash.
+      # E.g. "http://consoleurl/monitoring" -> "http://consoleurl/monitoring/".
+      location ~ ^/[^/]+$ {
+        rewrite ^(/[^/]+)$ $1/ last;
       }
 
       # Catch all handler that catches "http://consoleurl/prefix1/prefix2/", and redirects to
