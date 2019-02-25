@@ -236,5 +236,4 @@ data:
         root $base;
         try_files $2 $1/index.html;
       }
-
     }
