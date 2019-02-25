@@ -389,7 +389,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
 
         return
     elif returncode != 0:
-        printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
+        printerr("Unable to retrieve get release information.  Proceed with caution.")
         return
 
     hasPVs = 'usePersistentVolumes: true' in stdout
