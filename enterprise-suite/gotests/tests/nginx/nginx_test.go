@@ -35,7 +35,7 @@ var _ = Describe("all:nginx_rules", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.Headers).Should(HaveKeyWithValue("X-Frame-Options", []string{"DENY"}))
 		Expect(res.Headers).Should(HaveKeyWithValue("X-Xss-Protection", []string{"1"}))
-		Expect(res.Headers).Should(HaveKeyWithValue("Content-Security-Policy", []string{"default-src 'self' 'unsafe-eval' 'unsafe-inline';"}))
+		Expect(res.Headers).Should(HaveKeyWithValue("Content-Security-Policy", []string{"img-src 'self' data:; default-src 'self' 'unsafe-eval' 'unsafe-inline';"}))
 		Expect(res.Headers).Should(HaveKeyWithValue("Cache-Control", []string{"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"}))
 	},
 		Entry("cluster", "/cluster"),
