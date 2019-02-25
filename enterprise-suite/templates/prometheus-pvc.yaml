@@ -1,12 +1,12 @@
-{{ if .Values.managePersistentVolumes }}
+{{ if .Values.usePersistentVolumes }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: prometheus-storage
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
+  {{ if or .Values.defaultStorageClass .Values.prometheusStorageClass }}
   storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}
+  {{ end }}
   accessModes:
   - ReadWriteOnce
   resources:

@@ -16,7 +16,7 @@ Running all tests locally:
 `ginkgo -r`
 
 or if console-charts is under GOPATH you can do:
-`GOCACHE=on GO111MODULE=on ginkgo -r`
+`GO111MODULE=on ginkgo -r`
 
 If Tiller is installed in other namespace than `kube-system`, you can specify that with a flag:
 `ginkgo -r -- --tiller-namespace=lightbend-test`

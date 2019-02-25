@@ -1,12 +1,12 @@
-{{ if (and .Values.createAlertManager .Values.managePersistentVolumes) }}
+{{ if (and .Values.createAlertManager .Values.usePersistentVolumes) }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: alertmanager-storage
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
+  {{ if or .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
   storageClassName: {{ default .Values.defaultStorageClass .Values.esAlertmanagerStorageClass }}
+  {{ end }}
   accessModes:
   - ReadWriteOnce
   resources:

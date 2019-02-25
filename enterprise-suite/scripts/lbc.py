@@ -26,7 +26,7 @@ import urllib2 as url
 import time
 from distutils.version import LooseVersion
 
-# Required dependency versions
+# Minimum required dependency versions
 REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
 REQ_VER_MINIKUBE = '0.29'
@@ -44,7 +44,7 @@ CONSOLE_DEPLOYMENTS = [
 # Alertmanager deployment, this check can be turned off with --external-alertmanager
 CONSOLE_ALERTMANAGER_DEPLOYMENT = 'prometheus-alertmanager'
 
-# Install checks if these are already created, tries to reuse them if so
+# PVCs we need to pay attention to.
 CONSOLE_PVCS = [
     'alertmanager-storage',
     'es-grafana-storage',
@@ -74,7 +74,7 @@ def make_tempdir():
     return tempfile.mkdtemp()
 
 # Runs a given command with optional timeout.
-# Returns (stdout, returncode) tuple. If timeout
+# Returns (returncode, stdout, stderr) tuple. If timeout
 # occurred, returncode will be negative (-9 on macOS).
 def run(cmd, timeout=None, stdin=None, show_stderr=True):
     stdout, stderr, returncode, timer = None, None, None, None
@@ -99,15 +99,15 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
     finally:
         if timer != None:
             timer.cancel()
-        return stdout, returncode
+        return returncode, stdout, stderr
 
 # Executes a command if dry_run=False,
 # prints it to stdout or stderr, handles failure status
-# codes by exiting with and error if can_fail=False.
+# codes by exiting with an error if can_fail=False.
 def execute(cmd, can_fail=False, print_to_stdout=False):
     printerr(cmd)
     if not args.dry_run:
-        stdout, returncode = run(cmd)
+        returncode, stdout, _ = run(cmd)
         if print_to_stdout:
             printinfo(stdout)
         else:
@@ -123,7 +123,7 @@ def require_version(cmd, required_version):
     name = cmd.partition(' ')[0]
 
     # Use 1s timeout, mainly for docker when DOCKER_HOST is unreachable
-    stdout, returncode = run(cmd, 1)
+    returncode, stdout, _ = run(cmd, 1)
 
     if returncode == None:
         fail("Required program '" + name + "' not found")
@@ -142,18 +142,18 @@ def require_version(cmd, required_version):
     printerr("warning: unable to determine installed version of '" + name + "'")
 
 def is_running_minikube():
-    stdout, returncode = run('minikube status')
+    returncode, stdout, _ = run('minikube status')
     if returncode == 0:
         if ('minikube: Running' in stdout) and ('cluster: Running') in stdout:
-            stdout, returncode = run('kubectl config current-context')
+            returncode, stdout, _ = run('kubectl config current-context')
             return returncode == 0 and stdout == 'minikube'
     return False
 
 def is_running_minishift():
-    stdout, returncode = run('minishift status', show_stderr=False)
+    returncode, stdout, _ = run('minishift status', show_stderr=False)
     if returncode == 0:
         if ('minishift: Running' in stdout) and ('cluster: Running') in stdout:
-            stdout, returncode = run('kubectl config current-context')
+            returncode, stdout, _ = run('kubectl config current-context')
             return returncode == 0 and stdout == 'minishift'
     return False
 
@@ -167,7 +167,7 @@ def check_kubectl(minishift=False):
     require_version('kubectl version --client=true --short=true', REQ_VER_KUBECTL)
 
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
-    stdout, returncode = run('kubectl version', DEFAULT_TIMEOUT)
+    returncode, _, _ = run('kubectl version', DEFAULT_TIMEOUT)
     if returncode != 0:
         msg = 'Cannot reach cluster with kubectl'
         if minishift:
@@ -187,9 +187,9 @@ def check_credentials(creds):
     api_url = registry + '/enterprise-suite/es-monitor-api/tags/list'
 
     # Use curl for checking credentials by default, only do urllib2 backup in case curl isn't installed
-    stdout, returncode = run('curl --version')
+    returncode, stdout, _ = run('curl --version')
     if returncode == 0:
-        stdout, returncode = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
+        returncode, stdout, _ = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
             .format(creds[0], creds[1], api_url), DEFAULT_TIMEOUT, show_stderr=True)
         return is_int(stdout) and int(stdout) == 200
 
@@ -225,11 +225,11 @@ def check_new_install_script():
     installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
 
     # use curl command as first option.
-    stdout, returncode = run('curl --version')
+    returncode, _, _ = run('curl --version')
     if returncode == 0:
-        rmt_installer_cnts, returncode = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
-                                                                                                    curl_max_tmeout,
-                                                                                                    installer_url),
+        returncode, rmt_installer_cnts, _ = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
+                                                                                                       curl_max_tmeout,
+                                                                                                       installer_url),
                                              DEFAULT_TIMEOUT, show_stderr=True)
         if returncode != 0:
             return
@@ -248,7 +248,7 @@ def check_new_install_script():
         current_installer_contents = f.read()
 
     if rmt_installer_cnts != current_installer_contents:
-        printinfo("\nNew installer is available, use the following command to download it")
+        printinfo("\nNew installer is available. Use the following command to download it")
         printinfo ("    curl -O " + installer_url + "\n")
 
 def preinstall_check(creds, minikube=False, minishift=False):
@@ -264,7 +264,7 @@ def preinstall_check(creds, minikube=False, minishift=False):
         require_version('oc version', REQ_VER_OC)
 
     # Check if helm is set up inside a cluster
-    stdout, returncode = run('helm version', DEFAULT_TIMEOUT)
+    returncode, _, _ = run('helm version', DEFAULT_TIMEOUT)
     if returncode != 0:
         fail('Cannot get helm status. Did you set up helm inside your cluster?')
 
@@ -276,30 +276,39 @@ def preinstall_check(creds, minikube=False, minishift=False):
                  'proceeding with the installation anyway')
 
 # Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
+# Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    stdout, returncode = run('helm status ' + release_name,
+    returncode, stdout, _ = run('helm status ' + release_name,
                             DEFAULT_TIMEOUT, show_stderr=False)
+    namespace = None
     if returncode != 0:
-        return 'notfound' 
+        return 'notfound', namespace
+
+    match = re.search(r'^NAMESPACE: ([\w-]+)', stdout, re.MULTILINE)
+    if match:
+        namespace = match.group(1)
     
     if 'STATUS: DEPLOYED' in stdout or (stdout == ''):
-        return 'deployed'
-    if 'STATUS: FAILED' in stdout:
-        return 'failed'
-    if 'STATUS: PENDING_INSTALL' in stdout:
-        return 'pending'
-    if 'STATUS: PENDING_UPGRADE' in stdout:
-        return 'pending'
-    if 'STATUS: DELETING' in stdout:
-        return 'deleting'
-    return 'unknown'
+        status = 'deployed'
+    elif 'STATUS: FAILED' in stdout:
+        status = 'failed'
+    elif 'STATUS: PENDING_INSTALL' in stdout:
+        status = 'pending'
+    elif 'STATUS: PENDING_UPGRADE' in stdout:
+        status = 'pending'
+    elif 'STATUS: DELETING' in stdout:
+        status = 'deleting'
+    else:
+        status = 'unknown'
+
+    return status, namespace
 
 # Helper function that runs a command, then looks for expected strings
 # in the output, one per line. Returns True if everything in the 'expected'
 # list was found, False if nothing was found. If some resources were found,
 # but not all, it fails (sys.exit()) with a given message.
 def check_resource_list(cmd, expected, fail_msg):
-    stdout, returncode = run(cmd)
+    returncode, stdout, _ = run(cmd)
     if returncode == 0:
         all_found = True
         found_resources = []
@@ -320,13 +329,100 @@ def check_resource_list(cmd, expected, fail_msg):
         return all_found
     return False
 
-# Checks for console PVCs
-def are_pvcs_created(namespace):
-    return check_resource_list(
-        cmd='kubectl get pvc --namespace={} --no-headers'.format(namespace),
-        expected=CONSOLE_PVCS,
-        fail_msg='Found some PVCs ({}) from previous console install, but not all expected: {}.\nTo avoid data loss, please remove them manually'
-    )
+# Returns two lists.  For each of the PVC types we care about, the associated PV
+# is in the first or second list if the reclaim policy is RETAIN or not respectively.
+# Each list element is a tuple of PV name, claim, and status.
+def pvs_retained_and_not(namespace):
+    claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
+    go_template=('{{ range .items }}{{ if eq .spec.claimRef.name '+claimNames+' }}'
+                 '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name .status.phase }}{{ end }}{{ end }}'
+                )
+    returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
+                                .format(go_template))
+
+    retained = []
+    notRetained = []
+
+    if returncode != 0:
+        printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
+    else:
+        for pv in stdout.splitlines():
+            words = pv.split()
+
+            if words[1] == 'Retain':
+                list = retained
+            else:
+                list = notRetained
+            list.append((words[0], words[2], words[3]))
+
+    return (retained, notRetained)
+
+# Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
+def check_pv_usage(aboutToUninstall=False, namespace=None):
+    returncode, stdout, stderr = run('helm get ' + args.helm_name,
+                                    DEFAULT_TIMEOUT, show_stderr=False)
+
+    if namespace == None:
+        namespace = args.namespace
+
+    # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
+    wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
+
+    if 'Error: release: "{}" not found'.format(args.helm_name) in stderr:
+        # Fresh install so we're good with whatever but...
+        retainedPVs, _ = pvs_retained_and_not(namespace)
+        if len(retainedPVs) > 0:
+            # Look for orphaned PVs that are associated with Console.
+            # Even with usePersistentVolumes=true they'll be orphaned if they don't have status of "Available"
+            # (User was warned about this at uninstall time but reminding them...)
+            allAvailable = len([True for i in retainedPVs if i[2] != 'Available']) == 0
+            if ((not wantsPVs) or (wantsPVs and not allAvailable)):
+                printerr("WARNING: Console data exists in orphaned Persistent Volumes.")
+                if (not wantsPVs):
+                    printerr("         Set --usePersistentVolumes=true to reuse data.")
+                elif (wantsPVs and not allAvailable):
+                    printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+                printerr("         Proceeding with installation using new datasets.")
+                printerr("         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+                for pv in retainedPVs:
+                    printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1], pv[2]))
+
+        return
+    elif returncode != 0:
+        printerr("Unable to retrieve get release information.  Proceed with caution.")
+        return
+
+    hasPVs = 'usePersistentVolumes: true' in stdout
+
+    ## Choosing not to warn in this case.  Assume dev knows what they're doing.
+    # if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
+    #     # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
+    #     #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
+    #     printerr("WARNING: usePersistentVolumes was false. Continued (un)installation will result in the loss of Console data.")
+    #     fail("Stopping.  Invoke again with '--delete-pvcs' to proceed anyway, but save your data first if so desired")
+    # elif
+    if ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
+        # Chance of losing real data here.
+        # If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
+        #       (which means going from PV to emptyDir volume)
+        #    or
+        #       we're about to "helm delete" and usePersistentVolumes was true
+
+        retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
+
+        if len(notRetainedPVs) > 0:
+            printerr("WARNING: Given the current and desired configs, continued (un)installation will result in the loss of Console data.")
+            for pv in notRetainedPVs:
+                printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
+            printerr("Invoke again with '--delete-pvcs' to proceed anyway, but save your data first if so desired")
+            fail("Stopping")
+
+        if len(retainedPVs) > 0:
+            printerr("WARNING: Given the current and desired configs, this (un)installation will orphan existing Console data.")
+            printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+            printerr("         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+            for pv in retainedPVs:
+                printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
 
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
@@ -387,7 +483,7 @@ def install(creds_file):
         chart_ref = 'es-repo/' + args.chart
     
     if args.export_yaml != None:
-        # Tilerless path - renders kubernetes resources and prints to stdout
+        # Tillerless path - renders kubernetes resources and prints to stdout
 
         creds_exec_arg = ''
         if args.export_yaml == 'creds':
@@ -423,7 +519,7 @@ def install(creds_file):
         should_upgrade = False
 
         # Check status of existing install under the same release name
-        status = install_status(args.helm_name)
+        status, _ = install_status(args.helm_name)
         if status == 'deployed':
             if args.force_install:
                 uninstall(status=status)
@@ -442,30 +538,30 @@ def install(creds_file):
         if args.wait:
             helm_args += ' --wait'
 
+        if not args.delete_pvcs:
+            check_pv_usage()
+
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
                 .format(args.helm_name, chart_ref, version_arg,
                         creds_arg, helm_args))
         else:
-            createPVs = len(filter(lambda x: 'managePersistentVolumes=false' in x, sys.argv)) == 0
-            if createPVs and are_pvcs_created(args.namespace):
-                printerr('info: Found existing PVCs from a previous console installation.')
-                printerr('info: Please remove them with `kubectl delete pvc`, or pass --set managePersistentVolumes=false.')
-                printerr('info: Otherwise, the install may fail.')
-
             execute('helm install {} --name {} --namespace {} {} {} {}'
                 .format(chart_ref, args.helm_name, args.namespace,
                         version_arg, creds_arg, helm_args))
 
 def uninstall(status=None):
     if status == None:
-        status = install_status(args.helm_name)
+        status, namespace = install_status(args.helm_name)
 
     if status == 'notfound':
         fail('Unable to delete console installation - no release named {} found'.format(args.helm_name))
     elif status == 'deleting':
         fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
     else:
+        if not args.delete_pvcs:
+            check_pv_usage(aboutToUninstall=True, namespace=namespace)
+
         printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
         execute('helm delete --purge ' + args.helm_name)
         printerr(('warning: helm delete does not wait for resources to be removed'
@@ -496,12 +592,12 @@ def import_credentials():
 def check_install(external_alertmanager=False):
     def deployment_running(name):
         printinfo('Checking deployment {} ... '.format(name), end='')
-        stdout, returncode = run('kubectl --namespace {} get deploy/{} --no-headers'
+        returncode, stdout, _ = run('kubectl --namespace {} get deploy/{} --no-headers'
                                  .format(args.namespace, name))
         if returncode == 0:
             # Skip first (deployment name) and last (running time) items
             cols = [int(col) for col in stdout.replace('/', ' ').split()[1:-1]]
-            desired, current, up_to_date, available = cols[0], cols[1], cols[2], cols[3]
+            desired, _, _, available = cols[0], cols[1], cols[2], cols[3]
             if desired <= 0:
                 printinfo('failed')
                 printerr('Deployment {} status check: expected to see 1 or more desired replicas, found 0'
@@ -545,7 +641,7 @@ def debug_dump(args):
 
     def get_pod_containers(pod):
         # This magic gives us all the containers in a pod
-        containers, returncode = run("kubectl --namespace {} get pods {} -o jsonpath='{{.spec.containers[*].name}}'"
+        returncode, containers, _ = run("kubectl --namespace {} get pods {} -o jsonpath='{{.spec.containers[*].name}}'"
                                      .format(args.namespace, pod))
         if returncode == 0:
             return containers.split()
@@ -554,7 +650,7 @@ def debug_dump(args):
                  .format(pod))
 
     def write_log(archive, pod, container):
-        stdout, returncode = run('kubectl --namespace {} logs {} -c {}'
+        returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {}'
                                  .format(args.namespace, pod, container),
                                  show_stderr=False)
         if returncode == 0:
@@ -565,7 +661,7 @@ def debug_dump(args):
                      .format(container, pod))
 
         # Try to get previous logs too
-        stdout, returncode = run('kubectl --namespace {} logs {} -c {} -p'
+        returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {} -p'
                                  .format(args.namespace, pod, container),
                                  show_stderr=False)
         if returncode == 0:
@@ -581,7 +677,7 @@ def debug_dump(args):
         archive = zipfile.ZipFile(filename, 'w')
 
     # List all resources in our namespace
-    stdout, returncode = run('kubectl --namespace {} get all'.format(args.namespace),
+    returncode, stdout, _ = run('kubectl --namespace {} get all'.format(args.namespace),
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-get-all.txt', stdout)
@@ -590,7 +686,7 @@ def debug_dump(args):
                 .format(args.namespace))
 
     # Describe all resources
-    stdout, returncode = run('kubectl --namespace {} describe all'.format(args.namespace),
+    returncode, stdout, _ = run('kubectl --namespace {} describe all'.format(args.namespace),
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-describe-all.txt', stdout)
@@ -599,7 +695,7 @@ def debug_dump(args):
                 .format(args.namespace))
 
     # Describe PVCs
-    stdout, returncode = run('kubectl --namespace {} get pvc'.format(args.namespace),
+    returncode, stdout, _ = run('kubectl --namespace {} get pvc'.format(args.namespace),
                              show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-get-pvc.txt', stdout)
@@ -608,7 +704,7 @@ def debug_dump(args):
                 .format(args.namespace))
 
     # Iterate over pods
-    stdout, returncode = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
+    returncode, stdout, _ = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
     if returncode == 0:
         for line in stdout.split('\n'):
             if len(line) > 0:
@@ -664,6 +760,8 @@ def setup_args(argv):
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
+        subparser.add_argument('--delete-pvcs', help='ignore warnings about PVs and proceed anyway. CAUTION!',
+                            action='store_true')
         subparser.add_argument('--dry-run', help='only print out the commands that will be executed',
                                action='store_true')
         subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')

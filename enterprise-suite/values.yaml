@@ -61,8 +61,6 @@ daemonSetApiVersion: apps/v1beta2
 imagePullPolicy: IfNotPresent
 # prometheus annotation domain, e.g. `domain/scrape=true`
 prometheusDomain: prometheus.io
-# (deprecated) minikube debug resources - use exposeServices=NodePort instead
-minikube: false
 # Run pods as the given UID. There is no sensible default for this, so customers need to provide it.
 podUID:
 # Commercial image credentials - set `username` and `password` to install as Kubernetes Secret.
@@ -106,12 +104,15 @@ prometheusMemoryRequest: 250Mi
 # Persistent Volumes
 #
 # Set to true to use persistent volumes, otherwise emptyDir volumes are used.
-usePersistentVolumes: false
-# If true, the chart manages persistent volumes by creating PVCs. Set to false to not manage PVCs at all.
-# Warning: If you "unmanage" PVCs that helm is managing by setting this to false, helm will delete those PVCs.
-managePersistentVolumes: true
-# Default StorageClass to use for persistent volumes
-defaultStorageClass: standard
+usePersistentVolumes: true
+# Default StorageClass to use for persistent volumes.  If unspecified, use the cluster's DefaultStorageClass.
+#defaultStorageClass: standard
+# Application-specific storage classes. If unspecified (and usePersistentVolumes is true), the application-specific
+# PVCs will use the defaultStorageClass setting.
+#prometheusStorageClass:
+#esAlertmanagerStorageClass:
+#esGrafanaStorageClass:
+
 # Prometheus volume size - used for storing metrics data.
 prometheusVolumeSize: 256Gi
 # Alertmanager volume size - used for storing silences.
@@ -131,3 +132,12 @@ esGrafanaEnvVars:
 #  GF_SMTP_HOST: smtp.gmail.com:465
 #  GF_SMTP_USER: username
 #  GF_SMTP_PASSWORD: password
+
+#################################################
+# Deprecated
+#
+# minikube debug resources - use exposeServices=NodePort instead
+minikube: false
+# (Ignored)  If true, the chart manages persistent volumes by creating PVCs. Set to false to not manage PVCs at all.
+# Warning: If you "unmanage" PVCs that helm is managing by setting this to false, helm will delete those PVCs.
+#managePersistentVolumes: true

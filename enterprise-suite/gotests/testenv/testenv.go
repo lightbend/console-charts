@@ -172,11 +172,5 @@ func cleanup(allowFailures bool) {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 
-	// Delete PVCs which are left after helm uninstall
-	for _, pvc := range consolePVCs {
-		if err := kube.DeletePvc(K8sClient, args.ConsoleNamespace, pvc); err != nil && !allowFailures {
-			Expect(err).To(Succeed(), "delete PVCs")
-		}
-	}
 	fmt.Fprintln(ginkgo.GinkgoWriter, "Done cleaning up old installation")
 }
