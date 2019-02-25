@@ -29,7 +29,9 @@ var _ = AfterSuite(func() {
 
 var _ = Describe("all:nginx_rules", func() {
 	DescribeTable("returns security headers for console endpoints", func(endpoint string) {
-		res, err := urls.Get200(testenv.ConsoleAddr + endpoint)
+		url := testenv.ConsoleAddr + endpoint
+		By(url)
+		res, err := urls.Get200(url)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.Headers).Should(HaveKeyWithValue("X-Frame-Options", []string{"DENY"}))
 		Expect(res.Headers).Should(HaveKeyWithValue("X-Xss-Protection", []string{"1"}))
@@ -45,7 +47,9 @@ var _ = Describe("all:nginx_rules", func() {
 	)
 
 	DescribeTable("should rewrite a missing trailing slash", func(prefix string) {
-		res, err := urls.Get200(testenv.ConsoleAddr + prefix)
+		url := testenv.ConsoleAddr + prefix
+		By(url)
+		res, err := urls.Get200(url)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.Body).To(ContainSubstring(`<base href="%v/">`, prefix))
 	},
