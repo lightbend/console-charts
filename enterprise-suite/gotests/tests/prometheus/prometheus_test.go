@@ -127,7 +127,7 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(Succeed())
 		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 0")).ToNot(Succeed())
 		// None of the metrics should have kubernetes_namespace label
-		// Expect(prom.HasData("{kubernetes_namespace!=\"\"}")).ToNot(Succeed())
+		Expect(prom.HasData("{kubernetes_namespace!=\"\"}")).ToNot(Succeed())
 	})
 
 	DescribeTable("kube state metrics",
