@@ -1,0 +1,24 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: es-alert-test
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: es-alert-test
+        test: alert-test
+      annotations:
+        console-backend-e2e.io/scrape: "true"
+        console-backend-e2e.io/port: "8080"
+    spec:
+      containers:
+        # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
+        - name: es-alert-test
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: metrics
