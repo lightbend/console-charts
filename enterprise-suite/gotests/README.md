@@ -35,3 +35,10 @@ For example `all:prometheus` should be testing in all platforms, while `minikube
 Tracking of dependencies is done using Go 1.11 module system. To add a dependency, simply write an import
 statement in the code, nothing else needs to be done. Updating is done using `go get`, more about it in the
 [golang wiki](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies).
+
+## Troubleshooting
+
+If you get errors about unable to resolve imports, try cleaning your module cache:
+
+    go clean -modcache ./...
+    go build ./...
