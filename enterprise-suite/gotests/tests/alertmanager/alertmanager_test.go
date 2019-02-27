@@ -1,4 +1,4 @@
-package nginx
+package alertmanager 
 
 import (
 	"fmt"
@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes/typed/apps/v1"
 
 	. "github.com/onsi/ginkgo"
-	//. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
