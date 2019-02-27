@@ -52,7 +52,6 @@ var _ = BeforeSuite(func() {
 	esMonitor, err = monitor.NewConnection(testenv.MonitorAPIAddr)
 	Expect(err).To(Succeed())
 
-	
 	waitForScrapes := func(metric string) {
 		err = util.WaitUntilSuccess(util.LongWait, func() error {
 			return prom.HasNScrapes(metric, 3)

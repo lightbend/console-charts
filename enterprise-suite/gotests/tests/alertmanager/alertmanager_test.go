@@ -1,4 +1,4 @@
-package alertmanager 
+package alertmanager
 
 import (
 	"fmt"
@@ -8,15 +8,15 @@ import (
 	"github.com/lightbend/gotests/testenv"
 
 	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/gotests/util/alertmanager"
 	"github.com/lightbend/gotests/util/kube"
 	"github.com/lightbend/gotests/util/monitor"
 	"github.com/lightbend/gotests/util/prometheus"
-	"github.com/lightbend/gotests/util/alertmanager"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/typed/apps/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
