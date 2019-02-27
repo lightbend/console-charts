@@ -66,8 +66,6 @@ func (a *Connection) Alerts() ([]Alert, error) {
 	} else {
 		return nil, fmt.Errorf("expected 200 alertmanager response status code, got %v", resp.StatusCode)
 	}
-
-	return nil, err
 }
 
 func NewConnection(url string) (*Connection, error) {
