@@ -52,16 +52,18 @@ var _ = BeforeSuite(func() {
 	esMonitor, err = monitor.NewConnection(testenv.MonitorAPIAddr)
 	Expect(err).To(Succeed())
 
-	// Returns true if there were at least three scrapes of a given metric
-	threeScrapes := func(metric string) error {
-		return prom.HasData(fmt.Sprintf("count_over_time(%v[10m]) > 2", metric))
+	
+	waitForScrapes := func(metric string) {
+		err = util.WaitUntilSuccess(util.LongWait, func() error {
+			return prom.HasNScrapes(metric, 3)
+		})
+		Expect(err).To(Succeed())
 	}
 
 	// wait until there's some scrapes finished
-	err = util.WaitUntilSuccess(util.LongWait, func() error {
-		return threeScrapes("kube_pod_info")
-	})
-	Expect(err).To(Succeed())
+	waitForScrapes("prometheus_notifications_dropped_rate")
+	waitForScrapes("health{name=\"prometheus_notifications_dropped\"}")
+	waitForScrapes("kube_pod_info")
 })
 
 var _ = AfterSuite(func() {
@@ -163,7 +165,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can create monitors on automatic metrics for Pods, aka `up`", func() {
-			Expect(esMonitor.MakeMonitor("es-test/my_custom_monitor", "up")).To(Succeed())
+			Expect(esMonitor.MakeSimpleMonitor("es-test/my_custom_monitor", "up")).To(Succeed())
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasModel("my_custom_monitor")
 			})
@@ -196,7 +198,7 @@ var _ = Describe("all:prometheus", func() {
 
 		It("can create monitors on automatic metrics for Services, aka `up`", func() {
 			// 'Service' discovery - automatic metrics should gain an es_monitor_type label when a custom monitor is created
-			Expect(esMonitor.MakeMonitor("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
+			Expect(esMonitor.MakeSimpleMonitor("es-test-via-service/my_custom_monitor_for_service", "up")).To(Succeed())
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasModel("my_custom_monitor_for_service")
 			})
@@ -219,7 +221,7 @@ var _ = Describe("all:prometheus", func() {
 
 		It("kubelet cadvisor metrics should have a es_monitor_type label", func() {
 			// kubernetes-cadvisor metrics should have an es_monitor_type label.
-			Expect(esMonitor.MakeMonitor("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
+			Expect(esMonitor.MakeSimpleMonitor("es-test/es-monitor-type-test", "container_cpu_load_average_10s")).To(Succeed())
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasModel("es-monitor-type-test")
 			})

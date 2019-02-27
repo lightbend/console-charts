@@ -1,13 +1,6 @@
-# Used for smoke tests.  Will route alerts to a netcat listener.
+# Used for smoke tests.
 
 route:
   group_by: ['alertname']
   group_wait: 1s
   group_interval: 5s
-
-  receiver: webhook
-
-receivers:
-  - name: 'webhook'
-    webhook_configs:
-      - url: 'http://nc-pod-service:58585/'

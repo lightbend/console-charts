@@ -38,7 +38,7 @@ var _ = Describe("all:nginx", func() {
 		Entry("console", &testenv.ConsoleAddr),
 		Entry("grafana", &testenv.GrafanaAddr),
 		Entry("prometheus", &testenv.PrometheusAddr),
-		Entry("es-monitor-api", &testenv.MonitorAPIAddr),
+		Entry("console-api", &testenv.MonitorAPIAddr),
 		Entry("alertmanager", &testenv.AlertmanagerAddr),
 	)
 
@@ -51,7 +51,7 @@ var _ = Describe("all:nginx", func() {
 		Entry("console", ""),
 		Entry("grafana", "/service/grafana/"),
 		Entry("prometheus", "/service/prometheus/"),
-		Entry("es-monitor-api", "/service/es-monitor-api/status"),
+		Entry("console-api", "/service/es-monitor-api/status"),
 		Entry("alertmanager", "/service/alertmanager"),
 	)
 
@@ -89,7 +89,7 @@ var _ = Describe("all:nginx", func() {
 		Entry("grafana", "/service/grafana/"),
 		Entry("alertmanager", "/service/alertmanager/"),
 		// es-monitor-api fails DENY check
-		XEntry("es-monitor-api", "/service/es-monitor-api/"),
+		XEntry("console-api", "/service/es-monitor-api/"),
 	)
 
 	DescribeTable("csp headers are present", func(addr string) {
