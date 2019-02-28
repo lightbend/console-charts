@@ -210,7 +210,7 @@ var _ = Describe("all:prometheus", func() {
 			})
 			Expect(err).To(Succeed())
 
-			Expect(esMonitor.DeleteMonitor("es-test/my_custom_monitor_for_service")).To(Succeed())
+			Expect(esMonitor.DeleteMonitor("es-test-via-service/my_custom_monitor_for_service")).To(Succeed())
 		})
 
 		It("can discover Services without any pods, only endpoints, to support external redirection", func() {
