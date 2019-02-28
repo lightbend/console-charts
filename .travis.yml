@@ -84,7 +84,7 @@ jobs:
 
   - name: Console Whitesource Report
     # Only deploy for pushes to master (and if manually invoked)
-    #if: type IN (push, api)
+    if: type IN (push, api)
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - travis_retry make -C enterprise-suite install-helm install-dev
