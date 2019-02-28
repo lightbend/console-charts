@@ -9,7 +9,7 @@ export const environment: Env = {
   },
   isConvertToRateEnabled: false,
   prometheusApiUrl: `service/prometheus/api/v1/`,
-  monitorApiUrl: `service/es-monitor-api/`,
+  monitorApiUrl: `service/console-api/`,
   grafanaUrl: `service/grafana/dashboard/script/exporter-async.js`,
 
   // TODO need nginx proxy_pass set up for this as well:

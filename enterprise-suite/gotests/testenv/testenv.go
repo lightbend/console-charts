@@ -142,7 +142,7 @@ func InitEnv() {
 	}
 
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
-	MonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
+	MonitorAPIAddr = fmt.Sprintf("%v/service/console-api", ConsoleAddr)
 	GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
 	AlertmanagerAddr = fmt.Sprintf("%v/service/alertmanager", ConsoleAddr)
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// Connection to es-monitor-api server
+// Connection to console-api server
 type Connection struct {
 	url string
 }
