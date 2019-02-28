@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
 type Routes struct {

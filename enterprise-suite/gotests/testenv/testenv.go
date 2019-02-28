@@ -10,12 +10,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/util/helm"
-	"github.com/lightbend/gotests/util/kube"
-	"github.com/lightbend/gotests/util/lbc"
-	"github.com/lightbend/gotests/util/minikube"
-	"github.com/lightbend/gotests/util/oc"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/helm"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/oc"
 
 	. "github.com/onsi/gomega"
 )
