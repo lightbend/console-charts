@@ -11,8 +11,9 @@ type Connection struct {
 	url string
 }
 
-// MakeMonitor creates a new threshold monitor with given values
-func (m *Connection) MakeMonitor(name string, metric string, window string, confidence float32, threshold float32) error {
+// MakeMonitor creates a new threshold monitor with given values.
+// Confidence is a string because console-api accepts only certain values - 5e-324, 0.25, 0.5, 0.75, 0.95 and 1.
+func (m *Connection) MakeMonitor(name string, metric string, window string, confidence string, threshold float32) error {
 	url := fmt.Sprintf("%v/monitors/%v", m.url, name)
 
 	json := fmt.Sprintf(`
@@ -45,19 +46,46 @@ func (m *Connection) MakeMonitor(name string, metric string, window string, conf
 	req.Header.Set("Message", "testing")
 
 	httpClient := &http.Client{}
-	_, err = httpClient.Do(req)
+	resp, err := httpClient.Do(req)
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("console-api replied with status code %v", resp.StatusCode)
+	}
 
 	return err
 }
 
 // MakeSimpleMonitor creates a threshold monitor with non-configurable parameters.
 func (m *Connection) MakeSimpleMonitor(name string, metric string) error {
-	return m.MakeMonitor(name, metric, "5m", 1.0, 3.0)
+	return m.MakeMonitor(name, metric, "5m", "1", 3.0)
 }
 
 // MakeAlertingMonitor creates a threshold monitor with low confidence
 func (m *Connection) MakeAlertingMonitor(name string, metric string, threshold float32) error {
-	return m.MakeMonitor(name, metric, "1m", 0.0001, threshold)
+	return m.MakeMonitor(name, metric, "1m", "5e-324", threshold)
+}
+
+func (m *Connection) DeleteMonitor(name string) error {
+	url := fmt.Sprintf("%v/monitors/%v", m.url, name)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Author-Name", "me")
+	req.Header.Set("Author-Email", "me@lightbend.com")
+	req.Header.Set("Message", "testing")
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("console-api replied with status code %v", resp.StatusCode)
+	}
+
+	return err
 }
 
 func NewConnection(url string) (*Connection, error) {

@@ -174,6 +174,8 @@ var _ = Describe("all:prometheus", func() {
 				return prom.HasData(`up{es_workload="es-test", es_monitor_type="es-test"}`)
 			})
 			Expect(err).To(Succeed())
+
+			Expect(esMonitor.DeleteMonitor("es-test/my_custom_monitor")).To(Succeed())
 		})
 
 		It("can discover a pod with multiple ports", func() {
@@ -207,6 +209,8 @@ var _ = Describe("all:prometheus", func() {
 				return prom.HasData("up{es_workload=\"es-test-via-service\", es_monitor_type=\"es-test-via-service\"}")
 			})
 			Expect(err).To(Succeed())
+
+			Expect(esMonitor.DeleteMonitor("es-test/my_custom_monitor_for_service")).To(Succeed())
 		})
 
 		It("can discover Services without any pods, only endpoints, to support external redirection", func() {
@@ -230,6 +234,8 @@ var _ = Describe("all:prometheus", func() {
 				return prom.HasData(`{job="kubernetes-cadvisor", es_monitor_type="es-test"}`)
 			})
 			Expect(err).To(Succeed())
+
+			Expect(esMonitor.DeleteMonitor("es-test/es-monitor-type-test")).To(Succeed())
 		})
 
 		XIt("metric data has es_monitor_type", func() {

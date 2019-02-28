@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/lightbend/gotests/util"
-
-	. "github.com/onsi/ginkgo"
 )
 
 type Alert struct {
@@ -45,7 +43,6 @@ func (a *Connection) Alerts() ([]Alert, error) {
 	}
 	defer util.Close(resp.Body)
 
-	fmt.Fprintf(GinkgoWriter, "got response: %v\n", resp.StatusCode)
 	if resp.StatusCode == 200 {
 		content, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -56,7 +53,6 @@ func (a *Connection) Alerts() ([]Alert, error) {
 		if err := json.Unmarshal(content, &alerts); err != nil {
 			return nil, err
 		}
-		fmt.Fprintf(GinkgoWriter, "parsed: %v\n", alerts)
 
 		if alerts.Status != "success" {
 			return nil, fmt.Errorf("unexpected status in alertmanager response: %v", alerts.Status)

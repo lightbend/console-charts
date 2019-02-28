@@ -2,6 +2,7 @@ package alertmanager
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/lightbend/gotests/args"
@@ -114,9 +115,9 @@ var _ = AfterSuite(func() {
 })
 
 var _ = Describe("all:alertmanager", func() {
-	Context("es-alert-test app integrity", func() {
-		It("is running", func() {
-			err := util.WaitUntilSuccess(util.SmallWait, func() error {
+	Context("es-alert-test app", func() {
+		It("has visible metrics", func() {
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, args.ConsoleNamespace))
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -124,25 +125,66 @@ var _ = Describe("all:alertmanager", func() {
 	})
 
 	Context("alerting", func() {
-		It("can see alert firing", func() {
-			// Setup alerting monitor
-			err := console.MakeAlertingMonitor("es-alert-test/alerting_monitor", "up", 3)
+		setupAlert := func(name string) {
+			err := console.MakeAlertingMonitor("es-alert-test/"+name, "up", 3)
 			Expect(err).ToNot(HaveOccurred())
 			err = util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasModel("alerting_monitor")
+				return prom.HasModel(name)
 			})
 			Expect(err).ToNot(HaveOccurred())
+		}
 
-			// Look for alert from our monitor
+		deleteAlert := func(name string) {
+			err := console.DeleteMonitor("es-alert-test/" + name)
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		It("is firing in alertmanager", func() {
+			name := "alert_monitor_alertm"
+			setupAlert(name)
+
+			// Look for alert from our monitor using alertmanager api
 			alerts, err := alertm.Alerts()
+			Expect(err).ToNot(HaveOccurred())
 			found := false
 			for _, alert := range alerts {
-				if val, ok := alert.Labels["alertname"]; ok && val == "alerting_monitor" {
+				if val, ok := alert.Labels["alertname"]; ok && val == name {
 					found = true
 					break
 				}
 			}
 			Expect(found).To(Equal(true))
+
+			deleteAlert(name)
+		})
+
+		It("is firing in prometheus", func() {
+			name := "alert_monitor_prom"
+			setupAlert(name)
+
+			// Look for alert from our monitor using prometheus query
+			err := prom.HasData(fmt.Sprintf(`ALERTS{alertname="%v",alertstate="firing",severity="warning"}`, name))
+			Expect(err).ToNot(HaveOccurred())
+
+			deleteAlert(name)
+		})
+
+		It("has correct generator URL", func() {
+			name := "alert_monitor_generator_url"
+			setupAlert(name)
+
+			alerts, err := alertm.Alerts()
+			Expect(err).ToNot(HaveOccurred())
+			found := false
+			for _, alert := range alerts {
+				if strings.HasPrefix(alert.GeneratorURL, "http://console.test.bogus:30080") {
+					found = true
+					break
+				}
+			}
+			Expect(found).To(Equal(true))
+
+			deleteAlert(name)
 		})
 	})
 })

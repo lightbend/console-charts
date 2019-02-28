@@ -71,7 +71,7 @@ func InitEnv() {
 		cleanup(true)
 	}
 
-	var additionalArgs []string
+	additionalArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 		foundStorageClass = true
