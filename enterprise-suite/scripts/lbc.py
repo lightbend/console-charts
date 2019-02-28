@@ -539,7 +539,7 @@ def install(creds_file):
             args.namespace=args.helm[ns_index+1]
             del args.helm[ns_index:ns_index+2]
 
-        # handle --namspace=<val>
+        # handle --namespace=<val>
         r=re.compile("--namespace=.*")
         if filter(r.match, args.helm):
             ns_val=filter(r.match, args.helm)[0]
