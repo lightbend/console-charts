@@ -528,26 +528,17 @@ def parse_set_string(s):
 def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
+    namespace_arg = "--namespace {}".format(args.namespace)
 
     helm_args = ''
     if len(args.helm) > 0:
-        # namespace can be passed to helm directly after -- and can take format -namespace <value> or --namespace=<value>
-        # remove namespace from helm args and assign it args.namespace
-        # handle --namespace <val>
-        if  "--namespace" in args.helm and args.helm.index("--namespace") < len(args.helm):
-            ns_index=args.helm.index("--namespace")
-            args.namespace=args.helm[ns_index+1]
-            del args.helm[ns_index:ns_index+2]
-
-        # handle --namespace=<val>
-        r=re.compile("--namespace=.*")
-        if filter(r.match, args.helm):
-            ns_val=filter(r.match, args.helm)[0]
-            args.namespace=ns_val.split("=")[1]
-            del(args.helm[args.helm.index(ns_val)])
-
-        # Helm args are separated from lbc.py args by double dash, filter it out
-        helm_args += ' '.join([arg for arg in args.helm if arg != '--']) + ' '
+        hparser = argparse.ArgumentParser()
+        hparser.add_argument('--namespace')
+        real_helm_args = args.helm[1:]
+        ns_args, unknown = hparser.parse_known_args(real_helm_args)
+        if ns_args.namespace != None:
+            namespace_arg=""
+        helm_args += ' '.join([arg for arg in real_helm_args]) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set:
@@ -589,9 +580,10 @@ def install(creds_file):
                     fail('cannot access fetched chartfile at {}, ES_CHART={}'
                          .format(chartfile_glob, args.chart))
                 chartfile = chartfile[0]
-            execute('helm template --name {} --namespace {} {} {} {}'
-                    .format(args.helm_name, args.namespace, helm_args,
-                            creds_exec_arg, chartfile), print_to_stdout=True)
+
+            execute('helm template --name {} {} {} {} {}'
+                .format(args.helm_name, namespace_arg, helm_args,
+                creds_exec_arg, chartfile), print_to_stdout=True)
         finally:
             if tempdir:
                 shutil.rmtree(tempdir)
@@ -630,9 +622,9 @@ def install(creds_file):
                     .format(args.helm_name, chart_ref, version_arg,
                             creds_arg, helm_args))
         else:
-            execute('helm install {} --name {} --namespace {} {} {} {}'
-                    .format(chart_ref, args.helm_name, args.namespace,
-                            version_arg, creds_arg, helm_args))
+            execute('helm install {} --name {} {} {} {} {}'
+                .format(chart_ref, args.helm_name, namespace_arg,
+                        version_arg, creds_arg, helm_args))
 
 
 def uninstall(status=None, namespace=None):
