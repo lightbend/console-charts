@@ -62,7 +62,7 @@ export const base = {
     debug: true
   },
   grafanaUrl: 'http://192.168.99.100:30030/dashboard/script/exporter-async.js',
-  monitorApiUrl: 'http://192.168.99.100:30080/service/es-monitor-api',
+  monitorApiUrl: 'http://192.168.99.100:30080/service/console-api',
   kubernetesUrl: 'http://192.168.99.100:30000/',
   isRuleCreationEnabled: false, // backend does not support saved monitor rule yet.
   showClusterMap: true,

@@ -1,7 +1,7 @@
 {{/*
    * Note to Helm devs: this is NOT a Helm template, but rather a plain go template used
-   * in es-monitor-api to generate the final prometheus.yml.
-   * sanitizeForPrometheusLabel is a function in es-monitor-api that replaces [.-] with "_"
+   * in console-api to generate the final prometheus.yml.
+   * sanitizeForPrometheusLabel is a function in console-api that replaces [.-] with "_"
    */}}
 global:
   # dev mode
