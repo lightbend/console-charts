@@ -855,6 +855,21 @@ def setup_args(argv):
     if len(argv) == 0:
         parser.print_help()
 
+    # namespace can be passed to helm directly after -- and can take format -namespace <value> or --namespace=<value>
+    # remove namespace from helm args and assign it args.namespace
+    # check --namespace foobar
+    if "--namespace" in args.helm and args.helm.index("--namespace") < len(args.helm):
+        ns_index=args.helm.index("--namespace")
+        args.namespace=args.helm[ns_index+1]
+        del args.helm[ns_index:ns_index+2]
+
+    # check --namspace=foobar
+    r=re.compile("--namespace=.*")
+    if filter(r.match, args.helm):
+        ns_val=filter(r.match, args.helm)[0]
+        args.namespace=ns_val.split("=")[1]
+        del(args.helm[args.helm.index(ns_val)])
+
     return args
 
 
