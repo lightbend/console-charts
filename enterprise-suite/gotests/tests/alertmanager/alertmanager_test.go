@@ -44,6 +44,9 @@ func TestAlertmanager(t *testing.T) {
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 
+	// Delete test configmap if it existed previously, ignore failure
+	kube.DeleteConfigMap(args.ConsoleNamespace, configName)
+
 	// Create test configmap
 	err := kube.CreateConfigMap(args.ConsoleNamespace, configName, configYaml)
 	Expect(err).ToNot(HaveOccurred())
