@@ -2,15 +2,13 @@ package apiserverproxy
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
-
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/urls"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -39,24 +37,7 @@ var _ = Describe("all:apiserverproxy", func() {
 		url := fmt.Sprintf("http://127.0.0.1:%d/api/v1/namespaces/%s/services/%s:http/proxy%s",
 			proxyPort, args.ConsoleNamespace, serviceName, servicePath)
 		By(url)
-
-		err := util.WaitUntilSuccess(util.SmallWait, func() error {
-			resp, err := http.Get(url)
-			if err != nil {
-				return err
-			}
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return err
-			}
-			if resp.StatusCode != 200 {
-				return fmt.Errorf("wanted 200, got %d: %s", resp.StatusCode, string(body))
-			}
-
-			return nil
-		})
-
+		_, err := urls.Get200(url)
 		Expect(err).ToNot(HaveOccurred())
 	},
 		Entry("console-server", "console-server", "/"),
