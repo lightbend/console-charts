@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
 type Result struct {

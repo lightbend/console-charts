@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/testenv"
-	"github.com/lightbend/gotests/util/urls"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/urls"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
