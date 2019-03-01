@@ -2,7 +2,7 @@
 # Console UI Configuration
 #
 consoleUIConfig:
-  customer: ""
+  logo: ""
 
 #################################################
 # Update these versions for a release.
