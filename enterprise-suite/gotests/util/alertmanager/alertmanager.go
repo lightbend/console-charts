@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
 type Alert struct {

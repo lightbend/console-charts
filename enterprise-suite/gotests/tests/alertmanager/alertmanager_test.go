@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/testenv"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
-	"github.com/lightbend/gotests/util"
-	"github.com/lightbend/gotests/util/alertmanager"
-	"github.com/lightbend/gotests/util/kube"
-	"github.com/lightbend/gotests/util/monitor"
-	"github.com/lightbend/gotests/util/prometheus"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/alertmanager"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/kube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/monitor"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/prometheus"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
