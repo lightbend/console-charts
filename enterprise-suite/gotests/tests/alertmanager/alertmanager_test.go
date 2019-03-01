@@ -8,11 +8,11 @@ import (
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/alertmanager"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/kube"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/monitor"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/prometheus"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/alertmanager"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/monitor"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/prometheus"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
