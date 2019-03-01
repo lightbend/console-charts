@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/urls"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
