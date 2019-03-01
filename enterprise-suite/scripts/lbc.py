@@ -553,6 +553,9 @@ def install(creds_file):
 def uninstall(status=None):
     if status == None:
         status, namespace = install_status(args.helm_name)
+        if namespace != args.namespace:
+            fail('Unable to delete console installation - released named {} found in namespace {}, expected in {}'
+                 .format(args.helm_name, namespace, args.namespace))
 
     if status == 'notfound':
         fail('Unable to delete console installation - no release named {} found'.format(args.helm_name))
@@ -560,7 +563,7 @@ def uninstall(status=None):
         fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
     else:
         if not args.delete_pvcs:
-            check_pv_usage(aboutToUninstall=True, namespace=namespace)
+            check_pv_usage(aboutToUninstall=True, namespace=args.namespace)
 
         printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
         execute('helm delete --purge ' + args.helm_name)
@@ -766,13 +769,10 @@ def setup_args(argv):
                                action='store_true')
         subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
 
-    # Common arguments for install, verify and dump
-    for subparser in [install, verify, debug_dump]:
-        subparser.add_argument('--namespace', help='namespace to install console into/where it is installed',
-                               default='lightbend')
-
     # Common arguments for all subparsers
     for subparser in [install, uninstall, verify, debug_dump]:
+        subparser.add_argument('--namespace', help='namespace to install console into/where it is installed',
+                               default='lightbend')
         subparser.add_argument('--skip-checks', help='skip environment checks',
                                action='store_true')
 

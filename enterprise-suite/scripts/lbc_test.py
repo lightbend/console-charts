@@ -31,7 +31,7 @@ def expect_cmd(re_pattern, returncode=0, stdout=''):
 def test_run(cmd, timeout=None, stdin=None, show_stderr=True):
     cmd_re, returncode, stdout = expected_cmds.popleft()
     if re.match(cmd_re, cmd) != None:
-        return returncode, stdout, None
+        return returncode, stdout, ""
     raise UnexpectedCmdException("Expected a command that matches '{}', instead got '{}'"
                                  .format(cmd_re, cmd))
                                 
@@ -105,6 +105,11 @@ class LbcTest(unittest.TestCase):
         # Remove credentials tempdir
         shutil.rmtree(self.creds_dir)
 
+        if len(expected_cmds) > 0:
+            print("\nDidn't execute expected commands:")
+            for cmd in expected_cmds:
+                print(" " + cmd[0])
+
         self.assertEqual(len(expected_cmds), 0)
 
     def test_export_yaml_console(self):
@@ -163,6 +168,20 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm delete --purge enterprise-suite')
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
         lbc.main(['install', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file])
+    
+    def test_install_helm_failed_no_delete_pvcs(self):
+        # Failed previous install, no PVCs or clusterroles found for reuse
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=0,
+                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
+        expect_cmd(r'helm get enterprise-suite', returncode=0,
+                   stdout='usePersistentVolumes: false')
+        expect_cmd(r'helm delete --purge enterprise-suite')
+        expect_cmd(r'helm get enterprise-suite', returncode=0,
+                   stdout='usePersistentVolumes: false')
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file])
 
     def test_install_helm_failed_reuse(self):
         # Failed previous install, PVCs found for reuse
@@ -252,6 +271,12 @@ class LbcTest(unittest.TestCase):
                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: DEPLOYED\nNOTES: blah')
         expect_cmd(r'helm delete --purge enterprise-suite')
         lbc.main(['uninstall', '--skip-checks', '--delete-pvcs'])
+    
+    def test_uninstall_wrong_namespace(self):
+        expect_cmd(r'helm status enterprise-suite', returncode=0,
+                  stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: DEPLOYED\nNOTES: blah')
+        with self.assertRaises(TestFailException):
+            lbc.main(['uninstall', '--skip-checks', '--delete-pvcs', '--namespace=monitoring'])
 
     def test_uninstall_not_found(self):
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
