@@ -29,6 +29,8 @@ spec:
       - name: commercial-credentials
 
       containers:
+      # Used by nginx to look up service names dynamically.
+      # go-dnsmasq has the unique property of using /etc/resolv.conf search domains.
       - name: dnsmasq
         image: {{ .Values.goDnsmasqImage }}:{{ .Values.goDnsmasqVersion }}
         args:
@@ -36,6 +38,7 @@ spec:
           - "127.0.0.1:5353"
           - --verbose
           - --enable-search
+
       - name: es-console
         image: {{ tpl .Values.esConsoleImage . }}:{{ .Values.esConsoleVersion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -46,10 +49,21 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-        - name: config-volume
+        - name: nginx-config
           mountPath: /etc/nginx/conf.d
+        - name: ui-config
+          mountPath: /helm-data/assets/js
 
       volumes:
-      - name: config-volume
+      - name: nginx-config
         configMap:
           name: es-console
+          items:
+          - key: default.conf
+            path: default.conf
+      - name: ui-config
+        configMap:
+          name: es-console
+          items:
+          - key: config.js
+            path: config.js
