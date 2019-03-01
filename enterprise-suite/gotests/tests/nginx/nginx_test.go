@@ -32,19 +32,28 @@ var _ = Describe("all:nginx", func() {
 	// Table entry parameters get evaluated before our testenv
 	// is initialized, so we pass a pointer to the right address.
 	DescribeTable("services are responding", func(addr *string) {
+		By(*addr)
 		_, err := urls.Get200(*addr)
 		Expect(err).ToNot(HaveOccurred())
 	},
 		Entry("console", &testenv.ConsoleAddr),
 		Entry("grafana", &testenv.GrafanaAddr),
 		Entry("prometheus", &testenv.PrometheusAddr),
-		Entry("console-api", &testenv.MonitorAPIAddr),
 		Entry("alertmanager", &testenv.AlertmanagerAddr),
 	)
+
+	// Console API needs separate test because it doesn't respond to queries on /service/es-monitor-api
+	Context("console-api", func() {
+		It("is responding", func() {
+			_, err := urls.Get200(testenv.MonitorAPIAddr + "/status")
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
 
 	DescribeTable("services accessible via any base path", func(service string) {
 		basepath := "fee/fie/fou/fum"
 		addr := fmt.Sprintf("%v/%v/%v", testenv.ConsoleAddr, basepath, service)
+		By(addr)
 		_, err := urls.Get200(addr)
 		Expect(err).ToNot(HaveOccurred())
 	},
@@ -56,6 +65,7 @@ var _ = Describe("all:nginx", func() {
 	)
 
 	DescribeTable("is redirected", func(service *string, location string) {
+		By(*service)
 		resp, err := urls.Get(*service, false)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.Headers.Get("Location")).To(Equal(location))
@@ -66,6 +76,7 @@ var _ = Describe("all:nginx", func() {
 	)
 
 	DescribeTable("caching is off", func(addr string) {
+		By(addr)
 		cacheoff := "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
 		resp, err := urls.Get200(testenv.ConsoleAddr + addr)
 		Expect(err).ToNot(HaveOccurred())
@@ -77,6 +88,7 @@ var _ = Describe("all:nginx", func() {
 	)
 
 	DescribeTable("security headers are present", func(addr string) {
+		By(addr)
 		resp, err := urls.Get200(testenv.ConsoleAddr + addr)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.Headers.Get("Server")).To(Equal(""))
@@ -93,6 +105,7 @@ var _ = Describe("all:nginx", func() {
 	)
 
 	DescribeTable("csp headers are present", func(addr string) {
+		By(addr)
 		csp := "img-src 'self' data:; default-src 'self' 'unsafe-eval' 'unsafe-inline';"
 		resp, err := urls.Get200(testenv.ConsoleAddr + addr)
 		Expect(err).ToNot(HaveOccurred())
