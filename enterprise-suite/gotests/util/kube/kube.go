@@ -3,7 +3,7 @@ package kube
 import (
 	"fmt"
 
-	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 
 	"k8s.io/client-go/kubernetes"
 

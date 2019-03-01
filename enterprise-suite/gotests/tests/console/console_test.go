@@ -3,13 +3,13 @@ package console
 import (
 	"testing"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/testenv"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
-	"github.com/lightbend/gotests/util/helm"
-	"github.com/lightbend/gotests/util/lbc"
-	"github.com/lightbend/gotests/util/minikube"
-	"github.com/lightbend/gotests/util/oc"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/helm"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/oc"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

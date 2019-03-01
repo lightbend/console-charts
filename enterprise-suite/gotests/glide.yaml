@@ -1,0 +1,4 @@
+package: github.com/lightbend/console-charts/enterprise-suite/gotests
+import:
+- package: k8s.io/client-go
+  version: v10.0.0
