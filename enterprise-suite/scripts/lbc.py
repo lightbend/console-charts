@@ -338,22 +338,57 @@ def pvs_retained_and_not(namespace):
                  '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name .status.phase }}{{ end }}{{ end }}'
                 )
     returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
-                                .format(go_template))
+                                .format(go_template), show_stderr=False)
+    # stdout contains...
+    # pvc-8149517b-3bae-11e9-83b7-08002755d2dd Delete alertmanager-storage Bound
 
+    pvs = []
     retained = []
     notRetained = []
 
     if returncode != 0:
-        printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
-    else:
-        for pv in stdout.splitlines():
-            words = pv.split()
+        ## try alternate method here
+        # Get PV info via PVCs
+        go_template=('{{ range .items }}{{ if eq .metadata.name '+claimNames+' }}'
+                     '{{ printf "%s %s %s %s\\n" .metadata.name .spec.volumeName .spec.storageClassName .status.phase }}{{ end }}{{ end }}'
+                    )
+        returncode, stdout, _ = run("kubectl get pvc -n {} -o go-template='{}'"
+                                .format(namespace, go_template))
+        # stdout contains...
+        # prometheus-storage pvc-81508cb1-3bae-11e9-83b7-08002755d2dd standard Bound
+        if returncode == 0:
+            # Now get default reclaim policy for storage class
+            for pv in stdout.splitlines():
+                words = pv.split()
 
-            if words[1] == 'Retain':
-                list = retained
-            else:
-                list = notRetained
-            list.append((words[0], words[2], words[3]))
+                go_template='{{ printf "%s %s\\n" .metadata.name .reclaimPolicy }}'
+                returncode, stdout, _ = run("kubectl get storageclass {} -o go-template='{}'"
+                                            .format(words[2], go_template))
+                # stdout contains...
+                # standard Delete
+
+                if returncode == 0:
+                    storage = stdout.split()
+                    # This matches output we would get direct from "get pv" above
+                    pvs.append('{} {} {} {}'
+                               .format(words[1], storage[1], words[0], words[3]))
+                    printerr("Assuming reclaim policy for PV {} from that of storage class.  Proceed with caution."
+                             .format(words[0]))
+                else:
+                    printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
+        else:
+            printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
+    else:
+        pvs = stdout.splitlines()
+
+    for pv in pvs:
+        words = pv.split()
+
+        if words[1] == 'Retain':
+            list = retained
+        else:
+            list = notRetained
+        list.append((words[0], words[2], words[3]))
 
     return (retained, notRetained)
 
@@ -389,7 +424,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
 
         return
     elif returncode != 0:
-        printerr("Unable to retrieve get release information.  Proceed with caution.")
+        printerr("Unable to retrieve release information.  Proceed with caution.")
         return
 
     hasPVs = 'usePersistentVolumes: true' in stdout
