@@ -38,7 +38,6 @@ run-tests-openshift:
 
 .PHONY: format
 format:
-	go mod tidy
 	goimports -w $(files)
 
 .PHONY: setup-tools
