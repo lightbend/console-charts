@@ -1,4 +1,10 @@
 #################################################
+# Console UI Configuration
+#
+consoleUIConfig:
+  customer: ""
+
+#################################################
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
@@ -55,7 +61,7 @@ deploymentApiVersion: apps/v1beta2
 daemonSetApiVersion: apps/v1beta2
 
 #################################################
-# Settings
+# Resource Settings
 #
 # default image pull  policy
 imagePullPolicy: IfNotPresent
