@@ -4,7 +4,7 @@ import { Navigation } from '../support/navigation';
 
 describe('Grafana Test', () => {
   const grafanaUrl = Environment.getEnv().grafanaUrl +
-    '?es_workload=es-demo&from=now-4h&service-type=akka,kubernetes&' +
+    '?namespace=lightbend&es_workload=es-demo&from=now-4h&service-type=akka,kubernetes&' +
     'metric=akka_actor_processing_time_ns&monitor=akka_processing_time&' +
     'promQL=max without (es_monitor_type) (akka_actor_processing_time_ns{es_workload="es-demo",namespace="lightbend",quantile="0.5"})';
 
