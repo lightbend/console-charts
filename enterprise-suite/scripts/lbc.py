@@ -554,7 +554,7 @@ def uninstall(status=None):
     if status == None:
         status, namespace = install_status(args.helm_name)
         if namespace != args.namespace:
-            fail('Unable to delete console installation - released named {} found in namespace {}, expected in {}'
+            fail('Unable to delete console installation - release named {} found in namespace {}, expected in {}'
                  .format(args.helm_name, namespace, args.namespace))
 
     if status == 'notfound':
