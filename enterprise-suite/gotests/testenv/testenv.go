@@ -168,7 +168,7 @@ func cleanup(allowFailures bool) {
 	}
 
 	// Uninstall Console using helm
-	if err := lbc.Uninstall(); err != nil && !allowFailures {
+	if err := lbc.Uninstall(args.ConsoleNamespace); err != nil && !allowFailures {
 		Expect(err).To(Succeed(), "lbc.Uninstall")
 	}
 

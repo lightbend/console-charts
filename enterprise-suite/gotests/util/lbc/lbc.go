@@ -66,8 +66,8 @@ func Verify(namespace string) error {
 	return nil
 }
 
-func Uninstall() error {
-	cmd := util.Cmd(lbcPath, "uninstall")
+func Uninstall(namespace string) error {
+	cmd := util.Cmd(lbcPath, "uninstall", "--namespace", namespace)
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
