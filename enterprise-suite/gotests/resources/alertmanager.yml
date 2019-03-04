@@ -1,0 +1,6 @@
+# Used for smoke tests.
+
+route:
+  group_by: ['alertname']
+  group_wait: 1s
+  group_interval: 5s

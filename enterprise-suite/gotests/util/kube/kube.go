@@ -15,19 +15,19 @@ import (
 // A change to parse yaml and use client-go is needed to make that work.
 
 func ApplyYaml(namespace string, filepath string) error {
-	if err := util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return util.Cmd("kubectl", "-n", namespace, "apply", "-f", filepath).Run()
 }
 
 func DeleteYaml(namespace string, filepath string) error {
-	if err := util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run(); err != nil {
-		return err
-	}
+	return util.Cmd("kubectl", "-n", namespace, "delete", "-f", filepath).Run()
+}
 
-	return nil
+func CreateConfigMap(namespace string, name string, filepath string) error {
+	return util.Cmd("kubectl", "-n", namespace, "create", "configmap", name, "--from-file", filepath).Run()
+}
+
+func DeleteConfigMap(namespace string, name string) error {
+	return util.Cmd("kubectl", "-n", namespace, "delete", "configmap", name).Run()
 }
 
 func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) error {

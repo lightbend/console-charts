@@ -240,6 +240,8 @@ const (
 	SmallWait = WaitTime(5 * time.Second)
 	// Use for operations which can take a while to succeed.
 	LongWait = WaitTime(70 * time.Second)
+	// Should not be used! Might be useful during development.
+	LongestWait = WaitTime(200 * time.Second)
 )
 
 // Repeatedly runs a function, sleeping for a bit after each time, until it returns nil or reaches maxRepeats.

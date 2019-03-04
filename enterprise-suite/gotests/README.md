@@ -17,9 +17,6 @@ Alternatively, you can use `go-tests` and `go-tests-start-minikube` targets in t
 Running all tests locally:
 `ginkgo -r`
 
-or if console-charts is under GOPATH you can do:
-`GO111MODULE=on ginkgo -r`
-
 If Tiller is installed in other namespace than `kube-system`, you can specify that with a flag:
 `ginkgo -r -- --tiller-namespace=lightbend-test`
 Note: this is not a ginkgo flag, but a custom flag in the test suites so it comes after `--`.

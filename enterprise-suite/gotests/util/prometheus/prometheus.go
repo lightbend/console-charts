@@ -83,6 +83,13 @@ func (p *Connection) AnyData(query string) error {
 	return p.HasData(fmt.Sprintf("count_over_time( (%v) [10m:] )", query))
 }
 
+func (p *Connection) HasNScrapes(metric string, n int) error {
+	if n < 1 {
+		return fmt.Errorf("HasNScrapes: n must be 1 or higher, was %v", n)
+	}
+	return p.HasData(fmt.Sprintf("count_over_time(%v[10m]) > %v", metric, n-1))
+}
+
 func (p *Connection) HasModel(model string) error {
 	return p.HasData(fmt.Sprintf("model{name=\"%v\"}", model))
 }

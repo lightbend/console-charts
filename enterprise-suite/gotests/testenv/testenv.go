@@ -24,11 +24,12 @@ var (
 	// The following variables are used across tests to access kubernetes
 	// and make requests on Console components.
 
-	K8sClient      *kubernetes.Clientset
-	ConsoleAddr    string
-	PrometheusAddr string
-	MonitorAPIAddr string
-	GrafanaAddr    string
+	K8sClient        *kubernetes.Clientset
+	ConsoleAddr      string
+	PrometheusAddr   string
+	MonitorAPIAddr   string
+	GrafanaAddr      string
+	AlertmanagerAddr string
 
 	isMinikube  bool
 	isOpenshift bool
@@ -70,7 +71,7 @@ func InitEnv() {
 		cleanup(true)
 	}
 
-	var additionalArgs []string
+	additionalArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 		foundStorageClass = true
@@ -143,6 +144,7 @@ func InitEnv() {
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
 	MonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
 	GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
+	AlertmanagerAddr = fmt.Sprintf("%v/service/alertmanager", ConsoleAddr)
 
 	testEnvInitialized = true
 }

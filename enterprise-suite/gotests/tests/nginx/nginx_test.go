@@ -3,9 +3,9 @@ package nginx
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/urls"
 
@@ -14,9 +14,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestNginxRules(t *testing.T) {
+func TestNginx(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Nginx Rules Suite")
+	RunSpecs(t, "Nginx Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -27,24 +27,101 @@ var _ = AfterSuite(func() {
 	testenv.CloseEnv()
 })
 
-var _ = Describe("all:nginx_rules", func() {
-	DescribeTable("returns security headers for console endpoints", func(endpoint string) {
-		url := testenv.ConsoleAddr + endpoint
-		By(url)
-		res, err := urls.Get200(url)
+var _ = Describe("all:nginx", func() {
+
+	// Table entry parameters get evaluated before our testenv
+	// is initialized, so we pass a pointer to the right address.
+	DescribeTable("services are responding", func(addr *string) {
+		By(*addr)
+		_, err := urls.Get200(*addr)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(res.Headers).Should(HaveKeyWithValue("X-Frame-Options", []string{"DENY"}))
-		Expect(res.Headers).Should(HaveKeyWithValue("X-Xss-Protection", []string{"1"}))
-		Expect(res.Headers).Should(HaveKeyWithValue("Content-Security-Policy", []string{"img-src 'self' data:; default-src 'self' 'unsafe-eval' 'unsafe-inline';"}))
-		Expect(res.Headers).Should(HaveKeyWithValue("Cache-Control", []string{"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"}))
+	},
+		Entry("console", &testenv.ConsoleAddr),
+		Entry("grafana", &testenv.GrafanaAddr),
+		Entry("prometheus", &testenv.PrometheusAddr),
+		Entry("alertmanager", &testenv.AlertmanagerAddr),
+	)
+
+	// Console API needs separate test because it doesn't respond to queries on /service/es-monitor-api
+	Context("console-api", func() {
+		It("is responding", func() {
+			_, err := urls.Get200(testenv.MonitorAPIAddr + "/status")
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
+	DescribeTable("services accessible via any base path", func(service string) {
+		basepath := "fee/fie/fou/fum"
+		addr := fmt.Sprintf("%v/%v/%v", testenv.ConsoleAddr, basepath, service)
+		By(addr)
+		_, err := urls.Get200(addr)
+		Expect(err).ToNot(HaveOccurred())
+	},
+		Entry("console", ""),
+		Entry("grafana", "/service/grafana/"),
+		Entry("prometheus", "/service/prometheus/"),
+		Entry("console-api", "/service/es-monitor-api/status"),
+		Entry("alertmanager", "/service/alertmanager"),
+	)
+
+	DescribeTable("is redirected", func(service *string, location string) {
+		By(*service)
+		resp, err := urls.Get(*service, false)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.Headers.Get("Location")).To(Equal(location))
+	},
+		Entry("prometheus", &testenv.PrometheusAddr, "/service/prometheus/"),
+		Entry("grafana", &testenv.GrafanaAddr, "/service/grafana/"),
+		Entry("alertmanager", &testenv.AlertmanagerAddr, "/service/alertmanager/"),
+	)
+
+	DescribeTable("caching is off", func(addr string) {
+		By(addr)
+		cacheoff := "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+		resp, err := urls.Get200(testenv.ConsoleAddr + addr)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.Headers.Get("Cache-Control")).To(Equal(cacheoff))
+	},
+		Entry("cluster page", "/cluster"),
+		Entry("workload page", "/workloads/prometheus-server"),
+		Entry("grafana frontend scripts", "/service/grafana/dashboard/script/exporter-async.js?service-type=cluster"),
+	)
+
+	DescribeTable("security headers are present", func(addr string) {
+		By(addr)
+		resp, err := urls.Get200(testenv.ConsoleAddr + addr)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.Headers.Get("Server")).To(Equal(""))
+		Expect(resp.Headers.Get("X-Frame-Options")).To(Equal("DENY"))
+		Expect(resp.Headers.Get("X-XSS-Protection")).To(Equal("1"))
 	},
 		Entry("cluster", "/cluster"),
-		Entry("workloads", fmt.Sprintf("/namespaces/%v/workloads/tiller-deploy", args.TillerNamespace)),
-		Entry("root", ""),
-		Entry("prefix", "/monitoring"),
-		// jsravn: Enable when pipelines is in console image.
-		//Entry("pipelines", "/pipelines"),
+		Entry("workload", "/workloads/prometheus-server"),
+		Entry("prometheus", "/service/prometheus/"),
+		Entry("grafana", "/service/grafana/"),
+		Entry("alertmanager", "/service/alertmanager/"),
+		// es-monitor-api fails DENY check
+		XEntry("console-api", "/service/es-monitor-api/"),
 	)
+
+	DescribeTable("csp headers are present", func(addr string) {
+		By(addr)
+		csp := "img-src 'self' data:; default-src 'self' 'unsafe-eval' 'unsafe-inline';"
+		resp, err := urls.Get200(testenv.ConsoleAddr + addr)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.Headers.Get("Content-Security-Policy")).To(Equal(csp))
+	},
+		Entry("cluster", "/cluster"),
+		Entry("workload", "/workloads/prometheus-server"),
+	)
+
+	Context("xss guard", func() {
+		It("guards against html injection", func() {
+			resp, err := urls.Get200(testenv.ConsoleAddr + "/cluster%22/%3E%3Cscript%3Ealert(789)%3C/script%3E")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(strings.Count(resp.Body, "<script>alert(789)</script>")).To(Equal(0))
+		})
+	})
 
 	DescribeTable("should rewrite a missing trailing slash", func(prefix string) {
 		url := testenv.ConsoleAddr + prefix
