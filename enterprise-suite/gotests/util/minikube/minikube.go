@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lightbend/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
 func IsRunning() bool {

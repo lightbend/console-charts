@@ -30,11 +30,11 @@ CLEANUP ?= false
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
-	ginkgo -r --skip=.*openshift.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
+	ginkgo -r --skip=.*openshift.* --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
 
 .PHONY: run-tests-openshift
 run-tests-openshift:
-	ginkgo -r --skip=.*minikube.* --randomizeAllSpecs -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
+	ginkgo -r --skip=.*minikube.* --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
 
 .PHONY: format
 format:

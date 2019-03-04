@@ -10,12 +10,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/util/helm"
-	"github.com/lightbend/gotests/util/kube"
-	"github.com/lightbend/gotests/util/lbc"
-	"github.com/lightbend/gotests/util/minikube"
-	"github.com/lightbend/gotests/util/oc"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/helm"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/oc"
 
 	. "github.com/onsi/gomega"
 )
@@ -24,11 +24,12 @@ var (
 	// The following variables are used across tests to access kubernetes
 	// and make requests on Console components.
 
-	K8sClient      *kubernetes.Clientset
-	ConsoleAddr    string
-	PrometheusAddr string
-	MonitorAPIAddr string
-	GrafanaAddr    string
+	K8sClient        *kubernetes.Clientset
+	ConsoleAddr      string
+	PrometheusAddr   string
+	MonitorAPIAddr   string
+	GrafanaAddr      string
+	AlertmanagerAddr string
 
 	isMinikube  bool
 	isOpenshift bool
@@ -70,7 +71,7 @@ func InitEnv() {
 		cleanup(true)
 	}
 
-	var additionalArgs []string
+	additionalArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
 		foundStorageClass = true
@@ -143,6 +144,7 @@ func InitEnv() {
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
 	MonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
 	GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
+	AlertmanagerAddr = fmt.Sprintf("%v/service/alertmanager", ConsoleAddr)
 
 	testEnvInitialized = true
 }

@@ -10,11 +10,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/testenv"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
-	"github.com/lightbend/gotests/util"
-	"github.com/lightbend/gotests/util/minikube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

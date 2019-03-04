@@ -11,9 +11,9 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/lightbend/gotests/args"
-	"github.com/lightbend/gotests/util"
-	"github.com/lightbend/gotests/util/kube"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
 )
 
 const ServiceAccountName = "tiller"
