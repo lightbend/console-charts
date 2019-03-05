@@ -6,6 +6,8 @@ import collections
 import tempfile
 import shutil
 import unittest
+from mock import patch
+
 
 # Exception that gets thrown when unexpected command is
 # executed by lbc script.
@@ -23,6 +25,14 @@ def test_fail(msg):
 
 # A FIFO queue of expected commands will be kept here
 expected_cmds = collections.deque()
+
+
+class MockDevice():
+    """A mock device to temporarily suppress output to stdout
+    Similar to UNIX /dev/null.
+    """
+
+    def write(self, s): pass
 
 # Adds a command to the list
 def expect_cmd(re_pattern, returncode=0, stdout=''):
@@ -220,10 +230,25 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite  --devel --values \S+ --set minikube=true --fakearg --namespace foobar')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'foobar'])
 
-    def test_helm_args_invalid_namespace_val(self):
+    def test_helm_args_conflicting_namesapce(self):
         with self.assertRaises(TestFailException):
             lbc.main(['install', '--namespace', 'foo', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
                       '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'bar'])
+
+    def test_helm_args_missing_namespace_value_in_args(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace  --devel --values \S+ --set minikube=true --fakearg ')
+        lbc.main(['install', '--namespace', '', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
+                      '--', '--set', 'minikube=true', '--fakearg'])
+
+    # parseargs fails when there is no namespace argument provided for helm and prints usage, Use mock to supress stderr
+    def test_helm_args_missing_namespace_value_in_helm_args(self):
+        with patch('sys.stderr', new=MockDevice()) as fake_out:
+            with self.assertRaises(TestFailException):
+                lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
+                '--', '--set', 'minikube=true', '--fakearg', "--namespace"])
 
     def test_helm_set(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')

@@ -535,7 +535,11 @@ def install(creds_file):
         hparser = argparse.ArgumentParser()
         hparser.add_argument('--namespace')
         real_helm_args = args.helm[1:]
-        ns_args, unknown = hparser.parse_known_args(real_helm_args)
+        try:
+            ns_args, unknown = hparser.parse_known_args(real_helm_args)
+        except:
+            fail("Parsing error, invalid namespacein helm args")
+
         if ns_args.namespace != None:
             if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
                 printerr("WARNING: Conflicting namespace values provided in arguments {} and {} ".format(
