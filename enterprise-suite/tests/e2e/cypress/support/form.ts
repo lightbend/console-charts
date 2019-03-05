@@ -81,7 +81,15 @@ export class Form {
     }
 
     static validateTriggerOccurrence(value: Occurrence) {
-        cy.get('#trigger-at-least').should('have.value', value);
+        const mapping = {
+          'once': '5e-324',
+          '25%': '0.25',
+          '50%': '0.50',
+          '75%': '0.75',
+          '95%': '0.95',
+          '100%': '1'
+        }
+        cy.get('#trigger-at-least').should('have.value', mapping[value]);
     }
 
     static setTimeWindow(value: TimeWindow) {
@@ -172,8 +180,8 @@ export class Form {
     }
 
     static validateFilterByContains(key: string, value: string) {
-        cy.get(`.capsule-group rc-capsule[ng-reflect-selected-key="${key}"] .capsule-view > .button-key`).contains(key);
-        cy.get(`.capsule-group rc-capsule[ng-reflect-selected-key="${key}"] .capsule-view > .button-value`).contains(value);
+        cy.get(`.capsule-group rc-capsule .capsule-view > .button-key`).contains(key);
+        cy.get(`.capsule-group rc-capsule .capsule-view > .button-value`).contains(value);
     }
 
     static setThresholdMonitor(m: ThresholdMonitor) {
