@@ -220,6 +220,11 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite  --devel --values \S+ --set minikube=true --fakearg --namespace foobar')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'foobar'])
 
+    def test_helm_args_invalid_namespace_val(self):
+        with self.assertRaises(TestFailException):
+            lbc.main(['install', '--namespace', 'foo', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
+                      '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'bar'])
+
     def test_helm_set(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
