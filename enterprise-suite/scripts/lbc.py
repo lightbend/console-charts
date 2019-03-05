@@ -538,7 +538,7 @@ def install(creds_file):
         try:
             ns_args, unknown = hparser.parse_known_args(real_helm_args)
         except:
-            fail("Parsing error, invalid namespacein helm args")
+            fail("")
 
         if ns_args.namespace != None:
             if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
@@ -870,7 +870,10 @@ def setup_args(argv):
         subparser.add_argument('--skip-checks', help='skip environment checks',
                                action='store_true')
 
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except:
+        fail("")
 
     if len(argv) == 0:
         parser.print_help()

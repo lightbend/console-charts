@@ -235,15 +235,12 @@ class LbcTest(unittest.TestCase):
             lbc.main(['install', '--namespace', 'foo', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
                       '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'bar'])
 
-    def test_helm_args_missing_namespace_value_in_args(self):
-        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
-        expect_cmd(r'helm repo update')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace  --devel --values \S+ --set minikube=true --fakearg ')
-        lbc.main(['install', '--namespace', '', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
-                      '--', '--set', 'minikube=true', '--fakearg'])
-
     # parseargs fails when there is no namespace argument provided for helm and prints usage, Use mock to supress stderr
+    def test_helm_args_missing_namespace_value_in_args(self):
+        with patch('sys.stderr', new=MockDevice()) as fake_out:
+            with self.assertRaises(TestFailException):
+                lbc.main(['install', '--namespace', '--creds='+self.creds_file,])
+
     def test_helm_args_missing_namespace_value_in_helm_args(self):
         with patch('sys.stderr', new=MockDevice()) as fake_out:
             with self.assertRaises(TestFailException):
