@@ -9,7 +9,7 @@ consoleUIConfig:
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: v1.0.3
-# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api
+# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api
 esMonitorVersion: v1.0.11
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.2.1
@@ -33,8 +33,8 @@ busyboxVersion: "1.30"
 #
 # es-console image
 esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
-# es-monitor-api image
-esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api'
+# console-api image
+esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api'
 # es-grafana image
 esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
 # prometheus image
