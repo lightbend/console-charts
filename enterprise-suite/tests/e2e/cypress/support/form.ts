@@ -155,13 +155,13 @@ export class Form {
     }
 
     static validateCritical(enabled: boolean, comparator: Comparator, value: number) {
-        cy.get('.critical-comparator > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
+        cy.get('.critical-enable > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
         cy.get('#critical-comparator').find(':selected').should('have.text', comparator);
         cy.get('#critical-threshold').should('have.value', value.toString());
     }
 
     static validateWarning(enabled: boolean, comparator: Comparator, value: number) {
-        cy.get('.warning-comparator > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
+        cy.get('.warning-enable > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
         cy.get('#warning-comparator').find(':selected').should('have.text', comparator);
         cy.get('#warning-threshold').should('have.value', value.toString());
     }
