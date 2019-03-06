@@ -96,29 +96,33 @@ kind: ConfigMap
 metadata:
   name: es-console
 data:
-  default.conf: |-
+  config.js: |
+    window.installedConfig = {
+      "logo":""
+    }
+  default.conf: |
     server {
       listen 8080;
       server_name localhost;
       set $base /usr/share/nginx/html;
-
+  
       # common security headers
-
+  
       more_clear_headers "Server";
       more_set_headers
         "X-Frame-Options: DENY"
         "X-XSS-Protection: 1";
-      set $app_csp "default-src 'self' 'unsafe-eval' 'unsafe-inline';";
-
+      set $app_csp "img-src 'self' data:; default-src 'self' 'unsafe-eval' 'unsafe-inline';";
+  
       # use external resolver to lookup backends, cache for 30 seconds
-
+  
       resolver 127.0.0.1:5353 ipv6=off valid=30s;
-
+  
       set $prometheus "prometheus-server";
       set $monitorapi "es-monitor-api";
       set $grafana "grafana-server";
       set $alertmanager "alertmanager:9093";
-
+  
       # nginx config primer:
       # location ~ (regex.*)(matchers.*) { regex matchers become $1 and $2 in the block }
       #   nginx uses longest path match to decide which location handler to use
@@ -134,15 +138,21 @@ data:
       #   array_split '/' $1 to=$encoded_base;
       #   array_map_op set_escape_uri $encoded_base;
       #   array_join '/' $encoded_base;
-
+  
       # proxy_pass backends with dynamic base url
-
+  
+      # Location matching strategy:
+      # - Explicit location matchers for each route.
+      # - Anything not matched by the explicit location matchers is treated as a path prefix (base href), added by
+      #   e.g. ingress or apiserver proxy.
+      # - Catch all location matcher is last, which captures the path prefix up to the penultimate slash.
+  
       sub_filter_once off;
-
+  
       set $nocache 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
-
+  
       # prometheus UI and api endpoints
-      location ~ (.*/service/prometheus)(/.*) {
+      location ~ ^(.*/service/prometheus)(/.*)$ {
         # encode base path
         array_split '/' $1 to=$encoded_base;
         array_map_op set_escape_uri $encoded_base;
@@ -154,15 +164,15 @@ data:
         sub_filter 'PATH_PREFIX = ""' 'PATH_PREFIX = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/graph"))';
         proxy_redirect '/' ' $1/';
       }
-
+  
       # es-monitor-api
-      location ~ (.*/service/es-monitor-api)(/.*) {
+      location ~ ^(.*/service/es-monitor-api)(/.*)$ {
         proxy_pass http://$monitorapi$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
-
+  
       # grafana plugin
-      location ~ (.*/service/grafana)(/dashboard/script/exporter-async.js) {
+      location ~ ^(.*/service/grafana)(/dashboard/script/exporter-async.js)$ {
         # encode base path
         array_split '/' $1 to=$encoded_base;
         array_map_op set_escape_uri $encoded_base;
@@ -181,9 +191,9 @@ data:
         expires off;
         etag off;
       }
-
+  
       # grafana ui
-      location ~ (.*/service/grafana)(/.*) {
+      location ~ ^(.*/service/grafana)(/.*)$ {
         # encode base path
         array_split '/' $1 to=$encoded_base;
         array_map_op set_escape_uri $encoded_base;
@@ -196,27 +206,27 @@ data:
         proxy_cookie_path '/service/grafana' '$1';
         proxy_redirect '/' ' $1/';
       }
-
+  
       # alertmanager ui
-      location ~ (.*/service/alertmanager)(/.*) {
+      location ~ ^(.*/service/alertmanager)(/.*)$ {
         proxy_pass http://$alertmanager$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
-
+  
       # redirect /service/prometheus -> /service/prometheus/
       # redirect /service/grafana -> /service/grafana/
       # redirect /service/alertmanager -> /service/alertmanager/
-
-      location ~ (.*/service/(prometheus|grafana|alertmanager))$ {
+  
+      location ~ ^(.*/service/(prometheus|grafana|alertmanager))$ {
         return 301 ' $1/';
       }
-
+  
       # version
-
-      location ~ (.*)/version$ {
+  
+      location ~ ^(.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.0",
+          "version": "1.0.1",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
@@ -229,20 +239,20 @@ data:
           "busyboxVersion": "1.30",
           "configMapReloadImage": "jimmidyson/configmap-reload",
           "configMapReloadVersion": "v0.2.2",
+          "consoleUIConfig": "map[logo:]",
           "createAlertManager": "true",
           "daemonSetApiVersion": "apps/v1beta2",
           "defaultCPURequest": "100m",
           "defaultMemoryRequest": "50Mi",
-          "defaultStorageClass": "standard",
           "deploymentApiVersion": "apps/v1beta2",
           "esConsoleExposePort": "30080",
           "esConsoleImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console",
-          "esConsoleVersion": "v1.0.1",
+          "esConsoleVersion": "v1.0.3",
           "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
           "esGrafanaVersion": "v0.2.1",
           "esGrafanaVolumeSize": "32Gi",
           "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api",
-          "esMonitorVersion": "v1.0.6",
+          "esMonitorVersion": "v1.0.9",
           "exposeServices": "NodePort",
           "goDnsmasqImage": "lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq",
           "goDnsmasqVersion": "v0.1.7-1",
@@ -250,21 +260,21 @@ data:
           "imagePullPolicy": "IfNotPresent",
           "kubeStateMetricsImage": "gcr.io/google_containers/kube-state-metrics",
           "kubeStateMetricsVersion": "v1.2.0",
-          "managePersistentVolumes": "true",
           "prometheusDomain": "prometheus.io",
           "prometheusImage": "prom/prometheus",
           "prometheusMemoryRequest": "250Mi",
           "prometheusVersion": "v2.7.1",
           "prometheusVolumeSize": "256Gi",
           "rbacApiVersion": "rbac.authorization.k8s.io/v1",
+          "usePersistentVolumes": "true",
           "name": "enterprise-suite"
         }';
         default_type application/json;
       }
-
+  
       # console entry point
-
-      location ~ (.*/)index.html {
+  
+      location ~ ^(.*/)index.html$ {
         # Console CSP
         add_header Content-Security-Policy $app_csp;
         # encode base path
@@ -282,11 +292,11 @@ data:
         expires off;
         etag off;
       }
-
+  
       # bookmarks and reloads in the /workloads/ path
       # (for our single page app, these should reload index.html but keep the path)
-
-      location ~ (.*/)(namespaces/[^/]+/workloads/.*) {
+  
+      location ~ ^(.*/)(namespaces/[^/]+/workloads/.*)$ {
         # Console CSP
         add_header Content-Security-Policy $app_csp;
         # encode base path
@@ -305,20 +315,60 @@ data:
         expires off;
         etag off;
       }
-
-      # static files
-
-      location ~ (.*)(/assets/.*) {
+  
+      # pipelines ui
+  
+      location ~ ^(.*/)(pipelines/.*)$ {
+        # Console CSP
+        add_header Content-Security-Policy $app_csp;
+        # encode base path
+        array_split '/' $1 to=$encoded_base;
+        array_map_op set_escape_uri $encoded_base;
+        array_join '/' $encoded_base;
+        # serve the app
+        alias $base/index.html;
+        default_type text/html;
+        # replace base href
+        sub_filter 'base href="/"' 'base href="$encoded_base"';
+        # no-cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control $nocache;
+        if_modified_since off;
+        expires off;
+        etag off;
+      }
+  
+      # Specific handler for /assets/js/config.js
+      location ~ ^.*/(assets/js/config.js)$ {
+        alias /helm-data/$1;
+      }
+  
+      # Specific handler for assets.
+      location ~ ^(.*)(/assets/.*)$ {
         alias $base$2;
       }
-
-      location ~ (.*)(/.*) {
+  
+      # Handler for application routes and assets not inside of /assets.
+      location ~ ^(.*)(/(cluster|.*\.js|.*\.css|.*\.woff|.*\.woff2|.*\.ttf))$ {
         root $base;
-        index index.html;
         try_files $2 $1/index.html;
       }
-
+  
+      # If there is a path with no trailing slash that hasn't matched any location yet, rewrite to trailing slash.
+      # E.g. "http://consoleurl/monitoring" -> "http://consoleurl/monitoring/".
+      location ~ ^/.+[^/]$ {
+        rewrite ^(/.+[^/])$ $1/ last;
+      }
+  
+      # Catch all handler that catches "http://consoleurl/prefix1/prefix2/", and redirects to
+      # "http://consoleurl/prefix1/prefix2/index.html". It handles arbitrary number of prefix subpaths.
+      # It does not work with application routes - those need specific location handlers which are listed above.
+      location ~ ^(.*)(/.*)$ {
+        root $base;
+        try_files $2 $1/index.html;
+      }
     }
+  
 
 ---
 # Source: enterprise-suite/templates/es-grafana-configmap-datasource.yaml
@@ -784,7 +834,7 @@ data:
             "graphName": "Resident Memory Used Percent",
             "promQL": [
                 {
-                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)",
+                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left kube_node_status_capacity_memory_bytes) * 100)",
                     "legendFormat": "{{kubernetes_pod_name}}"
                 }
             ],
@@ -796,7 +846,7 @@ data:
             "graphName": "Total Memory Used Percent",
             "promQL": [
                 {
-                    "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left node_memory_MemTotal) * 100)",
+                    "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left kube_node_status_capacity_memory_bytes) * 100)",
                     "legendFormat": "{{kubernetes_pod_name}}"
                 }
             ],
@@ -1713,6 +1763,34 @@ data:
   
     {{ .MonitorTypeRules | indent 6 }}
   
+      # kubelet metrics (not for monitoring, just grafana data)
+      - job_name: 'kubelet'
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+  
+        kubernetes_sd_configs:
+          - role: node
+  
+        honor_labels: true
+  
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+          - source_labels: [__meta_kubernetes_node_name]
+            target_label: node_name
+          - source_labels: [__meta_kubernetes_node_address_InternalIP]
+            target_label: node_ip
+  
+  
       # kube-state-metrics
   
       - job_name: 'kube-state-metrics'
@@ -1984,16 +2062,16 @@ data:
       expr: 100 * prometheus_target_sync_length_seconds{quantile="0.99"} / on (job,instance) group_left(interval) prometheus_target_interval_length_seconds{quantile="0.01"}
   
     - record: prometheus_notifications_dropped_rate
-      expr: rate(prometheus_notifications_dropped_total[10m])
+      expr: irate(prometheus_notifications_dropped_total[5m])
   
     - record: prometheus_rule_evaluation_failures_rate
-      expr: rate(prometheus_rule_evaluation_failures_total[10m])
+      expr: irate(prometheus_rule_evaluation_failures_total[5m])
   
     - record: prometheus_target_scrapes_exceeded_sample_limit_rate
-      expr: rate(prometheus_target_scrapes_exceeded_sample_limit_total[10m])
+      expr: irate(prometheus_target_scrapes_exceeded_sample_limit_total[5m])
   
     - record: prometheus_tsdb_reloads_failures_rate
-      expr: rate(prometheus_tsdb_reloads_failures_total[10m])
+      expr: irate(prometheus_tsdb_reloads_failures_total[5m])
   
     - record: akka_processing_time_seconds
       expr: akka_actor_processing_time_ns{quantile="0.5"} / 1000000000
@@ -2005,7 +2083,7 @@ data:
       expr: (redis_keyspace_misses_total/redis_keyspace_hits_total) * 100
   
     - record: kafka_incoming_messages_rate
-      expr: sum without (instance) (rate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
+      expr: sum without (instance) (irate(kafka_server_brokertopicmetrics_messagesin_total[5m]))
   
     - record: kafka_active_controllers
       expr: sum by (namespace, es_workload, es_monitor_type) (kafka_controller_kafkacontroller_activecontrollercount)
@@ -2014,10 +2092,10 @@ data:
       expr: (sum without(command, status) (memcached_commands_total{status="miss"})/sum without(command, status) (memcached_commands_total)) * 100
   
     - record: memcached_evictions_rate
-      expr: rate(memcached_items_evicted_total[5m])
+      expr: irate(memcached_items_evicted_total[5m])
   
     - record: akka_http_http_server_responses_5xx_rate
-      expr: rate(akka_http_http_server_responses_5xx[5m])
+      expr: irate(akka_http_http_server_responses_5xx[5m]) and akka_http_http_server_responses_5xx offset 1m
   
 
 ---
@@ -2051,10 +2129,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: alertmanager-storage
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
-  storageClassName: standard
+  
   accessModes:
   - ReadWriteOnce
   resources:
@@ -2069,10 +2145,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: es-grafana-storage
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
-  storageClassName: standard
+  
   accessModes:
   - ReadWriteOnce
   resources:
@@ -2087,10 +2161,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: prometheus-storage
-  annotations:
-    "helm.sh/resource-policy": keep
 spec:
-  storageClassName: standard
+  
   accessModes:
   - ReadWriteOnce
   resources:
@@ -2220,8 +2292,8 @@ spec:
     port: 9093
     targetPort: 9093
   selector:
-    app: prometheus
-    component: alertmanager
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: alertmanager
   type: ClusterIP
 
 
@@ -2239,7 +2311,8 @@ spec:
     targetPort: 8080
     nodePort: 30080
   selector:
-    run: es-console
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: es-console
   type: NodePort
 
 
@@ -2255,7 +2328,8 @@ spec:
       port: 80
       targetPort: 8080
   selector:
-    run: es-console
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: es-console
   type: ClusterIP
 
 ---
@@ -2274,8 +2348,8 @@ spec:
       protocol: TCP
       targetPort: 3000
   selector:
-    app: grafana
-    component: "server"
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: grafana
   type: "ClusterIP"
 
 ---
@@ -2283,12 +2357,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: prometheus-kube-state-metrics
   annotations:
     prometheus.io/scrape: "true"
   labels:
-    app: prometheus
-    component: "kube-state-metrics"
-  name: prometheus-kube-state-metrics
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: kube-state-metrics
 spec:
   clusterIP: None
   ports:
@@ -2313,8 +2387,8 @@ spec:
       port: 80
       targetPort: 8180
   selector:
-    app: prometheus
-    component: server
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: prometheus
 
 ---
 # Source: enterprise-suite/templates/prometheus-service-prom.yaml
@@ -2328,8 +2402,8 @@ spec:
       port: 80
       targetPort: 9090
   selector:
-    app: prometheus
-    component: server
+    app.kubernetes.io/name: lightbend-console
+    app.kubernetes.io/component: prometheus
 
 ---
 # Source: enterprise-suite/templates/alertmanager-deployment.yaml
@@ -2354,9 +2428,18 @@ spec:
     matchLabels:
       app: prometheus
       component: alertmanager
+
   template:
     metadata:
+      annotations:
+        checksum/alertmanager-config: 80defaeb71676c73fc6988e08249907ff78a990d1910e9456ea8b8cef0223d8f
       labels:
+        app.kubernetes.io/name: lightbend-console
+        helm.sh/chart: enterprise-suite-1.0.1
+        app.kubernetes.io/managed-by: Tiller
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: alertmanager
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: alertmanager
     spec:
@@ -2419,7 +2502,8 @@ spec:
             name: alertmanager-default
         - name: data-volume
           
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: alertmanager-storage
           
 
 
@@ -2430,9 +2514,21 @@ kind: Deployment
 metadata:
   name: es-console
 spec:
+  selector:
+    matchLabels:
+      run: es-console
+
   template:
     metadata:
+      annotations:
+        checksum/es-console-config: b2c6f1d9d1cd53e038bce509e1874176ea6a433cf831f08d6647b791d1e73c67
       labels:
+        app.kubernetes.io/name: lightbend-console
+        helm.sh/chart: enterprise-suite-1.0.1
+        app.kubernetes.io/managed-by: Tiller
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: es-console
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         run: es-console
     spec:
       
@@ -2441,6 +2537,8 @@ spec:
       - name: commercial-credentials
 
       containers:
+      # Used by nginx to look up service names dynamically.
+      # go-dnsmasq has the unique property of using /etc/resolv.conf search domains.
       - name: dnsmasq
         image: lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq:v0.1.7-1
         args:
@@ -2448,8 +2546,9 @@ spec:
           - "127.0.0.1:5353"
           - --verbose
           - --enable-search
+
       - name: es-console
-        image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console:v1.0.1
+        image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console:v1.0.3
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -2458,13 +2557,24 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-        - name: config-volume
+        - name: nginx-config
           mountPath: /etc/nginx/conf.d
+        - name: ui-config
+          mountPath: /helm-data/assets/js
 
       volumes:
-      - name: config-volume
+      - name: nginx-config
         configMap:
           name: es-console
+          items:
+          - key: default.conf
+            path: default.conf
+      - name: ui-config
+        configMap:
+          name: es-console
+          items:
+          - key: config.js
+            path: config.js
 
 ---
 # Source: enterprise-suite/templates/es-grafana-deployment.yaml
@@ -2484,11 +2594,28 @@ spec:
     # Needed for helm upgrade to succeed.
     rollingUpdate: null
 
+  selector:
+    matchLabels:
+      app: grafana
+      component: server
+
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: lightbend-console
+        helm.sh/chart: enterprise-suite-1.0.1
+        app.kubernetes.io/managed-by: Tiller
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: grafana
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: grafana
         component: server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        checksum/datasource-config: 7ee3b4952149b811cd0ba812bdedc5645aa19711250641d8f75662e4bd8b7686
+        checksum/plugin-config: 7691198805c99deec9bef4884d99da822915f6f0c60c4f3edf4d6d1a45a16f45
+
     spec:
       
 
@@ -2525,7 +2652,7 @@ spec:
               command: ["/bin/sh", "-c", "echo \"Waiting for grafana to enable cinnamon plugin...\"; until curl --output /dev/null --silent --head --fail curl http://127.0.0.1:3000; do echo -n '.' ;  sleep 2; done ; curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
         readinessProbe:
           httpGet:
-            path: /login
+            path: /api/health
             port: 3000
         volumeMounts:
         - name: grafana-dashboards
@@ -2544,7 +2671,8 @@ spec:
           name: grafana-datasource-cm
       - name: grafana-data
         
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: es-grafana-storage
         
 
 ---
@@ -2558,15 +2686,24 @@ metadata:
   name: prometheus-kube-state-metrics
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: prometheus
       component: kube-state-metrics
+
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: lightbend-console
+        helm.sh/chart: enterprise-suite-1.0.1
+        app.kubernetes.io/managed-by: Tiller
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: kube-state-metrics
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: kube-state-metrics
+
     spec:
       
       serviceAccountName: prometheus-kube-state-metrics
@@ -2607,13 +2744,23 @@ spec:
     matchLabels:
       app: prometheus
       component: server
+
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: lightbend-console
+        helm.sh/chart: enterprise-suite-1.0.1
+        app.kubernetes.io/managed-by: Tiller
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: prometheus
+        # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: server
       annotations:
         prometheus.io/scrape: "true"
+        checksum/es-monitor-api-config: c36b8f800c9f5926f3fc90279d829de0184a279a56611ec37e03e8eefecfa390
+        checksum/bare-prometheus-config: 8898a493fb7758aaed74b5167d86ccd6d773f74a9f27bee46496d93754a9b39c
+
     spec:
       serviceAccountName: prometheus-server
 
@@ -2647,7 +2794,7 @@ spec:
           command:
             - sh
             - -c
-            - "chown -Rc 65534:65534 /data || true"
+            - "chown -Rc 65534:65534 /data 2>/dev/null || true"
           volumeMounts:
             - name: prometheus-data-volume
               mountPath: /data
@@ -2658,7 +2805,7 @@ spec:
 
       containers:
         - name: es-monitor-api
-          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api:v1.0.6
+          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api:v1.0.9
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -2759,7 +2906,8 @@ spec:
             name: es-monitor-api
         - name: prometheus-data-volume
           
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: prometheus-storage
           
         - name: bare-prometheus
           configMap:
