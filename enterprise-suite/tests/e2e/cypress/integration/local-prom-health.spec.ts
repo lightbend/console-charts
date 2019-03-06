@@ -9,11 +9,14 @@ import { Health } from '../support/health';
 describe('Local Prometheus Health Test', () => {
   beforeEach(() => {
     Navigation.goMonitorPage('lightbend', 'es-demo', 'akka_inbox_growth');
+    Form.validateMonitorName('akka_inbox_growth');
     Action.editMonitor();
+    Form.validateMonitorName('akka_inbox_growth');
+    Form.validateMonitorType('growth rate');
     Form.validateMetricName('akka_actor_mailbox_size');
   });
 
-  it.skip('enable critical only', () => {
+  it('enable critical only', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
@@ -35,11 +38,12 @@ describe('Local Prometheus Health Test', () => {
 
     // ISSUE: lightbend/console-home#328 - bottom 2 health bars are not changed in edit mode
     if (!Cypress.env('skipKnownError')) {
+      cy.log('DDD');
       Health.validateBottomTimeline('critical');
     }
   });
 
-  it.skip('enable warning only', () => {
+  it('enable warning only', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
@@ -81,7 +85,7 @@ describe('Local Prometheus Health Test', () => {
   });
 
   // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
-  it.skip('warning should not overwrite critical', () => {
+  it('warning should not overwrite critical', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',

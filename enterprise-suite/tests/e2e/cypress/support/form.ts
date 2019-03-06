@@ -64,7 +64,7 @@ export class Form {
     }
 
     static validateMonitorName(value: string) {
-        cy.get('#mon-name').should('have.value', value);
+        cy.get('#mon-name', {timeout: 5000}).should('have.value', value);
     }
 
     static setMonitorType(value: MonitorType) {
@@ -73,7 +73,12 @@ export class Form {
     }
 
     static validateMonitorType(value: MonitorType) {
-        cy.get('#monitor-type').should('have.value', value);
+      const mapping = {
+        'growth rate': 'growthrate',
+        'threshold': 'threshold',
+        'simple moving average': 'sma'
+      }
+        cy.get('#monitor-type').should('have.value', mapping[value]);
     }
 
     static setTriggerOccurrence(value: Occurrence) {
@@ -93,7 +98,7 @@ export class Form {
     }
 
     static setTimeWindow(value: TimeWindow) {
-        cy.get('#trigger-within').select(value);
+        cy.get('#trigger-within', {timeout: 5000}).select(value);
     }
 
     static validateTimeWindow(value: TimeWindow) {
@@ -150,13 +155,13 @@ export class Form {
     }
 
     static validateCritical(enabled: boolean, comparator: Comparator, value: number) {
-        cy.get('.critical-enable > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
+        cy.get('.critical-comparator > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
         cy.get('#critical-comparator').find(':selected').should('have.text', comparator);
         cy.get('#critical-threshold').should('have.value', value.toString());
     }
 
     static validateWarning(enabled: boolean, comparator: Comparator, value: number) {
-        cy.get('.warning-enable > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
+        cy.get('.warning-comparator > span').should('have.text', enabled ? 'Enabled' : 'Disabled');
         cy.get('#warning-comparator').find(':selected').should('have.text', comparator);
         cy.get('#warning-threshold').should('have.value', value.toString());
     }
@@ -194,6 +199,9 @@ export class Form {
         }
 
         this.setMonitorType('threshold');
+        cy.wait(2000); // work around ui change slowly
+        this.setMonitorType('threshold'); // FIXME: sometimes it will roll back to growthrate monitor
+        cy.wait(1000); // work around ui change slowly
         this.setTimeWindow(m.timeWindow);
         this.enableCritical(m.critical.enabled);
         this.setCritical(m.critical.comparator, m.critical.value);

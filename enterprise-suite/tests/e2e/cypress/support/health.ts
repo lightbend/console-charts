@@ -9,12 +9,11 @@ export class Health {
         //     .eq(index)
         //     .find('rect');
         // cy.wait(10000); // wait health bar be stable, need to remove in the future
-
         cy.get('.monitor-list .health-bar')
             .eq(index)
             .find('rect')
             .not('.crosshair')
-            .last()
+            .last({timeout: 10000})
             // ISSUE/FLAKY: lightbend/console-home#354 - unknown health in middle health bar due to missing health data
             .should('have.class', `health-${health}-bar`);
     }
@@ -24,16 +23,17 @@ export class Health {
         cy.get('.selected-container .health-bar')
             .find('rect')
             .not('.crosshair')
-            .last()
+            .last({timeout: 10000})
             .should('have.class', `health-${health}-bar`);
     }
 
     static validateBottomTimeline(health: 'warning'|'critical'|'ok') {
         cy.log('validateBottomTimeline()', health);
+        cy.wait(5000); // FIXME hard wait
         cy.get('.timeline-health')
             .find('rect')
             .not('.crosshair')
-            .last()
+            .last({timeout: 10000})
             .should('have.class', `health-${health}-bar`);
     }
 }
