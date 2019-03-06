@@ -16,7 +16,7 @@ describe('Local Prometheus Health Test', () => {
     Form.validateMetricName('akka_actor_mailbox_size');
   });
 
-  it('enable critical only', () => {
+  it.skip('enable critical only', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
@@ -43,7 +43,7 @@ describe('Local Prometheus Health Test', () => {
     }
   });
 
-  it('enable warning only', () => {
+  it.skip('enable warning only', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
@@ -85,7 +85,7 @@ describe('Local Prometheus Health Test', () => {
   });
 
   // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
-  it('warning should not overwrite critical', () => {
+  it.skip('warning should not overwrite critical', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
