@@ -8,11 +8,12 @@ export class Health {
         // Instead, if it has more then "2" rect (1) rect.health-unknown-bar (2) rect.corsshair  then it has updated
         cy.get('.monitor-list .health-bar').eq(index).find('rect', {timeout: 10000}).should('have.length.be.gt', 2);
 
+        cy.wait(2000);  // FIXME: sometimes health bar updated is not stable. wait make it more stable
         cy.get('.monitor-list .health-bar')
             .eq(index)
             .find('rect')
             .not('.crosshair')
-            .last({timeout: 10000})
+            .last({timeout: 2000})
             // ISSUE/FLAKY: lightbend/console-home#354 - unknown health in middle health bar due to missing health data
             .should('have.class', `health-${health}-bar`);
     }
@@ -22,7 +23,7 @@ export class Health {
         cy.get('.selected-container .health-bar')
             .find('rect')
             .not('.crosshair')
-            .last({timeout: 10000})
+            .last({timeout: 2000})
             .should('have.class', `health-${health}-bar`);
     }
 
@@ -30,9 +31,13 @@ export class Health {
     static validateContextTimeline(health: 'warning'|'critical'|'ok') {
         cy.log('validateContextTimeline()', health);
 
+        // wait for health bar updated
         cy.get('.context-div .timeline-health').find('rect', {timeout: 10000}).should('have.length.be.gt', 2);
+
+        cy.wait(2000); // FIXME: sometimes health bar updated is not stable. wait make it more stable
+
         cy.get('.context-div .timeline-health')
-            .find('rect', {timeout: 10000})
+            .find('rect', {timeout: 2000})
             .not('.crosshair')
             // .last({timeout: 10000})  // NOTE: not the last element anymore
             .should('have.class', `health-${health}-bar`);
