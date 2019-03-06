@@ -13,8 +13,6 @@ describe('Create Monitor Test', () => {
 
 
   // NOTE: group by actor is flaky due to the following two issues
-  // ISSUE: lightbend/console-home#322 - drop down with super long wait in edit mode
-  // ISSUE/FLAKY: lightbend/console-home#323 - sometimes drop down data is incorrect
   it('validate created threshold monitor w/ group by actor', () => {
     // create and save monitor
     const monitorName = Util.createRandomMonitorName();
@@ -46,13 +44,8 @@ describe('Create Monitor Test', () => {
 
     // validate form
     Action.editMonitor();
-
-    if (!Cypress.env('skipKnownError')) {
-      // ISSUE: lightbend/console-home#324 - value wrongly reset to 1 if disable severity
-      Form.validateThresholdMonitor(thresholdMonitor);
-      // ISSUE: lightbend/console-home#260 - label "workload" is wrongly added in "filter by" field
-      Form.validateFilterByCount(1);
-    }
+    Form.validateThresholdMonitor(thresholdMonitor);
+    Form.validateFilterByCount(1);
     Form.validateFilterByContains('app', 'es-demo');
 
     // delete created monitor
@@ -94,13 +87,8 @@ describe('Create Monitor Test', () => {
 
     // validate form
     Action.editMonitor();
-
-    if (!Cypress.env('skipKnownError')) {
-      // ISSUE: lightbend/console-home#324 - value wrongly reset to 1 if disable severity
-      Form.validateThresholdMonitor(thresholdMonitor);
-      // ISSUE: lightbend/console-home#260 - label "workload" is wrongly added in "filter by" field
-      Form.validateFilterByCount(1);
-    }
+    Form.validateThresholdMonitor(thresholdMonitor);
+    Form.validateFilterByCount(1);
     Form.validateFilterByContains('job', 'kube-state-metrics');
 
     // delete created monitor

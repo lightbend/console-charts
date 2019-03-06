@@ -29,8 +29,6 @@ export class Form {
     }
 
     static setGroupBy(value: string) {
-      // ISSUE: lightbend/console-home#322 - drop down with super long wait in edit mode
-      // ISSUE: lightbend/console-home#323 - sometimes drop down data is incorrect
         cy.log('set group by', value);
         cy.get(`#agg-label option[value="${value}"]`, {timeout: 40000});
         cy.wait(1000); // make sure downdown updated and no flaky

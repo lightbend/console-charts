@@ -28,10 +28,8 @@ describe('History Log Test', () => {
 
     // check history log: should be 1 item
     cy.log('check log history when create a new monitor');
-    if (!Cypress.env('skipKnownError')) {
-      History.validateCount(1);
-      History.validateCreatedIsIndex(0);
-    }
+    History.validateCount(1);
+    History.validateCreatedIsIndex(0);
     Action.editMonitor();
     Form.validateGroupByNone();
 
@@ -50,19 +48,14 @@ describe('History Log Test', () => {
     History.validateModifiedIsIndex(0);
     History.validateCount(2);
 
-    // ISSUE: lightbend/console-home#260 - "filter by" field should not change if only change group by
+    // ISSUE: lightbend/console-frontend#501 - Monitor Change Log is missing details
     if (!Cypress.env('skipKnownError')) {
       // FIXME: the following test is disabled due to regression failed
-      if (false) {
-        // FIXME: regression bug
-        History.validateContainChange(0, 'aggregate using', 'avg');
-        History.validateContainChange(0, 'group by', 'instance');
-        // FIXME: bug in frontend, should only show two lines for first change
-        // (1) title 'modified' (2) modified content
-        History.validateChangeCountForIndex(0, 2);
-      }
-
-
+      History.validateContainChange(0, 'aggregate using', 'avg');
+      History.validateContainChange(0, 'group by', 'instance');
+      // FIXME: bug in frontend, should only show two lines for first change
+      // (1) title 'modified' (2) modified content
+      History.validateChangeCountForIndex(0, 2);
     }
 
     // clean up
