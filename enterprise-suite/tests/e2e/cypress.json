@@ -9,5 +9,5 @@
       "mochaFile": "results/[hash].xml",
       "toConsole": true
     },
-    "videoCompression": false
+    "videoCompression": 1
 }
