@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"time"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
@@ -33,13 +32,8 @@ type Connection struct {
 
 func (p *Connection) Query(query string) (*PromResponse, error) {
 	addr := fmt.Sprintf("%v/api/v1/query?query=%v", p.url, url.QueryEscape(query))
-	// Some of the tests with openshift clusters timed out in 20 seconds, so adding a timeout for 45 seconds.
-	timeout := time.Duration(45 * time.Second)
-	client := http.Client{
-		Timeout: timeout,
-	}
-	// client.Get(url)
-	resp, err := client.Get(addr)
+
+	resp, err := http.Get(addr)
 	if err != nil {
 		return nil, err
 	}
