@@ -51,7 +51,6 @@ export class Util {
   static waitRecalculateHealth() {
     cy.get('.monitor-list .center').contains('Calculating Health');
     cy.get('.monitor-list .health-bar', {timeout: 20000});
-    cy.wait(5000); // FIXME: hard waiting to workaround update health line by line
   }
 
 }

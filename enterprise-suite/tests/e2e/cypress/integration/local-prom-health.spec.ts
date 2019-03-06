@@ -39,7 +39,7 @@ describe('Local Prometheus Health Test', () => {
     // ISSUE: lightbend/console-home#328 - bottom 2 health bars are not changed in edit mode
     if (!Cypress.env('skipKnownError')) {
       cy.log('DDD');
-      Health.validateBottomTimeline('critical');
+      Health.validateContextTimeline('critical');
     }
   });
 
@@ -59,7 +59,7 @@ describe('Local Prometheus Health Test', () => {
     Health.validateMiddleMetricList(1, 'warning');
     Health.validateSelectedGraph('warning');
     if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('warning');
+      Health.validateContextTimeline('warning');
     }
   });
 
@@ -80,7 +80,7 @@ describe('Local Prometheus Health Test', () => {
     Health.validateMiddleMetricList(1, 'ok');
     Health.validateSelectedGraph('ok');
     if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('ok');
+      Health.validateContextTimeline('ok');
     }
   });
 
@@ -104,7 +104,7 @@ describe('Local Prometheus Health Test', () => {
     Health.validateSelectedGraph('critical');
 
     if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('critical');
+      Health.validateContextTimeline('critical');
     }
 
     Form.enableWarning(true);
@@ -115,7 +115,7 @@ describe('Local Prometheus Health Test', () => {
       Health.validateMiddleMetricList(0, 'critical');
       Health.validateMiddleMetricList(1, 'critical');
       Health.validateSelectedGraph('critical');
-      Health.validateBottomTimeline('critical');
+      Health.validateContextTimeline('critical');
     }
   });
 
@@ -137,7 +137,7 @@ describe('Local Prometheus Health Test', () => {
       Health.validateMiddleMetricList(0, 'critical');
       Health.validateMiddleMetricList(1, 'critical');
       Health.validateSelectedGraph('critical');
-      Health.validateBottomTimeline('critical');
+      Health.validateContextTimeline('critical');
     }
   });
 
@@ -159,7 +159,7 @@ describe('Local Prometheus Health Test', () => {
       Health.validateMiddleMetricList(0, 'critical');
       Health.validateMiddleMetricList(1, 'critical');
       Health.validateSelectedGraph('critical');
-      Health.validateBottomTimeline('critical');
+      Health.validateContextTimeline('critical');
     }
   });
 });

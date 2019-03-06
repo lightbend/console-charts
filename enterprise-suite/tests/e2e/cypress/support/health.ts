@@ -4,11 +4,10 @@ export class Health {
     static validateMiddleMetricList(index: number, health: 'warning'|'critical'|'ok') {
         cy.log('validateMiddleMetricList()', index, health);
 
-        // ISSUE: lightbend/console-home#353 - health bar recalculate twice, so put long delay to bypass problem
-        // cy.get('.monitor-list .health-bar')
-        //     .eq(index)
-        //     .find('rect');
-        // cy.wait(10000); // wait health bar be stable, need to remove in the future
+        // FIXME: polling health bar is updated -> somehow code always have "health-unknown-bar", so we cannot poll This
+        // Instead, if it has more then "2" rect (1) rect.health-unknown-bar (2) rect.corsshair  then it has updated
+        cy.get('.monitor-list .health-bar').eq(index).find('rect', {timeout: 10000}).should('have.length.be.gt', 2);
+
         cy.get('.monitor-list .health-bar')
             .eq(index)
             .find('rect')
@@ -27,13 +26,15 @@ export class Health {
             .should('have.class', `health-${health}-bar`);
     }
 
-    static validateBottomTimeline(health: 'warning'|'critical'|'ok') {
-        cy.log('validateBottomTimeline()', health);
-        cy.wait(5000); // FIXME hard wait
-        cy.get('.timeline-health')
-            .find('rect')
+    // second  timeline
+    static validateContextTimeline(health: 'warning'|'critical'|'ok') {
+        cy.log('validateContextTimeline()', health);
+
+        cy.get('.context-div .timeline-health').find('rect', {timeout: 10000}).should('have.length.be.gt', 2);
+        cy.get('.context-div .timeline-health')
+            .find('rect', {timeout: 10000})
             .not('.crosshair')
-            .last({timeout: 10000})
+            // .last({timeout: 10000})  // NOTE: not the last element anymore
             .should('have.class', `health-${health}-bar`);
     }
 }
