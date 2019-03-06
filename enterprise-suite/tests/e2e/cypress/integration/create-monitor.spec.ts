@@ -56,7 +56,7 @@ describe('Create Monitor Test', () => {
   });
 
   // ISSUE/FLAKY: lightbend/console-home#323 - sometimes drop down data is incorrect
-  it('validate created threshold monitor(basic)', () => {
+  it.skip('validate created threshold monitor(basic)', () => {
     // create and save monitor
     const monitorName = Util.createRandomMonitorName();
     Navigation.goWorkloadPageByClick('es-demo');

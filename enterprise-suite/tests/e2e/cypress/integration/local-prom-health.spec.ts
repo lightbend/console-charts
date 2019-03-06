@@ -34,7 +34,7 @@ describe('Local Prometheus Health Test', () => {
     Health.validateContextTimeline('critical');
   });
 
-  it('enable warning only', () => {
+  it.skip('enable warning only', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
@@ -71,7 +71,6 @@ describe('Local Prometheus Health Test', () => {
     Health.validateContextTimeline('ok');
   });
 
-  // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
   it('warning should not overwrite critical', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
@@ -100,7 +99,6 @@ describe('Local Prometheus Health Test', () => {
     Health.validateContextTimeline('critical');
   });
 
-  // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
   it.skip('enable both critical and warning 1', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
@@ -119,7 +117,6 @@ describe('Local Prometheus Health Test', () => {
     Health.validateContextTimeline('critical');
   });
 
-  // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
   it.skip('enable both critical and warning 2', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
