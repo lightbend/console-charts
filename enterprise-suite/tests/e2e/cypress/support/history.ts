@@ -14,11 +14,11 @@ export class History {
     }
 
     static validateChangeCountForIndex(index: number, count: number) {
-        cy.get(`side rc-monitor-change-log .change-field[data-index="${index}"]`).should('have.length', count);
+        cy.get(`side rc-monitor-change-log .log-type[data-index="${index}"]`).should('have.length', count);
     }
 
     static validateContainChange(index: number, field: string, value: string) {
-        cy.get(`side rc-monitor-change-log .change-field[data-index="${index}"] .field`).contains(field)
+        cy.get(`side rc-monitor-change-log .log-type[data-index="${index}"] .value`).contains(field)
           .parent().children('.value').contains(value);
     }
 }
