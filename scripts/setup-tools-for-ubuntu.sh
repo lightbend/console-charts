@@ -16,6 +16,10 @@ sudo apt install -y jq
 # libgconf2-4
 sudo apt install -y libgconf2-4
 
+# pip mock
+sudo apt-get install -y python-pip
+pip install mock
+
 # promtool
 mkdir -p build
 cd build
