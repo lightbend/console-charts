@@ -18,7 +18,7 @@ sudo apt install -y libgconf2-4
 
 # pip mock
 sudo apt-get install -y python-pip
-pip install mock
+sudo pip install mock
 
 # promtool
 mkdir -p build
