@@ -49,7 +49,7 @@ var _ = BeforeSuite(func() {
 	prom, err = prometheus.NewConnection(testenv.PrometheusAddr)
 	Expect(err).To(Succeed())
 
-	esMonitor, err = monitor.NewConnection(testenv.MonitorAPIAddr)
+	esMonitor, err = monitor.NewConnection(testenv.ConsoleAPIAddr)
 	Expect(err).To(Succeed())
 
 	waitForScrapes := func(metric string) {
@@ -110,7 +110,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_scrape_time"),
 	)
 
-	It("coherency", func() {
+	It("has the expected labels", func() {
 		// PromData with "es_workload" should also have a "namespace" label
 		Expect(prom.HasData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).ToNot(Succeed())
 		// Health should have "es_workload" label, with a few known exceptions
