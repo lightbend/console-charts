@@ -24,7 +24,9 @@ function diagnostics() {
 
 function setup() {
     kubectl create namespace ${NAMESPACE}
-    kubectl create namespace ${TILLER_NAMESPACE}
+    if [ "${NAMESPACE}" != "${TILLER_NAMESPACE}" ]; then
+        kubectl create namespace ${TILLER_NAMESPACE}
+    fi
     kubectl create serviceaccount --namespace ${TILLER_NAMESPACE} tiller
     kubectl create clusterrolebinding ${TILLER_NAMESPACE}:tiller --clusterrole=cluster-admin \
         --serviceaccount=${TILLER_NAMESPACE}:tiller
