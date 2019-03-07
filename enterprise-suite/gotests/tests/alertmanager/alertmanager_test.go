@@ -84,7 +84,7 @@ var _ = BeforeSuite(func() {
 	// Setup prometheus and console-api clients
 	prom, err = prometheus.NewConnection(testenv.PrometheusAddr)
 	Expect(err).To(Succeed())
-	console, err = monitor.NewConnection(testenv.MonitorAPIAddr)
+	console, err = monitor.NewConnection(testenv.ConsoleAPIAddr)
 	Expect(err).To(Succeed())
 	alertm, err = alertmanager.NewConnection(testenv.AlertmanagerAddr)
 

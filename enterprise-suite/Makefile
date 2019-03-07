@@ -112,7 +112,11 @@ gotests-minikube: preflight-check
 
 .PHONY: gotests-openshift
 gotests-openshift: preflight-check
-	$(MAKE) -C gotests run-tests-openshift NAMESPACE=$(NAMESPACE)
+	# Purge any existing installation first.
+	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
+	$(MAKE) -C gotests run-tests-openshift purge-console-openshift NAMESPACE=$(NAMESPACE)
+	# Clean up after the tests.
+	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
 
 .PHONY: help
 help:  ## Print help for targets

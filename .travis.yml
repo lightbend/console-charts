@@ -28,7 +28,7 @@ jobs:
   - name: Backend E2E Go Tests - Openshift
     script:
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
-    - CLEANUP=true make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
     - sleep 5
 
