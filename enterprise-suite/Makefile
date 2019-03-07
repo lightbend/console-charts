@@ -41,16 +41,6 @@ package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
 script-tests: ## Run installer tests
 	python $(CHART_DIR)/scripts/lbc_test.py
 
-.PHONY: minikube-backend-tests
-minikube-backend-tests: ## Run the backend tests against minikube
-	@echo Running minikube tests
-	( cd $(CHART_DIR)/tests ; ./smoketest_minikube.sh ; )
-
-.PHONY: openshift-backend-tests
-openshift-backend-tests: ## Run the backend tests against openshift
-	@echo Running openshift tests
-	( cd $(CHART_DIR)/tests ; ./smoketest_openshift.sh ; )
-
 .PHONY: frontend-tests
 frontend-tests: ## Run the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
