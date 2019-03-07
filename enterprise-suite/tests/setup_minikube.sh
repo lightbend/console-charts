@@ -7,7 +7,8 @@
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd $script_dir
 
-source ./smoketest_ci.sh
+export NAMESPACE=${NAMESPACE:-console-backend-e2e}
+export TILLER_NAMESPACE=${TILLER_NAMESPACE:-${NAMESPACE}}
 
 function test_context() {
     echo minikube
