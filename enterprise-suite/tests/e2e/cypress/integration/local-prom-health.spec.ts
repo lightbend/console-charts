@@ -16,7 +16,7 @@ describe('Local Prometheus Health Test', () => {
     Form.validateMetricName('akka_actor_mailbox_size');
   });
 
-  it('enable critical only', () => {
+  it.skip('enable critical only', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
