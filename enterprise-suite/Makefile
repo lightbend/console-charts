@@ -39,7 +39,6 @@ package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
 
 .PHONY: script-tests
 script-tests: ## Run installer tests
-	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
 	python $(CHART_DIR)/scripts/lbc_test.py
 
 .PHONY: minikube-backend-tests
