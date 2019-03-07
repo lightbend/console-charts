@@ -3,6 +3,7 @@ package testenv
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -64,6 +65,7 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
+	additionalLbcArgs := []string{}
 	additionalArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
 	if isMinikube {
 		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
@@ -79,7 +81,7 @@ func InitEnv() {
 			}
 		}
 		if foundStorageClass {
-			additionalArgs = append(additionalArgs, "--delete-pvcs")
+			additionalLbcArgs = append(additionalLbcArgs, "--delete-pvcs")
 		} else {
 			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
 		}
@@ -108,7 +110,7 @@ func InitEnv() {
 	defer ticker.Stop()
 
 	// Install console
-	if err := lbc.Install(args.ConsoleNamespace, additionalArgs...); err != nil {
+	if err := lbc.Install(args.ConsoleNamespace, strings.Join(additionalLbcArgs, " "), additionalArgs...); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 

@@ -14,11 +14,13 @@ import (
 const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
-func Install(namespace string, additionalArgs ...string) error {
+func Install(namespace string, additionalLbcArgs string, additionalArgs ...string) error {
 	defaultArgs := []string{"install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
-		"--wait", "--", "--timeout 110"}
+		"--wait",
+		additionalLbcArgs,
+		"--", "--timeout 110"}
 	fullArgs := append(defaultArgs, additionalArgs...)
 	cmd := util.Cmd(lbcPath, fullArgs...)
 	if args.TillerNamespace != "" {
