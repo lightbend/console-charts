@@ -67,7 +67,7 @@ func Verify(namespace string) error {
 }
 
 func Uninstall() error {
-	cmd := util.Cmd(lbcPath, "uninstall")
+	cmd := util.Cmd(lbcPath, "uninstall", "--delete-pvcs")
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
