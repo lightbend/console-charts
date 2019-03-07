@@ -78,7 +78,9 @@ func InitEnv() {
 				break
 			}
 		}
-		if !foundStorageClass {
+		if foundStorageClass {
+			additionalArgs = append(additionalArgs, "--delete-pvcs")
+		} else {
 			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
 		}
 	}
