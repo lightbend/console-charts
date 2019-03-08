@@ -780,8 +780,7 @@ def setup_args(argv):
     install.add_argument('--version', help='console version to install', type=str)
     install.add_argument('--wait', help='wait for install to finish before returning',
                          action='store_true')
-    install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
-                         action='append')
+    install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', action='append')
 
     # Verify arguments
     verify.add_argument('--external-alertmanager', help='skips alertmanager check (for use with existing alertmanagers)',

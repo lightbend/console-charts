@@ -70,6 +70,9 @@ class SetStrParsingTest(unittest.TestCase):
         # Quoted values + multiple pairs
         self.assertEqual(lbc.parse_set_string("key1=\"val1,val2\",key2=val3"), [("key1", "val1,val2"), ("key2", "val3")])
 
+        # Some real cases
+        self.assertEqual(lbc.parse_set_string("prometheusDomain=console-backend-e2e.io"), [("prometheusDomain", "console-backend-e2e.io")])
+
         # Error cases
         with self.assertRaises(ValueError):
             lbc.parse_set_string("key=val1,val2,key2=val3")
