@@ -497,7 +497,7 @@ def install(creds_file):
     helm_args = ''
     if len(args.helm) > 0:
         # Helm args are separated from lbc.py args by double dash, filter it out
-        helm_args += ' '.join([arg for arg in args.helm if arg != '--']) + ' '
+        helm_args += ' '.join([arg for arg in args.helm]) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set != None:
@@ -805,11 +805,17 @@ def setup_args(argv):
         subparser.add_argument('--skip-checks', help='skip environment checks',
                                action='store_true')
 
-    # Put this at the end to have lowest priority
-    install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
-                         nargs=argparse.REMAINDER)
+    lbc_args = argv
+    helm_args = []
 
-    args = parser.parse_args(argv)
+    # Manually separate lbc args from helm args if -- is present in argv
+    if "--" in argv:
+        sep = argv.index("--")
+        lbc_args = argv[:sep]
+        helm_args = argv[sep+1:]
+
+    args = parser.parse_args(lbc_args)
+    args.helm = helm_args
 
     if len(argv) == 0:
         parser.print_help()
