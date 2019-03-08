@@ -45,7 +45,7 @@ done
 
 echo "validated $count promql expressions"
 
-echo "checking enterprise-suite/es-monitor-api/static-rules.yml"
-cat ${script_dir}/../es-monitor-api/static-rules.yml |
+echo "checking enterprise-suite/console-api/static-rules.yml"
+cat ${script_dir}/../console-api/static-rules.yml |
   ( printf 'groups:\n- name: group\n  rules:\n' ; sed -e 's/^/  /') |
   promtool check rules /dev/stdin

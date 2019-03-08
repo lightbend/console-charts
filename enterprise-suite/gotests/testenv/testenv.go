@@ -5,13 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/onsi/ginkgo"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/helm"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
@@ -24,12 +21,13 @@ var (
 	// The following variables are used across tests to access kubernetes
 	// and make requests on Console components.
 
-	K8sClient        *kubernetes.Clientset
-	ConsoleAddr      string
-	PrometheusAddr   string
-	MonitorAPIAddr   string
-	GrafanaAddr      string
-	AlertmanagerAddr string
+	K8sClient            *kubernetes.Clientset
+	ConsoleAddr          string
+	PrometheusAddr       string
+	ConsoleAPIAddr       string
+	GrafanaAddr          string
+	AlertmanagerAddr     string
+	LegacyMonitorAPIAddr string
 
 	isMinikube  bool
 	isOpenshift bool
@@ -64,11 +62,6 @@ func InitEnv() {
 	K8sClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		Expect(err).To(Succeed(), "new k8sclient")
-	}
-
-	if args.Cleanup && (helm.ReleaseExists(helmReleaseName)) {
-		// Cleanup with allowFailures=true
-		cleanup(true)
 	}
 
 	additionalArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
@@ -142,9 +135,10 @@ func InitEnv() {
 	}
 
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
-	MonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
+	ConsoleAPIAddr = fmt.Sprintf("%v/service/console-api", ConsoleAddr)
 	GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
 	AlertmanagerAddr = fmt.Sprintf("%v/service/alertmanager", ConsoleAddr)
+	LegacyMonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
 
 	testEnvInitialized = true
 }
@@ -154,25 +148,5 @@ func CloseEnv() {
 		return
 	}
 
-	if args.Cleanup {
-		cleanup(false)
-	}
-
 	testEnvInitialized = false
-}
-
-func cleanup(allowFailures bool) {
-	fmt.Fprintf(ginkgo.GinkgoWriter, "Cleaning up old installation...")
-	if isOpenshift {
-		if err := oc.Unexpose(openshiftConsoleService); err != nil && !allowFailures {
-			Expect(err).To(Succeed(), "oc delete route")
-		}
-	}
-
-	// Uninstall Console using helm
-	if err := lbc.Uninstall(); err != nil && !allowFailures {
-		Expect(err).To(Succeed(), "lbc.Uninstall")
-	}
-
-	fmt.Fprintln(ginkgo.GinkgoWriter, "Done cleaning up old installation")
 }

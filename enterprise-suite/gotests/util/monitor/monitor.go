@@ -3,10 +3,11 @@ package monitor
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
-// Connection to es-monitor-api server
+// Connection to console-api server
 type Connection struct {
 	url string
 }
@@ -45,14 +46,7 @@ func (m *Connection) MakeMonitor(name string, metric string, window string, conf
 	req.Header.Set("Author-Email", "me@lightbend.com")
 	req.Header.Set("Message", "testing")
 
-	httpClient := &http.Client{}
-	resp, err := httpClient.Do(req)
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("console-api replied with status code %v", resp.StatusCode)
-	}
-
-	return err
+	return makeRequest(req)
 }
 
 // MakeSimpleMonitor creates a threshold monitor with non-configurable parameters.
@@ -78,14 +72,33 @@ func (m *Connection) DeleteMonitor(name string) error {
 	req.Header.Set("Author-Email", "me@lightbend.com")
 	req.Header.Set("Message", "testing")
 
+	return makeRequest(req)
+}
+
+func (m *Connection) CheckHealth() error {
+	url := fmt.Sprintf("%v/status", m.url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	return makeRequest(req)
+}
+
+func makeRequest(req *http.Request) error {
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("console-api replied with status code %v", resp.StatusCode)
 	}
 
-	return err
+	return nil
 }
 
 func NewConnection(url string) (*Connection, error) {

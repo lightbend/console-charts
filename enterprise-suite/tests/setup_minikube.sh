@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
-# Runs select smoketests on a local Minikube cluster, ensuring clean up when done.
+# Installs helm & console into minikube cluster
 
 (return 2>/dev/null) || set -ux
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd $script_dir
 
-source ./smoketest_ci.sh
+export NAMESPACE=${NAMESPACE:-console-backend-e2e}
+export TILLER_NAMESPACE=${TILLER_NAMESPACE:-${NAMESPACE}}
 
 function test_context() {
     echo minikube
@@ -23,7 +24,9 @@ function diagnostics() {
 
 function setup() {
     kubectl create namespace ${NAMESPACE}
-    kubectl create namespace ${TILLER_NAMESPACE}
+    if [ "${NAMESPACE}" != "${TILLER_NAMESPACE}" ]; then
+        kubectl create namespace ${TILLER_NAMESPACE}
+    fi
     kubectl create serviceaccount --namespace ${TILLER_NAMESPACE} tiller
     kubectl create clusterrolebinding ${TILLER_NAMESPACE}:tiller --clusterrole=cluster-admin \
         --serviceaccount=${TILLER_NAMESPACE}:tiller
@@ -46,6 +49,3 @@ function cleanup() {
     helm del --purge enterprise-suite
     kubectl delete namespace ${NAMESPACE}
 }
-
-# Only run main if not sourced.
-(return 2>/dev/null) || main

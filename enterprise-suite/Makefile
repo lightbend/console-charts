@@ -39,18 +39,7 @@ package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
 
 .PHONY: script-tests
 script-tests: ## Run installer tests
-	$(CHART_DIR)/tests/lib/bats/bats $(CHART_DIR)/tests
 	python $(CHART_DIR)/scripts/lbc_test.py
-
-.PHONY: minikube-backend-tests
-minikube-backend-tests: ## Run the backend tests against minikube
-	@echo Running minikube tests
-	( cd $(CHART_DIR)/tests ; ./smoketest_minikube.sh ; )
-
-.PHONY: openshift-backend-tests
-openshift-backend-tests: ## Run the backend tests against openshift
-	@echo Running openshift tests
-	( cd $(CHART_DIR)/tests ; ./smoketest_openshift.sh ; )
 
 .PHONY: frontend-tests
 frontend-tests: ## Run the frontend tests against minikube
@@ -123,7 +112,11 @@ gotests-minikube: preflight-check
 
 .PHONY: gotests-openshift
 gotests-openshift: preflight-check
-	$(MAKE) -C gotests run-tests-openshift NAMESPACE=$(NAMESPACE)
+	# Purge any existing installation first.
+	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
+	$(MAKE) -C gotests run-tests-openshift purge-console-openshift NAMESPACE=$(NAMESPACE)
+	# Clean up after the tests.
+	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
 
 .PHONY: help
 help:  ## Print help for targets

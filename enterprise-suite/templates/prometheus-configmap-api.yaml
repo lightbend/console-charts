@@ -4,6 +4,6 @@ metadata:
   labels:
     app: prometheus
     component: server
-  name: es-monitor-api
+  name: console-api
 data:
-{{ (.Files.Glob "es-monitor-api/*").AsConfig | indent 2 }}
+{{ (.Files.Glob "console-api/*").AsConfig | indent 2 }}

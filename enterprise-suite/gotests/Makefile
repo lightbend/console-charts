@@ -26,15 +26,23 @@ vet:
 lint:
 	golint -set_exit_status $(go list ./...)
 
-CLEANUP ?= false
+.PHONY: purge-console-openshift
+purge-console-openshift: purge-console
+	-oc delete route console-server
+
+.PHONY: purge-console
+purge-console:
+	-TILLER_NAMESPACE=$(NAMESPACE) ../scripts/lbc.py uninstall
+
+ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
-	ginkgo -r --skip=.*openshift.* --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
+	ginkgo --skip=.*openshift.* $(ginkgo_args)
 
 .PHONY: run-tests-openshift
 run-tests-openshift:
-	ginkgo -r --skip=.*minikube.* --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE) --cleanup=$(CLEANUP)
+	ginkgo --skip=.*minikube.* $(ginkgo_args)
 
 .PHONY: format
 format:
