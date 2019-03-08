@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+// Original source at https://github.com/pulumi/travisqueue.
+//
 // Modified by james.ravn@lightbend.com to queue project wide, so no more than 1 concurrent build at a time.
 
 package main
