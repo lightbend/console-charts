@@ -9,7 +9,7 @@ echo "Installing ES from helm charts, $( basename $( pwd ) )"
 
 NAMESPACE=lightbend
 TILLER_NAMESPACE=lightbend
-source ${script_dir}/../tests/smoketest_minikube.sh
+source ${script_dir}/../tests/setup_minikube.sh
 setup
 
 # run tests
