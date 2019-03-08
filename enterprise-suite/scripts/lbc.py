@@ -783,9 +783,6 @@ def setup_args(argv):
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
 
-    install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
-                         nargs=argparse.REMAINDER)
-
     # Verify arguments
     verify.add_argument('--external-alertmanager', help='skips alertmanager check (for use with existing alertmanagers)',
                         action='store_true')
@@ -807,6 +804,10 @@ def setup_args(argv):
     for subparser in [install, uninstall, verify, debug_dump]:
         subparser.add_argument('--skip-checks', help='skip environment checks',
                                action='store_true')
+
+    # Put this at the end to have lowest priority
+    install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
+                         nargs=argparse.REMAINDER)
 
     args = parser.parse_args(argv)
 
