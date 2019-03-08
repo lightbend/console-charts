@@ -48,6 +48,8 @@ scrape_configs:
         replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
       - source_labels: [__meta_kubernetes_node_name]
         target_label: node_name
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
       - source_labels: [__meta_kubernetes_node_address_InternalIP]
         target_label: node_ip
 
@@ -145,12 +147,6 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
         target_label: kubernetes_name
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        action: replace
-        target_label: node_name
-      - source_labels: [__meta_kubernetes_pod_host_ip]
-        action: replace
-        target_label: node_ip
 
     # es_workload labels:
     # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
