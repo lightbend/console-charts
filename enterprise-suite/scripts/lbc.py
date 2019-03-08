@@ -819,6 +819,9 @@ def main(argv):
     global args
     args = setup_args(argv)
 
+    printinfo('lbc.py invoked with arguments ' + str(args))
+    printinfo('python version: ' + str(sys.version_info))
+
     force_verify = False
     if args.subcommand == 'install':
         creds = import_credentials()
