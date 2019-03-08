@@ -839,7 +839,7 @@ def main(argv):
             write_temp_credentials(creds_tempfile, creds)
             install(creds_tempfile.name)
 
-        if args.wait:
+        if args.wait and not args.skip_checks:
             force_verify = True
 
     if args.subcommand == 'verify' or force_verify:
