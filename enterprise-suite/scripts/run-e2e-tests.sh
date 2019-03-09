@@ -45,11 +45,11 @@ if [[ "$?" != "0" ]]; then
     exit 1
 fi
 
-if [[ -z "$SUBSET"]]; then
+if [[ -z "$SUBSET" ]]; then
     npm run e2e:travis-prs
-elif [[ "$SUBSET" == "1"]]; then
+elif [[ "$SUBSET" == "1" ]]; then
     npm run e2e:travis-prs-subset1
-elif [[ "$SUBSET" == "2"]]; then
+elif [[ "$SUBSET" == "2" ]]; then
     npm run e2e:travis-prs-subset2
 else
     echo "wrong parameter $SUBSET for run-e2e-tests.sh"
