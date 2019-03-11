@@ -7,19 +7,18 @@ dist: xenial
 services:
 - docker
 
-# travisqueue.go ensures only a single build runs at a time for console-charts
-before_install:
-- go run travisqueue.go start
-
-after_script:
-- go run travisqueue.go stop
-
 install:
 - travis_retry scripts/setup-tools-for-ubuntu.sh
 - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
 
 jobs:
   include:
+  - stage: queue
+    # travisqueue.go ensures only a single build runs at a time for console-charts
+    name: Queue Build
+    script:
+    - go run travisqueue.go start
+
   - stage: Tests
     name: Unit tests
     script:
@@ -114,6 +113,12 @@ jobs:
     - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out /tmp/resources/es-repo-7c1fefe17951.json -d || travis_terminate 1
     - travis_retry scripts/deploy-to-gcs.sh
     - travis_retry scripts/trigger-build-helm-charts.sh
+
+  - stage: afterqueue
+    # travisqueue.go ensures only a single build runs at a time for console-charts
+    name: Release Build
+    script:
+    - go run travisqueue.go stop
 
 branches:
   only:
