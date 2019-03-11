@@ -7,6 +7,13 @@ dist: xenial
 services:
 - docker
 
+# travisqueue.go ensures only a single build runs at a time for console-charts
+before_install:
+- go run travisqueue.go start
+
+after_script:
+- go run travisqueue.go stop
+
 install:
 - travis_retry scripts/setup-tools-for-ubuntu.sh
 - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
