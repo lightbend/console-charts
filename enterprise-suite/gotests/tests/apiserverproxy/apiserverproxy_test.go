@@ -41,7 +41,7 @@ var _ = Describe("all:apiserverproxy", func() {
 		Expect(err).ToNot(HaveOccurred())
 	},
 		Entry("console-server", "console-server", "/"),
-		Entry("es-monitor-api", "es-monitor-api", "/status"),
+		Entry("console-api", "console-api", "/status"),
 		Entry("prometheus-server", "prometheus-server", "/-/healthy"),
 		Entry("grafana-server", "grafana-server", "/api/org"),
 		Entry("alertmanager", "alertmanager", "/-/healthy"),

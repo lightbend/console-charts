@@ -32,7 +32,7 @@ spec:
         component: server
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
-        checksum/es-monitor-api-config: {{ (.Files.Glob "es-monitor-api/*").AsConfig | sha256sum }}
+        checksum/console-api-config: {{ (.Files.Glob "console-api/*").AsConfig | sha256sum }}
         checksum/bare-prometheus-config: {{ include (print $.Template.BasePath "/prometheus-configmap-prom.yaml") . | sha256sum }}
 
     spec:
@@ -80,7 +80,7 @@ spec:
         - name: commercial-credentials
 
       containers:
-        - name: es-monitor-api
+        - name: console-api
           image: {{ tpl .Values.esMonitorImage . }}:{{ .Values.esMonitorVersion }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           resources:
@@ -90,16 +90,16 @@ spec:
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
-            - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
-            - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
+            - --staticConfig=/etc/console-api/static-rules.yml
+            - --defaultMonitorsFile=/etc/console-api/default-monitors.json
+            - --prometheusTemplate=/etc/console-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
             - --alertmanagers={{ .Values.alertManagers }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: es-monitor-api-volume
-              mountPath: /etc/es-monitor-api
+            - name: console-api-volume
+              mountPath: /etc/console-api
             - name: prometheus-data-volume
               mountPath: /monitor-data
               subPath: monitor-data
@@ -120,18 +120,18 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
-        - name: es-monitor-api-configmap-reload
+        - name: console-api-configmap-reload
           image: {{ .Values.configMapReloadImage }}:{{ .Values.configMapReloadVersion }}
           resources:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
-          - --volume-dir=/etc/es-monitor-api
+          - --volume-dir=/etc/console-api
           - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
-          - name: es-monitor-api-volume
-            mountPath: /etc/es-monitor-api
+          - name: console-api-volume
+            mountPath: /etc/console-api
 
         - name: prometheus-server
           image: {{ .Values.prometheusImage }}:{{ .Values.prometheusVersion }}
@@ -180,9 +180,9 @@ spec:
       volumes:
         - name: config-volume
           emptyDir: {}
-        - name: es-monitor-api-volume
+        - name: console-api-volume
           configMap:
-            name: es-monitor-api
+            name: console-api
         - name: prometheus-data-volume
           {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:

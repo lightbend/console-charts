@@ -45,7 +45,7 @@ var _ = Describe("all:nginx", func() {
 	// Console API needs separate test because it doesn't respond to queries on /service/es-monitor-api
 	Context("console-api", func() {
 		It("is responding", func() {
-			_, err := urls.Get200(testenv.MonitorAPIAddr + "/status")
+			_, err := urls.Get200(testenv.ConsoleAPIAddr + "/status")
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

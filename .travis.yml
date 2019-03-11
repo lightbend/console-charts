@@ -18,19 +18,6 @@ jobs:
     script:
     - make test
 
-  - name: Backend E2E Tests - Minikube
-    script:
-    - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite minikube-backend-tests
-    # update whitesource docker image CVE report based on above images
-    - travis_retry curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
-    - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
-
-  - name: Backend E2E Tests - Openshift
-    script:
-    - travis_retry scripts/setup-openshift.sh ${OC_TOKEN}
-    - make -C enterprise-suite openshift-backend-tests
-
   - name: Backend E2E Go Tests - Minikube
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
@@ -41,7 +28,7 @@ jobs:
   - name: Backend E2E Go Tests - Openshift
     script:
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
-    - CLEANUP=true make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
     - sleep 5
 
@@ -84,6 +71,16 @@ jobs:
   - name: Reactive-sandbox test
     script:
     - make test CHARTS=reactive-sandbox
+
+  - name: Console Whitesource Report
+    # Only deploy for pushes to master (and if manually invoked)
+    if: type IN (push, api)
+    script:
+    - travis_retry scripts/setup-minikube-for-linux.sh
+    - travis_retry make -C enterprise-suite install-helm install-dev
+    # update whitesource docker image CVE report based on installed docker images
+    - travis_retry curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
+    - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
 
   - stage: deploy
     name: Deploy to GCS

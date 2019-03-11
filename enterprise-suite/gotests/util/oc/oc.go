@@ -49,6 +49,11 @@ func IsRunning() bool {
 }
 
 func Expose(service string) error {
+	if addr, _ := Address(service); addr != "" {
+		// Already exposed.
+		return nil
+	}
+
 	if err := util.Cmd("oc", "expose", "service", service).Run(); err != nil {
 		return err
 	}

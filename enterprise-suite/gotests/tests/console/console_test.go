@@ -3,6 +3,8 @@ package console
 import (
 	"testing"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/monitor"
+
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
@@ -49,8 +51,13 @@ var _ = Describe("all:verify", func() {
 	})
 
 	Context("Console", func() {
-		It("is verified", func() {
+		It("is verified to be installed correctly", func() {
 			Expect(lbc.Verify(args.ConsoleNamespace)).Should(Succeed())
+		})
+
+		It("can access the legacy es-monitor-api endpoint still", func() {
+			_, err := monitor.NewConnection(testenv.LegacyMonitorAPIAddr)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })
