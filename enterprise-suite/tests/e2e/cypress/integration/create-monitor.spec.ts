@@ -13,9 +13,7 @@ describe('Create Monitor Test', () => {
 
 
   // NOTE: group by actor is flaky due to the following two issues
-  // ISSUE: lightbend/console-home#322 - drop down with super long wait in edit mode
-  // ISSUE/FLAKY: lightbend/console-home#323 - sometimes drop down data is incorrect
-  it.skip('validate created threshold monitor w/ group by actor', () => {
+  it('validate created threshold monitor w/ group by actor', () => {
     // create and save monitor
     const monitorName = Util.createRandomMonitorName();
     Navigation.goWorkloadPageByClick('es-demo');
@@ -37,27 +35,22 @@ describe('Create Monitor Test', () => {
     Action.saveMonitor();
 
     // go to monitor page
-    Util.validateUrlPath('/workloads/es-demo');
+    Util.validateUrlPath('/namespaces/lightbend/workloads/es-demo');
     Util.validateMonitorCountGte(3);
 
     // go to created monitor
     Navigation.clickMonitor(monitorName);
-    Util.validateUrlPath(`/workloads/es-demo/monitors/${monitorName}`);
+    Util.validateUrlPath(`/namespaces/lightbend/workloads/es-demo/monitors/${monitorName}`);
 
     // validate form
     Action.editMonitor();
-
-    if (!Cypress.env('skipKnownError')) {
-      // ISSUE: lightbend/console-home#324 - value wrongly reset to 1 if disable severity
-      Form.validateThresholdMonitor(thresholdMonitor);
-      // ISSUE: lightbend/console-home#260 - label "workload" is wrongly added in "filter by" field
-      Form.validateFilterByCount(1);
-    }
+    Form.validateThresholdMonitor(thresholdMonitor);
+    Form.validateFilterByCount(1);
     Form.validateFilterByContains('app', 'es-demo');
 
     // delete created monitor
     Action.removeMonitor();
-    Util.validateUrlPath(`/workloads/es-demo`);
+    Util.validateUrlPath(`/namespaces/lightbend/workloads/es-demo`);
     Util.validateMonitorCountGte(3);
     Util.validateNoMonitor(monitorName);
   });
@@ -81,31 +74,26 @@ describe('Create Monitor Test', () => {
     };
 
     Form.setThresholdMonitor(thresholdMonitor);
-    Form.addFilterBy('app', 'prometheus');
+    Form.addFilterBy('job', 'kube-state-metrics');
     Action.saveMonitor();
 
     // go to monitor page
-    Util.validateUrlPath('/workloads/es-demo');
+    Util.validateUrlPath('/namespaces/lightbend/workloads/es-demo');
     Util.validateMonitorCountGte(3);
 
     // go to created monitor
     Navigation.clickMonitor(monitorName);
-    Util.validateUrlPath(`/workloads/es-demo/monitors/${monitorName}`);
+    Util.validateUrlPath(`/namespaces/lightbend/workloads/es-demo/monitors/${monitorName}`);
 
     // validate form
     Action.editMonitor();
-
-    if (!Cypress.env('skipKnownError')) {
-      // ISSUE: lightbend/console-home#324 - value wrongly reset to 1 if disable severity
-      Form.validateThresholdMonitor(thresholdMonitor);
-      // ISSUE: lightbend/console-home#260 - label "workload" is wrongly added in "filter by" field
-      Form.validateFilterByCount(1);
-    }
-    Form.validateFilterByContains('app', 'prometheus');
+    Form.validateThresholdMonitor(thresholdMonitor);
+    Form.validateFilterByCount(1);
+    Form.validateFilterByContains('job', 'kube-state-metrics');
 
     // delete created monitor
     Action.removeMonitor();
-    Util.validateUrlPath(`/workloads/es-demo`);
+    Util.validateUrlPath(`/namespaces/lightbend/workloads/es-demo`);
     Util.validateMonitorCountGte(3);
     Util.validateNoMonitor(monitorName);
   });

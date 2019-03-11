@@ -29,8 +29,6 @@ export class Form {
     }
 
     static setGroupBy(value: string) {
-      // ISSUE: lightbend/console-home#322 - drop down with super long wait in edit mode
-      // ISSUE: lightbend/console-home#323 - sometimes drop down data is incorrect
         cy.log('set group by', value);
         cy.get(`#agg-label option[value="${value}"]`, {timeout: 40000});
         cy.wait(1000); // make sure downdown updated and no flaky
@@ -64,7 +62,7 @@ export class Form {
     }
 
     static validateMonitorName(value: string) {
-        cy.get('#mon-name').should('have.value', value);
+        cy.get('#mon-name', {timeout: 5000}).should('have.value', value);
     }
 
     static setMonitorType(value: MonitorType) {
@@ -73,7 +71,12 @@ export class Form {
     }
 
     static validateMonitorType(value: MonitorType) {
-        cy.get('#monitor-type').should('have.value', value);
+      const mapping = {
+        'growth rate': 'growthrate',
+        'threshold': 'threshold',
+        'simple moving average': 'sma'
+      }
+        cy.get('#monitor-type').should('have.value', mapping[value]);
     }
 
     static setTriggerOccurrence(value: Occurrence) {
@@ -81,11 +84,19 @@ export class Form {
     }
 
     static validateTriggerOccurrence(value: Occurrence) {
-        cy.get('#trigger-at-least').should('have.value', value);
+        const mapping = {
+          'once': '5e-324',
+          '25%': '0.25',
+          '50%': '0.50',
+          '75%': '0.75',
+          '95%': '0.95',
+          '100%': '1'
+        }
+        cy.get('#trigger-at-least').should('have.value', mapping[value]);
     }
 
     static setTimeWindow(value: TimeWindow) {
-        cy.get('#trigger-within').select(value);
+        cy.get('#trigger-within', {timeout: 5000}).select(value);
     }
 
     static validateTimeWindow(value: TimeWindow) {
@@ -172,8 +183,8 @@ export class Form {
     }
 
     static validateFilterByContains(key: string, value: string) {
-        cy.get(`.capsule-group rc-capsule[ng-reflect-selected-key="${key}"] .capsule-view > .button-key`).contains(key);
-        cy.get(`.capsule-group rc-capsule[ng-reflect-selected-key="${key}"] .capsule-view > .button-value`).contains(value);
+        cy.get(`.capsule-group rc-capsule .capsule-view > .button-key`).contains(key);
+        cy.get(`.capsule-group rc-capsule .capsule-view > .button-value`).contains(value);
     }
 
     static setThresholdMonitor(m: ThresholdMonitor) {
@@ -186,6 +197,9 @@ export class Form {
         }
 
         this.setMonitorType('threshold');
+        cy.wait(2000); // work around ui change slowly
+        this.setMonitorType('threshold'); // FIXME: sometimes it will roll back to growthrate monitor
+        cy.wait(1000); // work around ui change slowly
         this.setTimeWindow(m.timeWindow);
         this.enableCritical(m.critical.enabled);
         this.setCritical(m.critical.comparator, m.critical.value);
