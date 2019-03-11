@@ -9,7 +9,10 @@ import { Health } from '../support/health';
 describe('Local Prometheus Health Test', () => {
   beforeEach(() => {
     Navigation.goMonitorPage('lightbend', 'es-demo', 'akka_inbox_growth');
+    Form.validateMonitorName('akka_inbox_growth');
     Action.editMonitor();
+    Form.validateMonitorName('akka_inbox_growth');
+    Form.validateMonitorType('growth rate');
     Form.validateMetricName('akka_actor_mailbox_size');
   });
 
@@ -25,18 +28,10 @@ describe('Local Prometheus Health Test', () => {
 
     Form.setThresholdMonitor(thresholdMonitor);
     Util.waitRecalculateHealth();
-    // ISSUE/FLAKY: lightbend/console-home#353 - health bar recalculate twice, so put long delay to bypass problem
-    // ISSUE/FLAKY: lightbend/console-home#354 - unknown health in middle health bar due to missing health data
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateMiddleMetricList(0, 'critical');
-      Health.validateMiddleMetricList(1, 'critical');
-      Health.validateSelectedGraph('critical');
-    }
-
-    // ISSUE: lightbend/console-home#328 - bottom 2 health bars are not changed in edit mode
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('critical');
-    }
+    Health.validateMiddleMetricList(0, 'critical');
+    Health.validateMiddleMetricList(1, 'critical');
+    Health.validateSelectedGraph('critical');
+    Health.validateContextTimeline('critical');
   });
 
   it.skip('enable warning only', () => {
@@ -54,9 +49,7 @@ describe('Local Prometheus Health Test', () => {
     Health.validateMiddleMetricList(0, 'warning');
     Health.validateMiddleMetricList(1, 'warning');
     Health.validateSelectedGraph('warning');
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('warning');
-    }
+    Health.validateContextTimeline('warning');
   });
 
   it.skip('disable both critical and warning', () => {
@@ -75,13 +68,10 @@ describe('Local Prometheus Health Test', () => {
     Health.validateMiddleMetricList(0, 'ok');
     Health.validateMiddleMetricList(1, 'ok');
     Health.validateSelectedGraph('ok');
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('ok');
-    }
+    Health.validateContextTimeline('ok');
   });
 
-  // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
-  it.skip('warning should not overwrite critical', () => {
+  it('warning should not overwrite critical', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
@@ -98,24 +88,17 @@ describe('Local Prometheus Health Test', () => {
     Health.validateMiddleMetricList(0, 'critical');
     Health.validateMiddleMetricList(1, 'critical');
     Health.validateSelectedGraph('critical');
-
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateBottomTimeline('critical');
-    }
+    Health.validateContextTimeline('critical');
 
     Form.enableWarning(true);
     Util.waitRecalculateHealth();
 
-    // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateMiddleMetricList(0, 'critical');
-      Health.validateMiddleMetricList(1, 'critical');
-      Health.validateSelectedGraph('critical');
-      Health.validateBottomTimeline('critical');
-    }
+    Health.validateMiddleMetricList(0, 'critical');
+    Health.validateMiddleMetricList(1, 'critical');
+    Health.validateSelectedGraph('critical');
+    Health.validateContextTimeline('critical');
   });
 
-  // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
   it.skip('enable both critical and warning 1', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
@@ -128,16 +111,12 @@ describe('Local Prometheus Health Test', () => {
 
     Form.setThresholdMonitor(thresholdMonitor);
     Util.waitRecalculateHealth();
-    // FIXME: warning should not overwrite critical
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateMiddleMetricList(0, 'critical');
-      Health.validateMiddleMetricList(1, 'critical');
-      Health.validateSelectedGraph('critical');
-      Health.validateBottomTimeline('critical');
-    }
+    Health.validateMiddleMetricList(0, 'critical');
+    Health.validateMiddleMetricList(1, 'critical');
+    Health.validateSelectedGraph('critical');
+    Health.validateContextTimeline('critical');
   });
 
-  // ISSUE: lightbend/console-home#320 - browser-prom.js support for multiple severities
   it.skip('enable both critical and warning 2', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
@@ -150,12 +129,9 @@ describe('Local Prometheus Health Test', () => {
 
     Form.setThresholdMonitor(thresholdMonitor);
     Util.waitRecalculateHealth();
-    // FIXME: warning should not overwrite critical
-    if (!Cypress.env('skipKnownError')) {
-      Health.validateMiddleMetricList(0, 'critical');
-      Health.validateMiddleMetricList(1, 'critical');
-      Health.validateSelectedGraph('critical');
-      Health.validateBottomTimeline('critical');
-    }
+    Health.validateMiddleMetricList(0, 'critical');
+    Health.validateMiddleMetricList(1, 'critical');
+    Health.validateSelectedGraph('critical');
+    Health.validateContextTimeline('critical');
   });
 });

@@ -39,7 +39,7 @@ jobs:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite-latest minikube-backend-tests
 
-  - name: Frontend E2E Tests - Minikube
+  - name: Frontend E2E Tests 1 - Minikube
     cache:
       directories:
         - ~/.npm
@@ -47,10 +47,25 @@ jobs:
     node_js: 9.4.0
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite frontend-tests
+    - make -C enterprise-suite frontend-tests1
     after_script:
-    # Cypress videos.
-    - artifacts upload $(find . -name '*.mp4')
+      # Cypress videos.
+      - artifacts upload $(find . -name '*.mp4')
+      - artifacts upload $(find . -name '*.png')
+
+  - name: Frontend E2E Tests 2 - Minikube
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    script:
+    - travis_retry scripts/setup-minikube-for-linux.sh
+    - make -C enterprise-suite frontend-tests2
+    after_script:
+      # Cypress videos.
+      - artifacts upload $(find . -name '*.mp4')
+      - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
