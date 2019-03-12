@@ -71,7 +71,8 @@ describe('Local Prometheus Health Test', () => {
     Health.validateContextTimeline('ok');
   });
 
-  it('warning should not overwrite critical', () => {
+  // Disable slow test
+  it.skip('warning should not overwrite critical', () => {
     const thresholdMonitor: ThresholdMonitor = {
       groupBy: 'actor',
       timeWindow: '1 minute',
