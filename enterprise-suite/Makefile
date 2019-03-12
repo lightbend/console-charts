@@ -50,7 +50,7 @@ frontend-tests1: ## Run subset 1 of frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 1
 
 .PHONY: frontend-tests2
-frontend-tests2: ## Run subset 1 of frontend tests against minikube
+frontend-tests2: ## Run subset 2 of frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 2
 
 # This target required by top-level helm-charts Makefile. It's not used by travis.
