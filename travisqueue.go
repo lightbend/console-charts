@@ -59,8 +59,8 @@ var (
 	travisToken    = mustGetenv("TRAVIS_TOKEN")
 
 	// https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
-	travisBuildID = mustAtoi(mustGetenv("TRAVIS_BUILD_ID"))
-	travisRepoSlug  = mustGetenv("TRAVIS_REPO_SLUG")
+	travisBuildID  = mustAtoi(mustGetenv("TRAVIS_BUILD_ID"))
+	travisRepoSlug = mustGetenv("TRAVIS_REPO_SLUG")
 )
 
 // https://developer.travis-ci.org/resource/build#Build
@@ -142,52 +142,15 @@ func earliestStartedBuild() Build {
 	return getBuilds("started", "id", "1")[0]
 }
 
-func cancelledBuilds() []Build {
-	// Last 10 cancelled builds should be enough to cover all builds which need to be restarted since this build started.
-	return getBuilds("cancelled", "id:desc", "10")
-}
-
-func cancelThisBuild() {
-	log.Print("Cancelling this build...")
-
-	path := fmt.Sprintf("/build/%v/cancel", travisBuildID)
-	callTravisAPI("POST", path, http.StatusAccepted, nil)
-
-	// Wait for the build to be cancelled. Travis' build timeout is 2 hours.
-	time.Sleep(3 * time.Hour)
-}
-
-func restartBuild(id int) {
-	path := fmt.Sprintf("/build/%v/restart", id)
-	callTravisAPI("POST", path, http.StatusAccepted, nil)
-}
-
 func main() {
-	command := ""
-	if len(os.Args) > 1 {
-		command = os.Args[1]
-	}
-
-	switch command {
-	case "start":
-		// Check we're the running build with the earliest start time.
+	// Check we're the running build with the earliest start time.
+	for {
 		earliest := earliestStartedBuild()
-		if earliest.ID != travisBuildID {
-			log.Printf("Found an older build running: %v (%v) started at %v\n", earliest.Number, earliest.ID, *earliest.StartedAt)
-			cancelThisBuild()
+		if earliest.ID == travisBuildID {
+			log.Println("Starting build")
+			return
 		}
-
-	case "finish":
-		// Restart any cancelled queued builds
-		cancelledBuilds := cancelledBuilds()
-		for _, build := range cancelledBuilds {
-			if build.ID > travisBuildID {
-				log.Printf("Restarting cancelled build %v (%v)\n", build.Number, build.ID)
-				restartBuild(build.ID)
-			}
-		}
-
-	default:
-		log.Fatalf("Usage: %v {start|finish}\n", os.Args[0])
+		log.Printf("Found an older build already running: %v (%v) started at %v\n", earliest.Number, earliest.ID, *earliest.StartedAt)
+		time.Sleep(15 * time.Second)
 	}
 }
