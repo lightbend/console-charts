@@ -9,12 +9,6 @@ services:
 
 jobs:
   include:
-  - stage: queue
-    # travisqueue.go ensures only a single build runs at a time for console-charts
-    name: Queue Build
-    script:
-    - go run travisqueue.go
-
   - stage: Tests
     name: Unit tests
     install:
@@ -37,6 +31,8 @@ jobs:
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
+    # travisqueue.go ensures only a single build runs at a time on Openshift
+    - go run travisqueue.go
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
     - travis_retry make -C enterprise-suite/gotests setup-tools
     - make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=console-backend-go-tests || true
@@ -102,6 +98,8 @@ jobs:
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api)
     install:
+    # travisqueue.go ensures only a single deploy happens at a time
+    - go run travisqueue.go
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     # Decrypt credentials for GCS system account helmchart@es-repo.iam.gserviceaccount.com

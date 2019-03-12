@@ -150,7 +150,7 @@ func main() {
 			log.Println("Starting build")
 			return
 		}
-		log.Printf("Found an older build already running: %v (%v) started at %v\n", earliest.Number, earliest.ID, *earliest.StartedAt)
+		log.Printf("Found a build already running: %v (%v) started at %v\n", earliest.Number, earliest.ID, *earliest.StartedAt)
 		time.Sleep(15 * time.Second)
 	}
 }
