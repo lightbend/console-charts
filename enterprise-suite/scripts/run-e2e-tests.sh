@@ -2,7 +2,7 @@
 
 set -exu
 
-subset=$1
+subset=${1:-all}
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
