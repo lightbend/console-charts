@@ -83,6 +83,9 @@ jobs:
         - ~/.npm
         - ~/.cache
     node_js: 9.4.0
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite-latest frontend-tests1
@@ -99,6 +102,9 @@ jobs:
         - ~/.npm
         - ~/.cache
     node_js: 9.4.0
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite-latest frontend-tests2
