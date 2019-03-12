@@ -1,6 +1,5 @@
 [![Build Status](https://travis-ci.org/lightbend/console-charts.svg?branch=master)](https://travis-ci.org/lightbend/console-charts)
 
-
 # console-charts
 
 Contains public Helm charts related to the Lightbend Console. Lightbend's helm repo is available at `https://repo.lightbend.com/helm-charts`.
