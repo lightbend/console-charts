@@ -139,11 +139,12 @@ func getBuilds(states, sortBy, limit string) []Build {
 }
 
 func earliestStartedBuild() Build {
-	return getBuilds("started", "started_at", "1")[0]
+	return getBuilds("started", "id", "1")[0]
 }
 
 func cancelledBuilds() []Build {
-	return getBuilds("cancelled", "started_at", "5")
+	// Last 10 cancelled builds should be enough to cover all builds which need to be restarted since this build started.
+	return getBuilds("cancelled", "id:desc", "10")
 }
 
 func cancelThisBuild() {
