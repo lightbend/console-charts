@@ -118,13 +118,13 @@ func callTravisAPI(method, path string, expectStatus int, bodyValue interface{})
 // - that sorts first by `sortBy`, as interpreted by the Travis API.
 // Exits on error or if no matching build is found.
 // https://developer.travis-ci.com/resource/builds#find
-func firstMatchingBuild(states, sortBy string) Build {
+func getBuilds(states, sortBy, limit string) []Build {
 	vs := url.Values{}
 	vs.Add("sort_by", sortBy)
 	if states != "" {
 		vs.Add("build.state", states)
 	}
-	vs.Add("limit", "1")
+	vs.Add("limit", limit)
 
 	var builds Builds
 
@@ -135,19 +135,15 @@ func firstMatchingBuild(states, sortBy string) Build {
 		log.Fatal("found no builds")
 	}
 
-	return builds.Builds[0]
+	return builds.Builds
 }
 
 func earliestStartedBuild() Build {
-	return firstMatchingBuild("started", "started_at")
+	return getBuilds("started", "started_at", "1")[0]
 }
 
-func newestFinishedBuild() Build {
-	return firstMatchingBuild("passed,failed,errored", "id:desc")
-}
-
-func newestBuild() Build {
-	return firstMatchingBuild("", "id:desc")
+func cancelledBuilds() []Build {
+	return getBuilds("cancelled", "started_at", "5")
 }
 
 func cancelThisBuild() {
@@ -180,21 +176,14 @@ func main() {
 			cancelThisBuild()
 		}
 
-		// Check there are no newer, finished builds.
-		finished := newestFinishedBuild()
-		if finished.ID > travisBuildID {
-			log.Printf("Found a newer finished build: %v (%v), state %v\n", finished.Number, finished.ID, finished.State)
-			cancelThisBuild()
-		}
-
-		// Okay to proceed.
-
 	case "finish":
-		// Restart the newest queued build if it is cancelled.
-		newest := newestBuild()
-		if newest.State == "canceled" /* [sic] */ {
-			log.Printf("Restarting cancelled build %v (%v)\n", newest.Number, newest.ID)
-			restartBuild(newest.ID)
+		// Restart any cancelled queued builds
+		cancelledBuilds := cancelledBuilds()
+		for _, build := range cancelledBuilds {
+			if build.ID > travisBuildID {
+				log.Printf("Restarting cancelled build %v (%v)\n", build.Number, build.ID)
+				restartBuild(build.ID)
+			}
 		}
 
 	default:
