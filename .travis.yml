@@ -67,7 +67,7 @@ jobs:
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
-  - name: Frontend E2E Tests - Minikube Latest
+  - name: Frontend E2E Tests 1 - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     cache:
@@ -77,7 +77,23 @@ jobs:
     node_js: 9.4.0
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite-latest frontend-tests
+    - make -C enterprise-suite-latest frontend-tests1
+    after_script:
+      # Cypress videos.
+      - artifacts upload $(find . -name '*.mp4')
+      - artifacts upload $(find . -name '*.png')
+
+  - name: Frontend E2E Tests 2 - Minikube Latest
+    # Only build latest in the daily cron - don't block PRs or master releases.
+    if: type in (cron)
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    script:
+    - travis_retry scripts/setup-minikube-for-linux.sh
+    - make -C enterprise-suite-latest frontend-tests2
     after_script:
       # Cypress videos.
       - artifacts upload $(find . -name '*.mp4')
