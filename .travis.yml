@@ -21,7 +21,7 @@ jobs:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
-    - travis_retry make -C enterprise-suite install-helm
+    - travis_retry make -C enterprise-suite install-helm TILLER_NAMESPACE=console-backend-go-tests
     - travis_retry make -C enterprise-suite/gotests setup-tools
     - make -C enterprise-suite/gotests run-tests-minikube NAMESPACE=console-backend-go-tests
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
