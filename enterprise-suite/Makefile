@@ -45,9 +45,11 @@ script-tests: ## Run installer tests
 frontend-tests: ## Run the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
 
+.PHONY: frontend-tests1
 frontend-tests1: ## Run the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 1
 
+.PHONY: frontend-tests2
 frontend-tests2: ## Run the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 2
 
