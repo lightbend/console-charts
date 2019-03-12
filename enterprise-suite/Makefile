@@ -46,7 +46,7 @@ frontend-tests: ## Run all the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
 
 .PHONY: frontend-tests1
-frontend-tests1: ## Run subset 1 of frontend tests against minikube
+frontend-tests1: ## Run subset 1 of frontend tests against minikube 
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 1
 
 .PHONY: frontend-tests2
