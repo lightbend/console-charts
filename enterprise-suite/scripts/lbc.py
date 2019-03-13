@@ -529,16 +529,18 @@ def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
-    helm_args = args.rest
+    helm_args = ' '.join(args.rest)
 
     # Add '--set' arguments to helm_args
-    if args.set != None:
+    if args.set:
+        if helm_args:
+            helm_args += ' '
         for s in args.set:
             for key, val in parse_set_string(s):
-                helm_args += ' --set {}={}'.format(key, val.replace(',', '\\,'))
+                helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
 
     chart_ref = None
-    if args.local_chart != None:
+    if args.local_chart:
         # Install from local chart tarball
         chart_ref = args.local_chart
     else:
@@ -546,7 +548,7 @@ def install(creds_file):
         execute('helm repo update')
         chart_ref = 'es-repo/' + args.chart
 
-    if args.export_yaml != None:
+    if args.export_yaml:
         # Tillerless path - renders kubernetes resources and prints to stdout
 
         creds_exec_arg = ''
@@ -557,7 +559,7 @@ def install(creds_file):
         try:
             chartfile = args.local_chart
             tempdir = None
-            if chartfile == None:
+            if not chartfile:
                 # No local chart given, fetch from repo
                 tempdir = make_tempdir()
                 execute('helm fetch -d {} {} {}'
@@ -573,7 +575,7 @@ def install(creds_file):
                     .format(args.helm_name, args.namespace, helm_args,
                             creds_exec_arg, chartfile), print_to_stdout=True)
         finally:
-            if tempdir != None:
+            if tempdir:
                 shutil.rmtree(tempdir)
 
     else:
@@ -616,7 +618,7 @@ def install(creds_file):
 
 
 def uninstall(status=None, namespace=None):
-    if status == None:
+    if not status:
         status, namespace = install_status(args.helm_name)
 
     if status == 'notfound':
@@ -645,12 +647,12 @@ def import_credentials():
     creds = (os.environ.get('LIGHTBEND_COMMERCIAL_USERNAME'),
              os.environ.get('LIGHTBEND_COMMERCIAL_PASSWORD'))
 
-    if creds[0] == None or creds[1] == None:
+    if creds[0] is None or creds[1] is None:
         with open(os.path.expanduser(args.creds), 'r') as creds_file:
             creds_dict = dict(re.findall(r'(\S+)\s*=\s*(".*?"|\S+)', creds_file.read()))
             creds = (creds_dict.get('user'), creds_dict.get('password'))
 
-    if creds[0] == None or creds[1] == None:
+    if creds[0] is None or creds[1] is None:
         fail("Credentials missing, please check your credentials file\n"
              "LIGHTBEND_COMMERCIAL_CREDENTIALS=" + args.creds)
 
