@@ -46,16 +46,16 @@ export class Form {
 
     static setMetricName(value: string) {
         // assume dropdown is expanding
-        cy.get('rc-capsule.metric .tag-name-input').clear().wait(1000).should('have.value', '').wait(1000).type(value);
+        cy.get('rc-capsule.metric .capsule-edit .tag-name-input').clear().wait(1000).should('have.value', '').wait(1000).type(value);
         cy.wait(2000);
-        cy.get(`rc-capsule.metric .capsule-wrapper .tag-name-list a[title="${value}"]`, {timeout: 60000}).click();
+        cy.get(`rc-capsule.metric .capsule-edit .capsule-wrapper .tag-name-list a[title="${value}"]`, {timeout: 60000}).click();
         cy.wait(2000);
         this.validateMetricName(value);
     }
 
     static validateMetricName(value: string) {
-        cy.get('rc-capsule.metric label.button-key', {timeout: 20000}).should('have.text', value).should('be.visible');
-        cy.get('rc-capsule.metric label.button-value').should('not.be.visible');
+        cy.get('rc-capsule.metric .capsule-view label.button-key', {timeout: 20000}).should('have.text', value).should('be.visible');
+        cy.get('rc-capsule.metric .capsule-view label.button-value').should('not.be.visible');
     }
 
 
