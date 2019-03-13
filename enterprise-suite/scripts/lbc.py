@@ -529,10 +529,7 @@ def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
-    helm_args = ' '.join(args.rest)
-    # if len(args.rest) > 0:
-    #     # Helm args are separated from lbc.py args by double dash, filter it out
-    #     helm_args += ' '.join(args.rest) + ' '
+    helm_args = args.rest
 
     # Add '--set' arguments to helm_args
     if args.set != None:

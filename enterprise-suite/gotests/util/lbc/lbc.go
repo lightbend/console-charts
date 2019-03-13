@@ -15,14 +15,14 @@ const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
 func Install(namespace string, lbcArgs, helmArgs []string) error {
-	cmdArgs := []string{"install", "--local-chart", localChartPath,
+	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
 		"--wait"}
 	cmdArgs = append(cmdArgs, lbcArgs...)
 	cmdArgs = append(cmdArgs, "--", "--timeout", "110")
 	cmdArgs = append(cmdArgs, helmArgs...)
-	cmd := util.Cmd(lbcPath, cmdArgs...)
+	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
