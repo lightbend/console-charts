@@ -13,8 +13,7 @@ describe('Create Monitor Test', () => {
 
 
   // NOTE: group by actor is flaky due to the following two issues
-  // FIXME: SKIP the test due to flaky
-  it.skip('validate created threshold monitor w/ group by actor', () => {
+  it('validate created threshold monitor w/ group by actor', () => {
     // create and save monitor
     const monitorName = Util.createRandomMonitorName();
     Navigation.goWorkloadPageByClick('es-demo');

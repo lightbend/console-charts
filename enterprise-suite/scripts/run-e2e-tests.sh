@@ -21,13 +21,13 @@ cd $script_dir/../tests/e2e
 # run the e2e test
 set +e
 
-npm install
+npm run e2e:demo-app-setup
 if [[ "$?" != "0" ]]; then
     diagnostics
     exit 1
 fi
 
-npm run e2e:demo-app-setup
+npm install
 if [[ "$?" != "0" ]]; then
     diagnostics
     exit 1
