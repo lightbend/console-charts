@@ -22,7 +22,8 @@ func Install(namespace string, additionalLbcArgs string, additionalArgs ...strin
 		additionalLbcArgs,
 		"--", "--timeout 110"}
 	fullArgs := append(defaultArgs, additionalArgs...)
-	logDebugInfo(fmt.Sprintf("invoking: lbc.py %s %s", lbcPath, fullArgs))
+	// jara: debug line - remove before merge.
+	fmt.Printf("invoking: lbc.py %s %s", lbcPath, fullArgs)
 	cmd := util.Cmd(lbcPath, fullArgs...)
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
