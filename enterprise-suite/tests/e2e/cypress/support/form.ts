@@ -231,11 +231,14 @@ export class Form {
         this.validateCritical(m.critical.enabled, m.critical.comparator, m.critical.value);
         this.validateWarning(m.warning.enabled, m.warning.comparator, m.warning.value);
         this.validateTriggerOccurrence(m.triggerOccurrence);
-        if (m.groupBy !== '<none>') {
-            this.validateGroupBy(m.groupBy);
-            this.validateAggregateUsing(m.aggregator);
-        } else {
-            this.validateGroupByNone();
+
+        if (!Cypress.env('skipKnownError')) {
+          if (m.groupBy !== '<none>') {
+              this.validateGroupBy(m.groupBy);
+              this.validateAggregateUsing(m.aggregator);
+          } else {
+              this.validateGroupByNone();
+          }
         }
     }
 

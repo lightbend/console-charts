@@ -33,7 +33,7 @@ export class Util {
   }
 
   static validateMonitorCountGte(count: number) {
-    cy.get('.monitor-list .monitor-name', {timeout: 20000}).should('have.length.be.gte', count);
+    cy.get('.monitor-list .monitor-name', {timeout: 40000}).should('have.length.be.gte', count);
   }
 
   static validateControlIconContains(value: string) {
