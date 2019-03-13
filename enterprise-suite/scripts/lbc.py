@@ -500,7 +500,7 @@ def install(creds_file):
     helm_args = ''
     if len(args.helm) > 0:
         # Helm args are separated from lbc.py args by double dash, filter it out
-        helm_args += ' '.join([arg for arg in args.helm if arg != '--']) + ' '
+        helm_args += ' '.join(args.helm) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set != None:
@@ -786,9 +786,6 @@ def setup_args(argv):
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
 
-    install.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
-                         nargs=argparse.REMAINDER)
-
     # Verify arguments
     verify.add_argument('--external-alertmanager', help='skips alertmanager check (for use with existing alertmanagers)',
                         action='store_true')
@@ -800,6 +797,9 @@ def setup_args(argv):
         subparser.add_argument('--dry-run', help='only print out the commands that will be executed',
                                action='store_true')
         subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
+        subparser.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
+                         nargs='*')
+
 
     # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
