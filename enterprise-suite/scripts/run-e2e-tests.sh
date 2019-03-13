@@ -2,7 +2,7 @@
 
 set -exu
 
-subset=$1
+subset=${1:-all}
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
@@ -45,7 +45,7 @@ if [[ "$?" != "0" ]]; then
     exit 1
 fi
 
-if [[ -z "$subset" ]]; then
+if [[ "$subset" == "all" ]]; then
     npm run e2e:travis-prs
 elif [[ "$subset" == "1" ]]; then
     npm run e2e:travis-prs-subset1

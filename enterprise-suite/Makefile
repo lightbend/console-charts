@@ -42,13 +42,15 @@ script-tests: ## Run installer tests
 	python $(CHART_DIR)/scripts/lbc_test.py
 
 .PHONY: frontend-tests
-frontend-tests: ## Run the frontend tests against minikube
+frontend-tests: ## Run all the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
 
-frontend-tests1: ## Run the frontend tests against minikube
+.PHONY: frontend-tests1
+frontend-tests1: ## Run subset 1 of frontend tests against minikube 
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 1
 
-frontend-tests2: ## Run the frontend tests against minikube
+.PHONY: frontend-tests2
+frontend-tests2: ## Run subset 2 of frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 2
 
 # This target required by top-level helm-charts Makefile. It's not used by travis.
