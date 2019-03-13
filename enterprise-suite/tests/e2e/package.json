@@ -8,7 +8,7 @@
   "scripts": {
     "e2e": "cypress run",
     "e2e:minikube": "cypress run --env configFile=minikube",
-    "e2e:travis-prs": "NO_COLOR=1 cypress run --env configFile=minikube,skipKnownError=true",
+    "e2e:travis-prs": "NO_COLOR=1 cypress-run --env configFile=minikube",
     "e2e:travis-prs-subset1": "NO_COLOR=1 cypress-run --spec 'cypress/integration/+(cluster-page|grafana|monitor-history|workload-page).spec.ts' --env configFile=minikube",
     "e2e:travis-prs-subset2": "NO_COLOR=1 cypress-run --spec 'cypress/integration/+(create-monitor|local-prom-health).spec.ts' --env configFile=minikube",
     "e2e:travis-prs:result": "NO_COLOR=1 cypress-run --env configFile=minikube,skipKnownError=true | tee results.txt",
