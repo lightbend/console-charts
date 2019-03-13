@@ -226,8 +226,8 @@ def check_credentials(creds):
     except url.URLError as err:
         if err.reason.errno == 54:
             # Code 54 error can be raised when old TLS is used due to old python
-            printerr(
-                'error: check_credentials TLS authorization failed; this can be due to an old python version installed on OS X - please upgrade your python version')
+            printerr('error: check_credentials TLS authorization failed; this can be due to an old python '
+                     'version installed on OS X - please upgrade your python version')
         else:
             printerr('error: check_credentials failed: {}'.format(err))
     finally:
@@ -356,8 +356,8 @@ def check_resource_list(cmd, expected, fail_msg):
 def pvs_retained_and_not(namespace):
     claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
     go_template = ('{{ range .items }}{{ if eq .spec.claimRef.name ' + claimNames + ' }}'
-                                                                                    '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name .status.phase }}{{ end }}{{ end }}'
-                   )
+                   '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy '
+                   '.spec.claimRef.name .status.phase }}{{ end }}{{ end }}')
     returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
                                 .format(go_template), show_stderr=False)
     # stdout contains...
@@ -371,8 +371,8 @@ def pvs_retained_and_not(namespace):
         ## try alternate method here
         # Get PV info via PVCs
         go_template = ('{{ range .items }}{{ if eq .metadata.name ' + claimNames + ' }}'
-                                                                                   '{{ printf "%s %s %s %s\\n" .metadata.name .spec.volumeName .spec.storageClassName .status.phase }}{{ end }}{{ end }}'
-                       )
+                       '{{ printf "%s %s %s %s\\n" .metadata.name .spec.volumeName .spec.storageClassName '
+                       '.status.phase }}{{ end }}{{ end }}')
         returncode, stdout, _ = run("kubectl get pvc -n {} -o go-template='{}'"
                                     .format(namespace, go_template))
         # stdout contains...
@@ -438,11 +438,11 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
                 if (not wantsPVs):
                     printerr("         Set --usePersistentVolumes=true to reuse data.")
                 elif (wantsPVs and not allAvailable):
-                    printerr(
-                        "         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+                    printerr("         Manual intervention will be required to reuse it with the Console, "
+                             "or to actually delete it.")
                 printerr("         Proceeding with installation using new datasets.")
-                printerr(
-                    "         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+                printerr("         See associated documentation at "
+                         "https://developer.lightbend.com/docs/console/current/installation/storage.html.")
                 for pv in retainedPVs:
                     printerr(
                         "   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1],
@@ -472,20 +472,20 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
         retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
 
         if len(notRetainedPVs) > 0:
-            printerr(
-                "WARNING: Given the current and desired configs, continued (un)installation will result in the loss of Console data.")
+            printerr("WARNING: Given the current and desired configs, continued (un)installation will "
+                     "result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
             printerr("Invoke again with '--delete-pvcs' to proceed anyway, but save your data first if so desired")
             fail("Stopping")
 
         if len(retainedPVs) > 0:
-            printerr(
-                "WARNING: Given the current and desired configs, this (un)installation will orphan existing Console data.")
-            printerr(
-                "         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
-            printerr(
-                "         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+            printerr("WARNING: Given the current and desired configs, this (un)installation will "
+                     "orphan existing Console data.")
+            printerr("         Manual intervention will be required to reuse it with the Console, or to actually "
+                     "delete it.")
+            printerr("         See associated documentation at "
+                     "https://developer.lightbend.com/docs/console/current/installation/storage.html.")
             for pv in retainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
 
