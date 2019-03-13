@@ -97,22 +97,26 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	// Revert back to original alertmanager config
-	for _, volume := range alertmanagerDep.Spec.Template.Spec.Volumes {
-		if volume.Name == "config-volume" {
-			volume.ConfigMap = oldConfigmap
+	if alertmanagerDep != nil {
+		for _, volume := range alertmanagerDep.Spec.Template.Spec.Volumes {
+			if volume.Name == "config-volume" {
+				volume.ConfigMap = oldConfigmap
+			}
 		}
 	}
-	var err error
-	alertmanagerDep, err = depsClient.Update(alertmanagerDep)
-	Expect(err).ToNot(HaveOccurred())
 
-	// Delete test configmap
-	err = kube.DeleteConfigMap(args.ConsoleNamespace, configName)
-	Expect(err).ToNot(HaveOccurred())
+	if depsClient != nil {
+		_, err := depsClient.Update(alertmanagerDep)
+		Expect(err).ToNot(HaveOccurred())
 
-	// Delete test app
-	err = kube.DeleteYaml(args.ConsoleNamespace, appYaml)
-	Expect(err).ToNot(HaveOccurred())
+		// Delete test configmap
+		err = kube.DeleteConfigMap(args.ConsoleNamespace, configName)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Delete test app
+		err = kube.DeleteYaml(args.ConsoleNamespace, appYaml)
+		Expect(err).ToNot(HaveOccurred())
+	}
 
 	testenv.CloseEnv()
 })

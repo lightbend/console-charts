@@ -14,17 +14,15 @@ import (
 const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
-func Install(namespace string, additionalLbcArgs string, additionalArgs ...string) error {
-	defaultArgs := []string{"install", "--local-chart", localChartPath,
+func Install(namespace string, lbcArgs, helmArgs []string) error {
+	cmdArgs := []string{"install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
-		"--wait",
-		additionalLbcArgs,
-		"--", "--timeout 110"}
-	fullArgs := append(defaultArgs, additionalArgs...)
-	// jara: debug line - remove before merge.
-	fmt.Printf("invoking: lbc.py %s %s", lbcPath, fullArgs)
-	cmd := util.Cmd(lbcPath, fullArgs...)
+		"--wait"}
+	cmdArgs = append(cmdArgs, lbcArgs...)
+	cmdArgs = append(cmdArgs, "--", "--timeout", "110")
+	cmdArgs = append(cmdArgs, helmArgs...)
+	cmd := util.Cmd(lbcPath, cmdArgs...)
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}

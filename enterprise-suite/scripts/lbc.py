@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-import sys 
+import sys
 import subprocess
 
 # Note: this script expects to run on python2. Some systems map 'python'
@@ -51,10 +51,11 @@ CONSOLE_PVCS = [
     'prometheus-storage'
 ]
 
-DEFAULT_TIMEOUT=3
+DEFAULT_TIMEOUT = 3
 
 # Parsed commandline args
 args = None
+
 
 # The following functions are overridable for testing purposes
 
@@ -62,16 +63,20 @@ args = None
 def printerr(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+
 # Prints to stdout
 def printinfo(*args, **kwargs):
     print(*args, **kwargs)
+
 
 # Exits process with a message and non-0 exit code
 def fail(msg):
     sys.exit(msg)
 
+
 def make_tempdir():
     return tempfile.mkdtemp()
+
 
 # Runs a given command with optional timeout.
 # Returns (returncode, stdout, stderr) tuple. If timeout
@@ -84,22 +89,23 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
                                 stdin=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         if timeout != None:
-            timer = threading.Timer(timeout, proc.kill) 
+            timer = threading.Timer(timeout, proc.kill)
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
         if len(stderr) > 0 and show_stderr:
             printerr(stderr)
         returncode = proc.returncode
     except OSError as e:
-        stdout=e.strerror
-        returncode=e.errno
+        stdout = e.strerror
+        returncode = e.errno
     except Exception as e:
-        stdout=str(e)
-        returncode=1
+        stdout = str(e)
+        returncode = 1
     finally:
         if timer != None:
             timer.cancel()
         return returncode, stdout, stderr
+
 
 # Executes a command if dry_run=False,
 # prints it to stdout or stderr, handles failure status
@@ -117,7 +123,10 @@ def execute(cmd, can_fail=False, print_to_stdout=False):
         return returncode
     return 0
 
+
 version_re = re.compile(r'([0-9]+\.[0-9]+(\.[0-9]+)?)')
+
+
 def require_version(cmd, required_version):
     # Use first word as a program name in messages
     name = cmd.partition(' ')[0]
@@ -136,10 +145,11 @@ def require_version(cmd, required_version):
                 return
             else:
                 fail("Installed version of '" + name + "' is too old. Found: {}, required: {}"
-                     .format(current, required)) 
+                     .format(current, required))
 
-    # Non-critical warning
+                # Non-critical warning
     printerr("warning: unable to determine installed version of '" + name + "'")
+
 
 def is_running_minikube():
     returncode, stdout, _ = run('minikube status')
@@ -149,6 +159,7 @@ def is_running_minikube():
             return returncode == 0 and stdout == 'minikube'
     return False
 
+
 def is_running_minishift():
     returncode, stdout, _ = run('minishift status', show_stderr=False)
     if returncode == 0:
@@ -157,10 +168,12 @@ def is_running_minishift():
             return returncode == 0 and stdout == 'minishift'
     return False
 
+
 # Helm check is a separate function because we also need it when not doing full
 # preflight check, eg. when using --export-yaml argument
 def check_helm():
     require_version('helm version --client --short', REQ_VER_HELM)
+
 
 # Kubectl check is needed both in install and verify subcommands
 def check_kubectl(minishift=False):
@@ -175,12 +188,14 @@ def check_kubectl(minishift=False):
             msg = msg + ". Did you do 'eval $(minishift oc-env)'?"
         fail(msg)
 
+
 def is_int(s):
-  try:
-    int(s)
-    return True
-  except:
-    return False
+    try:
+        int(s)
+        return True
+    except:
+        return False
+
 
 def check_credentials(creds):
     registry = 'https://lightbend-docker-commercial-registry.bintray.io/v2'
@@ -190,7 +205,7 @@ def check_credentials(creds):
     returncode, stdout, _ = run('curl --version')
     if returncode == 0:
         returncode, stdout, _ = run('curl -s -o /dev/null -w "%{http_code}" ' + ' --user {}:{} {}'
-            .format(creds[0], creds[1], api_url), DEFAULT_TIMEOUT, show_stderr=True)
+                                    .format(creds[0], creds[1], api_url), DEFAULT_TIMEOUT, show_stderr=True)
         return is_int(stdout) and int(stdout) == 200
 
     # Set up basic auth with given creds
@@ -211,18 +226,20 @@ def check_credentials(creds):
     except url.URLError as err:
         if err.reason.errno == 54:
             # Code 54 error can be raised when old TLS is used due to old python
-             printerr('error: check_credentials TLS authorization failed; this can be due to an old python version installed on OS X - please upgrade your python version')
+            printerr(
+                'error: check_credentials TLS authorization failed; this can be due to an old python version installed on OS X - please upgrade your python version')
         else:
             printerr('error: check_credentials failed: {}'.format(err))
     finally:
         return success
 
+
 # compare the contents of current running installer and remote installer.
 # Print warning if they are different
 def check_new_install_script():
-    connect_timeout=3
-    curl_max_tmeout=5
-    installer_url="https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
+    connect_timeout = 3
+    curl_max_tmeout = 5
+    installer_url = "https://raw.githubusercontent.com/lightbend/console-charts/master/enterprise-suite/scripts/lbc.py"
 
     # use curl command as first option.
     returncode, _, _ = run('curl --version')
@@ -230,15 +247,15 @@ def check_new_install_script():
         returncode, rmt_installer_cnts, _ = run('curl -s --connect-timeout {} --max-time {} {}'.format(connect_timeout,
                                                                                                        curl_max_tmeout,
                                                                                                        installer_url),
-                                             DEFAULT_TIMEOUT, show_stderr=True)
+                                                DEFAULT_TIMEOUT, show_stderr=True)
         if returncode != 0:
             return
     else:
         try:
-            response=url.urlopen(installer_url, timeout=connect_timeout)
+            response = url.urlopen(installer_url, timeout=connect_timeout)
             if response == None:
                 return
-            rmt_installer_cnts=response.read()
+            rmt_installer_cnts = response.read()
         except url.URLError as e:
             # if we cannot connect to remote server, ignore for now...
             return
@@ -249,7 +266,8 @@ def check_new_install_script():
 
     if rmt_installer_cnts != current_installer_contents:
         printinfo("\nNew installer is available. Use the following command to download it")
-        printinfo ("    curl -O " + installer_url + "\n")
+        printinfo("    curl -O " + installer_url + "\n")
+
 
 def preinstall_check(creds, minikube=False, minishift=False):
     check_helm()
@@ -275,11 +293,12 @@ def preinstall_check(creds, minikube=False, minishift=False):
                  ' - unable to make authenticated request to lightbend docker registry; ' +
                  'proceeding with the installation anyway')
 
+
 # Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
     returncode, stdout, _ = run('helm status ' + release_name,
-                            DEFAULT_TIMEOUT, show_stderr=False)
+                                DEFAULT_TIMEOUT, show_stderr=False)
     namespace = None
     if returncode != 0:
         return 'notfound', namespace
@@ -287,7 +306,7 @@ def install_status(release_name):
     match = re.search(r'^NAMESPACE: ([\w-]+)', stdout, re.MULTILINE)
     if match:
         namespace = match.group(1)
-    
+
     if 'STATUS: DEPLOYED' in stdout or (stdout == ''):
         status = 'deployed'
     elif 'STATUS: FAILED' in stdout:
@@ -302,6 +321,7 @@ def install_status(release_name):
         status = 'unknown'
 
     return status, namespace
+
 
 # Helper function that runs a command, then looks for expected strings
 # in the output, one per line. Returns True if everything in the 'expected'
@@ -329,14 +349,15 @@ def check_resource_list(cmd, expected, fail_msg):
         return all_found
     return False
 
+
 # Returns two lists.  For each of the PVC types we care about, the associated PV
 # is in the first or second list if the reclaim policy is RETAIN or not respectively.
 # Each list element is a tuple of PV name, claim, and status.
 def pvs_retained_and_not(namespace):
     claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
-    go_template=('{{ range .items }}{{ if eq .spec.claimRef.name '+claimNames+' }}'
-                 '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name .status.phase }}{{ end }}{{ end }}'
-                )
+    go_template = ('{{ range .items }}{{ if eq .spec.claimRef.name ' + claimNames + ' }}'
+                                                                                    '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy .spec.claimRef.name .status.phase }}{{ end }}{{ end }}'
+                   )
     returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
                                 .format(go_template), show_stderr=False)
     # stdout contains...
@@ -349,11 +370,11 @@ def pvs_retained_and_not(namespace):
     if returncode != 0:
         ## try alternate method here
         # Get PV info via PVCs
-        go_template=('{{ range .items }}{{ if eq .metadata.name '+claimNames+' }}'
-                     '{{ printf "%s %s %s %s\\n" .metadata.name .spec.volumeName .spec.storageClassName .status.phase }}{{ end }}{{ end }}'
-                    )
+        go_template = ('{{ range .items }}{{ if eq .metadata.name ' + claimNames + ' }}'
+                                                                                   '{{ printf "%s %s %s %s\\n" .metadata.name .spec.volumeName .spec.storageClassName .status.phase }}{{ end }}{{ end }}'
+                       )
         returncode, stdout, _ = run("kubectl get pvc -n {} -o go-template='{}'"
-                                .format(namespace, go_template))
+                                    .format(namespace, go_template))
         # stdout contains...
         # prometheus-storage pvc-81508cb1-3bae-11e9-83b7-08002755d2dd standard Bound
         if returncode == 0:
@@ -361,7 +382,7 @@ def pvs_retained_and_not(namespace):
             for pv in stdout.splitlines():
                 words = pv.split()
 
-                go_template='{{ printf "%s %s\\n" .metadata.name .reclaimPolicy }}'
+                go_template = '{{ printf "%s %s\\n" .metadata.name .reclaimPolicy }}'
                 returncode, stdout, _ = run("kubectl get storageclass {} -o go-template='{}'"
                                             .format(words[2], go_template))
                 # stdout contains...
@@ -392,10 +413,11 @@ def pvs_retained_and_not(namespace):
 
     return (retained, notRetained)
 
+
 # Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
 def check_pv_usage(aboutToUninstall=False, namespace=None):
     returncode, stdout, stderr = run('helm get ' + args.helm_name,
-                                    DEFAULT_TIMEOUT, show_stderr=False)
+                                     DEFAULT_TIMEOUT, show_stderr=False)
 
     if namespace == None:
         namespace = args.namespace
@@ -416,11 +438,15 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
                 if (not wantsPVs):
                     printerr("         Set --usePersistentVolumes=true to reuse data.")
                 elif (wantsPVs and not allAvailable):
-                    printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+                    printerr(
+                        "         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
                 printerr("         Proceeding with installation using new datasets.")
-                printerr("         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+                printerr(
+                    "         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
                 for pv in retainedPVs:
-                    printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1], pv[2]))
+                    printerr(
+                        "   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1],
+                                                                                                           pv[2]))
 
         return
     elif returncode != 0:
@@ -446,18 +472,23 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
         retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
 
         if len(notRetainedPVs) > 0:
-            printerr("WARNING: Given the current and desired configs, continued (un)installation will result in the loss of Console data.")
+            printerr(
+                "WARNING: Given the current and desired configs, continued (un)installation will result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
             printerr("Invoke again with '--delete-pvcs' to proceed anyway, but save your data first if so desired")
             fail("Stopping")
 
         if len(retainedPVs) > 0:
-            printerr("WARNING: Given the current and desired configs, this (un)installation will orphan existing Console data.")
-            printerr("         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
-            printerr("         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
+            printerr(
+                "WARNING: Given the current and desired configs, this (un)installation will orphan existing Console data.")
+            printerr(
+                "         Manual intervention will be required to reuse it with the Console, or to actually delete it.")
+            printerr(
+                "         See associated documentation at https://developer.lightbend.com/docs/console/current/installation/storage.html.")
             for pv in retainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
+
 
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
@@ -485,28 +516,29 @@ def parse_set_string(s):
                 matchlen = len(m.group(0))
                 result.append((m.group(1), m.group(2).replace('\\,', ',')))
                 if matchlen == len(left) or left[matchlen] == ',':
-                    left = left[matchlen+1:]
+                    left = left[matchlen + 1:]
                 else:
                     raise ValueError('unexpected character "{}"'.format(left[matchlen]))
             else:
                 raise ValueError('unable to parse "{}"'.format(left))
         return result
-    return [] 
+    return []
+
 
 def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
 
-    helm_args = ''
-    if len(args.helm) > 0:
-        # Helm args are separated from lbc.py args by double dash, filter it out
-        helm_args += ' '.join(args.helm) + ' '
+    helm_args = ' '.join(args.rest)
+    # if len(args.rest) > 0:
+    #     # Helm args are separated from lbc.py args by double dash, filter it out
+    #     helm_args += ' '.join(args.rest) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set != None:
         for s in args.set:
-            for key,val in parse_set_string(s):
-                helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
+            for key, val in parse_set_string(s):
+                helm_args += ' --set {}={}'.format(key, val.replace(',', '\\,'))
 
     chart_ref = None
     if args.local_chart != None:
@@ -516,7 +548,7 @@ def install(creds_file):
         execute('helm repo add es-repo ' + args.repo)
         execute('helm repo update')
         chart_ref = 'es-repo/' + args.chart
-    
+
     if args.export_yaml != None:
         # Tillerless path - renders kubernetes resources and prints to stdout
 
@@ -524,7 +556,7 @@ def install(creds_file):
         if args.export_yaml == 'creds':
             creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
             printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
-        
+
         try:
             chartfile = args.local_chart
             tempdir = None
@@ -532,24 +564,24 @@ def install(creds_file):
                 # No local chart given, fetch from repo
                 tempdir = make_tempdir()
                 execute('helm fetch -d {} {} {}'
-                    .format(tempdir, version_arg, chart_ref))
+                        .format(tempdir, version_arg, chart_ref))
                 chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
                 # Print a fake chart archive name when dry-running
                 chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-ver.tgz']
-                if len(chartfile) < 1: 
+                if len(chartfile) < 1:
                     fail('cannot access fetched chartfile at {}, ES_CHART={}'
-                        .format(chartfile_glob, args.chart))
+                         .format(chartfile_glob, args.chart))
                 chartfile = chartfile[0]
             execute('helm template --name {} --namespace {} {} {} {}'
-                .format(args.helm_name, args.namespace, helm_args,
-                creds_exec_arg, chartfile), print_to_stdout=True)
+                    .format(args.helm_name, args.namespace, helm_args,
+                            creds_exec_arg, chartfile), print_to_stdout=True)
         finally:
             if tempdir != None:
                 shutil.rmtree(tempdir)
 
     else:
         # Tiller path - installs console directly to a k8s cluster in a given namespace
-        
+
         # Determine if we should upgrade or install
         should_upgrade = False
 
@@ -578,12 +610,13 @@ def install(creds_file):
 
         if should_upgrade:
             execute('helm upgrade {} {} {} {} {}'
-                .format(args.helm_name, chart_ref, version_arg,
-                        creds_arg, helm_args))
+                    .format(args.helm_name, chart_ref, version_arg,
+                            creds_arg, helm_args))
         else:
             execute('helm install {} --name {} --namespace {} {} {} {}'
-                .format(chart_ref, args.helm_name, args.namespace,
-                        version_arg, creds_arg, helm_args))
+                    .format(chart_ref, args.helm_name, args.namespace,
+                            version_arg, creds_arg, helm_args))
+
 
 def uninstall(status=None, namespace=None):
     if status == None:
@@ -602,12 +635,14 @@ def uninstall(status=None, namespace=None):
         printerr(('warning: helm delete does not wait for resources to be removed'
                   '- if the script fails on install, please re-run it.'))
 
+
 def write_temp_credentials(creds_tempfile, creds):
     creds_str = '\n'.join(["imageCredentials:",
                            "    username: " + creds[0],
                            "    password: " + creds[1]])
     creds_tempfile.write(creds_str)
     creds_tempfile.flush()
+
 
 def import_credentials():
     creds = (os.environ.get('LIGHTBEND_COMMERCIAL_USERNAME'),
@@ -624,11 +659,12 @@ def import_credentials():
 
     return creds
 
+
 def check_install(external_alertmanager=False):
     def deployment_running(name):
         printinfo('Checking deployment {} ... '.format(name), end='')
         returncode, stdout, _ = run('kubectl --namespace {} get deploy/{} --no-headers'
-                                 .format(args.namespace, name))
+                                    .format(args.namespace, name))
         if returncode == 0:
             # Skip first (deployment name) and last (running time) items
             cols = [int(col) for col in stdout.replace('/', ' ').split()[1:-1]]
@@ -663,8 +699,8 @@ def check_install(external_alertmanager=False):
     else:
         fail('Lightbend Console status check failed')
 
-def debug_dump(args):
 
+def debug_dump(args):
     def dump(dest, filename, content):
         if args.print:
             # Print to stdout
@@ -677,7 +713,7 @@ def debug_dump(args):
     def get_pod_containers(pod):
         # This magic gives us all the containers in a pod
         returncode, containers, _ = run("kubectl --namespace {} get pods {} -o jsonpath='{{.spec.containers[*].name}}'"
-                                     .format(args.namespace, pod))
+                                        .format(args.namespace, pod))
         if returncode == 0:
             return containers.split()
         else:
@@ -686,25 +722,25 @@ def debug_dump(args):
 
     def write_log(archive, pod, container):
         returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {}'
-                                 .format(args.namespace, pod, container),
-                                 show_stderr=False)
+                                    .format(args.namespace, pod, container),
+                                    show_stderr=False)
         if returncode == 0:
             filename = '{}+{}.log'.format(pod, container)
             dump(archive, filename, stdout)
         else:
             fail(failure_msg + 'unable to get logs for container {} in a pod {}'
-                     .format(container, pod))
+                 .format(container, pod))
 
         # Try to get previous logs too
         returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {} -p'
-                                 .format(args.namespace, pod, container),
-                                 show_stderr=False)
+                                    .format(args.namespace, pod, container),
+                                    show_stderr=False)
         if returncode == 0:
             filename = '{}+{}+prev.log'.format(pod, container)
             dump(archive, filename, stdout)
 
     failure_msg = 'Failed to get diagnostic data: '
-    
+
     archive = None
     if not args.print:
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -713,30 +749,30 @@ def debug_dump(args):
 
     # List all resources in our namespace
     returncode, stdout, _ = run('kubectl --namespace {} get all'.format(args.namespace),
-                             show_stderr=False)
+                                show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-get-all.txt', stdout)
     else:
         fail(failure_msg + 'unable to list k8s resources in {} namespace'
-                .format(args.namespace))
+             .format(args.namespace))
 
     # Describe all resources
     returncode, stdout, _ = run('kubectl --namespace {} describe all'.format(args.namespace),
-                             show_stderr=False)
+                                show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-describe-all.txt', stdout)
     else:
         fail(failure_msg + 'unable to describe k8s resources in {} namespace'
-                .format(args.namespace))
+             .format(args.namespace))
 
     # Describe PVCs
     returncode, stdout, _ = run('kubectl --namespace {} get pvc'.format(args.namespace),
-                             show_stderr=False)
+                                show_stderr=False)
     if returncode == 0:
         dump(archive, 'kubectl-get-pvc.txt', stdout)
     else:
         fail(failure_msg + 'unable to describe k8s resources in {} namespace'
-                .format(args.namespace))
+             .format(args.namespace))
 
     # Iterate over pods
     returncode, stdout, _ = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
@@ -755,6 +791,7 @@ def debug_dump(args):
         archive.close()
         printerr('Lightbend Console diagnostic data written to {}'.format(filename))
 
+
 def setup_args(argv):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
@@ -763,18 +800,20 @@ def setup_args(argv):
     install = subparsers.add_parser('install', help='install lightbend console', formatter_class=fmt)
     uninstall = subparsers.add_parser('uninstall', help='uninstall lightbend console', formatter_class=fmt)
     verify = subparsers.add_parser('verify', help='verify console installation', formatter_class=fmt)
-    debug_dump = subparsers.add_parser('debug-dump', help='make an archive with k8s status info for debugging and diagnostic purposes',
+    debug_dump = subparsers.add_parser('debug-dump',
+                                       help='make an archive with k8s status info for debugging and diagnostic purposes',
                                        formatter_class=fmt)
 
     # Debug dump arguments
     debug_dump.add_argument('--print', help='print the output instead of writing it to a zip file',
-                        action='store_true')
+                            action='store_true')
 
     # Install arguments
-    install.add_argument('--force-install', help='set to true to delete an existing install first, instead of upgrading',
-                        action='store_true')
+    install.add_argument('--force-install',
+                         help='set to true to delete an existing install first, instead of upgrading',
+                         action='store_true')
     install.add_argument('--export-yaml', help='export resource yaml to stdout',
-                        choices=['creds', 'console'])
+                         choices=['creds', 'console'])
 
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
@@ -787,19 +826,20 @@ def setup_args(argv):
                          action='append')
 
     # Verify arguments
-    verify.add_argument('--external-alertmanager', help='skips alertmanager check (for use with existing alertmanagers)',
+    verify.add_argument('--external-alertmanager',
+                        help='skips alertmanager check (for use with existing alertmanagers)',
                         action='store_true')
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
         subparser.add_argument('--delete-pvcs', help='ignore warnings about PVs and proceed anyway. CAUTION!',
-                            action='store_true')
+                               action='store_true')
         subparser.add_argument('--dry-run', help='only print out the commands that will be executed',
                                action='store_true')
         subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
-        subparser.add_argument('helm', help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
-                         nargs='*')
-
+        subparser.add_argument('rest',
+                               help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
+                               nargs='*')
 
     # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
@@ -817,6 +857,7 @@ def setup_args(argv):
         parser.print_help()
 
     return args
+
 
 def main(argv):
     global args
@@ -852,7 +893,7 @@ def main(argv):
             check_install()
         else:
             check_install(args.external_alertmanager)
- 
+
     if args.subcommand == 'uninstall':
         if not args.skip_checks:
             check_helm()
@@ -862,6 +903,7 @@ def main(argv):
         if not args.skip_checks:
             check_kubectl()
         debug_dump(args)
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
