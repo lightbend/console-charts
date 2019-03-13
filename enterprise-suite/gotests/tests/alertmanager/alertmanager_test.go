@@ -153,7 +153,6 @@ var _ = Describe("all:alertmanager", func() {
 			// Look for alert from our monitor using alertmanager api
 			alerts, err := alertm.Alerts()
 			Expect(err).ToNot(HaveOccurred())
-			found := false
 			var alertNames []string
 			for _, alert := range alerts {
 				if val, ok := alert.Labels["alertname"]; ok {
