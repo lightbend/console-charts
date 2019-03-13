@@ -154,13 +154,13 @@ var _ = Describe("all:alertmanager", func() {
 			alerts, err := alertm.Alerts()
 			Expect(err).ToNot(HaveOccurred())
 			found := false
+			var alertNames []string
 			for _, alert := range alerts {
-				if val, ok := alert.Labels["alertname"]; ok && val == name {
-					found = true
-					break
+				if val, ok := alert.Labels["alertname"]; ok {
+					alertNames = append(alertNames, val)
 				}
 			}
-			Expect(found).To(Equal(true))
+			Expect(alertNames).To(ContainElement(name))
 
 			deleteAlert(name)
 		})
