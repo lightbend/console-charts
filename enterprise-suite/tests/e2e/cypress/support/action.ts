@@ -4,7 +4,7 @@ export class Action {
     }
 
     static saveMonitor() {
-        cy.contains('SAVE CHANGES').click();
+        cy.contains('SAVE CHANGES').click({force:true});
     }
 
     static editMonitor() {
