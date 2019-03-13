@@ -54,7 +54,8 @@ export class Form {
     }
 
     static validateMetricName(value: string) {
-        cy.get('rc-capsule.metric label.button-key', {timeout: 20000}).should('have.text', value);
+        cy.get('rc-capsule.metric label.button-key', {timeout: 20000}).should('have.text', value).should('be.visible');
+        cy.get('rc-capsule.metric label.button-value').should('not.be.visible');
     }
 
 
