@@ -2,6 +2,8 @@
 
 set -exu
 
+subset=${1:-all}
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 # setup
@@ -19,13 +21,13 @@ cd $script_dir/../tests/e2e
 # run the e2e test
 set +e
 
-npm install
+npm run e2e:demo-app-setup
 if [[ "$?" != "0" ]]; then
     diagnostics
     exit 1
 fi
 
-npm run e2e:demo-app-setup
+npm install
 if [[ "$?" != "0" ]]; then
     diagnostics
     exit 1
@@ -43,7 +45,16 @@ if [[ "$?" != "0" ]]; then
     exit 1
 fi
 
-npm run e2e:travis-prs
+if [[ "$subset" == "all" ]]; then
+    npm run e2e:travis-prs
+elif [[ "$subset" == "1" ]]; then
+    npm run e2e:travis-prs-subset1
+elif [[ "$subset" == "2" ]]; then
+    npm run e2e:travis-prs-subset2
+else
+    echo "wrong parameter $subset for run-e2e-tests.sh"
+    exit 1
+fi
 if [[ "$?" != "0" ]]; then
     diagnostics
     exit 1

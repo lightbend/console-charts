@@ -2,7 +2,7 @@
     "baseUrl": "http://localhost:4200",
     "supportFile": "cypress/support/index.ts",
     "env": {
-      "skipKnownError": false
+      "skipKnownError": true
     },
     "reporter": "junit",
     "reporterOptions": {

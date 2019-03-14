@@ -97,22 +97,26 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	// Revert back to original alertmanager config
-	for _, volume := range alertmanagerDep.Spec.Template.Spec.Volumes {
-		if volume.Name == "config-volume" {
-			volume.ConfigMap = oldConfigmap
+	if alertmanagerDep != nil {
+		for _, volume := range alertmanagerDep.Spec.Template.Spec.Volumes {
+			if volume.Name == "config-volume" {
+				volume.ConfigMap = oldConfigmap
+			}
 		}
 	}
-	var err error
-	alertmanagerDep, err = depsClient.Update(alertmanagerDep)
-	Expect(err).ToNot(HaveOccurred())
 
-	// Delete test configmap
-	err = kube.DeleteConfigMap(args.ConsoleNamespace, configName)
-	Expect(err).ToNot(HaveOccurred())
+	if depsClient != nil {
+		_, err := depsClient.Update(alertmanagerDep)
+		Expect(err).ToNot(HaveOccurred())
 
-	// Delete test app
-	err = kube.DeleteYaml(args.ConsoleNamespace, appYaml)
-	Expect(err).ToNot(HaveOccurred())
+		// Delete test configmap
+		err = kube.DeleteConfigMap(args.ConsoleNamespace, configName)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Delete test app
+		err = kube.DeleteYaml(args.ConsoleNamespace, appYaml)
+		Expect(err).ToNot(HaveOccurred())
+	}
 
 	testenv.CloseEnv()
 })
@@ -149,14 +153,13 @@ var _ = Describe("all:alertmanager", func() {
 			// Look for alert from our monitor using alertmanager api
 			alerts, err := alertm.Alerts()
 			Expect(err).ToNot(HaveOccurred())
-			found := false
+			var alertNames []string
 			for _, alert := range alerts {
-				if val, ok := alert.Labels["alertname"]; ok && val == name {
-					found = true
-					break
+				if val, ok := alert.Labels["alertname"]; ok {
+					alertNames = append(alertNames, val)
 				}
 			}
-			Expect(found).To(Equal(true))
+			Expect(alertNames).To(ContainElement(name))
 
 			deleteAlert(name)
 		})

@@ -64,22 +64,25 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
-	additionalArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
+	var lbcArgs []string
+	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
 	if isMinikube {
-		additionalArgs = append(additionalArgs, "--set exposeServices=NodePort")
+		helmArgs = append(helmArgs, "--set exposeServices=NodePort")
 		foundStorageClass = true
 	} else {
 		// Look for expected storage classes, run with emptyDir if they don't exist
 		for _, storageClass := range []string{"standard", "gp2"} {
 			if kube.StorageClassExists(K8sClient, storageClass) {
 				foundStorageClass = true
-				additionalArgs = append(additionalArgs,
+				helmArgs = append(helmArgs,
 					fmt.Sprintf("--set usePersistentVolumes=true,defaultStorageClass=%v", storageClass))
 				break
 			}
 		}
-		if !foundStorageClass {
-			additionalArgs = append(additionalArgs, "--set usePersistentVolumes=false,managePersistentVolumes=false")
+		if foundStorageClass {
+			lbcArgs = append(lbcArgs, "--delete-pvcs")
+		} else {
+			helmArgs = append(helmArgs, "--set usePersistentVolumes=false")
 		}
 	}
 
@@ -106,7 +109,7 @@ func InitEnv() {
 	defer ticker.Stop()
 
 	// Install console
-	if err := lbc.Install(args.ConsoleNamespace, additionalArgs...); err != nil {
+	if err := lbc.Install(args.ConsoleNamespace, lbcArgs, helmArgs); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 

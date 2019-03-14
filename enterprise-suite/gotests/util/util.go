@@ -116,11 +116,9 @@ func (cb *CmdBuilder) start() error {
 	}
 
 	// Set up env variables
-	if len(cb.envVars) > 0 {
-		cb.cmd.Env = os.Environ()
-		for _, envVar := range cb.envVars {
-			cb.cmd.Env = append(cb.cmd.Env, envVar)
-		}
+	cb.cmd.Env = os.Environ()
+	for _, envVar := range cb.envVars {
+		cb.cmd.Env = append(cb.cmd.Env, envVar)
 	}
 
 	cmdStdout, err := cb.cmd.StdoutPipe()

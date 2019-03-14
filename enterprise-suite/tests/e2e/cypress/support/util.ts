@@ -25,15 +25,15 @@ export class Util {
   }
 
   static validateMidHealthBarCount(count: number) {
-    cy.get('.list-header', {timeout: 20000}).should('have.text', `Groupings (${count})`);
+    cy.get('.list-header', {timeout: 35000}).should('have.text', `Groupings (${count})`);
   }
 
   static validateUrlPath(urlPath: string) {
-    cy.location('pathname', {timeout: 20000}).should('eq', urlPath);
+    cy.location('pathname', {timeout: 35000}).should('eq', urlPath);
   }
 
   static validateMonitorCountGte(count: number) {
-    cy.get('.monitor-list .monitor-name', {timeout: 10000}).should('have.length.be.gte', count);
+    cy.get('.monitor-list .monitor-name', {timeout: 20000}).should('have.length.be.gte', count);
   }
 
   static validateControlIconContains(value: string) {

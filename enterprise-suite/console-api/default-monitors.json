@@ -680,6 +680,59 @@
           "summary": "Circuit breaker tripped",
           "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
         }
+      },
+      "kafka_consumer_throughput": {
+        "monitorVersion": "1",
+        "model": "sma",
+        "parameters": {
+          "metric": "kafka_consumer_topic_consumed_rate",
+          "period": "15m",
+          "minval": "1000",
+          "window": "15m",
+          "confidence": "1",
+          "severity": {
+            "warning": {
+              "numsigma": "3"
+            }
+          },
+          "summary": "Kafka consumer throughput is anomalous",
+          "description": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
+        }
+      },
+      "kafka_producer_throughput": {
+        "monitorVersion": "1",
+        "model": "sma",
+        "parameters": {
+          "metric": "kafka_producer_topic_send_rate",
+          "period": "15m",
+          "minval": "1000",
+          "window": "15m",
+          "confidence": "1",
+          "severity": {
+            "warning": {
+              "numsigma": "3"
+            }
+          },
+          "summary": "Kafka producer throughput is anomalous",
+          "description": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
+        }
+      },
+      "kafka_consumer_lag": {
+        "monitorVersion": "1",
+        "model": "growth",
+        "parameters": {
+          "metric": "kafka_consumer_topic_lag_max",
+          "period": "15m",
+          "minslope": "0.1",
+          "confidence": "1",
+          "severity": {
+            "warning": {
+              "window": "15m"
+            }
+          },
+          "summary": "consumergroup falling behind",
+          "description": "{{$labels.es_workload}} has lag on {{$labels.topic}}"
+        }
       }
     }
   }
