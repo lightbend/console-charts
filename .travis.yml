@@ -59,6 +59,7 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests Subset 2 - Minikube (Skip due to flaky)
+    if: false # skip test due to flaky
     cache:
       directories:
         - ~/.npm
@@ -67,9 +68,9 @@ jobs:
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
-    script: skip # skip due to flaky
-    # - travis_retry scripts/setup-minikube-for-linux.sh
-    # - make -C enterprise-suite frontend-tests2
+    script:
+    - travis_retry scripts/setup-minikube-for-linux.sh
+    - make -C enterprise-suite frontend-tests2
     after_script:
       # Cypress videos.
       - artifacts upload $(find . -name '*.mp4')
@@ -96,7 +97,7 @@ jobs:
 
   - name: Frontend E2E Tests Subset 2 - Minikube Latest (Skip due to flaky)
     # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron)
+    if: type in (cron) AND false # skip test due to flaky
     cache:
       directories:
         - ~/.npm
@@ -105,9 +106,9 @@ jobs:
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
-    script: skip # skip due to flaky
-    # - travis_retry scripts/setup-minikube-for-linux.sh
-    # - make -C enterprise-suite-latest frontend-tests2
+    script:
+    - travis_retry scripts/setup-minikube-for-linux.sh
+    - make -C enterprise-suite-latest frontend-tests2
     after_script:
       # Cypress videos.
       - artifacts upload $(find . -name '*.mp4')
