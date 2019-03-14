@@ -7,37 +7,39 @@ dist: xenial
 services:
 - docker
 
-install:
-- travis_retry scripts/setup-tools-for-ubuntu.sh
-- travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
-
 jobs:
   include:
   - stage: Tests
     name: Unit tests
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test
 
   - name: Backend E2E Go Tests - Minikube
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite install-helm gotests-minikube
+    - travis_retry make -C enterprise-suite install-helm TILLER_NAMESPACE=console-backend-go-tests
+    - travis_retry make -C enterprise-suite/gotests setup-tools
+    - make -C enterprise-suite/gotests run-tests-minikube NAMESPACE=console-backend-go-tests
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
     - sleep 5
 
   - name: Backend E2E Go Tests - Openshift
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
+    # travisqueue.go ensures only a single build runs at a time on Openshift
+    - go run travisqueue.go
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
-    - make -C enterprise-suite gotests-openshift NAMESPACE=console-backend-go-tests
+    - travis_retry make -C enterprise-suite/gotests setup-tools
+    - make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=console-backend-go-tests || true
+    - make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=console-backend-go-tests
+    - make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=console-backend-go-tests || true
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
     - sleep 5
-
-  - name: Backend E2E Tests - Minikube Latest
-    # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron)
-    script:
-    - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite-latest minikube-backend-tests
 
   - name: Frontend E2E Tests 1 - Minikube
     cache:
@@ -45,6 +47,9 @@ jobs:
         - ~/.npm
         - ~/.cache
     node_js: 9.4.0
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite frontend-tests1
@@ -59,6 +64,9 @@ jobs:
         - ~/.npm
         - ~/.cache
     node_js: 9.4.0
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - make -C enterprise-suite frontend-tests2
@@ -67,7 +75,7 @@ jobs:
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
-  - name: Frontend E2E Tests - Minikube Latest
+  - name: Frontend E2E Tests 1 - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     cache:
@@ -75,21 +83,47 @@ jobs:
         - ~/.npm
         - ~/.cache
     node_js: 9.4.0
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite-latest frontend-tests
+    - make -C enterprise-suite-latest frontend-tests1
+    after_script:
+      # Cypress videos.
+      - artifacts upload $(find . -name '*.mp4')
+      - artifacts upload $(find . -name '*.png')
+
+  - name: Frontend E2E Tests 2 - Minikube Latest
+    # Only build latest in the daily cron - don't block PRs or master releases.
+    if: type in (cron)
+    cache:
+      directories:
+        - ~/.npm
+        - ~/.cache
+    node_js: 9.4.0
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
+    script:
+    - travis_retry scripts/setup-minikube-for-linux.sh
+    - make -C enterprise-suite-latest frontend-tests2
     after_script:
       # Cypress videos.
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
   - name: Reactive-sandbox test
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test CHARTS=reactive-sandbox
 
   - name: Console Whitesource Report
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api)
+    install:
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - travis_retry scripts/setup-minikube-for-linux.sh
     - travis_retry make -C enterprise-suite install-helm install-dev
@@ -101,6 +135,10 @@ jobs:
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api)
+    install:
+    # travisqueue.go ensures only a single deploy happens at a time
+    - go run travisqueue.go
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     # Decrypt credentials for GCS system account helmchart@es-repo.iam.gserviceaccount.com
     - mkdir -p /tmp/resources || travis_terminate 1
