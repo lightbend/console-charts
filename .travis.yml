@@ -59,7 +59,7 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests Subset 2 - Minikube (Skip due to flaky)
-    if: true != false # skip test due to flaky
+    if: true = false # skip test due to flaky
     cache:
       directories:
         - ~/.npm
