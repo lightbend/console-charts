@@ -59,7 +59,7 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests Subset 2 - Minikube (Skip due to flaky)
-    if: false # skip test due to flaky
+    if: true != false # skip test due to flaky
     cache:
       directories:
         - ~/.npm
@@ -97,7 +97,7 @@ jobs:
 
   - name: Frontend E2E Tests Subset 2 - Minikube Latest (Skip due to flaky)
     # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron) AND false # skip test due to flaky
+    if: type in (cron) AND true = false # skip test due to flaky
     cache:
       directories:
         - ~/.npm
