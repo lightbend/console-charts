@@ -41,7 +41,7 @@ jobs:
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
     - sleep 5
 
-  - name: Frontend E2E Tests 1 - Minikube
+  - name: Frontend E2E Tests Subset 1 - Minikube
     cache:
       directories:
         - ~/.npm
@@ -58,7 +58,8 @@ jobs:
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
-  - name: Frontend E2E Tests 2 - Minikube
+  - name: Frontend E2E Tests Subset 2 - Minikube (Skip due to flaky)
+    if: true = false # skip test due to flaky
     cache:
       directories:
         - ~/.npm
@@ -75,7 +76,7 @@ jobs:
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
-  - name: Frontend E2E Tests 1 - Minikube Latest
+  - name: Frontend E2E Tests Subset 1 - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     cache:
@@ -94,9 +95,9 @@ jobs:
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
-  - name: Frontend E2E Tests 2 - Minikube Latest
+  - name: Frontend E2E Tests Subset 2 - Minikube Latest (Skip due to flaky)
     # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron)
+    if: type in (cron) AND true = false # skip test due to flaky
     cache:
       directories:
         - ~/.npm

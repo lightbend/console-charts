@@ -31,3 +31,4 @@ gotests/
 scripts/
 .vscode/
 .venv/
+.ws.conf

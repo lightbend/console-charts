@@ -84,6 +84,7 @@ describe('Local Prometheus Health Test', () => {
     Form.setThresholdMonitor(thresholdMonitor);
 
     // move the following to health check
+    Util.waitRecalculateHealth();
     Util.validateMidHealthBarCount(2);
     Health.validateMiddleMetricList(0, 'critical');
     Health.validateMiddleMetricList(1, 'critical');
