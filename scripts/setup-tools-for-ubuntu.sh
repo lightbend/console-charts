@@ -27,9 +27,9 @@ tar xzvf ${prom_file}
 sudo cp prometheus-${prom_version}.linux-amd64/promtool /usr/local/bin/
 
 # install helm
-helm_file="helm-v2.12.0-linux-amd64.tar.gz"
+helm_file="helm-v2.10.0-linux-amd64.tar.gz"
 curl -LO https://storage.googleapis.com/kubernetes-helm/${helm_file}
-echo "9f96a6e4fc52b5df906da381532cc2eb2f3f57cc203ccaec2b11cf5dc26a7dfc ${helm_file}" | sha256sum --check
+echo "0fa2ed4983b1e4a3f90f776d08b88b0c73fd83f305b5b634175cb15e61342ffe ${helm_file}" | sha256sum --check
 tar xzvf ${helm_file}
 sudo cp linux-amd64/helm /usr/local/bin/
 helm init -c
