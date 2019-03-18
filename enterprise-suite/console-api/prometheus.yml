@@ -81,10 +81,14 @@ scrape_configs:
       - source_labels: [kubernetes_pod_name, es_workload]
         regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
         target_label: es_workload
-      # spark executor workload
+      # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+        regex: (.*)-[0-9]{13}-exec-[0-9]+;
         replacement: ${1}-exec
+        target_label: es_workload
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[0-9]{13}-driver;
+        replacement: ${1}-driver
         target_label: es_workload
       # extract workload from workload-num
       - source_labels: [kubernetes_pod_name, es_workload]
@@ -187,10 +191,14 @@ scrape_configs:
       - source_labels: [pod, es_workload]
         regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
         target_label: es_workload
-      # spark executor workload
+      # spark workload
       - source_labels: [pod, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+        regex: (.*)-[0-9]{13}-exec-[0-9]+;
         replacement: ${1}-exec
+        target_label: es_workload
+      - source_labels: [pod, es_workload]
+        regex: (.*)-[0-9]{13}-driver;
+        replacement: ${1}-driver
         target_label: es_workload
       # extract workload from workload-num
       - source_labels: [pod, es_workload]
@@ -283,10 +291,14 @@ scrape_configs:
         action: replace
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
-      # spark executor workload
+      # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+        regex: (.*)-[0-9]{13}-exec-[0-9]+;
         replacement: ${1}-exec
+        target_label: es_workload
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[0-9]{13}-driver;
+        replacement: ${1}-driver
         target_label: es_workload
       # fall through plain pod name
       - source_labels: [kubernetes_pod_name, es_workload]
@@ -372,10 +384,14 @@ scrape_configs:
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
 
-      # spark executor workload
+      # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+        regex: (.*)-[0-9]{13}-exec-[0-9]+;
         replacement: ${1}-exec
+        target_label: es_workload
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[0-9]{13}-driver;
+        replacement: ${1}-driver
         target_label: es_workload
 
       # fall through plain pod name
