@@ -531,10 +531,10 @@ def install(creds_file):
     namespace_arg = "--namespace {}".format(args.namespace)
 
     helm_args = ''
-    if len(args.helm) > 0:
+    if len(args.rest) > 0:
         hparser = argparse.ArgumentParser()
         hparser.add_argument('--namespace')
-        real_helm_args = args.helm[1:]
+        real_helm_args = args.rest[1:]
         try:
             ns_args, unknown = hparser.parse_known_args(real_helm_args)
         except:
