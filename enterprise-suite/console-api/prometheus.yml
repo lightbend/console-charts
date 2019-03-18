@@ -140,6 +140,8 @@ scrape_configs:
         action: keep
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
         target_label: kubernetes_name
@@ -194,8 +196,9 @@ scrape_configs:
         target_label: es_workload
       - source_labels: [node]
         target_label: node_name
-      - regex: 'node'
-        action: labeldrop
+      # UI should use node_name label and not node label   https://github.com/lightbend/console-frontend/issues/632
+      #- regex: 'node'
+      #  action: labeldrop
 
 {{ .MonitorTypeRules | indent 6 }}
 
