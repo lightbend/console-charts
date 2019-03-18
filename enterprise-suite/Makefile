@@ -42,8 +42,16 @@ script-tests: ## Run installer tests
 	python $(CHART_DIR)/scripts/lbc_test.py
 
 .PHONY: frontend-tests
-frontend-tests: ## Run the frontend tests against minikube
+frontend-tests: ## Run all the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
+
+.PHONY: frontend-tests1
+frontend-tests1: ## Run subset 1 of frontend tests against minikube 
+	$(CHART_DIR)/scripts/run-e2e-tests.sh 1
+
+.PHONY: frontend-tests2
+frontend-tests2: ## Run subset 2 of frontend tests against minikube
+	$(CHART_DIR)/scripts/run-e2e-tests.sh 2
 
 # This target required by top-level helm-charts Makefile. It's not used by travis.
 # It only performs lightweight checks.
@@ -114,7 +122,7 @@ gotests-minikube: preflight-check
 gotests-openshift: preflight-check
 	# Purge any existing installation first.
 	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
-	$(MAKE) -C gotests run-tests-openshift purge-console-openshift NAMESPACE=$(NAMESPACE)
+	$(MAKE) -C gotests run-tests-openshift NAMESPACE=$(NAMESPACE)
 	# Clean up after the tests.
 	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
 

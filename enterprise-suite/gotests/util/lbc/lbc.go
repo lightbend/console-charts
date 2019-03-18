@@ -14,13 +14,15 @@ import (
 const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
-func Install(namespace string, additionalArgs ...string) error {
-	defaultArgs := []string{"install", "--local-chart", localChartPath,
+func Install(namespace string, lbcArgs, helmArgs []string) error {
+	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
-		"--wait", "--", "--timeout 110"}
-	fullArgs := append(defaultArgs, additionalArgs...)
-	cmd := util.Cmd(lbcPath, fullArgs...)
+		"--wait"}
+	cmdArgs = append(cmdArgs, lbcArgs...)
+	cmdArgs = append(cmdArgs, "--", "--timeout", "110")
+	cmdArgs = append(cmdArgs, helmArgs...)
+	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
@@ -67,7 +69,7 @@ func Verify(namespace string) error {
 }
 
 func Uninstall() error {
-	cmd := util.Cmd(lbcPath, "uninstall")
+	cmd := util.Cmd(lbcPath, "uninstall", "--delete-pvcs")
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
