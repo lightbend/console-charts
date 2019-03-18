@@ -130,7 +130,7 @@ var _ = Describe("all:prometheus", func() {
 		// None of the metrics should have kubernetes_namespace label
 		Expect(prom.HasData("{kubernetes_namespace!=\"\"}")).ToNot(Succeed())
 		// make sure the number of node_names matches the number of kubelets
-		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`).To(Succeed())
+		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
 	})
 
 	DescribeTable("kube state metrics",
