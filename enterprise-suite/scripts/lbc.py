@@ -636,7 +636,6 @@ def install(creds_file):
                 .format(chart_ref, args.helm_name, namespace_arg,
                         version_arg, creds_arg, helm_args))
 
-
 def uninstall(status=None, namespace=None):
     if not status:
         status, namespace = install_status(args.helm_name)
