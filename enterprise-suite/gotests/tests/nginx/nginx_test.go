@@ -29,17 +29,23 @@ var _ = AfterSuite(func() {
 
 var _ = Describe("all:nginx", func() {
 
-	// Table entry parameters get evaluated before our testenv
-	// is initialized, so we pass a pointer to the right address.
-	DescribeTable("services are responding", func(addr *string) {
-		By(*addr)
-		_, err := urls.Get200(*addr)
+	DescribeTable("services are accessible", func(service string) {
+		addr := fmt.Sprintf("%v/%v", testenv.ConsoleAddr, service)
+		By(addr)
+		_, err := urls.Get200(addr)
+		Expect(err).ToNot(HaveOccurred())
+
+		basepath := "fee/fie/fou/fum"
+		addr = fmt.Sprintf("%v/%v/%v", testenv.ConsoleAddr, basepath, service)
+		By(addr)
+		_, err = urls.Get200(addr)
 		Expect(err).ToNot(HaveOccurred())
 	},
-		Entry("console", &testenv.ConsoleAddr),
-		Entry("grafana", &testenv.GrafanaAddr),
-		Entry("prometheus", &testenv.PrometheusAddr),
-		Entry("alertmanager", &testenv.AlertmanagerAddr),
+		Entry("console", ""),
+		Entry("grafana", "/service/grafana/"),
+		Entry("prometheus", "/service/prometheus/"),
+		Entry("console-api", "/service/console-api/status"),
+		Entry("alertmanager", "/service/alertmanager"),
 	)
 
 	// Console API needs separate test because it doesn't respond to queries on /service/es-monitor-api
@@ -49,20 +55,6 @@ var _ = Describe("all:nginx", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
-
-	DescribeTable("services accessible via any base path", func(service string) {
-		basepath := "fee/fie/fou/fum"
-		addr := fmt.Sprintf("%v/%v/%v", testenv.ConsoleAddr, basepath, service)
-		By(addr)
-		_, err := urls.Get200(addr)
-		Expect(err).ToNot(HaveOccurred())
-	},
-		Entry("console", ""),
-		Entry("grafana", "/service/grafana/"),
-		Entry("prometheus", "/service/prometheus/"),
-		Entry("console-api", "/service/es-monitor-api/status"),
-		Entry("alertmanager", "/service/alertmanager"),
-	)
 
 	DescribeTable("is redirected", func(service *string, location string) {
 		By(*service)
