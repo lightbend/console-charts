@@ -48,13 +48,17 @@ var _ = Describe("all:nginx", func() {
 		Entry("alertmanager", "/service/alertmanager"),
 	)
 
-	// Console API needs separate test because it doesn't respond to queries on /service/es-monitor-api
-	Context("console-api", func() {
-		It("is responding", func() {
-			_, err := urls.Get200(testenv.ConsoleAPIAddr + "/status")
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
+	DescribeTable("favicon.ico", func(base string) {
+		addr := fmt.Sprintf("%v/%vfavicon.ico", testenv.ConsoleAddr, base)
+		By(addr)
+		res, err := urls.Get200(addr)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res.Headers.Get("Content-Type")).To(HavePrefix("image/"))
+	},
+		Entry("root", ""),
+		Entry("assets", "assets/"),
+		Entry("prefix", "/my/monitoring/"),
+	)
 
 	DescribeTable("is redirected", func(service *string, location string) {
 		By(*service)
