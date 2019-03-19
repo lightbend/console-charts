@@ -149,12 +149,6 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
         target_label: kubernetes_name
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        action: replace
-        target_label: node_name
-      - source_labels: [__meta_kubernetes_pod_host_ip]
-        action: replace
-        target_label: node_ip
 
     # es_workload labels:
     # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
@@ -208,6 +202,11 @@ scrape_configs:
       - source_labels: [pod, es_workload]
         regex: (.+);
         target_label: es_workload
+      - source_labels: [node]
+        target_label: node_name
+      # UI should use node_name label and not node label   https://github.com/lightbend/console-frontend/issues/632
+      #- regex: 'node'
+      #  action: labeldrop
 
 {{ .MonitorTypeRules | indent 6 }}
 
