@@ -38,7 +38,6 @@ func (p *Connection) Query(query string) (*PromResponse, error) {
 	client := http.Client{
 		Timeout: timeout,
 	}
-	// client.Get(url)
 	resp, err := client.Get(addr)
 	if err != nil {
 		return nil, err
@@ -65,20 +64,33 @@ func (p *Connection) Query(query string) (*PromResponse, error) {
 }
 
 func (p *Connection) HasData(query string) error {
+	return p.checkForData(query, true)
+}
+
+func (p *Connection) HasNoData(query string) error {
+	return p.checkForData(query, false)
+}
+
+func (p *Connection) checkForData(query string, expectResults bool) error {
 	resp, err := p.Query(query)
 
 	if err != nil {
-		return fmt.Errorf("%q returned an error: %v", query, err)
+		return fmt.Errorf("%s returned an error: %v", query, err)
 	}
 
 	// Cast result to array of anything
 	arr, ok := resp.Data.Result.([]interface{})
 	if !ok {
-		return fmt.Errorf("%q - expected array of values, but was %v: %s", query, reflect.TypeOf(resp.Data.Result), resp.Original)
+		return fmt.Errorf("expected array of values, but was %q: %s ->\n%s", reflect.TypeOf(resp.Data.Result),
+			query, util.IndentJson(resp.Original))
 	}
 
-	if len(arr) == 0 {
-		return fmt.Errorf("%q returned 0 results: %s", query, resp.Original)
+	if len(arr) == 0 && expectResults {
+		return fmt.Errorf("expected >1 result, got 0: %s ->\n%s", query, util.IndentJson(resp.Original))
+	}
+
+	if len(arr) > 0 && !expectResults {
+		return fmt.Errorf("expected 0 results, got %d: %s ->\n%s", len(arr), query, util.IndentJson(resp.Original))
 	}
 
 	return nil

@@ -16,6 +16,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func TestPrometheus(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Prometheus Suite")
+}
+
 var prom *prometheus.Connection
 var esMonitor *monitor.Connection
 
@@ -69,7 +74,7 @@ var _ = AfterSuite(func() {
 	// Delete test app deployments + services
 	for res := range appYamls {
 		if err := kube.DeleteYaml(args.ConsoleNamespace, res); err != nil {
-			panic(err)
+			util.LogG("Unable to remove %v\n", res)
 		}
 	}
 
@@ -110,25 +115,25 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_scrape_time"),
 	)
 
-	It("has the expected labels", func() {
+	FIt("has the expected labels", func() {
 		// PromData with "es_workload" should also have a "namespace" label
-		Expect(prom.HasData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).ToNot(Succeed())
+		Expect(prom.HasNoData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(Succeed())
 		// Health should have "es_workload" label, with a few known exceptions
-		Expect(prom.HasData("health{es_workload=\"\", name!~\"node.*|kube_node.*|prometheus_target_down|scrape_time\"}")).ToNot(Succeed())
+		Expect(prom.HasNoData("health{es_workload=\"\", name!~\"node.*|kube_node.*|prometheus_target_down|scrape_time\"}")).To(Succeed())
 
 		// kube_pod_info must have es_workload labels (flaky!)
 		//Expect(prom.HasData("kube_pd_info{es_workload=~\".+\"}")).To(BeTrue())
 
-		Expect(prom.HasData("kube_pod_info{es_workload=\"\"}")).ToNot(Succeed())
+		Expect(prom.HasNoData("kube_pod_info{es_workload=\"\"}")).To(Succeed())
 		// kube data mapped pod to workload labels
-		Expect(prom.HasData("{__name__=~ \"kube_.+\", pod!=\"\", es_workload=\"\"}")).ToNot(Succeed())
+		Expect(prom.HasNoData("{__name__=~ \"kube_.+\", pod!=\"\", es_workload=\"\"}")).To(Succeed())
 		// All container data have a workload label
-		Expect(prom.HasData("{__name__=~\"container_.+\", es_workload=\"\"}")).ToNot(Succeed())
+		Expect(prom.HasNoData("{__name__=~\"container_.+\", es_workload=\"\"}")).To(Succeed())
 		// All targets should be reachable
 		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(Succeed())
-		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 0")).ToNot(Succeed())
+		Expect(prom.HasNoData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 0")).To(Succeed())
 		// None of the metrics should have kubernetes_namespace label
-		Expect(prom.HasData("{kubernetes_namespace!=\"\"}")).ToNot(Succeed())
+		Expect(prom.HasNoData("{kubernetes_namespace!=\"\"}")).To(Succeed())
 		// make sure the number of node_names matches the number of kubelets
 		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
 	})
@@ -255,8 +260,3 @@ var _ = Describe("all:prometheus", func() {
 		})
 	})
 })
-
-func TestPrometheus(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Prometheus Suite")
-}

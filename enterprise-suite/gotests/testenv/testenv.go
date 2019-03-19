@@ -36,7 +36,6 @@ var (
 	helmReleaseName         = "enterprise-suite"
 	consolePVCs             = []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
 
-	foundStorageClass  = false
 	testEnvInitialized = false
 )
 
@@ -68,9 +67,9 @@ func InitEnv() {
 	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
 	if isMinikube {
 		helmArgs = append(helmArgs, "--set exposeServices=NodePort")
-		foundStorageClass = true
 	} else {
 		// Look for expected storage classes, run with emptyDir if they don't exist
+		var foundStorageClass bool
 		for _, storageClass := range []string{"standard", "gp2"} {
 			if kube.StorageClassExists(K8sClient, storageClass) {
 				foundStorageClass = true
@@ -79,9 +78,7 @@ func InitEnv() {
 				break
 			}
 		}
-		if foundStorageClass {
-			lbcArgs = append(lbcArgs, "--delete-pvcs")
-		} else {
+		if !foundStorageClass {
 			helmArgs = append(helmArgs, "--set usePersistentVolumes=false")
 		}
 	}
