@@ -97,9 +97,7 @@ metadata:
   name: es-console
 data:
   config.js: |
-    window.installedConfig = {
-      "logo":""
-    }
+    window.installedConfig = {"logo":""}
   default.conf: |
     server {
       listen 8080;
@@ -119,7 +117,7 @@ data:
       resolver 127.0.0.1:5353 ipv6=off valid=30s;
   
       set $prometheus "prometheus-server";
-      set $monitorapi "es-monitor-api";
+      set $monitorapi "console-api";
       set $grafana "grafana-server";
       set $alertmanager "alertmanager:9093";
   
@@ -165,8 +163,9 @@ data:
         proxy_redirect '/' ' $1/';
       }
   
-      # es-monitor-api
-      location ~ ^(.*/service/es-monitor-api)(/.*)$ {
+      # console-api
+      # es-monitor-api is preserved for backwards compatibility with es-console-spa
+      location ~ ^(.*/service/console-api|.*/service/es-monitor-api)(/.*)$ {
         proxy_pass http://$monitorapi$2$is_args$args;
         proxy_redirect '/' ' $1/';
       }
@@ -226,7 +225,7 @@ data:
       location ~ ^(.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.1",
+          "version": "1.0.2",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
@@ -251,8 +250,8 @@ data:
           "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
           "esGrafanaVersion": "v0.2.1",
           "esGrafanaVolumeSize": "32Gi",
-          "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-monitor-api",
-          "esMonitorVersion": "v1.0.9",
+          "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api",
+          "esMonitorVersion": "v1.0.11",
           "exposeServices": "NodePort",
           "goDnsmasqImage": "lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq",
           "goDnsmasqVersion": "v0.1.7-1",
@@ -979,7 +978,7 @@ metadata:
   labels:
     app: prometheus
     component: server
-  name: es-monitor-api
+  name: console-api
 data:
   default-monitors.json: |
     {
@@ -1664,6 +1663,59 @@ data:
               "summary": "Circuit breaker tripped",
               "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
             }
+          },
+          "kafka_consumer_throughput": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "kafka_consumer_topic_consumed_rate",
+              "period": "15m",
+              "minval": "1000",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "3"
+                }
+              },
+              "summary": "Kafka consumer throughput is anomalous",
+              "description": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
+            }
+          },
+          "kafka_producer_throughput": {
+            "monitorVersion": "1",
+            "model": "sma",
+            "parameters": {
+              "metric": "kafka_producer_topic_send_rate",
+              "period": "15m",
+              "minval": "1000",
+              "window": "15m",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "numsigma": "3"
+                }
+              },
+              "summary": "Kafka producer throughput is anomalous",
+              "description": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
+            }
+          },
+          "kafka_consumer_lag": {
+            "monitorVersion": "1",
+            "model": "growth",
+            "parameters": {
+              "metric": "kafka_consumer_topic_lag_max",
+              "period": "15m",
+              "minslope": "0.1",
+              "confidence": "1",
+              "severity": {
+                "warning": {
+                  "window": "15m"
+                }
+              },
+              "summary": "consumergroup falling behind",
+              "description": "{{$labels.es_workload}} has lag on {{$labels.topic}}"
+            }
           }
         }
       }
@@ -1671,8 +1723,8 @@ data:
   prometheus.yml: |
     {{/*
        * Note to Helm devs: this is NOT a Helm template, but rather a plain go template used
-       * in es-monitor-api to generate the final prometheus.yml.
-       * sanitizeForPrometheusLabel is a function in es-monitor-api that replaces [.-] with "_"
+       * in console-api to generate the final prometheus.yml.
+       * sanitizeForPrometheusLabel is a function in console-api that replaces [.-] with "_"
        */}}
     global:
       # dev mode
@@ -1752,6 +1804,11 @@ data:
           - source_labels: [kubernetes_pod_name, es_workload]
             regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
             target_label: es_workload
+          # spark executor workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            replacement: ${1}-exec
+            target_label: es_workload
           # extract workload from workload-num
           - source_labels: [kubernetes_pod_name, es_workload]
             regex: (.*)-[0-9]{1,4};
@@ -1808,8 +1865,6 @@ data:
             regex: __meta_kubernetes_service_label_(.+)
           - source_labels: [__meta_kubernetes_namespace]
             target_label: namespace
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: kubernetes_namespace
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
@@ -1854,6 +1909,11 @@ data:
           # extract workload from workload-rand
           - source_labels: [pod, es_workload]
             regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
+            target_label: es_workload
+          # spark executor workload
+          - source_labels: [pod, es_workload]
+            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            replacement: ${1}-exec
             target_label: es_workload
           # extract workload from workload-num
           - source_labels: [pod, es_workload]
@@ -1924,8 +1984,6 @@ data:
             regex: __meta_kubernetes_service_label_(.+)
           - source_labels: [__meta_kubernetes_namespace]
             target_label: namespace
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: kubernetes_namespace
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
@@ -1947,6 +2005,15 @@ data:
           - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
             action: replace
             regex: '(.*)-[0-9]+;'
+            target_label: es_workload
+          # spark executor workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            replacement: ${1}-exec
+            target_label: es_workload
+          # fall through plain pod name
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*);
             target_label: es_workload
   
     {{ .MonitorTypeRules | indent 6 }}
@@ -2028,6 +2095,17 @@ data:
             regex: '(.*)-[0-9]+;'
             target_label: es_workload
   
+          # spark executor workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            replacement: ${1}-exec
+            target_label: es_workload
+  
+          # fall through plain pod name
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*);
+            target_label: es_workload
+  
     {{ .MonitorTypeRules | indent 6 }}
   static-rules.yml: |
     - record: kube_node_pressure
@@ -2096,6 +2174,15 @@ data:
   
     - record: akka_http_http_server_responses_5xx_rate
       expr: irate(akka_http_http_server_responses_5xx[5m]) and akka_http_http_server_responses_5xx offset 1m
+  
+    - record: kafka_consumer_topic_consumed_rate
+      expr: sum by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic) (kafka_consumer_consumer_fetch_manager_metrics_records_consumed_rate)
+  
+    - record: kafka_producer_topic_send_rate
+      expr: sum by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic) (kafka_producer_producer_metrics_record_send_rate)
+  
+    - record: kafka_consumer_topic_lag_max
+      expr: max by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic, instance) (kafka_consumer_consumer_fetch_manager_metrics_records_lag_max >= 0)
   
 
 ---
@@ -2380,7 +2467,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: es-monitor-api
+  name: console-api
 spec:
   ports:
     - name: http
@@ -2435,9 +2522,9 @@ spec:
         checksum/alertmanager-config: 80defaeb71676c73fc6988e08249907ff78a990d1910e9456ea8b8cef0223d8f
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.1
+        helm.sh/chart: enterprise-suite-1.0.2
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/component: alertmanager
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
@@ -2521,12 +2608,12 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/es-console-config: b2c6f1d9d1cd53e038bce509e1874176ea6a433cf831f08d6647b791d1e73c67
+        checksum/es-console-config: bf8577a8f056974cbe4e600419e2dbffed44beafb0b07fa9a45c933f6d432fb1
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.1
+        helm.sh/chart: enterprise-suite-1.0.2
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/component: es-console
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         run: es-console
@@ -2603,9 +2690,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.1
+        helm.sh/chart: enterprise-suite-1.0.2
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/component: grafana
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: grafana
@@ -2696,9 +2783,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.1
+        helm.sh/chart: enterprise-suite-1.0.2
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/component: kube-state-metrics
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
@@ -2749,16 +2836,16 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.1
+        helm.sh/chart: enterprise-suite-1.0.2
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/component: prometheus
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: server
       annotations:
         prometheus.io/scrape: "true"
-        checksum/es-monitor-api-config: c36b8f800c9f5926f3fc90279d829de0184a279a56611ec37e03e8eefecfa390
+        checksum/console-api-config: bdc18268d23952d803d4bd4e49ca626ce270147a4b4c2f4a4b7118fc3a35331b
         checksum/bare-prometheus-config: 8898a493fb7758aaed74b5167d86ccd6d773f74a9f27bee46496d93754a9b39c
 
     spec:
@@ -2804,8 +2891,8 @@ spec:
         - name: commercial-credentials
 
       containers:
-        - name: es-monitor-api
-          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-monitor-api:v1.0.9
+        - name: console-api
+          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api:v1.0.11
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -2814,16 +2901,16 @@ spec:
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
-            - --staticConfig=/etc/es-monitor-api/static-rules.yml
-            - --defaultMonitorsFile=/etc/es-monitor-api/default-monitors.json
-            - --prometheusTemplate=/etc/es-monitor-api/prometheus.yml
+            - --staticConfig=/etc/console-api/static-rules.yml
+            - --defaultMonitorsFile=/etc/console-api/default-monitors.json
+            - --prometheusTemplate=/etc/console-api/prometheus.yml
             - --prometheusDomain=prometheus.io
             - --alertmanagers=alertmanager:9093
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: es-monitor-api-volume
-              mountPath: /etc/es-monitor-api
+            - name: console-api-volume
+              mountPath: /etc/console-api
             - name: prometheus-data-volume
               mountPath: /monitor-data
               subPath: monitor-data
@@ -2844,18 +2931,18 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
 
-        - name: es-monitor-api-configmap-reload
+        - name: console-api-configmap-reload
           image: jimmidyson/configmap-reload:v0.2.2
           resources:
             requests:
               cpu: 100m
               memory: 50Mi
           args:
-          - --volume-dir=/etc/es-monitor-api
+          - --volume-dir=/etc/console-api
           - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
-          - name: es-monitor-api-volume
-            mountPath: /etc/es-monitor-api
+          - name: console-api-volume
+            mountPath: /etc/console-api
 
         - name: prometheus-server
           image: prom/prometheus:v2.7.1
@@ -2901,9 +2988,9 @@ spec:
       volumes:
         - name: config-volume
           emptyDir: {}
-        - name: es-monitor-api-volume
+        - name: console-api-volume
           configMap:
-            name: es-monitor-api
+            name: console-api
         - name: prometheus-data-volume
           
           persistentVolumeClaim:
