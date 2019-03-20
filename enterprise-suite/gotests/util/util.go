@@ -1,7 +1,9 @@
 package util
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -102,7 +104,7 @@ func (cb *CmdBuilder) start() error {
 	}
 
 	if cb.printCommand {
-		fmt.Fprintf(ginkgo.GinkgoWriter, "%v\n", cb)
+		LogG("%v\n", cb)
 	}
 
 	// Set up timeout context if needed
@@ -277,4 +279,19 @@ func FindFreePort() int {
 	}
 	defer conn.Close()
 	return conn.Addr().(*net.TCPAddr).Port
+}
+
+// LogG logs to the ginkgo writer. On test failure, it will print out whatever was written to it.
+func LogG(format string, a ...interface{}) {
+	if _, err := fmt.Fprintf(ginkgo.GinkgoWriter, format, a...); err != nil {
+		panic(err)
+	}
+}
+
+func IndentJson(in string) string {
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, []byte(in), "", "  "); err != nil {
+		panic(err)
+	}
+	return buf.String()
 }

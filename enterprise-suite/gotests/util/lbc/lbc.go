@@ -1,11 +1,8 @@
 package lbc
 
 import (
-	"fmt"
 	"strings"
 	"time"
-
-	"github.com/onsi/ginkgo"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
@@ -18,6 +15,7 @@ func Install(namespace string, lbcArgs, helmArgs []string) error {
 	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
+		"--delete-pvcs",
 		"--wait"}
 	cmdArgs = append(cmdArgs, lbcArgs...)
 	cmdArgs = append(cmdArgs, "--", "--timeout", "110")
@@ -36,7 +34,7 @@ func Install(namespace string, lbcArgs, helmArgs []string) error {
 }
 
 func logDebugInfo(namespace string) {
-	fmt.Fprint(ginkgo.GinkgoWriter, "\n********************************************\nInstall failed, printing debug information:\n\n")
+	util.LogG("\n********************************************\nInstall failed, printing debug information:\n\n")
 
 	debugCmds := []string{
 		"get events --sort-by=.metadata.resourceVersion",
@@ -50,9 +48,9 @@ func logDebugInfo(namespace string) {
 		kubectlArgs := []string{"-n", namespace}
 		kubectlArgs = append(kubectlArgs, strings.Split(cmd, " ")...)
 		if err := util.Cmd("kubectl", kubectlArgs...).PrintCommand().Run(); err != nil {
-			fmt.Fprintf(ginkgo.GinkgoWriter, "Could not gather debug info: %v\n", err)
+			util.LogG("Could not gather debug info: %v\n", err)
 		}
-		fmt.Fprintf(ginkgo.GinkgoWriter, "\n")
+		util.LogG("\n")
 	}
 }
 
