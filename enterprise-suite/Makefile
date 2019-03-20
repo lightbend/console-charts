@@ -46,7 +46,7 @@ frontend-tests: ## Run all the frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh
 
 .PHONY: frontend-tests1
-frontend-tests1: ## Run subset 1 of frontend tests against minikube 
+frontend-tests1: ## Run subset 1 of frontend tests against minikube
 	$(CHART_DIR)/scripts/run-e2e-tests.sh 1
 
 .PHONY: frontend-tests2
@@ -72,7 +72,7 @@ lint-helm:  ## Run helm lint on chart files
 
 .PHONY: lint-json
 lint-json:  ## Test json files are well-formed
-	find $(CHART_DIR) -not -path '*/\.*' -name '*.json' | xargs -tn 1 jq . >/dev/null
+	find $(CHART_DIR)/console-api $(CHART_DIR)/es-grafana -name '*.json' | xargs -tn 1 jq . >/dev/null
 
 .PHONY: lint-promql
 lint-promql:  ## Test promql bits are well-formed
