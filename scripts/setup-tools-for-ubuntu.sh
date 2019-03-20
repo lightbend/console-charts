@@ -19,10 +19,10 @@ sudo apt install -y libgconf2-4
 # promtool
 mkdir -p build
 cd build
-prom_version=2.3.2
+prom_version=2.7.2
 prom_file="prometheus-${prom_version}.linux-amd64.tar.gz"
 curl -LO https://github.com/prometheus/prometheus/releases/download/v${prom_version}/${prom_file}
-echo "351931fe9bb252849b7d37183099047fbe6d7b79dcba013fb6ae19cc1bbd8552 $prom_file" | sha256sum --check
+echo "fca1b17bef8bd19c2ad90caf13d7ffa85e8c4655aa03315fb5e228bd06c4e0ae $prom_file" | sha256sum --check
 tar xzvf ${prom_file}
 sudo cp prometheus-${prom_version}.linux-amd64/promtool /usr/local/bin/
 

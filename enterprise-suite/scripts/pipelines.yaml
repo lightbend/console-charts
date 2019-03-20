@@ -1,3 +1,4 @@
-esConsoleImage: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/pipelines-ui
+esConsoleImage: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/pipelines-ui-19.3.2019.1
 esConsoleVersion: latest
 imagePullPolicy: Always
+defaultStorageClass: gp2
