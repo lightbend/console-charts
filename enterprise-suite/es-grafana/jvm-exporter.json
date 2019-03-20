@@ -112,7 +112,7 @@
     "graphName": "Memory Pool Usage",
     "promQL": [
       {
-        "expr": "jvm_memory_pool_bytes_used / jvm_memory_pool_bytes_max > 0 or on (kubernetes_pod_name) label_replace({__name__=~\"jvm_pools_.*_usage\",__name__!=\"jvm_pools_Metaspace_usage\"}, \"pool\", \"$1\", \"__name__\", \"jvm_pools_(.*)_usage\")",
+        "expr": "jvm_memory_pool_bytes_used{ContextTags} / jvm_memory_pool_bytes_max{ContextTags} > 0 or on (kubernetes_pod_name) label_replace({ContextTags,__name__=~\"jvm_pools_.*_usage\",__name__!=\"jvm_pools_Metaspace_usage\"}, \"pool\", \"$1\", \"__name__\", \"jvm_pools_(.*)_usage\")",
         "legendFormat": "{{pool}} on {{kubernetes_pod_name}}"
       }
     ],
