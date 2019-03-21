@@ -56,6 +56,8 @@ DEFAULT_TIMEOUT = 3
 # Parsed commandline args
 args = None
 
+# This will be true if running on Windows
+windows = os.name == 'nt'
 
 # The following functions are overridable for testing purposes
 
@@ -817,7 +819,7 @@ def setup_args(argv):
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
-    install.add_argument('--creds', help='credentials file', default='~/.lightbend/commercial.credentials')
+    install.add_argument('--creds', help='credentials file', default=os.path.join('~', '.lightbend', 'commercial.credentials'))
     install.add_argument('--version', help='console version to install', type=str)
     install.add_argument('--wait', help='wait for install to finish before returning',
                          action='store_true')
@@ -878,9 +880,18 @@ def main(argv):
             printerr(("warning: --version has not been set, helm will use the latest available version. "
                       "It is recommended to use an explicit version."))
 
-        with tempfile.NamedTemporaryFile('w') as creds_tempfile:
+        # Cannot use `with` statement to auto-delete here because on windows we cannot have file opened by two processes at the same time
+        creds_tempfile = tempfile.NamedTemporaryFile('w', delete=False)
+        filename = creds_tempfile.name
+        if windows:
+            # Escape path separators on windows because helm does its own un-escaping
+            filename = filename.replace('\\', '\\\\')
+        try:
             write_temp_credentials(creds_tempfile, creds)
-            install(creds_tempfile.name)
+            creds_tempfile.close()
+            install(filename)
+        finally:
+            os.remove(filename)
 
         if args.wait:
             force_verify = True
