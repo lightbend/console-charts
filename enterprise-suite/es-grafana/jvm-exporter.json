@@ -72,7 +72,7 @@
     }
   },
   {
-    "graphName": "GC Rate",
+    "graphName": "GC Rate (avg per second)",
     "promQL": [
       {
         "expr": "rate( (jvm_gc_collection_seconds_count{ContextTags} or on (kubernetes_pod_name, gc) label_replace({ContextTags,__name__=~\"jvm_.*_count\",gc=\"\"}, \"gc\", \"$1\", \"__name__\", \"jvm_(.*)_count\")) [5m:])",
@@ -84,7 +84,7 @@
     }
   },
   {
-    "graphName": "GC Time",
+    "graphName": "GC Time (avg per second)",
     "promQL": [
       {
         "expr": "rate( (jvm_gc_collection_seconds_sum{ContextTags} or on (kubernetes_pod_name, gc) label_replace({ContextTags,__name__=~\"jvm_.*_time\",gc=\"\"}, \"gc\", \"$1\", \"__name__\", \"jvm_(.*)_time\") /1000) [5m:])",
