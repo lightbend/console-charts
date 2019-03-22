@@ -15,7 +15,7 @@ jobs:
   include:
   - stage: Tests
     name: Unit tests
-    if: os=linux
+    if: os = linux
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -139,16 +139,16 @@ jobs:
   
   - stage: Windows Tests
     name: Windows Tests
-    if: os=windows
+    if: os = windows
     install:
-      - choco install python2
+    - choco install python2
     script:
-      - enterprise-suite/scripts/lbc_test.py
+    - enterprise-suite/scripts/lbc_test.py
 
   - stage: deploy
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
-    if: type IN (push, api) AND os=linux
+    if: type IN (push, api) AND os = linux
     install:
     # travisqueue.go ensures only a single deploy happens at a time
     - go run travisqueue.go
