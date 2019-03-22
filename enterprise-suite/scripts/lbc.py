@@ -535,11 +535,7 @@ def install(creds_file):
     if len(args.rest) > 0:
         hparser = argparse.ArgumentParser()
         hparser.add_argument('--namespace')
-        real_helm_args = args.rest[1:]
-        try:
-            ns_args, unknown = hparser.parse_known_args(real_helm_args)
-        except:
-            fail("")
+        ns_args, unknown = hparser.parse_known_args(args.rest)
 
         if ns_args.namespace != None:
             if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
@@ -548,7 +544,7 @@ def install(creds_file):
                 fail("Invoke again with correct namespace value...")
             namespace_arg=""
 
-        helm_args += ' '.join([arg for arg in real_helm_args]) + ' '
+        helm_args += ' '.join(args.rest) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set:
