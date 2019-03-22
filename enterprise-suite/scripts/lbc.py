@@ -530,6 +530,7 @@ def install(creds_file):
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
     namespace_arg = "--namespace {}".format(args.namespace)
 
+    # Handle --namespace in helm args (after --) to complain about conflicts
     helm_args = ''
     if len(args.rest) > 0:
         hparser = argparse.ArgumentParser()
@@ -544,8 +545,7 @@ def install(creds_file):
             if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
                 printerr("WARNING: Conflicting namespace values provided in arguments {} and {} ".format(
                     args.namespace, ns_args.namespace))
-                printerr("Invoke again with correct namespace value...")
-                fail("Stopping")
+                fail("Invoke again with correct namespace value...")
             namespace_arg=""
 
         helm_args += ' '.join([arg for arg in real_helm_args]) + ' '
