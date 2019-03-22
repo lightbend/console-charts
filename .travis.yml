@@ -162,7 +162,7 @@ jobs:
     dist: xenial
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
-    if: type IN (push, api) AND
+    if: type IN (push, api)
     install:
     # travisqueue.go ensures only a single deploy happens at a time
     - go run travisqueue.go
