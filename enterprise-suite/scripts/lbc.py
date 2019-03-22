@@ -528,8 +528,23 @@ def parse_set_string(s):
 def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ('--version ' + args.version) if args.version != None else '--devel'
+    namespace_arg = "--namespace {}".format(args.namespace)
 
-    helm_args = ' '.join(args.rest)
+    # Handle --namespace in helm args (after --) to complain about conflicts
+    helm_args = ''
+    if len(args.rest) > 0:
+        hparser = argparse.ArgumentParser()
+        hparser.add_argument('--namespace')
+        ns_args, unknown = hparser.parse_known_args(args.rest)
+
+        if ns_args.namespace != None:
+            if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
+                printerr("WARNING: Conflicting namespace values provided in arguments {} and {} ".format(
+                    args.namespace, ns_args.namespace))
+                fail("Invoke again with correct namespace value...")
+            namespace_arg=""
+
+        helm_args += ' '.join(args.rest) + ' '
 
     # Add '--set' arguments to helm_args
     if args.set:
@@ -571,9 +586,10 @@ def install(creds_file):
                     fail('cannot access fetched chartfile at {}, ES_CHART={}'
                          .format(chartfile_glob, args.chart))
                 chartfile = chartfile[0]
-            execute('helm template --name {} --namespace {} {} {} {}'
-                    .format(args.helm_name, args.namespace, helm_args,
-                            creds_exec_arg, chartfile), print_to_stdout=True)
+
+            execute('helm template --name {} {} {} {} {}'
+                .format(args.helm_name, namespace_arg, helm_args,
+                creds_exec_arg, chartfile), print_to_stdout=True)
         finally:
             if tempdir:
                 shutil.rmtree(tempdir)
@@ -612,10 +628,9 @@ def install(creds_file):
                     .format(args.helm_name, chart_ref, version_arg,
                             creds_arg, helm_args))
         else:
-            execute('helm install {} --name {} --namespace {} {} {} {}'
-                    .format(chart_ref, args.helm_name, args.namespace,
-                            version_arg, creds_arg, helm_args))
-
+            execute('helm install {} --name {} {} {} {} {}'
+                .format(chart_ref, args.helm_name, namespace_arg,
+                        version_arg, creds_arg, helm_args))
 
 def uninstall(status=None, namespace=None):
     if not status:
@@ -850,7 +865,10 @@ def setup_args(argv):
         subparser.add_argument('--skip-checks', help='skip environment checks',
                                action='store_true')
 
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except:
+        fail("")
 
     if len(argv) == 0:
         parser.print_help()

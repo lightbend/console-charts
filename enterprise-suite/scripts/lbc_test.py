@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import unittest
 
+
 # Exception that gets thrown when unexpected command is
 # executed by lbc script.
 class UnexpectedCmdException(Exception):
@@ -205,6 +206,32 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --devel --values \S+ --set minikube=true --fakearg')
         lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg'])
+
+    def test_helm_args_namespace(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite  --devel --values \S+ --set minikube=true --fakearg --namespace=foobar')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg', '--namespace=foobar'])
+
+    def test_helm_args_namespace_val(self):
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite  --devel --values \S+ --set minikube=true --fakearg --namespace foobar')
+        lbc.main(['install', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'foobar'])
+
+    def test_helm_args_conflicting_namespace(self):
+        with self.assertRaises(TestFailException):
+            lbc.main(['install', '--namespace', 'foo', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
+                      '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'bar'])
+    
+    # At some point lbc ate `--timeout` and passed to helm only the number 110
+    def test_helm_args_timeout(self):
+        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        expect_cmd(r'helm install . --name enterprise-suite --namespace foo --devel --values \S+ --timeout 110 ')
+        lbc.main(['install', '--local-chart', '.', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--namespace', 'foo', '--', '--timeout', '110'])
+
 
     def test_helm_set(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
