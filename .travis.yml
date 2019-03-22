@@ -4,6 +4,10 @@ go:
 sudo: required
 dist: xenial
 
+os:
+- linux
+- windows
+
 services:
 - docker
 
@@ -11,11 +15,12 @@ jobs:
   include:
   - stage: Tests
     name: Unit tests
+    if: os=linux
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test
-
+  
   - name: Backend E2E Go Tests - Minikube
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
@@ -131,11 +136,19 @@ jobs:
     # update whitesource docker image CVE report based on installed docker images
     - travis_retry curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
     - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
+  
+  - stage: Windows Tests
+    name: Windows Tests
+    if: os=windows
+    install:
+      - choco install python2
+    script:
+      - enterprise-suite/scripts/lbc_test.py
 
   - stage: deploy
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
-    if: type IN (push, api)
+    if: type IN (push, api) AND os=linux
     install:
     # travisqueue.go ensures only a single deploy happens at a time
     - go run travisqueue.go
