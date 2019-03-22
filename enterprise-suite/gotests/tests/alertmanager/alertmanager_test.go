@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"k8s.io/client-go/kubernetes/typed/apps/v1"
+
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
@@ -17,24 +18,25 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var prom *prometheus.Connection
-var console *monitor.Connection
-var alertm *alertmanager.Connection
+var (
+	prom    *prometheus.Connection
+	console *monitor.Connection
+	alertm  *alertmanager.Connection
 
-var depsClient v1.DeploymentInterface
-var oldConfigmap *apiv1.ConfigMapVolumeSource
-var alertmanagerDep *appsv1.Deployment
+	depsClient      v1.DeploymentInterface
+	oldConfigmap    *apiv1.ConfigMapVolumeSource
+	alertmanagerDep *appsv1.Deployment
 
-var configYaml = "../../resources/alertmanager.yml"
-var configName = "alertmanager-smoke-config"
-var appYaml = "../../resources/alert-app.yaml"
-var appName = "es-alert-test"
+	configYaml = "../../resources/alertmanager.yml"
+	configName = "alertmanager-smoke-config"
+	appYaml    = "../../resources/alert-app.yaml"
+	appName    = "es-alert-test"
+)
 
 func TestAlertmanager(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -45,14 +47,14 @@ var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 
 	// Delete test configmap if it existed previously, ignore failure
-	kube.DeleteConfigMap(args.ConsoleNamespace, configName)
+	kube.DeleteConfigMap(testenv.ConsoleNamespace, configName)
 
 	// Create test configmap
-	err := kube.CreateConfigMap(args.ConsoleNamespace, configName, configYaml)
+	err := kube.CreateConfigMap(testenv.ConsoleNamespace, configName, configYaml)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Get deployments interface and alertmanager deployment
-	depsClient = testenv.K8sClient.AppsV1().Deployments(args.ConsoleNamespace)
+	depsClient = testenv.K8sClient.AppsV1().Deployments(testenv.ConsoleNamespace)
 	alertmanagerDep, err = depsClient.Get("prometheus-alertmanager", metav1.GetOptions{})
 	Expect(err).ToNot(HaveOccurred())
 
@@ -72,12 +74,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Deploy test app
-	err = kube.ApplyYaml(args.ConsoleNamespace, appYaml)
+	err = kube.ApplyYaml(testenv.ConsoleNamespace, appYaml)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Wait for it to become ready
 	err = util.WaitUntilSuccess(util.LongWait, func() error {
-		return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, appName)
+		return kube.IsDeploymentAvailable(testenv.K8sClient, testenv.ConsoleNamespace, appName)
 	})
 	Expect(err).NotTo(HaveOccurred())
 
@@ -110,11 +112,11 @@ var _ = AfterSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// Delete test configmap
-		err = kube.DeleteConfigMap(args.ConsoleNamespace, configName)
+		err = kube.DeleteConfigMap(testenv.ConsoleNamespace, configName)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Delete test app
-		err = kube.DeleteYaml(args.ConsoleNamespace, appYaml)
+		err = kube.DeleteYaml(testenv.ConsoleNamespace, appYaml)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
@@ -125,7 +127,7 @@ var _ = Describe("all:alertmanager", func() {
 	Context("es-alert-test app", func() {
 		It("has visible metrics", func() {
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, args.ConsoleNamespace))
+				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, testenv.ConsoleNamespace))
 			})
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -191,6 +193,44 @@ var _ = Describe("all:alertmanager", func() {
 			Expect(found).To(Equal(true))
 
 			deleteAlert(name)
+		})
+	})
+
+	Context("external URL", func() {
+		It("is set correctly on Prometheus", func() {
+			pods, err := testenv.K8sClient.CoreV1().Pods(testenv.ConsoleNamespace).
+				List(metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=prometheus"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(pods.Items).To(HaveLen(1))
+			pod := pods.Items[0]
+
+			var promContainer *apiv1.Container
+			for _, c := range pod.Spec.Containers {
+				if c.Name == "prometheus-server" {
+					promContainer = &c
+					break
+				}
+			}
+			Expect(promContainer).ToNot(BeNil())
+			Expect(promContainer.Args).To(ContainElement("--web.external-url=http://console.test.bogus:30080/service/prometheus"))
+		})
+
+		It("is set correctly on Alertmanager", func() {
+			pods, err := testenv.K8sClient.CoreV1().Pods(testenv.ConsoleNamespace).
+				List(metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=alertmanager"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(pods.Items).To(HaveLen(1))
+			pod := pods.Items[0]
+
+			var amContainer *apiv1.Container
+			for _, c := range pod.Spec.Containers {
+				if c.Name == "prometheus-alertmanager" {
+					amContainer = &c
+					break
+				}
+			}
+			Expect(amContainer).ToNot(BeNil())
+			Expect(amContainer.Args).To(ContainElement("--web.external-url=http://console.test.bogus:30080/service/alertmanager"))
 		})
 	})
 })
