@@ -176,7 +176,7 @@ jobs:
     - travis_retry scripts/trigger-build-helm-charts.sh
 
   - name: Deploy to Demo Environment
-    if: type in (push, api) AND tag is present
+    #if: type in (push, api) AND tag is present
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
