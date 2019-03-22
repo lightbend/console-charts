@@ -2,7 +2,6 @@ language: go
 go:
   - "1.11.x"
 sudo: required
-dist: xenial
 
 services:
 - docker
@@ -19,12 +18,16 @@ jobs:
  
   - stage: tests
     name: Unit tests
+    os: linux
+    dist: xenial
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test
  
   - name: Backend E2E Go Tests - Minikube
+    os: linux
+    dist: xenial
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -36,6 +39,8 @@ jobs:
     - sleep 5
 
   - name: Backend E2E Go Tests - Openshift
+    os: linux
+    dist: xenial
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -50,6 +55,8 @@ jobs:
     - sleep 5
 
   - name: Frontend E2E Tests Subset 1 - Minikube
+    os: linux
+    dist: xenial
     cache:
       directories:
         - ~/.npm
@@ -67,6 +74,8 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests Subset 2 - Minikube (Skip due to flaky)
+    os: linux
+    dist: xenial
     if: true = false # skip test due to flaky
     cache:
       directories:
@@ -85,6 +94,8 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests Subset 1 - Minikube Latest
+    os: linux
+    dist: xenial
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron)
     cache:
@@ -104,6 +115,8 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Frontend E2E Tests Subset 2 - Minikube Latest (Skip due to flaky)
+    os: linux
+    dist: xenial
     # Only build latest in the daily cron - don't block PRs or master releases.
     if: type in (cron) AND true = false # skip test due to flaky
     cache:
@@ -123,12 +136,16 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Reactive-sandbox test
+    os: linux
+    dist: xenial
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test CHARTS=reactive-sandbox
 
   - name: Console Whitesource Report
+    os: linux
+    dist: xenial
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api)
     install:
@@ -141,6 +158,8 @@ jobs:
     - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
   
   - stage: deploy
+    os: linux
+    dist: xenial
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
     if: type IN (push, api) AND
