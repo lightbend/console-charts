@@ -20,8 +20,16 @@ jobs:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test
+
+  - name: Windows Unit Tests
+    if: os = windows
+    install:
+    - choco install python2
+    script:
+    - enterprise-suite/scripts/lbc_test.py
   
   - name: Backend E2E Go Tests - Minikube
+    if: os = linux
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -33,6 +41,7 @@ jobs:
     - sleep 5
 
   - name: Backend E2E Go Tests - Openshift
+    if: os = linux
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -47,6 +56,7 @@ jobs:
     - sleep 5
 
   - name: Frontend E2E Tests Subset 1 - Minikube
+    if: os = linux
     cache:
       directories:
         - ~/.npm
@@ -83,7 +93,7 @@ jobs:
 
   - name: Frontend E2E Tests Subset 1 - Minikube Latest
     # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron)
+    if: type in (cron) AND os = linux
     cache:
       directories:
         - ~/.npm
@@ -120,6 +130,7 @@ jobs:
       - artifacts upload $(find . -name '*.png')
 
   - name: Reactive-sandbox test
+    if: os = linux
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -127,7 +138,7 @@ jobs:
 
   - name: Console Whitesource Report
     # Only deploy for pushes to master (and if manually invoked)
-    if: type IN (push, api)
+    if: type IN (push, api) AND os = linux
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -137,14 +148,6 @@ jobs:
     - travis_retry curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
     - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
   
-  - stage: windows
-    name: Windows Tests
-    if: os = windows
-    install:
-    - choco install python2
-    script:
-    - enterprise-suite/scripts/lbc_test.py
-
   - stage: deploy
     name: Deploy to GCS
     # Only deploy for pushes to master (and if manually invoked)
