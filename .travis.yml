@@ -183,7 +183,7 @@ jobs:
     # travisqueue.go ensures only a single build runs at a time on Openshift
     - go run travisqueue.go
     - travis_retry scripts/setup-openshift.sh ${OC_DEMO_TOKEN}
-    - enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set usePersistentVolumes=true,defaultStorageClass=gp2
+    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set usePersistentVolumes=true,defaultStorageClass=gp2
 
 branches:
   only:
