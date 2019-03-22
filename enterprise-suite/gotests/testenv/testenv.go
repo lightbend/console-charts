@@ -8,7 +8,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
@@ -54,7 +53,7 @@ func InitEnv() {
 	}
 
 	// Setup k8s client
-	config, err := clientcmd.BuildConfigFromFlags("", args.Kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", Kubeconfig)
 	if err != nil {
 		Expect(err).To(Succeed(), "new k8sclient config")
 	}
@@ -106,7 +105,7 @@ func InitEnv() {
 	defer ticker.Stop()
 
 	// Install console
-	if err := lbc.Install(args.ConsoleNamespace, lbcArgs, helmArgs); err != nil {
+	if err := lbc.Install(ConsoleNamespace, TillerNamespace, lbcArgs, helmArgs); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 

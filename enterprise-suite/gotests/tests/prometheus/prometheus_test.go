@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
@@ -39,13 +38,13 @@ var _ = BeforeSuite(func() {
 
 	// Create test app deployments + services
 	for res, depName := range appYamls {
-		err = kube.ApplyYaml(args.ConsoleNamespace, res)
+		err = kube.ApplyYaml(testenv.ConsoleNamespace, res)
 		Expect(err).To(Succeed())
 
 		// wait for deployment to become ready
 		if len(depName) > 0 {
 			err = util.WaitUntilSuccess(util.LongWait, func() error {
-				return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, depName)
+				return kube.IsDeploymentAvailable(testenv.K8sClient, testenv.ConsoleNamespace, depName)
 			})
 			Expect(err).To(Succeed())
 		}
@@ -73,7 +72,7 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	// Delete test app deployments + services
 	for res := range appYamls {
-		if err := kube.DeleteYaml(args.ConsoleNamespace, res); err != nil {
+		if err := kube.DeleteYaml(testenv.ConsoleNamespace, res); err != nil {
 			util.LogG("Unable to remove %v\n", res)
 		}
 	}
@@ -165,7 +164,7 @@ var _ = Describe("all:prometheus", func() {
 
 	Context("k8s service discovery", func() {
 		It("can discover a pod", func() {
-			appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", testenv.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstancesQuery)
 			})
@@ -188,7 +187,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover a pod with multiple ports", func() {
-			appInstancesWithMultiplePortsQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", args.ConsoleNamespace)
+			appInstancesWithMultiplePortsQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", testenv.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstancesWithMultiplePortsQuery)
 			})
@@ -196,7 +195,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover k8s `Service` resources", func() {
-			appInstancesViaServiceQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstancesViaServiceQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", testenv.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				if err := prom.HasData(appInstancesViaServiceQuery); err != nil {
 					return fmt.Errorf("unable to discover app via 'Service' service discovery: %v", err)
@@ -226,7 +225,7 @@ var _ = Describe("all:prometheus", func() {
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(fmt.Sprintf("count( count by (instance) (up{ "+
 					"job=\"kubernetes-services\", kubernetes_name=\"es-test-service-with-only-endpoints\", namespace=\"%v\""+
-					"}) ) == 1", args.ConsoleNamespace))
+					"}) ) == 1", testenv.ConsoleNamespace))
 			})
 			Expect(err).To(Succeed())
 		})

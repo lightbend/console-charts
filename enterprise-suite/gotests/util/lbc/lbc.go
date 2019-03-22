@@ -4,14 +4,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
 const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
-func Install(namespace string, lbcArgs, helmArgs []string) error {
+func Install(namespace, tillerNamespace string, lbcArgs, helmArgs []string) error {
 	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
@@ -21,8 +20,8 @@ func Install(namespace string, lbcArgs, helmArgs []string) error {
 	cmdArgs = append(cmdArgs, "--", "--timeout", "110")
 	cmdArgs = append(cmdArgs, helmArgs...)
 	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
-	if args.TillerNamespace != "" {
-		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	if tillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", tillerNamespace)
 	}
 
 	if err := cmd.Timeout(time.Minute * 2).Run(); err != nil {
@@ -54,24 +53,12 @@ func logDebugInfo(namespace string) {
 	}
 }
 
-func Verify(namespace string) error {
+func Verify(namespace, tillerNamespace string) error {
 	cmd := util.Cmd(lbcPath, "verify", "--namespace", namespace)
-	if args.TillerNamespace != "" {
-		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	if tillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", tillerNamespace)
 	}
 	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func Uninstall() error {
-	cmd := util.Cmd(lbcPath, "uninstall", "--delete-pvcs")
-	if args.TillerNamespace != "" {
-		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
-	}
-	if err := cmd.Timeout(time.Minute).Run(); err != nil {
 		return err
 	}
 
