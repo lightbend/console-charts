@@ -13,7 +13,7 @@ services:
 
 jobs:
   include:
-  - stage: Tests
+  - stage: tests
     name: Unit tests
     if: os = linux
     install:
@@ -137,7 +137,7 @@ jobs:
     - travis_retry curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
     - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
   
-  - stage: Windows Tests
+  - stage: windows
     name: Windows Tests
     if: os = windows
     install:
