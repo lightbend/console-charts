@@ -21,7 +21,8 @@ jobs:
     script:
     - make test
 
-  - name: Windows Unit Tests
+  - stage: tests
+    name: Windows Unit Tests
     if: os = windows
     install:
     - choco install python2
