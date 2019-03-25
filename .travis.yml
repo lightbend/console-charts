@@ -157,13 +157,13 @@ jobs:
     # update whitesource docker image CVE report based on installed docker images
     - travis_retry curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
     - travis_retry java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
- 
-  - stage: deploy
+
+  - stage: Deploy
     os: linux
     dist: xenial
     name: Deploy to GCS
-    # Only deploy for pushes to master (and if manually invoked)
-    if: type IN (push, api)
+    # Only deploy on tags
+    if: type IN (push, api) AND tag is present
     install:
     # travisqueue.go ensures only a single deploy happens at a time
     - go run travisqueue.go
@@ -175,9 +175,24 @@ jobs:
     - travis_retry scripts/deploy-to-gcs.sh
     - travis_retry scripts/trigger-build-helm-charts.sh
 
+  - name: Deploy to Demo Environment
+    os: linux
+    dist: xenial
+    # Only deploy on tags
+    if: type in (push, api) AND tag is present
+    install:
+    # travisqueue.go ensures only a single build runs at a time on Openshift
+    - go run travisqueue.go
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    script:
+    - travis_retry scripts/setup-openshift.sh ${OC_DEMO_TOKEN}
+    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set defaultStorageClass=gp2
+
 branches:
   only:
   - master
+  # build tags starting with `enterprise-suite`, e.g. enterprise-suite-1.0.1
+  - /^enterprise-suite-.+$/
 
 notifications:
   email: false
