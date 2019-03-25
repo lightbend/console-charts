@@ -504,7 +504,7 @@ def parse_set_string(s):
 
     # We accept either a single keyval pair with commas allowed inside value, or multiple pairs
     m = keyval_pair_re.match(s)
-    if m != None and m.group(0) == s:
+    if m is not None and m.group(0) == s:
         return [(m.group(1), m.group(2).replace('\\,', ','))]
     else:
         left, result = s, []
@@ -512,7 +512,7 @@ def parse_set_string(s):
             mq = keyval_pair_quot_re.match(left)
             mn = keyval_pair_nc_re.match(left)
             m = mq or mn
-            if m != None:
+            if m is not None:
                 matchlen = len(m.group(0))
                 result.append((m.group(1), m.group(2).replace('\\,', ',')))
                 if matchlen == len(left) or left[matchlen] == ',':
@@ -522,12 +522,13 @@ def parse_set_string(s):
             else:
                 raise ValueError('unable to parse "{}"'.format(left))
         return result
-    return []
 
 
 def install(creds_file):
     creds_arg = '--values ' + creds_file
-    version_arg = ('--version ' + args.version) if args.version != None else '--devel'
+    version_arg = ''
+    if args.version is not None:
+        version_arg = ('--version ' + args.version)
     namespace_arg = "--namespace {}".format(args.namespace)
 
     # Handle --namespace in helm args (after --) to complain about conflicts
@@ -537,7 +538,7 @@ def install(creds_file):
         hparser.add_argument('--namespace')
         ns_args, unknown = hparser.parse_known_args(args.rest)
 
-        if ns_args.namespace != None:
+        if ns_args.namespace is not None:
             if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
                 printerr("WARNING: Conflicting namespace values provided in arguments {} and {} ".format(
                     args.namespace, ns_args.namespace))
