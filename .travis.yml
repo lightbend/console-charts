@@ -162,7 +162,7 @@ jobs:
     os: linux
     dist: xenial
     name: Deploy to GCS
-    # Only deploy for pushes to master (and if manually invoked)
+    # Only deploy on tags
     if: type IN (push, api) AND tag is present
     install:
     # travisqueue.go ensures only a single deploy happens at a time
@@ -176,20 +176,22 @@ jobs:
     - travis_retry scripts/trigger-build-helm-charts.sh
 
   - name: Deploy to Demo Environment
-    #if: type in (push, api) AND tag is present
+    # Only deploy on tags
+#    if: type in (push, api) AND tag is present
     install:
-    - travis_retry scripts/setup-tools-for-ubuntu.sh
-    script:
     # travisqueue.go ensures only a single build runs at a time on Openshift
     - go run travisqueue.go
+    - travis_retry scripts/setup-tools-for-ubuntu.sh
+    script:
     - travis_retry scripts/setup-openshift.sh ${OC_DEMO_TOKEN}
-    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set usePersistentVolumes=true,defaultStorageClass=gp2
+    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py uninstall --namespace=console-demo --delete-pvc
+    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set defaultStorageClass=gp2
 
 branches:
   only:
   - master
-  # build tags starting with `v`, e.g. v0.0.16
-  - /^v.*$/
+  # build tags starting with `enterprise-suite`, e.g. enterprise-suite-1.0.1
+  - /^enterprise-suite-.+$/
 
 notifications:
   email: false
