@@ -11,6 +11,7 @@ jobs:
   - stage: tests
     name: Windows Unit Tests
     os: windows
+    filter_secrets: false
     install:
     - choco install python2
     script:
