@@ -56,7 +56,6 @@ var _ = Describe("all:nginx", func() {
 		Expect(res.Headers.Get("Content-Type")).To(HavePrefix("image/"))
 	},
 		Entry("root", ""),
-		Entry("assets", "assets/"),
 		Entry("prefix", "/my/monitoring/"),
 	)
 
