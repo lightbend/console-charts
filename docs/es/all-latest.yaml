@@ -225,7 +225,7 @@ data:
       location ~ ^(.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.2",
+          "version": "1.0.3-rc.1",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
@@ -348,7 +348,7 @@ data:
       }
   
       # Handler for application routes and assets not inside of /assets.
-      location ~ ^(.*)(/(cluster|.*\.js|.*\.css|.*\.woff|.*\.woff2|.*\.ttf))$ {
+      location ~ ^(.*)(/(cluster|.*\.js|.*\.css|.*\.woff|.*\.woff2|.*\.ttf|favicon\.ico))$ {
         root $base;
         try_files $2 $1/index.html;
       }
@@ -596,6 +596,57 @@ data:
         }
       }
     ]
+  akka-stream-exporter.json: |
+    [
+        {
+            "graphName": "Stream Throughput",
+            "promQL": [
+                {
+                    "expr": "rate(akka_stream_stream_throughput{ContextTags}[1m])",
+                    "legendFormat": "{{stream}}"
+                }
+            ],
+            "yaxes": {
+                "format": "ops"
+            }
+        },
+        {
+            "graphName": "Stream Processing Time",
+            "promQL": [
+                {
+                    "expr": "akka_stream_stream_flow_time_ns{ContextTags}",
+                    "legendFormat": "{{stream}} quantile {{quantile}}"
+                }
+            ],
+            "yaxes": {
+                "format": "ns"
+            }
+        },
+        {
+            "graphName": "Slowest Operators",
+            "promQL": [
+                {
+                    "expr": "topk(3, akka_stream_operator_processing_time_ns{ContextTags,quantile=\"0.99\"})",
+                    "legendFormat": "{{stream}} {{operator}}"
+                }
+            ],
+            "yaxes": {
+                "format": "ns"
+            }
+        },
+        {
+            "graphName": "Operator Failures",
+            "promQL": [
+                {
+                    "expr": "sum by (stream) (rate(akka_stream_operator_operator_failure{ContextTags}[5m]))",
+                    "legendFormat": "{{stream}}"
+                }
+            ],
+            "yaxes": {
+                "format": "ops"
+            }
+        }
+    ]
   cassandra-exporter.json: |
     [
       {"graphName":"Storage", "promQL":["cassandra_storage_load{ContextTags}"]},
@@ -655,19 +706,19 @@ data:
         "graphName": "Heap",
         "promQL": [
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_heap_committed{ContextTags})",
+            "expr": "jvm_memory_bytes_committed{ContextTags,area=\"heap\"} or on (kubernetes_pod_name) jvm_heap_committed{ContextTags}",
             "legendFormat": "committed {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_heap_init{ContextTags})",
+            "expr": "jvm_memory_bytes_init{ContextTags,area=\"heap\"} or on (kubernetes_pod_name) jvm_heap_init{ContextTags}",
             "legendFormat": "init {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_heap_max{ContextTags})",
+            "expr": "jvm_memory_bytes_max{ContextTags,area=\"heap\"} or on (kubernetes_pod_name) jvm_heap_max{ContextTags}",
             "legendFormat": "max {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_heap_used{ContextTags})",
+            "expr": "jvm_memory_bytes_used{ContextTags,area=\"heap\"} or on (kubernetes_pod_name) jvm_heap_used{ContextTags}",
             "legendFormat": "used {{kubernetes_pod_name}}"
           }
         ],
@@ -679,19 +730,19 @@ data:
         "graphName": "Non Heap",
         "promQL": [
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_committed{ContextTags})",
+            "expr": "jvm_memory_bytes_committed{ContextTags,area=\"nonheap\"} or on (kubernetes_pod_name) jvm_non_heap_committed{ContextTags}",
             "legendFormat": "commmitted {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_init{ContextTags})",
+            "expr": "jvm_memory_bytes_init{ContextTags,area=\"nonheap\"} or on (kubernetes_pod_name)jvm_non_heap_init{ContextTags}",
             "legendFormat": "init {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_max{ContextTags})",
+            "expr": "jvm_memory_bytes_max{ContextTags,area=\"nonheap\"} or on (kubernetes_pod_name)jvm_non_heap_max{ContextTags}",
             "legendFormat": "max {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_non_heap_used{ContextTags})",
+            "expr": "jvm_memory_bytes_used{ContextTags,area=\"nonheap\"} or on (kubernetes_pod_name)jvm_non_heap_used{ContextTags}",
             "legendFormat": "used {{kubernetes_pod_name}}"
           }
         ],
@@ -703,19 +754,19 @@ data:
         "graphName": "Total Memory",
         "promQL": [
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_total_committed{ContextTags})",
+            "expr": "sum by (kubernetes_pod_name) (jvm_memory_bytes_committed{ContextTags}) or on (kubernetes_pod_name) jvm_total_committed{ContextTags}",
             "legendFormat": "committed {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_total_init{ContextTags})",
+            "expr": "sum by (kubernetes_pod_name) (jvm_memory_bytes_init{ContextTags}) or on (kubernetes_pod_name) jvm_total_init{ContextTags}",
             "legendFormat": "init {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_total_max{ContextTags})",
+            "expr": "sum by (kubernetes_pod_name) (jvm_memory_bytes_max{ContextTags}) or on (kubernetes_pod_name) jvm_total_max{ContextTags}",
             "legendFormat": "max {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_total_used{ContextTags})",
+            "expr": "sum by (kubernetes_pod_name) (jvm_memory_bytes_used{ContextTags}) or on (kubernetes_pod_name) jvm_total_used{ContextTags}",
             "legendFormat": "used {{kubernetes_pod_name}}"
           }
         ],
@@ -724,40 +775,38 @@ data:
         }
       },
       {
-        "graphName": "GC Rate",
+        "graphName": "GC Rate (avg per second)",
         "promQL": [
           {
-            "expr": "sum by (kubernetes_pod_name)(rate(jvm_PS_MarkSweep_count{ContextTags}[5m]))",
-            "legendFormat": "PS_MarkSweep Rate {{kubernetes_pod_name}}"
-          },
-          {
-            "expr": "sum by (kubernetes_pod_name)(rate(jvm_PS_Scavenge_count{ContextTags}[5m]))",
-            "legendFormat": "PS_Scavenge Rate {{kubernetes_pod_name}}"
+            "expr": "rate( (jvm_gc_collection_seconds_count{ContextTags} or on (kubernetes_pod_name, gc) label_replace({ContextTags,__name__=~\"jvm_.*_count\",gc=\"\"}, \"gc\", \"$1\", \"__name__\", \"jvm_(.*)_count\")) [5m:])",
+            "legendFormat": "{{gc}} rate {{kubernetes_pod_name}}"
           }
-        ]
+        ],
+        "yaxes": {
+          "format": "ops"
+        }
       },
       {
-        "graphName": "GC Time",
+        "graphName": "GC Time (avg per second)",
         "promQL": [
           {
-            "expr": "max by (kubernetes_pod_name)(jvm_PS_MarkSweep_time{ContextTags})",
-            "legendFormat": "PS_MarkSweep max {{kubernetes_pod_name}}"
-          },
-          {
-            "expr": "max by (kubernetes_pod_name)(jvm_PS_Scavenge_time{ContextTags})",
-            "legendFormat": "PS_Scavenge max {{kubernetes_pod_name}}"
+            "expr": "rate( (jvm_gc_collection_seconds_sum{ContextTags} or on (kubernetes_pod_name, gc) label_replace({ContextTags,__name__=~\"jvm_.*_time\",gc=\"\"}, \"gc\", \"$1\", \"__name__\", \"jvm_(.*)_time\") /1000) [5m:])",
+            "legendFormat": "{{gc}} time {{kubernetes_pod_name}}"
           }
-        ]
+        ],
+        "yaxes": {
+          "format": "s"
+        }
       },
       {
         "graphName": "Class Loading",
         "promQL": [
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_loaded{ContextTags})",
+            "expr": "jvm_classes_loaded{ContextTags} or on (kubernetes_pod_name) jvm_loaded{ContextTags}",
             "legendFormat": "loaded {{kubernetes_pod_name}}"
           },
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_unloaded{ContextTags})",
+            "expr": "jvm_classes_unloaded{ContextTags} or on (kubernetes_pod_name) jvm_unloaded{ContextTags}",
             "legendFormat": "unloaded {{kubernetes_pod_name}}"
           }
         ]
@@ -766,30 +815,38 @@ data:
         "graphName": "Memory Pool Usage",
         "promQL": [
           {
-            "expr": "sum by (kubernetes_pod_name)(jvm_pools_Code_Cache_usage{ContextTags})",
-            "legendFormat": "Code Cache {{kubernetes_pod_name}}"
-          },
-          {
-            "expr": "sum by (kubernetes_pod_name)(jvm_pools_Compressed_Class_Space_usage{ContextTags})",
-            "legendFormat": "Compressed Class Space {{kubernetes_pod_name}}"
-          },
-          {
-            "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Eden_Space_usage{ContextTags})",
-            "legendFormat": "PS Eden Space {{kubernetes_pod_name}}"
-          },
-          {
-            "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Old_Gen_usage{ContextTags})",
-            "legendFormat": "PS Old Gen {{kubernetes_pod_name}}"
-          },
-          {
-            "expr": "sum by (kubernetes_pod_name)(jvm_pools_PS_Survivor_Space_usage{ContextTags})",
-            "legendFormat": "PS Survivor Space {{kubernetes_pod_name}}"
+            "expr": "jvm_memory_pool_bytes_used{ContextTags} / jvm_memory_pool_bytes_max{ContextTags} > 0 or on (kubernetes_pod_name) label_replace({ContextTags,__name__=~\"jvm_pools_.*_usage\",__name__!=\"jvm_pools_Metaspace_usage\"}, \"pool\", \"$1\", \"__name__\", \"jvm_pools_(.*)_usage\")",
+            "legendFormat": "{{pool}} on {{kubernetes_pod_name}}"
           }
         ],
         "yaxes": {
           "format": "percent"
         }
       }
+    ]
+  kafka-consumer-exporter.json: |
+    [
+        {
+            "graphName": "Consumer Throughput",
+            "promQL": [
+                {
+                    "expr": "kafka_consumer_topic_consumed_rate{ContextTags}",
+                    "legendFormat": "{{topic}}"
+                }
+            ],
+            "yaxes": {
+                "format": "rps"
+            }
+        },
+        {
+            "graphName": "Consumer Lag",
+            "promQL": [
+                {
+                    "expr": "kafka_consumer_topic_lag_max{ContextTags}",
+                    "legendFormat": "{{topic}}"
+                }
+            ]
+        }
     ]
   kafka-exporter.json: |
     [
@@ -815,6 +872,21 @@ data:
       {"graphName":"Network Processor Avg Idle Percent", "promQL":["kafka_network_socketserver_networkprocessoravgidle_percent{ContextTags}*100"]},
       {"graphName":"Request Handler Avg Idle Percent", "promQL":["kafka_server_kafkarequesthandlerpool_requesthandleravgidle_percent{ContextTags}*100"]}
     ]
+  kafka-producer-exporter.json: |
+    [
+        {
+            "graphName": "Producer Throughput",
+            "promQL": [
+                {
+                    "expr": "kafka_producer_topic_send_rate{ContextTags}",
+                    "legendFormat": "{{topic}}"
+                }
+            ],
+            "yaxes": {
+                "format": "wps"
+            }
+        }
+    ]
   kubernetes-exporter.json: |
     [
         {
@@ -833,7 +905,7 @@ data:
             "graphName": "Resident Memory Used Percent",
             "promQL": [
                 {
-                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_ip) group_left kube_node_status_capacity_memory_bytes) * 100)",
+                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_name) group_left kube_node_status_capacity_memory_bytes) * 100)",
                     "legendFormat": "{{kubernetes_pod_name}}"
                 }
             ],
@@ -845,7 +917,7 @@ data:
             "graphName": "Total Memory Used Percent",
             "promQL": [
                 {
-                    "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_ip) group_left kube_node_status_capacity_memory_bytes) * 100)",
+                    "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_name) group_left kube_node_status_capacity_memory_bytes) * 100)",
                     "legendFormat": "{{kubernetes_pod_name}}"
                 }
             ],
@@ -953,6 +1025,102 @@ data:
       {"graphName":"Keys Evicted Per Second", "promQL":["irate(redis_evicted_keys_total{ContextTags}[1m])"]},
       {"graphName":"Keys Evicted Per Second", "promQL":["irate(redis_evicted_keys_total{ContextTags}[1m])"]},
       {"graphName":"Connections", "promQL":["redis_connected_clients{ContextTags}"]}
+    ]
+  spark-driver-exporter.json: |
+    [
+        {
+            "graphName": "Driver Events",
+            "promQL": [
+                {
+                    "expr": "rate(spark_driver_livelistenerbus_numeventsposted_count{ContextTags}[5m])",
+                    "legendFormat": "{{es_workload}}"
+                }
+            ]
+        },
+        {
+            "graphName": "Executor Management Queue Size",
+            "promQL": [
+                {
+                    "expr": "spark_driver_livelistenerbus_queue_executormanagement_size{ContextTags}",
+                    "legendFormat": "{{es_workload}}"
+                }
+            ]
+        }
+    ]
+  spark-executor-exporter.json: |
+    [
+        {
+            "graphName": "Shuffle Records Read Rate",
+            "promQL": [
+                {
+                    "expr": "rate(spark_executor_shufflerecordsread_count{ContextTags}[5m])",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "rps"
+            }
+        },
+        {
+            "graphName": "Shuffle Records Write Rate",
+            "promQL": [
+                {
+                    "expr": "rate(spark_executor_shufflerecordswritten_count{ContextTags}[5m])",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "wps"
+            }
+        },
+        {
+            "graphName": "CPU Utilization",
+            "promQL": [
+                {
+                    "expr": "rate(spark_executor_cputime_count{ContextTags}[5m]) / 1000000000",
+                    "legendFormat": "{{kubernetes_pod_name}}"
+                }
+            ],
+            "yaxes": {
+                "format": "percentunit"
+            }
+        }
+    ]
+  spark-operator-exporter.json: |
+    [
+        {
+            "graphName": "Running Executors",
+            "promQL": [
+                {
+                    "expr": "spark_app_executor_running_count{ContextTags}",
+                    "legendFormat": "{{es_workload}}"
+                }
+            ]
+        },
+        {
+            "graphName": "Executor Failure Rate",
+            "promQL": [
+                {
+                    "expr": "rate(spark_app_executor_failure_count{ContextTags}[5m])",
+                    "legendFormat": "{{es_workload}}"
+                }
+            ],
+            "yaxes": {
+                "format": "ops"
+            }
+        },
+        {
+            "graphName": "Controller Retry Rate",
+            "promQL": [
+                {
+                    "expr": "rate(spark_application_controller_retries{ContextTags}[5m])",
+                    "legendFormat": "{{es_workload}}"
+                }
+            ],
+            "yaxes": {
+                "format": "ops"
+            }
+        }
     ]
   zookeeper-exporter.json: |
     [
@@ -1804,10 +1972,14 @@ data:
           - source_labels: [kubernetes_pod_name, es_workload]
             regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
             target_label: es_workload
-          # spark executor workload
+          # spark workload
           - source_labels: [kubernetes_pod_name, es_workload]
-            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            regex: (.*)-[0-9]{13}-exec-[0-9]+;
             replacement: ${1}-exec
+            target_label: es_workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{13}-driver;
+            replacement: ${1}-driver
             target_label: es_workload
           # extract workload from workload-num
           - source_labels: [kubernetes_pod_name, es_workload]
@@ -1868,12 +2040,6 @@ data:
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            action: replace
-            target_label: node_name
-          - source_labels: [__meta_kubernetes_pod_host_ip]
-            action: replace
-            target_label: node_ip
   
         # es_workload labels:
         # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
@@ -1910,10 +2076,14 @@ data:
           - source_labels: [pod, es_workload]
             regex: (.*)-[bcdfghjklmnpqrstvwxz2456789]{5};
             target_label: es_workload
-          # spark executor workload
+          # spark workload
           - source_labels: [pod, es_workload]
-            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            regex: (.*)-[0-9]{13}-exec-[0-9]+;
             replacement: ${1}-exec
+            target_label: es_workload
+          - source_labels: [pod, es_workload]
+            regex: (.*)-[0-9]{13}-driver;
+            replacement: ${1}-driver
             target_label: es_workload
           # extract workload from workload-num
           - source_labels: [pod, es_workload]
@@ -1923,6 +2093,11 @@ data:
           - source_labels: [pod, es_workload]
             regex: (.+);
             target_label: es_workload
+          - source_labels: [node]
+            target_label: node_name
+          # UI should use node_name label and not node label   https://github.com/lightbend/console-frontend/issues/632
+          #- regex: 'node'
+          #  action: labeldrop
   
     {{ .MonitorTypeRules | indent 6 }}
   
@@ -2006,10 +2181,14 @@ data:
             action: replace
             regex: '(.*)-[0-9]+;'
             target_label: es_workload
-          # spark executor workload
+          # spark workload
           - source_labels: [kubernetes_pod_name, es_workload]
-            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            regex: (.*)-[0-9]{13}-exec-[0-9]+;
             replacement: ${1}-exec
+            target_label: es_workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{13}-driver;
+            replacement: ${1}-driver
             target_label: es_workload
           # fall through plain pod name
           - source_labels: [kubernetes_pod_name, es_workload]
@@ -2095,10 +2274,14 @@ data:
             regex: '(.*)-[0-9]+;'
             target_label: es_workload
   
-          # spark executor workload
+          # spark workload
           - source_labels: [kubernetes_pod_name, es_workload]
-            regex: (.*)-[0-9]{13}-exec-[0-9]{1,3};
+            regex: (.*)-[0-9]{13}-exec-[0-9]+;
             replacement: ${1}-exec
+            target_label: es_workload
+          - source_labels: [kubernetes_pod_name, es_workload]
+            regex: (.*)-[0-9]{13}-driver;
+            replacement: ${1}-driver
             target_label: es_workload
   
           # fall through plain pod name
@@ -2182,7 +2365,7 @@ data:
       expr: sum by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic) (kafka_producer_producer_metrics_record_send_rate)
   
     - record: kafka_consumer_topic_lag_max
-      expr: max by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic, instance) (kafka_consumer_consumer_fetch_manager_metrics_records_lag_max >= 0)
+      expr: max by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic, instance) (clamp_min(kafka_consumer_consumer_fetch_manager_metrics_records_lag_max,0))
   
 
 ---
@@ -2522,9 +2705,9 @@ spec:
         checksum/alertmanager-config: 80defaeb71676c73fc6988e08249907ff78a990d1910e9456ea8b8cef0223d8f
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.1
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: alertmanager
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
@@ -2608,12 +2791,12 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/es-console-config: 2bdb3ad08ab94023c981cb23e2118dd972d6b278048a92cd55f1edccc210fa61
+        checksum/es-console-config: f499af877cb1503f4098baeef5d49dc5453f6fe649b163e241d2f36f14ad64ec
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.1
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: es-console
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         run: es-console
@@ -2690,9 +2873,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.1
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: grafana
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: grafana
@@ -2701,7 +2884,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3000"
         checksum/datasource-config: 7ee3b4952149b811cd0ba812bdedc5645aa19711250641d8f75662e4bd8b7686
-        checksum/plugin-config: 7691198805c99deec9bef4884d99da822915f6f0c60c4f3edf4d6d1a45a16f45
+        checksum/plugin-config: 810e0a6b0c3be73f47bbffe0f8cf3ee52e1dafdf26e8d240e14b74579a324bb6
 
     spec:
       
@@ -2783,9 +2966,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.1
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: kube-state-metrics
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
@@ -2836,16 +3019,16 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.1
         app.kubernetes.io/managed-by: Tiller
-        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: prometheus
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: server
       annotations:
         prometheus.io/scrape: "true"
-        checksum/console-api-config: bdc18268d23952d803d4bd4e49ca626ce270147a4b4c2f4a4b7118fc3a35331b
+        checksum/console-api-config: 1262e8b57c8b4df2691a056be9aa6c0aef2ffcf8951c5bf76081e706ca6bca23
         checksum/bare-prometheus-config: 8898a493fb7758aaed74b5167d86ccd6d773f74a9f27bee46496d93754a9b39c
 
     spec:
