@@ -32,7 +32,7 @@ purge-console-openshift: purge-console
 
 .PHONY: purge-console
 purge-console:
-	-TILLER_NAMESPACE=$(NAMESPACE) ../scripts/lbc.py uninstall
+	-TILLER_NAMESPACE=$(NAMESPACE) ../scripts/lbc.py uninstall --delete-pvcs
 
 ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
 
