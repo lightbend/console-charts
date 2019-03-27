@@ -15,7 +15,7 @@
         "graphName": "Resident Memory Used Percent",
         "promQL": [
             {
-                "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_name) group_left kube_node_status_capacity_memory_bytes) * 100)",
+                "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_name) group_left max without (instance, namespace)(kube_node_status_capacity_memory_bytes)) * 100)",
                 "legendFormat": "{{kubernetes_pod_name}}"
             }
         ],
@@ -27,7 +27,7 @@
         "graphName": "Total Memory Used Percent",
         "promQL": [
             {
-                "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_name) group_left kube_node_status_capacity_memory_bytes) * 100)",
+                "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_name) group_left max without (instance, namespace)(kube_node_status_capacity_memory_bytes)) * 100)",
                 "legendFormat": "{{kubernetes_pod_name}}"
             }
         ],
