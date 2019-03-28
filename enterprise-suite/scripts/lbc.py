@@ -855,7 +855,7 @@ def setup_args(argv):
                                action='store_true')
         subparser.add_argument('--helm-name', help='helm release name', default='enterprise-suite')
         subparser.add_argument('rest',
-                               help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set emptyDir=false')",
+                               help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set usePersistentVolumes=false')",
                                nargs='*')
 
     # Common arguments for install, verify and dump
