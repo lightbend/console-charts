@@ -204,9 +204,12 @@ scrape_configs:
         target_label: es_workload
       - source_labels: [node]
         target_label: node_name
-      # UI should use node_name label and not node label   https://github.com/lightbend/console-frontend/issues/632
-      #- regex: 'node'
-      #  action: labeldrop
+
+      # Copy pod name to kubernetes_pod_name, to match all the other service discovery sections.
+      # The UI uses kubernetes_pod_name for displaying pod health.
+      - source_labels: [pod]
+        target_label: kubernetes_pod_name
+
 
 {{ .MonitorTypeRules | indent 6 }}
 
@@ -263,33 +266,49 @@ scrape_configs:
         replacement: ${1}:${2}
         target_label: __address__
 
-      # metadata labels
+      # Copy all labels from the service to the scraped metrics.
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
+
+      # Set the namespace label from metadata.
       - source_labels: [__meta_kubernetes_namespace]
         target_label: namespace
+
+      # Set the name label from the service name.
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
         target_label: kubernetes_name
+
+      # Set the node_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_node_name]
         action: replace
         target_label: node_name
+
+      # Set the node_ip label from metadata.
       - source_labels: [__meta_kubernetes_pod_host_ip]
         action: replace
         target_label: node_ip
+
+      # Copy all labels from the pod to the scraped metrics.
       - action: labelmap
         regex: __meta_kubernetes_pod_label_(.+)
+
+      # Set the kubernetes_pod_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: kubernetes_pod_name
+
+      # Set the es_workload label.
       - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
         action: replace
         regex: '[^;]+;(.*)-[^-]+-[^-]+;'
         target_label: es_workload
+
       - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
         action: replace
         regex: '(.*)-[0-9]+;'
         target_label: es_workload
+
       # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
         regex: (.*)-[0-9]{13}-exec-[0-9]+;
@@ -299,6 +318,7 @@ scrape_configs:
         regex: (.*)-[0-9]{13}-driver;
         replacement: ${1}-driver
         target_label: es_workload
+
       # fall through plain pod name
       - source_labels: [kubernetes_pod_name, es_workload]
         regex: (.*);
