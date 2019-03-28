@@ -225,7 +225,7 @@ data:
       location ~ ^(.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.3-rc.1",
+          "version": "1.0.3-rc.2",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
@@ -248,7 +248,7 @@ data:
           "esConsoleImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console",
           "esConsoleVersion": "v1.0.4",
           "esGrafanaImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana",
-          "esGrafanaVersion": "v0.2.2",
+          "esGrafanaVersion": "v0.2.4",
           "esGrafanaVolumeSize": "32Gi",
           "esMonitorImage": "{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api",
           "esMonitorVersion": "v1.0.12",
@@ -905,7 +905,7 @@ data:
             "graphName": "Resident Memory Used Percent",
             "promQL": [
                 {
-                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_name) group_left kube_node_status_capacity_memory_bytes) * 100)",
+                    "expr": "sum without(container_name,id,image,name)((container_memory_rss{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_rss{ContextTags} / on (node_name) group_left max without (instance, namespace)(kube_node_status_capacity_memory_bytes)) * 100)",
                     "legendFormat": "{{kubernetes_pod_name}}"
                 }
             ],
@@ -917,7 +917,7 @@ data:
             "graphName": "Total Memory Used Percent",
             "promQL": [
                 {
-                    "expr": "sum without(container_name,id,image,name)((container_memory_usage_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_name) group_left kube_node_status_capacity_memory_bytes) * 100)",
+                    "expr": "sum without(container_name,id,image,name)((container_memory_working_set_bytes{ContextTags} / container_spec_memory_limit_bytes < +Inf or container_memory_usage_bytes{ContextTags} / on (node_name) group_left max without (instance, namespace)(kube_node_status_capacity_memory_bytes)) * 100)",
                     "legendFormat": "{{kubernetes_pod_name}}"
                 }
             ],
@@ -2705,7 +2705,7 @@ spec:
         checksum/alertmanager-config: 80defaeb71676c73fc6988e08249907ff78a990d1910e9456ea8b8cef0223d8f
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.3-rc.1
+        helm.sh/chart: enterprise-suite-1.0.3-rc.2
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: alertmanager
@@ -2791,10 +2791,10 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/es-console-config: a5239fbcd9bf46390e36d5bc32e26e6659781c51236fa23f665b4835d607b12f
+        checksum/es-console-config: 16069dff2858e17a389108ce5f789befe45ff117654ff6e1905a033276c5b530
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.3-rc.1
+        helm.sh/chart: enterprise-suite-1.0.3-rc.2
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: es-console
@@ -2873,7 +2873,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.3-rc.1
+        helm.sh/chart: enterprise-suite-1.0.3-rc.2
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: grafana
@@ -2884,7 +2884,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3000"
         checksum/datasource-config: 7ee3b4952149b811cd0ba812bdedc5645aa19711250641d8f75662e4bd8b7686
-        checksum/plugin-config: 810e0a6b0c3be73f47bbffe0f8cf3ee52e1dafdf26e8d240e14b74579a324bb6
+        checksum/plugin-config: 2007d59df75f257433ebfc4f2d9a3c68b18f8c048e1a7a7ccd33abc2f179de8d
 
     spec:
       
@@ -2893,7 +2893,7 @@ spec:
       - name: commercial-credentials
 
       containers:
-      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:v0.2.2
+      - image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana:v0.2.4
         imagePullPolicy: IfNotPresent
         name: grafana-server
         resources:
@@ -2966,7 +2966,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.3-rc.1
+        helm.sh/chart: enterprise-suite-1.0.3-rc.2
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: kube-state-metrics
@@ -3019,7 +3019,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-1.0.3-rc.1
+        helm.sh/chart: enterprise-suite-1.0.3-rc.2
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: prometheus
