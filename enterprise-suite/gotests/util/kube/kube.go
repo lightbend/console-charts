@@ -16,7 +16,7 @@ import (
 // A change to parse yaml and use client-go is needed to make that work.
 
 func GetLogs(namespace, label string) (string, error) {
-	cmd := util.Cmd("kubectl", "-n", namespace, "logs", "-l", label)
+	cmd := util.Cmd("kubectl", "-n", namespace, "logs", "--tail=-1", "-l", label)
 	var out strings.Builder
 	cmd.CaptureStdout(&out)
 	if err := cmd.Run(); err != nil {
