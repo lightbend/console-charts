@@ -225,7 +225,7 @@ data:
       location ~ ^(.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.3-rc.2",
+          "version": "1.0.3-rc.3",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
@@ -2095,9 +2095,12 @@ data:
             target_label: es_workload
           - source_labels: [node]
             target_label: node_name
-          # UI should use node_name label and not node label   https://github.com/lightbend/console-frontend/issues/632
-          #- regex: 'node'
-          #  action: labeldrop
+  
+          # Copy pod name to kubernetes_pod_name, to match all the other service discovery sections.
+          # The UI uses kubernetes_pod_name for displaying pod health.
+          - source_labels: [pod]
+            target_label: kubernetes_pod_name
+  
   
     {{ .MonitorTypeRules | indent 6 }}
   
@@ -2154,33 +2157,49 @@ data:
             replacement: ${1}:${2}
             target_label: __address__
   
-          # metadata labels
+          # Copy all labels from the service to the scraped metrics.
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
+  
+          # Set the namespace label from metadata.
           - source_labels: [__meta_kubernetes_namespace]
             target_label: namespace
+  
+          # Set the name label from the service name.
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
+  
+          # Set the node_name label from metadata.
           - source_labels: [__meta_kubernetes_pod_node_name]
             action: replace
             target_label: node_name
+  
+          # Set the node_ip label from metadata.
           - source_labels: [__meta_kubernetes_pod_host_ip]
             action: replace
             target_label: node_ip
+  
+          # Copy all labels from the pod to the scraped metrics.
           - action: labelmap
             regex: __meta_kubernetes_pod_label_(.+)
+  
+          # Set the kubernetes_pod_name label from metadata.
           - source_labels: [__meta_kubernetes_pod_name]
             action: replace
             target_label: kubernetes_pod_name
+  
+          # Set the es_workload label.
           - source_labels: [__meta_kubernetes_pod_label_pod_template_hash, __meta_kubernetes_pod_name, es_workload]
             action: replace
             regex: '[^;]+;(.*)-[^-]+-[^-]+;'
             target_label: es_workload
+  
           - source_labels: [__meta_kubernetes_pod_label_statefulset_kubernetes_io_pod_name, es_workload]
             action: replace
             regex: '(.*)-[0-9]+;'
             target_label: es_workload
+  
           # spark workload
           - source_labels: [kubernetes_pod_name, es_workload]
             regex: (.*)-[0-9]{13}-exec-[0-9]+;
@@ -2190,6 +2209,7 @@ data:
             regex: (.*)-[0-9]{13}-driver;
             replacement: ${1}-driver
             target_label: es_workload
+  
           # fall through plain pod name
           - source_labels: [kubernetes_pod_name, es_workload]
             regex: (.*);
@@ -2705,7 +2725,7 @@ spec:
         checksum/alertmanager-config: 80defaeb71676c73fc6988e08249907ff78a990d1910e9456ea8b8cef0223d8f
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.3
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: alertmanager
@@ -2791,10 +2811,10 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/es-console-config: dc26c246d6c5de4f936a259e944369c03c3e850cbf19b77f2433e8694b7eb996
+        checksum/es-console-config: c189acdabb70ee77d201541bc95f31a14504daaae4e4671aeb7815a102cfecec
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.3
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: es-console
@@ -2873,7 +2893,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.3
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: grafana
@@ -2966,7 +2986,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.3
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: kube-state-metrics
@@ -3019,7 +3039,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.2
+        helm.sh/chart: enterprise-suite-latest-1.0.3-rc.3
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: prometheus
@@ -3028,7 +3048,7 @@ spec:
         component: server
       annotations:
         prometheus.io/scrape: "true"
-        checksum/console-api-config: 1262e8b57c8b4df2691a056be9aa6c0aef2ffcf8951c5bf76081e706ca6bca23
+        checksum/console-api-config: f8c5040a808d295791878c39dbd655517bfa6af107321bbd9dabbadbf22f3c37
         checksum/bare-prometheus-config: 8898a493fb7758aaed74b5167d86ccd6d773f74a9f27bee46496d93754a9b39c
 
     spec:
