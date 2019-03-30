@@ -225,7 +225,7 @@ data:
       location ~ ^(.*)/version$ {
         return 200 '{
           "description": "Lightbend Console",
-          "version": "1.0.3",
+          "version": "1.0.4",
           "alertManagerConfigMap": "alertmanager-default",
           "alertManagerImage": "prom/alertmanager",
           "alertManagerVersion": "v0.16.0",
@@ -2725,7 +2725,7 @@ spec:
         checksum/alertmanager-config: 80defaeb71676c73fc6988e08249907ff78a990d1910e9456ea8b8cef0223d8f
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3
+        helm.sh/chart: enterprise-suite-latest-1.0.4
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: alertmanager
@@ -2811,10 +2811,10 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/es-console-config: 1c7c0487eec8e25bc39ce1e3ec5d6532f378f4ad90febdc5ad32bb726926f9d8
+        checksum/es-console-config: dfd843b481cdb7c11e4e04c60bf36198e6f872cca11274c7315c909d28cc9440
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3
+        helm.sh/chart: enterprise-suite-latest-1.0.4
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: es-console
@@ -2893,7 +2893,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3
+        helm.sh/chart: enterprise-suite-latest-1.0.4
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: grafana
@@ -2986,7 +2986,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3
+        helm.sh/chart: enterprise-suite-latest-1.0.4
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: kube-state-metrics
@@ -3039,7 +3039,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: lightbend-console
-        helm.sh/chart: enterprise-suite-latest-1.0.3
+        helm.sh/chart: enterprise-suite-latest-1.0.4
         app.kubernetes.io/managed-by: Tiller
         app.kubernetes.io/instance: release-name
         app.kubernetes.io/component: prometheus
