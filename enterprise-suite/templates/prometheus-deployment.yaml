@@ -90,8 +90,6 @@ spec:
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
-            - --staticConfig=/etc/console-api/static-rules.yml
-            - --defaultMonitorsFile=/etc/console-api/default-monitors.json
             - --prometheusTemplate=/etc/console-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
             - --alertmanagers={{ .Values.alertManagers }}
