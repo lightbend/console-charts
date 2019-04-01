@@ -25,6 +25,7 @@ jobs:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test
+    - travis_retry make -C enterprise-suite check-console-api
  
   - name: Backend E2E Go Tests - Minikube
     os: linux

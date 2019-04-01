@@ -26,6 +26,7 @@ SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
 VERSION ?= $(shell $(SCRIPTS_DIR)/export-chart-version.sh $(CHART))
 RELEASE = $(CHART)-$(VERSION)
 CHART_DIR = .
+CONSOLE_API_VERSION := $(shell yq r $(CHART_DIR)/values.yaml esMonitorVersion)
 ALL_YAML ?= all.yaml
 #####
 
@@ -81,6 +82,16 @@ lint-promql:  ## Test promql bits are well-formed
 .PHONY: lint-allyaml
 lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
 	kubectl --context=minikube create --dry-run --validate -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
+
+.PHONY: check-console-api
+check-console-api:
+	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/default-monitors.json | diff $(CHART_DIR)/console-api/default-monitors.json -
+	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/static-rules.yml | diff $(CHART_DIR)/console-api/static-rules.yml -
+
+.PHONY: sync-console-api
+sync-console-api:
+	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/default-monitors.json > $(CHART_DIR)/console-api/default-monitors.json
+	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/static-rules.yml > $(CHART_DIR)/console-api/static-rules.yml
 
 .PHONY: clean
 clean::  ## Delete make artifacts
