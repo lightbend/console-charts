@@ -5,6 +5,8 @@
 # Example usage:
 # ./pull-console-api.sh v1.0.13 monitors/default-monitors.json
 
+set -u
+
 # Expect two arguments
 if [ $# -ne 2 ]
 then

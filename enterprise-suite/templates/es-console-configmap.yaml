@@ -3,12 +3,4 @@ kind: ConfigMap
 metadata:
   name: es-console
 data:
-{{ (tpl (.Files.Glob "es-console/prometheus.yml").AsConfig .) | indent 2 }}
-{{ if .Values.defaultMonitorsFile }}
-  console-api/default-monitors.json: |-
-    {{ .Files.Get .Values.defaultMonitorsFile }}
-{{ end }}
-{{ if .Values.staticRulesFile }}
-  console-api/static-rules.json: |-
-    {{ .Files.Get .Values.staticRulesFile }}
-{{ end }}
+{{ (tpl (.Files.Glob "es-console/*").AsConfig .) | indent 2 }}

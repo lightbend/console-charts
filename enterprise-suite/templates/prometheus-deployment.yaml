@@ -94,7 +94,7 @@ spec:
             - --defaultMonitorsFile=/etc/{{ .Values.defaultMonitorsFile }}
             {{ end }}
             {{ if .Values.staticRulesFile }}
-            - --staticRules=/etc/{{ .Values.staticRulesFile }}
+            - --staticConfig=/etc/{{ .Values.staticRulesFile }}
             {{ end }}
             - --prometheusTemplate=/etc/console-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
