@@ -14,10 +14,9 @@ func Install(namespace, tillerNamespace string, lbcArgs, helmArgs []string) erro
 	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", namespace,
 		"--set prometheusDomain=console-backend-e2e.io",
-		"--delete-pvcs",
-		"--wait"}
+		"--delete-pvcs"}
 	cmdArgs = append(cmdArgs, lbcArgs...)
-	cmdArgs = append(cmdArgs, "--", "--timeout", "110")
+	cmdArgs = append(cmdArgs, "--", "--wait", "--timeout", "110")
 	cmdArgs = append(cmdArgs, helmArgs...)
 	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
 	if tillerNamespace != "" {

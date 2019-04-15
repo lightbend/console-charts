@@ -12,7 +12,6 @@ if sys.version_info >= (3, 0):
     sys.exit(proc.returncode)
 
 import os
-import glob
 import shlex
 import shutil
 import threading
@@ -23,6 +22,7 @@ import zipfile
 import datetime
 import base64
 import urllib2 as url
+import json
 import time
 from distutils.version import LooseVersion
 
@@ -57,6 +57,9 @@ REINSTALL_WAIT_SECS = 5
 # Parsed commandline args
 args = None
 
+# Computed values
+values = {}
+
 # This will be true if running on Windows
 windows = os.name == 'nt'
 
@@ -78,10 +81,6 @@ def fail(msg):
     sys.exit(msg)
 
 
-def make_tempdir():
-    return tempfile.mkdtemp()
-
-
 # Runs a given command with optional timeout.
 # Returns (returncode, stdout, stderr) tuple. If timeout
 # occurred, returncode will be negative (-9 on macOS).
@@ -92,7 +91,7 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
                                 stdout=subprocess.PIPE,
                                 stdin=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        if timeout != None:
+        if timeout is not None:
             timer = threading.Timer(timeout, proc.kill)
             timer.start()
         stdout, stderr = proc.communicate(input=stdin)
@@ -106,7 +105,7 @@ def run(cmd, timeout=None, stdin=None, show_stderr=True):
         stdout = str(e)
         returncode = 1
     finally:
-        if timer != None:
+        if timer is not None:
             timer.cancel()
         return returncode, stdout, stderr
 
@@ -419,16 +418,20 @@ def pvs_retained_and_not(namespace):
 
 # Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
 def check_pv_usage(aboutToUninstall=False, namespace=None):
-    returncode, stdout, stderr = run('helm get ' + args.helm_name,
-                                     DEFAULT_TIMEOUT, show_stderr=False)
+    # Retrieve the current helm installation computed values.
+    returncode, helm_get_stdout, helm_get_stderr = run('helm get ' + args.helm_name,
+                                                       DEFAULT_TIMEOUT, show_stderr=False)
 
-    if namespace == None:
+    if namespace is None:
         namespace = args.namespace
 
-    # This assumes the default is true.  What happens if they modify this in values.yaml?  We'll miss that I think.
-    wantsPVs = len(filter(lambda x: 'usePersistentVolumes=false' in x, sys.argv)) == 0
+    if 'usePersistentVolumes' not in values:
+        printerr("warn: can't determine the value of usePersistentVolumes, unable to parse helm values")
+        return
 
-    if 'Error: release: "{}" not found'.format(args.helm_name) in stderr:
+    wantsPVs = values['usePersistentVolumes'] is True
+
+    if 'Error: release: "{}" not found'.format(args.helm_name) in helm_get_stderr:
         # Fresh install so we're good with whatever but...
         retainedPVs, _ = pvs_retained_and_not(namespace)
         if len(retainedPVs) > 0:
@@ -450,21 +453,13 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
                     printerr(
                         "   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1],
                                                                                                            pv[2]))
-
         return
     elif returncode != 0:
         printerr("Unable to retrieve release information.  Proceed with caution.")
         return
 
-    hasPVs = 'usePersistentVolumes: true' in stdout
+    hasPVs = 'usePersistentVolumes: true' in helm_get_stdout
 
-    ## Choosing not to warn in this case.  Assume dev knows what they're doing.
-    # if ((not hasPVs and wantsPVs) or (not hasPVs and aboutToUninstall)):
-    #     # This case would be typical for a dev/demo.  Chances are we're okay losing the data.
-    #     #    (Not sure how useful this is really.  Don't think they can (easily) grab the data.)
-    #     printerr("WARNING: usePersistentVolumes was false. Continued (un)installation will result in the loss of Console data.")
-    #     fail("Stopping.  Invoke again with '--delete-pvcs' to proceed anyway, but save your data first if so desired")
-    # elif
     if ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
         # Chance of losing real data here.
         # If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
@@ -479,7 +474,7 @@ def check_pv_usage(aboutToUninstall=False, namespace=None):
                      "result in the loss of Console data.")
             for pv in notRetainedPVs:
                 printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
-            printerr("Invoke again with '--delete-pvcs' to proceed anyway, but save your data first if so desired")
+            printerr("Invoke again with '--delete-pvcs' to proceed anyway")
             fail("Stopping")
 
         if len(retainedPVs) > 0:
@@ -527,6 +522,17 @@ def parse_set_string(s):
         return result
 
 
+def make_fetchdir():
+    """Makes a temporary directory for fetching the helm chart. Used by tests to stub out the directory creation."""
+    return tempfile.mkdtemp()
+
+
+def prune_template_args(helm_args):
+    valid_args = r'(?:--set|--values|-f|--set-file|--set-string)(?:\s+|=)[^\s]+'
+    res = re.findall(valid_args, helm_args)
+    return ' '.join(res)
+
+
 def install(creds_file):
     creds_arg = '--values ' + creds_file
     version_arg = ''
@@ -546,9 +552,9 @@ def install(creds_file):
                 printerr("WARNING: Conflicting namespace values provided in arguments {} and {} ".format(
                     args.namespace, ns_args.namespace))
                 fail("Invoke again with correct namespace value...")
-            namespace_arg=""
+            namespace_arg = ""
 
-        helm_args += ' '.join(args.rest) + ' '
+        helm_args += ' '.join(args.rest)
 
     # Add '--set' arguments to helm_args
     if args.set:
@@ -558,90 +564,96 @@ def install(creds_file):
             for key, val in parse_set_string(s):
                 helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
 
-    chart_ref = None
-    if args.local_chart:
-        # Install from local chart tarball
-        chart_ref = args.local_chart
-    else:
-        execute('helm repo add es-repo ' + args.repo)
-        execute('helm repo update')
-        chart_ref = 'es-repo/' + args.chart
+    tempdir = None
+    try:
+        if args.local_chart:
+            chart_name = args.local_chart
+            chart_file = args.local_chart
+        else:
+            chart_name = "{}/{}".format(args.repo_name, args.chart)
+            execute('helm repo add {} {}'.format(args.repo_name, args.repo))
+            execute('helm repo update')
+            tempdir = make_fetchdir()
+            chart_file = fetch_remote_chart(tempdir)
 
-    if args.export_yaml:
-        # Tillerless path - renders kubernetes resources and prints to stdout
+        if args.export_yaml:
+            # Tillerless path - renders kubernetes resources and prints to stdout.
+            creds_exec_arg = ''
+            if args.export_yaml == 'creds':
+                creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
+                printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
 
-        creds_exec_arg = ''
-        if args.export_yaml == 'creds':
-            creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
-            printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
+            execute('helm template --name {} {} {} {} {}'.format(args.helm_name, namespace_arg,
+                                                                 helm_args, creds_exec_arg, chart_file),
+                    print_to_stdout=True)
 
-        try:
-            chartfile = args.local_chart
-            tempdir = None
-            if not chartfile:
-                # No local chart given, fetch from repo
-                tempdir = make_tempdir()
-                execute('helm fetch -d {} {} {}'
-                        .format(tempdir, version_arg, chart_ref))
-                chartfile_glob = tempdir + '/' + args.chart + '*.tgz'
-                # Print a fake chart archive name when dry-running
-                chartfile = glob.glob(chartfile_glob) if not args.dry_run else ['enterprise-suite-ver.tgz']
-                if len(chartfile) < 1:
-                    fail('cannot access fetched chartfile at {}, ES_CHART={}'
-                         .format(chartfile_glob, args.chart))
-                chartfile = chartfile[0]
+        else:
+            # Tiller path - installs console directly to a k8s cluster in a given namespace
 
-            execute('helm template --name {} {} {} {} {}'
-                .format(args.helm_name, namespace_arg, helm_args,
-                creds_exec_arg, chartfile), print_to_stdout=True)
-        finally:
-            if tempdir:
-                shutil.rmtree(tempdir)
-
-    else:
-        # Tiller path - installs console directly to a k8s cluster in a given namespace
-
-        # Determine if we should upgrade or install
-        should_upgrade = False
-
-        # Check status of existing install under the same release name
-        status, namespace = install_status(args.helm_name)
-        if status == 'deployed' or status == 'failed':
-            if status == 'failed':
-                printerr('info: found a failed installation under name {}, will attempt to upgrade'.format(args.helm_name))
-                printerr('info: if this fails, pass `--force-install` to delete the prior installation first')
-
-            if args.force_install:
-                uninstall(status=status, namespace=namespace)
-                # Give it some time to remove all resources before proceeding with install.
-                # This is not ideal - but neither are custom resource existence checks.
-                # Helm should really be doing this for us.
-                printerr('info: Waiting for prior resources to be removed')
-                time.sleep(REINSTALL_WAIT_SECS)
+            # Calculate computed values for chart to be installed.
+            template_args = prune_template_args(helm_args)
+            rc, template_stdout, template_stderr = run('helm template -x templates/dump-values.yaml {} {}'.
+                                                       format(template_args, chart_file))
+            global values
+            if rc != 0:
+                printerr("warn: unable to determine computed helm values - this may lead to incorrect warnings")
+                values = {}
             else:
-                should_upgrade = True
+                try:
+                    computed = template_stdout.splitlines()[-2][2:]
+                    values = json.loads(computed)
+                except Exception as e:
+                    printerr("warn: unable to parse helm values - this may lead to incorrect warnings")
+                    printerr(e)
+                    values = {}
 
-        elif status == 'notfound':
-            # Continue with the install when status is 'notfound'
-            pass
-        else:
-            fail('Unable to install/upgrade console, an install named {} with status {} already exists. '
-                 .format(args.helm_name, status))
+                printout("Computed chart values:", json.dumps(values, sort_keys=True, indent=2, separators=(',', ': ')))
+                printout("")
 
-        if args.wait:
-            helm_args += ' --wait'
+            # Determine if we should upgrade or install
+            should_upgrade = False
 
-        if not args.delete_pvcs:
-            check_pv_usage()
+            # Check status of existing install under the same release name
+            status, namespace = install_status(args.helm_name)
+            if status == 'deployed' or status == 'failed':
+                if status == 'failed':
+                    printerr('info: found a failed installation under name {}, will attempt to upgrade'.format(args.helm_name))
+                    printerr('info: if this fails, pass `--force-install` to delete the prior installation first')
 
-        if should_upgrade:
-            execute('helm upgrade {} {} {} {} {}'
-                    .format(args.helm_name, chart_ref, version_arg,
-                            creds_arg, helm_args))
-        else:
-            execute('helm install {} --name {} {} {} {} {}'
-                .format(chart_ref, args.helm_name, namespace_arg,
-                        version_arg, creds_arg, helm_args))
+                if args.force_install:
+                    uninstall(status=status, namespace=namespace)
+                    # Give it some time to remove all resources before proceeding with install.
+                    # This is not ideal - but neither are custom resource existence checks.
+                    # Helm should really be doing this for us.
+                    printerr('info: Waiting for prior resources to be removed')
+                    time.sleep(REINSTALL_WAIT_SECS)
+                else:
+                    should_upgrade = True
+
+            elif status == 'notfound':
+                # Continue with the install when status is 'notfound'
+                pass
+            else:
+                fail('Unable to install/upgrade console, an install named {} with status {} already exists. '
+                     .format(args.helm_name, status))
+
+            if args.wait:
+                helm_args += ' --wait'
+
+            if not args.delete_pvcs:
+                check_pv_usage()
+
+            if should_upgrade:
+                full_args = [args.helm_name, chart_name, version_arg, creds_arg, helm_args]
+                full_args = ' '.join(filter(None, full_args))
+                execute('helm upgrade {}'.format(full_args))
+            else:
+                full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
+                full_args = ' '.join(filter(None, full_args))
+                execute('helm install {} --name {}'.format(chart_name, full_args))
+    finally:
+        if tempdir:
+            shutil.rmtree(tempdir)
 
 
 def uninstall(status=None, namespace=None):
@@ -844,7 +856,10 @@ def setup_args(argv):
     install.add_argument('--local-chart', help='set to location of local chart tarball')
     install.add_argument('--chart', help='chart name to install from the repository', default='enterprise-suite')
     install.add_argument('--repo', help='helm chart repository', default='https://repo.lightbend.com/helm-charts')
-    install.add_argument('--creds', help='credentials file', default=os.path.join('~', '.lightbend', 'commercial.credentials'))
+    install.add_argument('--repo-name', help='name to give helm chart repository when adding to Tiller',
+                         default='es-repo')
+    install.add_argument('--creds', help='credentials file', default=os.path.join('~', '.lightbend',
+                                                                                  'commercial.credentials'))
     install.add_argument('--version', help='console version to install', type=str)
     install.add_argument('--wait', help='wait for install to finish before returning',
                          action='store_true')
@@ -886,6 +901,22 @@ def setup_args(argv):
         parser.print_help()
 
     return args
+
+
+def fetch_remote_chart(destdir):
+    """" Fetch remote chart into destdir and return its file location. """
+    extra_args = ""
+    if args.version:
+        extra_args = "--version %s" % args.version
+    chart_url = 'helm fetch --destination {} {} {} {}/{}'\
+        .format(destdir, extra_args, args.repo, args.repo_name, args.chart)
+    rc, fetch_stdout, fetch_stderr = run(chart_url, DEFAULT_TIMEOUT, show_stderr=False)
+    if rc != 0:
+        printerr("unable to reach helm repo: ", chart_url)
+        printerr(fetch_stderr)
+        fail("")
+    chart = os.listdir(destdir)[0]
+    return chart
 
 
 def main(argv):
