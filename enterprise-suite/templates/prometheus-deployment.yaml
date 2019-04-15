@@ -90,11 +90,11 @@ spec:
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
-            {{ if .Values.defaultMonitorsFile }}
-            - --defaultMonitorsFile=/etc/{{ .Values.defaultMonitorsFile }}
+            {{ if .Values.defaultMonitorsConfigMap }}
+            - --defaultMonitorsFile=/etc/default-monitors-config/default-monitors.json
             {{ end }}
-            {{ if .Values.staticRulesFile }}
-            - --staticConfig=/etc/{{ .Values.staticRulesFile }}
+            {{ if .Values.staticRulesConfigMap }}
+            - --staticConfig=/etc/static-rules-config/static-rules.json
             {{ end }}
             - --prometheusTemplate=/etc/console-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
@@ -173,9 +173,16 @@ spec:
             initialDelaySeconds: 30
 
           volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config
+            {{ if .Values.defaultMonitorsConfigMap }}
+            - name: default-monitors-volume
+              mountPath: /etc/default-monitors-config
               readOnly: true
+            {{ end }}
+            {{ if .Values.staticRulesConfigMap }}
+            - name: default-monitors-volume
+              mountPath: /etc/static-rules-config
+              readOnly: true
+            {{ end}}
             - name: prometheus-data-volume
               mountPath: /data
               subPath: prometheus-data
@@ -184,9 +191,16 @@ spec:
       volumes:
         - name: config-volume
           emptyDir: {}
-        - name: console-api-volume
+        {{ if .Values.defaultMonitorsConfigMap }}
+        - name: default-monitors-volume
           configMap:
-            name: console-api
+            name: {{ .Values.defaultMonitorsConfigMap }}
+        {{ end }}
+        {{ if .Values.staticRulesConfigMap }}
+        - name: static-rules-volume
+          configMap:
+            name: {{ .Values.staticRulesConfigMap }}
+        {{ end }}
         - name: prometheus-data-volume
           {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
