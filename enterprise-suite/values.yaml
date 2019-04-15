@@ -90,7 +90,7 @@ exposeServices: false
 # If exposeServices is set to "NodePort" or "LoadBalancer", Console will be exposed on this port.
 esConsoleExposePort: 30080
 
-# Default monitors ConfigMap. Must contain files `default-monitors.json` and 'static-rules.yml', leave empty for default.
+# Default monitors ConfigMap. Must contain files `default-monitors.json` and 'static-rules.yml'.
 defaultMonitorsConfigMap: console-api-defaults
 
 # URL for external access to the console.  Optional.
