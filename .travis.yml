@@ -25,7 +25,7 @@ jobs:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - make test
-    - travis_retry make -C enterprise-suite check-console-api
+    - travis_retry make -C enterprise-suite check-default-monitors-sync
  
   - name: Backend E2E Go Tests - Minikube
     os: linux

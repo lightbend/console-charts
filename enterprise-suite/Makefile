@@ -83,13 +83,13 @@ lint-promql:  ## Test promql bits are well-formed
 lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
 	kubectl --context=minikube create --dry-run --validate -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
 
-.PHONY: check-console-api
-check-console-api:
+.PHONY: check-default-monitors-sync:
+check-default-monitors-sync:
 	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/default-monitors.json | diff $(CHART_DIR)/console-api/default-monitors.json -
 	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/static-rules.yml | diff $(CHART_DIR)/console-api/static-rules.yml -
 
-.PHONY: sync-console-api
-sync-console-api:
+.PHONY: sync-default-monitors
+sync-default-monitors:
 	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/default-monitors.json > $(CHART_DIR)/console-api/default-monitors.json
 	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/static-rules.yml > $(CHART_DIR)/console-api/static-rules.yml
 

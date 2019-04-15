@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Downloads a file from console-api repo at specified tag.
 # Needs GITHUB_TOKEN env variable with a bearer token value!
