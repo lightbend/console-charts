@@ -100,6 +100,8 @@ spec:
               mountPath: /etc/config
             - name: console-api-volume
               mountPath: /etc/console-api
+            - name: console-api-defaults-volume
+              mountPath: /etc/console-api-defaults
             - name: prometheus-data-volume
               mountPath: /monitor-data
               subPath: monitor-data
@@ -128,6 +130,7 @@ spec:
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
           - --volume-dir=/etc/console-api
+          - --volume-dir=/etc/console-api-defaults
           - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
           - name: console-api-defaults-volume
