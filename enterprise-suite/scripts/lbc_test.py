@@ -164,18 +164,7 @@ class LbcTest(unittest.TestCase):
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm status enterprise-suite', returncode=0,
                    stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
-        expect_cmd(r'helm delete --purge enterprise-suite')
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+')
-        lbc.main(['install', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file])
-
-    def test_install_helm_failed_reuse(self):
-        # Failed previous install, PVCs found for reuse
-        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
-        expect_cmd(r'helm repo update')
-        expect_cmd(r'helm status enterprise-suite', returncode=0,
-                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
-        expect_cmd(r'helm delete --purge enterprise-suite')
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+')
+        expect_cmd(r'helm upgrade enterprise-suite es-repo/enterprise-suite\s+--values \S+')
         lbc.main(['install', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file])
 
     def test_install_not_finished(self):

@@ -605,14 +605,16 @@ def install(creds_file):
 
         # Check status of existing install under the same release name
         status, namespace = install_status(args.helm_name)
-        if status == 'deployed':
+        if status == 'deployed' or status == 'failed':
+            if status == 'failed':
+                printerr('info: found a failed installation under name {}, will attempt to upgrade'.format(args.helm_name))
+                printerr('info: if this fails, pass `--force-install` to delete the prior installation first')
+
             if args.force_install:
                 uninstall(status=status, namespace=namespace)
             else:
                 should_upgrade = True
-        elif status == 'failed':
-            printerr('info: found a failed installation under name {}, it will be deleted'.format(args.helm_name))
-            uninstall(status=status, namespace=namespace)
+
         elif status == 'notfound':
             # Continue with the install when status is 'notfound'
             pass
