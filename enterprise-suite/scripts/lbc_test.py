@@ -315,8 +315,9 @@ if __name__ == '__main__':
     lbc.run = test_run
     lbc.fail = test_fail
     lbc.printerr = test_print
-    lbc.printinfo = test_print
+    lbc.printout = test_print
     lbc.make_tempdir = test_make_tempdir
+    lbc.REINSTALL_WAIT_SECS = 0
 
     # Run tests
     unittest.main()

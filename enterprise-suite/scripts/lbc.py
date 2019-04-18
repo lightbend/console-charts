@@ -52,6 +52,7 @@ CONSOLE_PVCS = [
 ]
 
 DEFAULT_TIMEOUT = 3
+REINSTALL_WAIT_SECS = 5
 
 # Parsed commandline args
 args = None
@@ -61,13 +62,14 @@ windows = os.name == 'nt'
 
 # The following functions are overridable for testing purposes
 
+
 # Prints to stderr
 def printerr(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
 # Prints to stdout
-def printinfo(*args, **kwargs):
+def printout(*args, **kwargs):
     print(*args, **kwargs)
 
 
@@ -117,7 +119,7 @@ def execute(cmd, can_fail=False, print_to_stdout=False):
     if not args.dry_run:
         returncode, stdout, _ = run(cmd)
         if print_to_stdout:
-            printinfo(stdout)
+            printout(stdout)
         else:
             printerr(stdout)
         if not can_fail and returncode != 0:
@@ -267,8 +269,7 @@ def check_new_install_script():
         current_installer_contents = f.read()
 
     if rmt_installer_cnts != current_installer_contents:
-        printinfo("\nNew installer is available. Use the following command to download it")
-        printinfo("    curl -O " + installer_url + "\n")
+        printout("info: New installer is available. Use the following command to download it: curl -O {}".format(installer_url))
 
 
 def preinstall_check(creds, minikube=False, minishift=False):
@@ -612,6 +613,11 @@ def install(creds_file):
 
             if args.force_install:
                 uninstall(status=status, namespace=namespace)
+                # Give it some time to remove all resources before proceeding with install.
+                # This is not ideal - but neither are custom resource existence checks.
+                # Helm should really be doing this for us.
+                printerr('info: Waiting for prior resources to be removed')
+                time.sleep(REINSTALL_WAIT_SECS)
             else:
                 should_upgrade = True
 
@@ -637,6 +643,7 @@ def install(creds_file):
                 .format(chart_ref, args.helm_name, namespace_arg,
                         version_arg, creds_arg, helm_args))
 
+
 def uninstall(status=None, namespace=None):
     if not status:
         status, namespace = install_status(args.helm_name)
@@ -649,10 +656,10 @@ def uninstall(status=None, namespace=None):
         if not args.delete_pvcs:
             check_pv_usage(aboutToUninstall=True, namespace=namespace)
 
-        printerr("info: deleting previous console installation {} with status '{}'".format(args.helm_name, status))
+        printerr("info: Deleting previous console installation {} with status '{}'".format(args.helm_name, status))
         execute('helm delete --purge ' + args.helm_name)
-        printerr(('warning: helm delete does not wait for resources to be removed'
-                  '- if the script fails on install, please re-run it.'))
+        printerr('warning: Helm delete does not wait for resources to be fully removed. If a subsequent install fails, '
+                 'please re-run it after waiting for all resources to be removed.')
 
 
 def write_temp_credentials(creds_tempfile, creds):
@@ -681,7 +688,7 @@ def import_credentials():
 
 def check_install(external_alertmanager=False):
     def deployment_running(name):
-        printinfo('Checking deployment {} ... '.format(name), end='')
+        printout('Checking deployment {} ... '.format(name), end='')
         returncode, stdout, _ = run('kubectl --namespace {} get deploy/{} --no-headers'
                                     .format(args.namespace, name))
         if returncode == 0:
@@ -689,18 +696,18 @@ def check_install(external_alertmanager=False):
             cols = [int(col) for col in stdout.replace('/', ' ').split()[1:-1]]
             desired, _, _, available = cols[0], cols[1], cols[2], cols[3]
             if desired <= 0:
-                printinfo('failed')
+                printout('failed')
                 printerr('Deployment {} status check: expected to see 1 or more desired replicas, found 0'
                          .format(name))
             if desired > available:
-                printinfo('failed')
+                printout('failed')
                 printerr('Deployment {} status check: available replica number ({}) is less than desired ({})'
                          .format(name, available, desired))
             if desired > 0 and desired <= available:
-                printinfo('ok')
+                printout('ok')
                 return True
         else:
-            printinfo('failed')
+            printout('failed')
             printerr('Unable to check deployment {} status'.format(name))
         return False
 
@@ -723,8 +730,8 @@ def debug_dump(args):
     def dump(dest, filename, content):
         if args.print:
             # Print to stdout
-            printinfo('=== File: {} ==='.format(filename))
-            printinfo(content)
+            printout('=== File: {} ==='.format(filename))
+            printout(content)
         else:
             # Put to a zipfile
             dest.writestr(filename, stdout)
