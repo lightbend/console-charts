@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    component: server
+  name: console-api-default-monitors
+data:
+{{ (.Files.Glob "console-api/default-monitors.json").AsConfig | indent 2 }}

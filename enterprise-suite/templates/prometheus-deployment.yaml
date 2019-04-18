@@ -92,16 +92,18 @@ spec:
             - --storagePath=/monitor-data/
             - --staticConfig=/etc/console-api/static-rules.yml
             - --defaultMonitorsFile=/etc/console-api/default-monitors.json
-            - --prometheusTemplate=/etc/console-api-defaults/prometheus.yml
+            - --prometheusTemplate=/etc/console-api/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
             - --alertmanagers={{ .Values.alertManagers }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: console-api-volume
+            - name: console-api-default-monitors-volume
               mountPath: /etc/console-api
-            - name: console-api-defaults-volume
-              mountPath: /etc/console-api-defaults
+            - name: console-api-static-rules-volume
+              mountPath: /etc/console-api
+            - name: console-api-prometheus-volume
+              mountPath: /etc/console-api
             - name: prometheus-data-volume
               mountPath: /monitor-data
               subPath: monitor-data
@@ -130,12 +132,13 @@ spec:
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
           - --volume-dir=/etc/console-api
-          - --volume-dir=/etc/console-api-defaults
           - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
-          - name: console-api-defaults-volume
-            mountPath: /etc/console-api-defaults
-          - name: console-api-volume
+          - name: console-api-default-monitors-volume
+            mountPath: /etc/console-api
+          - name: console-api-static-rules-volume
+            mountPath: /etc/console-api
+          - name: console-api-prometheus-volume
             mountPath: /etc/console-api
 
         - name: prometheus-server
@@ -185,15 +188,15 @@ spec:
       volumes:
         - name: config-volume
           emptyDir: {}
-        # By default, console-api-defaults will be mounted twice. Template for prometheus config (prometheus.yml) will always
-        # be picked up from console-api-defaults-volume and default monitors (default-monitors.json, static-rules.yml) from
-        # console-api-volume. This allows to override default monitors volume while keeping default prometheus config template.
-        - name: console-api-defaults-volume
+        - name: console-api-default-monitors-volume
           configMap:
-            name: console-api-defaults
-        - name: console-api-volume
+            name: {{ .Values.defaultMonitorsConfigMap}}
+        - name: console-api-static-rules-volume
           configMap:
-            name: {{ .Values.defaultMonitorsConfigMap }}
+            name: {{ .Values.staticRulesConfigMap}}
+        - name: console-api-prometheus-volume
+          configMap:
+            name: console-api-prometheus
         - name: prometheus-data-volume
           {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
