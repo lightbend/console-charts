@@ -192,10 +192,10 @@ spec:
           emptyDir: {}
         - name: console-api-default-monitors-volume
           configMap:
-            name: {{ .Values.defaultMonitorsConfigMap}}
+            name: {{ .Values.consoleAPI.defaultMonitorsConfigMap}}
         - name: console-api-static-rules-volume
           configMap:
-            name: {{ .Values.staticRulesConfigMap}}
+            name: {{ .Values.consoleAPI.staticRulesConfigMap}}
         - name: console-api-prometheus-volume
           configMap:
             name: console-api-prometheus
