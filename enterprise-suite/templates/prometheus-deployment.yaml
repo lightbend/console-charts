@@ -90,16 +90,20 @@ spec:
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
-            - --staticConfig=/etc/console-api/static-rules.yml
-            - --defaultMonitorsFile=/etc/console-api/default-monitors.json
-            - --prometheusTemplate=/etc/console-api/prometheus.yml
+            - --staticConfig=/etc/console-api-static-rules/static-rules.yml
+            - --defaultMonitorsFile=/etc/console-api-default-monitors/default-monitors.json
+            - --prometheusTemplate=/etc/console-api-prometheus/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
             - --alertmanagers={{ .Values.alertManagers }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: console-api-volume
-              mountPath: /etc/console-api
+            - name: console-api-default-monitors-volume
+              mountPath: /etc/console-api-default-monitors
+            - name: console-api-static-rules-volume
+              mountPath: /etc/console-api-static-rules
+            - name: console-api-prometheus-volume
+              mountPath: /etc/console-api-prometheus
             - name: prometheus-data-volume
               mountPath: /monitor-data
               subPath: monitor-data
@@ -127,11 +131,17 @@ spec:
               cpu: {{ default .Values.defaultCPURequest .Values.configmapReloadCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.configmapReloadMemoryRequest }}
           args:
-          - --volume-dir=/etc/console-api
+          - --volume-dir=/etc/console-api-default-monitors
+          - --volume-dir=/etc/console-api-static-rules
+          - --volume-dir=/etc/console-api-prometheus
           - --webhook-url=http://127.0.0.1:8180/reload
           volumeMounts:
-          - name: console-api-volume
-            mountPath: /etc/console-api
+          - name: console-api-default-monitors-volume
+            mountPath: /etc/console-api-default-monitors
+          - name: console-api-static-rules-volume
+            mountPath: /etc/console-api-static-rules
+          - name: console-api-prometheus-volume
+            mountPath: /etc/console-api-prometheus
 
         - name: prometheus-server
           image: {{ .Values.prometheusImage }}:{{ .Values.prometheusVersion }}
@@ -180,9 +190,15 @@ spec:
       volumes:
         - name: config-volume
           emptyDir: {}
-        - name: console-api-volume
+        - name: console-api-default-monitors-volume
           configMap:
-            name: console-api
+            name: {{ .Values.consoleAPI.defaultMonitorsConfigMap}}
+        - name: console-api-static-rules-volume
+          configMap:
+            name: {{ .Values.consoleAPI.staticRulesConfigMap}}
+        - name: console-api-prometheus-volume
+          configMap:
+            name: console-api-prometheus
         - name: prometheus-data-volume
           {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
