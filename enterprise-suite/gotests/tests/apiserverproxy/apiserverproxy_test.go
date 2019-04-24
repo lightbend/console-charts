@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/urls"
@@ -34,7 +35,7 @@ var _ = AfterSuite(func() {
 var _ = Describe("all:apiserverproxy", func() {
 	DescribeTable("can access via apiserver proxy", func(serviceName, servicePath string) {
 		url := fmt.Sprintf("http://127.0.0.1:%d/api/v1/namespaces/%s/services/%s:http/proxy%s",
-			proxyPort, testenv.ConsoleNamespace, serviceName, servicePath)
+			proxyPort, args.ConsoleNamespace, serviceName, servicePath)
 		By(url)
 		_, err := urls.Get200(url)
 		Expect(err).ToNot(HaveOccurred())

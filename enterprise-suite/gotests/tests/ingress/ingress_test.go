@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
@@ -39,11 +40,11 @@ var _ = Describe("minikube:ingress", func() {
 		extAPI := testenv.K8sClient.ExtensionsV1beta1()
 
 		// On repeated test runs the ingress might already exist, so check before creating a new one
-		_, err := extAPI.Ingresses(testenv.ConsoleNamespace).Get(testIngressName, metav1.GetOptions{})
+		_, err := extAPI.Ingresses(args.ConsoleNamespace).Get(testIngressName, metav1.GetOptions{})
 		if err != nil {
 
 			// Figure out which port expose-es-console service uses
-			consoleService, err := coreAPI.Services(testenv.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
+			consoleService, err := coreAPI.Services(args.ConsoleNamespace).Get(consoleServiceName, metav1.GetOptions{})
 			Expect(err).To(Succeed())
 			servicePort := consoleService.Spec.Ports[0].Port
 
@@ -76,7 +77,7 @@ var _ = Describe("minikube:ingress", func() {
 					},
 				},
 			}
-			_, err = extAPI.Ingresses(testenv.ConsoleNamespace).Create(ingress)
+			_, err = extAPI.Ingresses(args.ConsoleNamespace).Create(ingress)
 			Expect(err).To(Succeed())
 		}
 
