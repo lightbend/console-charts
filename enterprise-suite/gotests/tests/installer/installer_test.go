@@ -50,9 +50,8 @@ var _ = Describe("all:lbc.py", func() {
 
 	Context("upgrades", func() {
 		Context("disable persistent volumes", func() {
-			// Assumption is testenv.InitEnv() sets usePersistentVolumes=true
-
 			BeforeEach(func() {
+				Expect(lbc.Install([]string{}, []string{"--set usePersistentVolumes=true"})).To(Succeed(), "install with PVs")
 				write(valuesFile, `usePersistentVolumes: false`)
 			})
 
