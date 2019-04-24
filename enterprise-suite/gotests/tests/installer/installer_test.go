@@ -61,7 +61,7 @@ var _ = Describe("all:lbc.py", func() {
 			})
 
 			It("should succeed if we provide --delete-pvcs", func() {
-				Expect(lbc.Install([]string{}, []string{"-f " + valuesFile.Name()})).To(Succeed())
+				Expect(lbc.Install([]string{"--delete-pvcs"}, []string{"-f " + valuesFile.Name()})).To(Succeed())
 			})
 		})
 	})
