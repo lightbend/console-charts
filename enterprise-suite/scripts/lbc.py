@@ -377,11 +377,13 @@ def check_pv_usage(uninstalling=False):
         if uninstalling:
             printerr("error: Existing deployment has usePersistentVolumes=true. Uninstall may "
                      "result in the loss of Console data as associated PVCs will be removed.")
-
-        if not wants_pvcs:
+        elif not wants_pvcs:
             printerr("error: Existing deployment has usePersistentVolumes=true, but upgrade has specified "
                      "usePersistentVolumes=false. Upgrade may result in the loss of Console data as associated "
                      "PVCs will be removed.")
+        else:
+            # Nothing potentially dangerous here - we are neither uninstalling nor setting usePersistentVolumes=false.
+            return
 
         printerr("error: Invoke with '--delete-pvcs' to proceed")
         fail("error: Stopping")
