@@ -5,13 +5,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+
 	apiv1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
 )
@@ -20,8 +21,8 @@ const ServiceAccountName = "tiller"
 
 func IsInstalled() bool {
 	cmd := util.Cmd("helm", "version")
-	if testenv.TillerNamespace != "" {
-		cmd = cmd.Env("TILLER_NAMESPACE", testenv.TillerNamespace)
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 	if err := cmd.Run(); err != nil {
 		return false
@@ -34,8 +35,8 @@ func IsInstalled() bool {
 func ReleaseExists(name string) bool {
 	var output strings.Builder
 	cmd := util.Cmd("helm", "list", "--all", "--short", name).CaptureStdout(&output)
-	if testenv.TillerNamespace != "" {
-		cmd = cmd.Env("TILLER_NAMESPACE", testenv.TillerNamespace)
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 
 	if err := cmd.Run(); err != nil {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
@@ -27,7 +28,7 @@ var _ = BeforeSuite(func() {
 
 	localPort = util.FindFreePort()
 	portForwardCmd = util.Cmd("kubectl", "port-forward",
-		"-n", testenv.ConsoleNamespace,
+		"-n", args.ConsoleNamespace,
 		consoleDeployment,
 		fmt.Sprintf("%d:%d", localPort, consoleRemotePort))
 	Expect(portForwardCmd.StartAsync()).To(Succeed())

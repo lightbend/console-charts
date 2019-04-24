@@ -4,27 +4,28 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
 const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
-func Install(namespace, tillerNamespace string, lbcArgs, helmArgs []string) error {
+func Install(lbcArgs, helmArgs []string) error {
 	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
-		"--namespace", namespace,
-		"--set prometheusDomain=console-backend-e2e.io",
-		"--delete-pvcs"}
+		"--namespace", args.ConsoleNamespace,
+		"--set prometheusDomain=console-backend-e2e.io"}
 	cmdArgs = append(cmdArgs, lbcArgs...)
 	cmdArgs = append(cmdArgs, "--", "--wait", "--timeout", "110")
 	cmdArgs = append(cmdArgs, helmArgs...)
 	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
-	if tillerNamespace != "" {
-		cmd = cmd.Env("TILLER_NAMESPACE", tillerNamespace)
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 
 	if err := cmd.Timeout(time.Minute * 2).Run(); err != nil {
-		logDebugInfo(namespace)
+		logDebugInfo(args.ConsoleNamespace)
 		return err
 	}
 

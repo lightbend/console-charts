@@ -352,146 +352,47 @@ def check_resource_list(cmd, expected, fail_msg):
     return False
 
 
-# Returns two lists.  For each of the PVC types we care about, the associated PV
-# is in the first or second list if the reclaim policy is RETAIN or not respectively.
-# Each list element is a tuple of PV name, claim, and status.
-def pvs_retained_and_not(namespace):
-    claimNames = '"' + '" "'.join(CONSOLE_PVCS) + '"'
-    go_template = ('{{ range .items }}{{ if eq .spec.claimRef.name ' + claimNames + ' }}'
-                   '{{ printf "%s %s %s %s\\n" .metadata.name .spec.persistentVolumeReclaimPolicy '
-                   '.spec.claimRef.name .status.phase }}{{ end }}{{ end }}')
-    returncode, stdout, _ = run("kubectl get pv -o go-template='{}'"
-                                .format(go_template), show_stderr=False)
-    # stdout contains...
-    # pvc-8149517b-3bae-11e9-83b7-08002755d2dd Delete alertmanager-storage Bound
-
-    pvs = []
-    retained = []
-    notRetained = []
-
-    if returncode != 0:
-        ## try alternate method here
-        # Get PV info via PVCs
-        go_template = ('{{ range .items }}{{ if eq .metadata.name ' + claimNames + ' }}'
-                       '{{ printf "%s %s %s %s\\n" .metadata.name .spec.volumeName .spec.storageClassName '
-                       '.status.phase }}{{ end }}{{ end }}')
-        returncode, stdout, _ = run("kubectl get pvc -n {} -o go-template='{}'"
-                                    .format(namespace, go_template))
-        # stdout contains...
-        # prometheus-storage pvc-81508cb1-3bae-11e9-83b7-08002755d2dd standard Bound
-        if returncode == 0:
-            # Now get default reclaim policy for storage class
-            for pv in stdout.splitlines():
-                words = pv.split()
-
-                go_template = '{{ printf "%s %s\\n" .metadata.name .reclaimPolicy }}'
-                returncode, stdout, _ = run("kubectl get storageclass {} -o go-template='{}'"
-                                            .format(words[2], go_template))
-                # stdout contains...
-                # standard Delete
-
-                if returncode == 0:
-                    storage = stdout.split()
-                    # This matches output we would get direct from "get pv" above
-                    pvs.append('{} {} {} {}'
-                               .format(words[1], storage[1], words[0], words[3]))
-                    printerr("Assuming reclaim policy for PV {} from that of storage class.  Proceed with caution."
-                             .format(words[0]))
-                else:
-                    printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
-        else:
-            printerr("Unable to retrieve Persistent Volume info.  Proceed with caution.")
-    else:
-        pvs = stdout.splitlines()
-
-    for pv in pvs:
-        words = pv.split()
-
-        if words[1] == 'Retain':
-            list = retained
-        else:
-            list = notRetained
-        list.append((words[0], words[2], words[3]))
-
-    return (retained, notRetained)
-
-
 # Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
-def check_pv_usage(aboutToUninstall=False, namespace=None):
+def check_pv_usage(uninstalling=False):
     # Retrieve the current helm installation computed values.
     returncode, helm_get_stdout, helm_get_stderr = run('helm get ' + args.helm_name,
                                                        DEFAULT_TIMEOUT, show_stderr=False)
-
-    if namespace is None:
-        namespace = args.namespace
 
     if 'usePersistentVolumes' not in values:
         printerr("warn: can't determine the value of usePersistentVolumes, unable to parse helm values")
         return
 
-    wantsPVs = values['usePersistentVolumes'] is True
+    wants_pvcs = values['usePersistentVolumes'] is True
 
     if 'Error: release: "{}" not found'.format(args.helm_name) in helm_get_stderr:
-        # Fresh install so we're good with whatever but...
-        retainedPVs, _ = pvs_retained_and_not(namespace)
-        if len(retainedPVs) > 0:
-            # Look for orphaned PVs that are associated with Console.
-            # Even with usePersistentVolumes=true they'll be orphaned if they don't have status of "Available"
-            # (User was warned about this at uninstall time but reminding them...)
-            allAvailable = len([True for i in retainedPVs if i[2] != 'Available']) == 0
-            if ((not wantsPVs) or (wantsPVs and not allAvailable)):
-                printerr("WARNING: Console data exists in orphaned Persistent Volumes.")
-                if (not wantsPVs):
-                    printerr("         Set --usePersistentVolumes=true to reuse data.")
-                elif (wantsPVs and not allAvailable):
-                    printerr("         Manual intervention will be required to reuse it with the Console, "
-                             "or to actually delete it.")
-                printerr("         Proceeding with installation using new datasets.")
-                printerr("         See associated documentation at "
-                         "https://developer.lightbend.com/docs/console/current/installation/storage.html.")
-                for pv in retainedPVs:
-                    printerr(
-                        "   info: Reclaim policy for PV {} for claim {} is 'Retain' with status {}".format(pv[0], pv[1],
-                                                                                                           pv[2]))
         return
-    elif returncode != 0:
+
+    if returncode != 0:
         printerr("Unable to retrieve release information.  Proceed with caution.")
         return
 
-    hasPVs = 'usePersistentVolumes: true' in helm_get_stdout
+    has_pvcs = 'usePersistentVolumes: true' in helm_get_stdout
 
-    if ((hasPVs and not wantsPVs) or (hasPVs and aboutToUninstall)):
-        # Chance of losing real data here.
-        # If    we're changing from usePersistentVolumes=true to usePersistentVolumes=false
-        #       (which means going from PV to emptyDir volume)
-        #    or
-        #       we're about to "helm delete" and usePersistentVolumes was true
+    if has_pvcs:
+        if uninstalling:
+            printerr("error: Existing deployment has usePersistentVolumes=true. Uninstall may "
+                     "result in the loss of Console data as associated PVCs will be removed.")
+        elif not wants_pvcs:
+            printerr("error: Existing deployment has usePersistentVolumes=true, but upgrade has specified "
+                     "usePersistentVolumes=false. Upgrade may result in the loss of Console data as associated "
+                     "PVCs will be removed.")
+        else:
+            # Nothing potentially dangerous here - we are neither uninstalling nor setting usePersistentVolumes=false.
+            return
 
-        retainedPVs, notRetainedPVs = pvs_retained_and_not(namespace)
-
-        if len(notRetainedPVs) > 0:
-            printerr("WARNING: Given the current and desired configs, continued (un)installation will "
-                     "result in the loss of Console data.")
-            for pv in notRetainedPVs:
-                printerr("   info: Reclaim policy for PV {} for claim {} is not 'Retain'".format(pv[0], pv[1]))
-            printerr("Invoke again with '--delete-pvcs' to proceed anyway")
-            fail("Stopping")
-
-        if len(retainedPVs) > 0:
-            printerr("WARNING: Given the current and desired configs, this (un)installation will "
-                     "orphan existing Console data.")
-            printerr("         Manual intervention will be required to reuse it with the Console, or to actually "
-                     "delete it.")
-            printerr("         See associated documentation at "
-                     "https://developer.lightbend.com/docs/console/current/installation/storage.html.")
-            for pv in retainedPVs:
-                printerr("   info: Reclaim policy for PV {} for claim {} is 'Retain'".format(pv[0], pv[1]))
+        printerr("error: Invoke with '--delete-pvcs' to proceed")
+        fail("error: Stopping")
 
 
 # Takes helm style "key1=value1,key2=value2" string and returns a list of (key, value)
 # pairs. Supports quoting, escaped or non-escaped commas and values with commas inside, eg.:
-#  parse_set_string('am=amg01:9093,amg02:9093') -> [('am', 'amg01:9093,amg02:9093')]
-#  parse_set_string('am="am01,am02",es=NodePort') -> [('am', 'am01,am02'), ('es', 'NodePort')]
+#   parse_set_string('am=amg01:9093,amg02:9093') -> [('am', 'amg01:9093,amg02:9093')]
+#   parse_set_string('am="am01,am02",es=NodePort') -> [('am', 'am01,am02'), ('es', 'NodePort')]
 def parse_set_string(s):
     # Keyval pair with commas allowed
     keyval_pair_re = re.compile(r'(\w+)=([\w\-\+\*\:\.\\,]+)')
@@ -666,7 +567,7 @@ def uninstall(status=None, namespace=None):
         fail('Unable to delete console installation {} - it is already being deleted'.format(args.helm_name))
     else:
         if not args.delete_pvcs:
-            check_pv_usage(aboutToUninstall=True, namespace=namespace)
+            check_pv_usage(uninstalling=True)
 
         printerr("info: Deleting previous console installation {} with status '{}'".format(args.helm_name, status))
         execute('helm delete --purge ' + args.helm_name)

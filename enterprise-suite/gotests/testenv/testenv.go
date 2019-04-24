@@ -5,10 +5,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/oc"
@@ -53,7 +54,7 @@ func InitEnv() {
 	}
 
 	// Setup k8s client
-	config, err := clientcmd.BuildConfigFromFlags("", Kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", args.Kubeconfig)
 	if err != nil {
 		Expect(err).To(Succeed(), "new k8sclient config")
 	}
@@ -62,24 +63,14 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
-	var lbcArgs []string
-	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080"}
+	// For test set-up installation, ignore any PVC warnings by setting --delete-pvcs.
+	lbcArgs := []string{"--delete-pvcs"}
+
+	// Always enable persistent volumes to improve our test coverage with this important configuration.
+	// This should work in all known standard clusters (except for Minishift, which doesn't provide a default StorageClass).
+	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080", "--set usePersistentVolumes=true"}
 	if isMinikube {
 		helmArgs = append(helmArgs, "--set exposeServices=NodePort")
-	} else {
-		// Look for expected storage classes, run with emptyDir if they don't exist
-		var foundStorageClass bool
-		for _, storageClass := range []string{"standard", "gp2"} {
-			if kube.StorageClassExists(K8sClient, storageClass) {
-				foundStorageClass = true
-				helmArgs = append(helmArgs,
-					fmt.Sprintf("--set usePersistentVolumes=true,defaultStorageClass=%v", storageClass))
-				break
-			}
-		}
-		if !foundStorageClass {
-			helmArgs = append(helmArgs, "--set usePersistentVolumes=false")
-		}
 	}
 
 	// Create an async goroutine to report when install is taking a while.
@@ -105,7 +96,7 @@ func InitEnv() {
 	defer ticker.Stop()
 
 	// Install console
-	if err := lbc.Install(ConsoleNamespace, TillerNamespace, lbcArgs, helmArgs); err != nil {
+	if err := lbc.Install(lbcArgs, helmArgs); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 

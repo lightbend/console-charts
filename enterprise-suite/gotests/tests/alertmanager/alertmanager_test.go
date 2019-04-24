@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/client-go/kubernetes/typed/apps/v1"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
@@ -47,14 +48,14 @@ var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 
 	// Delete test configmap if it existed previously, ignore failure
-	kube.DeleteConfigMap(testenv.ConsoleNamespace, configName)
+	kube.DeleteConfigMap(args.ConsoleNamespace, configName)
 
 	// Create test configmap
-	err := kube.CreateConfigMap(testenv.ConsoleNamespace, configName, configYaml)
+	err := kube.CreateConfigMap(args.ConsoleNamespace, configName, configYaml)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Get deployments interface and alertmanager deployment
-	depsClient = testenv.K8sClient.AppsV1().Deployments(testenv.ConsoleNamespace)
+	depsClient = testenv.K8sClient.AppsV1().Deployments(args.ConsoleNamespace)
 	alertmanagerDep, err = depsClient.Get("prometheus-alertmanager", metav1.GetOptions{})
 	Expect(err).ToNot(HaveOccurred())
 
@@ -74,12 +75,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Deploy test app
-	err = kube.ApplyYaml(testenv.ConsoleNamespace, appYaml)
+	err = kube.ApplyYaml(args.ConsoleNamespace, appYaml)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Wait for it to become ready
 	err = util.WaitUntilSuccess(util.LongWait, func() error {
-		return kube.IsDeploymentAvailable(testenv.K8sClient, testenv.ConsoleNamespace, appName)
+		return kube.IsDeploymentAvailable(testenv.K8sClient, args.ConsoleNamespace, appName)
 	})
 	Expect(err).NotTo(HaveOccurred())
 
@@ -112,11 +113,11 @@ var _ = AfterSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// Delete test configmap
-		err = kube.DeleteConfigMap(testenv.ConsoleNamespace, configName)
+		err = kube.DeleteConfigMap(args.ConsoleNamespace, configName)
 		Expect(err).ToNot(HaveOccurred())
 
 		// Delete test app
-		err = kube.DeleteYaml(testenv.ConsoleNamespace, appYaml)
+		err = kube.DeleteYaml(args.ConsoleNamespace, appYaml)
 		Expect(err).ToNot(HaveOccurred())
 	}
 
@@ -127,7 +128,7 @@ var _ = Describe("all:alertmanager", func() {
 	Context("es-alert-test app", func() {
 		It("has visible metrics", func() {
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, testenv.ConsoleNamespace))
+				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, args.ConsoleNamespace))
 			})
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -198,7 +199,7 @@ var _ = Describe("all:alertmanager", func() {
 
 	Context("external URL", func() {
 		It("is set correctly on Prometheus", func() {
-			pods, err := testenv.K8sClient.CoreV1().Pods(testenv.ConsoleNamespace).
+			pods, err := testenv.K8sClient.CoreV1().Pods(args.ConsoleNamespace).
 				List(metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=prometheus"})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pods.Items).To(HaveLen(1))
@@ -216,7 +217,7 @@ var _ = Describe("all:alertmanager", func() {
 		})
 
 		It("is set correctly on Alertmanager", func() {
-			pods, err := testenv.K8sClient.CoreV1().Pods(testenv.ConsoleNamespace).
+			pods, err := testenv.K8sClient.CoreV1().Pods(args.ConsoleNamespace).
 				List(metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=alertmanager"})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pods.Items).To(HaveLen(1))
