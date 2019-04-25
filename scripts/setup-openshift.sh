@@ -2,13 +2,13 @@
 
 set -e
 
-version="v3.10.0"
-full_version="${version}-dd10d17-linux-64bit"
+version="v3.11.0"
+full_version="${version}-0cbc58b-linux-64bit"
 tarball="openshift-origin-client-tools-${full_version}.tar.gz"
 curl -OL https://github.com/openshift/origin/releases/download/${version}/${tarball}
-echo "0f54235127884309d19b23e8e64e347f783efd6b5a94b49bfc4d0bf472efb5b8  ${tarball}" | sha256sum -c
+echo "4b0f07428ba854174c58d2e38287e5402964c9a9355f6c359d1242efd0990da3  ${tarball}" | sha256sum -c
 tar --strip 1 -xvzf ${tarball} && chmod +x oc && sudo cp oc /usr/local/bin/ && rm oc
-oc login https://centralpark.lightbend.com --token=$1
+oc login https://centralpark2.lightbend.com --token=$1
 oc status
 oc project
 oc get pods
