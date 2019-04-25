@@ -1,16 +1,18 @@
-{{ if .Values.createAlertManager }}
 apiVersion: v1
-kind: ConfigMap
+kind: Service
 metadata:
+  name: prometheus-server
   labels:
     app.kubernetes.io/name: {{ template "name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: alertmanager
-    app: prometheus
-    component: alertmanager
-  name: alertmanager-default
-data:
-{{ (.Files.Glob "alertmanager/*").AsConfig | indent 2}}
-{{ end }}
+    app.kubernetes.io/component: console-backend
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 9090
+  selector:
+    app.kubernetes.io/name: {{ template "name" . }}
+    app.kubernetes.io/component: prometheus

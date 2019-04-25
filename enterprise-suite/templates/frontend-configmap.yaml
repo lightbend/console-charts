@@ -1,16 +1,12 @@
-{{ if .Values.createAlertManager }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: console-frontend
   labels:
     app.kubernetes.io/name: {{ template "name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: alertmanager
-    app: prometheus
-    component: alertmanager
-  name: alertmanager-default
+    app.kubernetes.io/component: console-frontend
 data:
-{{ (.Files.Glob "alertmanager/*").AsConfig | indent 2}}
-{{ end }}
+{{ (tpl (.Files.Glob "console-frontend/*").AsConfig .) | indent 2 }}

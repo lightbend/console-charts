@@ -2,9 +2,12 @@ kind: Deployment
 apiVersion: {{ .Values.deploymentApiVersion }}
 metadata:
   labels:
-    app: prometheus
-    component: server
-  name: prometheus-server
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: console-backend
+  name: console-backend
 spec:
   replicas: 1
 
@@ -26,7 +29,7 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/component: prometheus
+        app.kubernetes.io/component: console-backend
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: prometheus
         component: server
