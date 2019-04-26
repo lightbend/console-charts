@@ -200,7 +200,7 @@ var _ = Describe("all:alertmanager", func() {
 	Context("external URL", func() {
 		It("is set correctly on Prometheus", func() {
 			pods, err := testenv.K8sClient.CoreV1().Pods(args.ConsoleNamespace).
-				List(metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=prometheus"})
+				List(metav1.ListOptions{LabelSelector: "app.kubernetes.io/component=console-backend"})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pods.Items).To(HaveLen(1))
 			pod := pods.Items[0]
