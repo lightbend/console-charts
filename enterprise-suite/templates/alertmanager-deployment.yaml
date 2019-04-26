@@ -8,8 +8,6 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/component: alertmanager
-    app: prometheus
-    component: alertmanager
   name: prometheus-alertmanager
 spec:
   replicas: 1

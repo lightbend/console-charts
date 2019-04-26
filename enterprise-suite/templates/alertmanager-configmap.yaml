@@ -8,8 +8,6 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/component: alertmanager
-    app: prometheus
-    component: alertmanager
   name: alertmanager-default
 data:
 {{ (.Files.Glob "alertmanager/*").AsConfig | indent 2}}

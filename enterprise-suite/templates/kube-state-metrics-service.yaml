@@ -18,6 +18,6 @@ spec:
       protocol: TCP
       targetPort: 8080
   selector:
-    app: prometheus
-    component: "kube-state-metrics"
+    app.kubernetes.io/name: {{ template "name" . }}
+    app.kubernetes.io/component: kube-state-metrics
   type: "ClusterIP"
