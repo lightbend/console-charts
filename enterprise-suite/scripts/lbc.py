@@ -36,8 +36,8 @@ REQ_VER_OC = '3.9'
 # Verify looks for these deployments, need to be updated if helm chart changes!
 CONSOLE_DEPLOYMENTS = [
     'console-backend',
-    'console-frontend'
-    'grafana-server',
+    'console-frontend',
+    'grafana',
     'prometheus-kube-state-metrics',
 ]
 
