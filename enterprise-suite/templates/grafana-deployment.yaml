@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: grafana-server
+  name: grafana
   labels:
     app.kubernetes.io/name: {{ template "name" . }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
