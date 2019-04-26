@@ -36,7 +36,7 @@ spec:
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
         checksum/console-api-config: {{ (.Files.Glob "console-api/*").AsConfig | sha256sum }}
-        checksum/bare-prometheus-config: {{ include (print $.Template.BasePath "/prometheus-configmap-prom.yaml") . | sha256sum }}
+        checksum/bare-prometheus-config: {{ include (print $.Template.BasePath "/backend-configmap-bare-prometheus.yaml") . | sha256sum }}
 
     spec:
       serviceAccountName: prometheus-server
