@@ -15,13 +15,20 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const consoleRemotePort = 8080
-const consoleDeployment = "deployment/es-console"
+const (
+	consoleRemotePort = 8080
+	consoleDeployment = "deployment/console-frontend"
+)
 
 var (
 	portForwardCmd *util.CmdBuilder
 	localPort      int
 )
+
+func TestPortForward(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Port Forward Suite")
+}
 
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
@@ -64,8 +71,3 @@ var _ = Describe("all:portforward", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 })
-
-func TestPortForward(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Port Forward Suite")
-}
