@@ -51,7 +51,8 @@ jobs:
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
     - travis_retry make -C enterprise-suite/gotests setup-tools
     - make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=console-backend-go-tests || true
-    - make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=console-backend-go-tests
+    # travis_fail early if tests fail - so we don't clean up, for easier debugging of failures
+    - make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=console-backend-go-tests || travis_fail
     - make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=console-backend-go-tests || true
     # https://github.com/travis-ci/travis-ci/issues/6018 - Prevent truncated output.
     - sleep 5
