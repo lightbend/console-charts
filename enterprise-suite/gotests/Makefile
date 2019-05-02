@@ -1,6 +1,7 @@
 files := $(shell find . -path ./vendor -prune -o -name '*.go' -print)
 
 NAMESPACE := lightbend
+TILLER_NAMESPACE := $(NAMESPACE)
 
 .PHONY: all
 all: check
@@ -32,9 +33,9 @@ purge-console-openshift: purge-console
 
 .PHONY: purge-console
 purge-console:
-	-TILLER_NAMESPACE=$(NAMESPACE) ../scripts/lbc.py uninstall --delete-pvcs
+	-TILLER_NAMESPACE=$(TILLER_NAMESPACE) ../scripts/lbc.py uninstall --delete-pvcs
 
-ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(NAMESPACE)
+ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(TILLER_NAMESPACE)
 
 .PHONY: run-tests-minikube
 run-tests-minikube:

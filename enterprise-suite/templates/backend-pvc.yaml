@@ -3,6 +3,12 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: prometheus-storage
+  labels:
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: console-backend
 spec:
   {{ if or .Values.defaultStorageClass .Values.prometheusStorageClass }}
   storageClassName: {{ default .Values.defaultStorageClass .Values.prometheusStorageClass }}

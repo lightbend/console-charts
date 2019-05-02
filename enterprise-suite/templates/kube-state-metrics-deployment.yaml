@@ -1,10 +1,13 @@
 apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
-  labels:
-    app: prometheus
-    component: kube-state-metrics
   name: prometheus-kube-state-metrics
+  labels:
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: kube-state-metrics
 spec:
   replicas: 1
 

@@ -1,0 +1,23 @@
+{{ if or .Values.exposeServices .Values.minikube }}
+apiVersion: v1
+kind: Service
+metadata:
+  # Changing this name will break backwards compatibility.
+  name: expose-es-console
+  labels:
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: console-frontend
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+    nodePort: {{ .Values.esConsoleExposePort }}
+  selector:
+    app.kubernetes.io/name: {{ template "name" . }}
+    app.kubernetes.io/component: console-frontend
+  type: {{ .Values.exposeServices | default "NodePort" }}
+{{ end }}

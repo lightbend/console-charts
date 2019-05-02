@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: exporter-graphs-cm
-data:
-{{ (.Files.Glob "es-grafana/*").AsConfig | indent 2 }}

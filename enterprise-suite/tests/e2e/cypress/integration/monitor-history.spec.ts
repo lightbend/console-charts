@@ -8,23 +8,23 @@ import { History } from '../support/history';
 
 describe('History Log Test', () => {
   beforeEach(() => {
-    // Util.deleteMonitorsForWorkload('es-console');
+    // Util.deleteMonitorsForWorkload('console-frontend');
   });
 
   it('log history check', () => {
     // create and save monitor
     const monitorName = Util.createRandomMonitorName();
-    Navigation.goWorkloadPageByClick('es-console');
+    Navigation.goWorkloadPageByClick('console-frontend');
     Action.createMonitor();
     Form.setMetricName('kube_pod_failed');
     Form.setMonitorName(monitorName);
     Action.saveMonitor();
 
     // go to monitor page
-    Util.validateUrlPath('/namespaces/lightbend/workloads/es-console');
+    Util.validateUrlPath('/namespaces/lightbend/workloads/console-frontend');
     Util.validateMonitorCountGte(3);
     Navigation.clickMonitor(monitorName);
-    Util.validateUrlPath(`/namespaces/lightbend/workloads/es-console/monitors/${monitorName}`);
+    Util.validateUrlPath(`/namespaces/lightbend/workloads/console-frontend/monitors/${monitorName}`);
 
     // check history log: should be 1 item
     cy.log('check log history when create a new monitor');
@@ -39,10 +39,10 @@ describe('History Log Test', () => {
     Action.saveMonitor();
 
     // go to monitor page and check history
-    Util.validateUrlPath('/namespaces/lightbend/workloads/es-console');
+    Util.validateUrlPath('/namespaces/lightbend/workloads/console-frontend');
     Util.validateMonitorCountGte(3);
     Navigation.clickMonitor(monitorName);
-    Util.validateUrlPath(`/namespaces/lightbend/workloads/es-console/monitors/${monitorName}`);
+    Util.validateUrlPath(`/namespaces/lightbend/workloads/console-frontend/monitors/${monitorName}`);
 
     History.validateCreatedIsIndex(1);
     History.validateModifiedIsIndex(0);
@@ -61,7 +61,7 @@ describe('History Log Test', () => {
     // clean up
     Action.editMonitor();
     Action.removeMonitor();
-    Util.validateUrlPath('/namespaces/lightbend/workloads/es-console');
+    Util.validateUrlPath('/namespaces/lightbend/workloads/console-frontend');
     Util.validateMonitorCountGte(3);
     Util.validateNoMonitor(monitorName);
   });

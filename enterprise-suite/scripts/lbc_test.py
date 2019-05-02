@@ -166,14 +166,14 @@ class HelmCommandsTest(unittest.TestCase):
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+\s+--wait')
         
         # Verify happens automatically when --wait is provided
-        expect_cmd(r'kubectl --namespace lightbend get deploy/es-console --no-headers',
-                   stdout='es-console 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace lightbend get deploy/grafana-server --no-headers',
-                   stdout='grafana-server 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/console-backend --no-headers',
+                   stdout='console-backend 2 2 2 2 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/console-frontend --no-headers',
+                   stdout='console-frontend 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace lightbend get deploy/grafana --no-headers',
+                   stdout='grafana 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-server --no-headers',
-                   stdout='prometheus-server 2 2 2 2 15m')
         expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-alertmanager --no-headers',
                    stdout='prometheus-alertmanager 1 1 1 1 15m')
 
@@ -327,15 +327,15 @@ class HelmCommandsTest(unittest.TestCase):
             lbc.main(['uninstall', '--skip-checks'])
 
     def test_verify_fail(self):
-        expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',
-                   stdout='es-console 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/console-backend --no-headers',
+                   stdout='console-backend 2 2 2 2 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/console-frontend --no-headers',
+                   stdout='console-frontend 1 1 1 1 15m')
         # Grafana is not running
-        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
-                   stdout='grafana-server 1 1 1 0 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana --no-headers',
+                   stdout='grafana 1 1 1 0 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
-                   stdout='prometheus-server 2 2 2 2 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
                    stdout='prometheus-alertmanager 1 1 1 1 15m')
 
@@ -344,14 +344,14 @@ class HelmCommandsTest(unittest.TestCase):
             lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])
 
     def test_verify_success(self):
-        expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',
-                   stdout='es-console 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
-                   stdout='grafana-server 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/console-backend --no-headers',
+                   stdout='console-backend 2 2 2 2 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/console-frontend --no-headers',
+                   stdout='console-frontend 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana --no-headers',
+                   stdout='grafana 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
-                   stdout='prometheus-server 2 2 2 2 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
                    stdout='prometheus-alertmanager 1 1 1 1 15m')
 

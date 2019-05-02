@@ -1,10 +1,13 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: grafana-server
+  name: grafana
   labels:
-    app: grafana
-    component: server
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: grafana
 spec:
   replicas: 1
 
@@ -33,7 +36,7 @@ spec:
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
         {{ .Values.prometheusDomain }}/port: "3000"
-        checksum/datasource-config: {{ include (print $.Template.BasePath "/es-grafana-configmap-datasource.yaml") . | sha256sum }}
+        checksum/datasource-config: {{ include (print $.Template.BasePath "/grafana-configmap-datasource.yaml") . | sha256sum }}
         checksum/plugin-config: {{ (.Files.Glob "es-grafana/*").AsConfig | sha256sum }}
 
     spec:

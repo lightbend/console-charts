@@ -35,10 +35,10 @@ REQ_VER_OC = '3.9'
 
 # Verify looks for these deployments, need to be updated if helm chart changes!
 CONSOLE_DEPLOYMENTS = [
-    'es-console',
-    'grafana-server',
+    'console-backend',
+    'console-frontend',
+    'grafana',
     'prometheus-kube-state-metrics',
-    'prometheus-server'
 ]
 
 # Alertmanager deployment, this check can be turned off with --external-alertmanager

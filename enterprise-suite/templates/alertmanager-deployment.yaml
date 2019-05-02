@@ -3,8 +3,11 @@ apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
   labels:
-    app: prometheus
-    component: alertmanager
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: alertmanager
   name: prometheus-alertmanager
 spec:
   replicas: 1

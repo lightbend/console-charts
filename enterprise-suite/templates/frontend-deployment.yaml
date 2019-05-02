@@ -1,7 +1,14 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: es-console
+  name: console-frontend
+  labels:
+    app.kubernetes.io/name: {{ template "name" . }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: console-frontend
+
 spec:
   selector:
     matchLabels:
@@ -10,13 +17,13 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/es-console-config: {{ include (print $.Template.BasePath "/es-console-configmap.yaml") . | sha256sum }}
+        checksum/es-console-config: {{ include (print $.Template.BasePath "/frontend-configmap.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/name: {{ template "name" . }}
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/component: es-console
+        app.kubernetes.io/component: console-frontend
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         run: es-console
     spec:
@@ -57,13 +64,13 @@ spec:
       volumes:
       - name: nginx-config
         configMap:
-          name: es-console
+          name: console-frontend
           items:
           - key: default.conf
             path: default.conf
       - name: ui-config
         configMap:
-          name: es-console
+          name: console-frontend
           items:
           - key: config.js
             path: config.js
