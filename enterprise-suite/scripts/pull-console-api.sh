@@ -21,10 +21,14 @@ file=$2
 repo=https://raw.githubusercontent.com/lightbend/console-api
 
 # GITHUB_TOKEN must be defined
-if [ -z "$GITHUB_TOKEN" ]
-then
-    echo "Env variable GITHUB_TOKEN is empty; cannot fetch from private repo!"
-    exit 1
+if [ -z "${GITHUB_TOKEN:-}" ]; then
+    if [ -f "$HOME/.config/hub" ]; then
+        GITHUB_TOKEN=$(yq r $HOME/.config/hub '[github.com]\[0].oauth_token')
+        echo "Found $HOME/.config/hub, will use that for oauth"
+    else
+        echo "Env variable GITHUB_TOKEN is empty; cannot fetch from private repo!"
+        exit 1
+    fi
 fi
 
 function fetch {

@@ -1,7 +1,8 @@
+Found /home/james/.config/hub, will use that for oauth
 {
   "monitors": {
     "_": {
-      "kube_container_restarts": {
+      "kube_container_restarting": {
         "monitorVersion": "1",
         "model": "threshold",
         "parameters": {

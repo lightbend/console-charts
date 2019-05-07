@@ -1,3 +1,4 @@
+Found /home/james/.config/hub, will use that for oauth
 - record: kube_node_pressure
   expr: avg by (es_workload, condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 

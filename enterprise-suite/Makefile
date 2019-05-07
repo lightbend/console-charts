@@ -85,8 +85,8 @@ lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
 
 .PHONY: check-default-monitors-sync
 check-default-monitors-sync:
-	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/default-monitors.json | diff $(CHART_DIR)/console-api/default-monitors.json -
-	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/static-rules.yml | diff $(CHART_DIR)/console-api/static-rules.yml -
+	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/default-monitors.json | diff -u $(CHART_DIR)/console-api/default-monitors.json -
+	$(CHART_DIR)/scripts/pull-console-api.sh $(CONSOLE_API_VERSION) monitors/static-rules.yml | diff -u $(CHART_DIR)/console-api/static-rules.yml -
 
 .PHONY: sync-default-monitors
 sync-default-monitors:
