@@ -115,7 +115,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_scrape_time"),
 	)
 
-	FIt("has the expected labels", func() {
+	It("has the expected labels", func() {
 		// PromData with "es_workload" should also have a "namespace" label
 		Expect(prom.HasNoData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(Succeed())
 		// Health should have "es_workload" label, with a few known exceptions
