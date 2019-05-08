@@ -136,7 +136,7 @@ var _ = Describe("all:alertmanager", func() {
 
 	Context("alerting", func() {
 		setupAlert := func(name string) {
-			err := console.MakeAlertingMonitor("es-alert-test/"+name, "up", 3)
+			err := console.MakeAlertingMonitor("es-alert-test/"+name)
 			Expect(err).ToNot(HaveOccurred())
 			err = util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasModel(name)
@@ -186,12 +186,13 @@ var _ = Describe("all:alertmanager", func() {
 			Expect(err).ToNot(HaveOccurred())
 			found := false
 			for _, alert := range alerts {
+				fmt.Fprintf(GinkgoWriter, "%v\n", alert)
 				if strings.HasPrefix(alert.GeneratorURL, "http://console.test.bogus:30080") {
 					found = true
 					break
 				}
 			}
-			Expect(found).To(Equal(true))
+			Expect(found).To(Equal(true), "expected alerts to have generator URL, but did not")
 
 			deleteAlert(name)
 		})

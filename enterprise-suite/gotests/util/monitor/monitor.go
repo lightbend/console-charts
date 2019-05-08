@@ -12,9 +12,9 @@ type Connection struct {
 	url string
 }
 
-// MakeMonitor creates a new threshold monitor with given values.
+// MakeThresholdMonitor creates a new threshold monitor with given values.
 // Confidence is a string because console-api accepts only certain values - 5e-324, 0.25, 0.5, 0.75, 0.95 and 1.
-func (m *Connection) MakeMonitor(name string, metric string, window string, confidence string, threshold float32) error {
+func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comparator, threshold string) error {
 	url := fmt.Sprintf("%v/monitors/%v", m.url, name)
 
 	json := fmt.Sprintf(`
@@ -22,19 +22,19 @@ func (m *Connection) MakeMonitor(name string, metric string, window string, conf
 		"monitorVersion": "1",
 		"model": "threshold",
 		"parameters": {
-		  "metric": "%v",
-		  "window": "%v",
-		  "confidence": "%v",
+		  "metric": "%s",
+		  "window": "%s",
+		  "confidence": "%s",
 		  "severity": {
 				"warning": {
-					"comparator": "!=",
-					"threshold": "%v"
+					"comparator": "%s",
+					"threshold": "%s"
 				}
 		  },
 		  "summary": "summ",
 		  "description": "desc"
 		}
-	}`, metric, window, confidence, threshold)
+	}`, metric, window, confidence, comparator, threshold)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(json))
 	if err != nil {
@@ -49,14 +49,14 @@ func (m *Connection) MakeMonitor(name string, metric string, window string, conf
 	return makeRequest(req)
 }
 
-// MakeSimpleMonitor creates a threshold monitor with non-configurable parameters.
+// MakeSimpleMonitor creates a simple threshold monitor.
 func (m *Connection) MakeSimpleMonitor(name string, metric string) error {
-	return m.MakeMonitor(name, metric, "5m", "1", 3.0)
+	return m.MakeThresholdMonitor(name, metric, "5m", "1", ">", "9999")
 }
 
-// MakeAlertingMonitor creates a threshold monitor with low confidence
-func (m *Connection) MakeAlertingMonitor(name string, metric string, threshold float32) error {
-	return m.MakeMonitor(name, metric, "1m", "5e-324", threshold)
+// MakeAlertingMonitor creates a monitor which is always alerting.
+func (m *Connection) MakeAlertingMonitor(name string) error {
+	return m.MakeThresholdMonitor(name, "up", "1m", "5e-324", "!=", "-1")
 }
 
 func (m *Connection) DeleteMonitor(name string) error {
