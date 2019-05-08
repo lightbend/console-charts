@@ -1,6 +1,7 @@
 package alertmanager
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -24,6 +25,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func TestAlertmanager(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Alertmanager Suite")
+}
+
 var (
 	prom    *prometheus.Connection
 	console *monitor.Connection
@@ -38,11 +44,6 @@ var (
 	appYaml    = "../../resources/alert-app.yaml"
 	appName    = "es-alert-test"
 )
-
-func TestAlertmanager(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Alertmanager Suite")
-}
 
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
@@ -136,8 +137,8 @@ var _ = Describe("all:alertmanager", func() {
 
 	Context("alerting", func() {
 		setupAlert := func(name string) {
-			err := console.MakeAlertingMonitor("es-alert-test/"+name)
-			Expect(err).ToNot(HaveOccurred())
+			err := console.MakeAlertingMonitor("es-alert-test/" + name)
+			Expect(err).ToNot(HaveOccurred(), "should have created monitor")
 			err = util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasModel(name)
 			})
@@ -146,25 +147,37 @@ var _ = Describe("all:alertmanager", func() {
 
 		deleteAlert := func(name string) {
 			err := console.DeleteMonitor("es-alert-test/" + name)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred(), "should have deleted monitor")
 		}
 
 		It("is firing in alertmanager", func() {
-			name := "alert_monitor_alertm"
+			name := "alert_monitor_alert"
 			setupAlert(name)
 
 			// Look for alert from our monitor using alertmanager api
-			alerts, err := alertm.Alerts()
-			Expect(err).ToNot(HaveOccurred())
-			var alertNames []string
-			for _, alert := range alerts {
-				if val, ok := alert.Labels["alertname"]; ok {
-					alertNames = append(alertNames, val)
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				alerts, err := alertm.Alerts()
+				Expect(err).ToNot(HaveOccurred())
+				var alertNames []string
+				var found bool
+				for _, alert := range alerts {
+					if val, ok := alert.Labels["alertname"]; ok {
+						alertNames = append(alertNames, val)
+						if val == name {
+							found = true
+							break
+						}
+					}
 				}
-			}
-			Expect(alertNames).To(ContainElement(name))
+				if !found {
+					return fmt.Errorf("could not find alert %s in %s", name, alertNames)
+				}
 
-			deleteAlert(name)
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			//deleteAlert(name)
 		})
 
 		It("is firing in prometheus", func() {
@@ -172,27 +185,37 @@ var _ = Describe("all:alertmanager", func() {
 			setupAlert(name)
 
 			// Look for alert from our monitor using prometheus query
-			err := prom.HasData(fmt.Sprintf(`ALERTS{alertname="%v",alertstate="firing",severity="warning"}`, name))
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				return prom.HasData(fmt.Sprintf(`ALERTS{alertname="%v",alertstate="firing",severity="warning"}`, name))
+			})
 			Expect(err).ToNot(HaveOccurred())
 
-			deleteAlert(name)
+			//deleteAlert(name)
 		})
 
 		It("has correct generator URL", func() {
 			name := "alert_monitor_generator_url"
 			setupAlert(name)
 
-			alerts, err := alertm.Alerts()
-			Expect(err).ToNot(HaveOccurred())
-			found := false
-			for _, alert := range alerts {
-				fmt.Fprintf(GinkgoWriter, "%v\n", alert)
-				if strings.HasPrefix(alert.GeneratorURL, "http://console.test.bogus:30080") {
-					found = true
-					break
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				alerts, err := alertm.Alerts()
+				if err != nil {
+					return err
 				}
-			}
-			Expect(found).To(Equal(true), "expected alerts to have generator URL, but did not")
+				found := false
+				for _, alert := range alerts {
+					fmt.Fprintf(GinkgoWriter, "%v\n", alert)
+					if strings.HasPrefix(alert.GeneratorURL, "http://console.test.bogus:30080") {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return errors.New("expected alerts to have generator URL, but did not")
+				}
+				return nil
+			})
+			Expect(err).ToNot(HaveOccurred())
 
 			deleteAlert(name)
 		})

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/onsi/ginkgo"
 )
 
 // Connection to console-api server
@@ -25,6 +27,7 @@ func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comp
 		  "metric": "%s",
 		  "window": "%s",
 		  "confidence": "%s",
+		  "warmup": "1s",
 		  "severity": {
 				"warning": {
 					"comparator": "%s",
@@ -56,6 +59,10 @@ func (m *Connection) MakeSimpleMonitor(name string, metric string) error {
 
 // MakeAlertingMonitor creates a monitor which is always alerting.
 func (m *Connection) MakeAlertingMonitor(name string) error {
+	if err := m.DeleteMonitor(name); err != nil {
+		// Delete monitor in case it exists
+		// ignore any error
+	}
 	return m.MakeThresholdMonitor(name, "up", "1m", "5e-324", "!=", "-1")
 }
 
@@ -92,7 +99,8 @@ func makeRequest(req *http.Request) error {
 		return err
 	}
 	defer resp.Body.Close()
-	ioutil.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Fprintf(ginkgo.GinkgoWriter, "response: %s\n", string(body))
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("console-api replied with status code %v", resp.StatusCode)
