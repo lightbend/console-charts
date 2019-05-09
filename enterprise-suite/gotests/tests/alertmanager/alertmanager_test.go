@@ -138,16 +138,23 @@ var _ = Describe("all:alertmanager", func() {
 	})
 
 	Context("warmup period", func() {
+		const name = "my-warmingup-monitor"
+
 		BeforeEach(func() {
 			Expect(lbc.Install([]string{}, []string{"--set defaultMonitorWarmup=10m"})).To(Succeed(), "install with PVs")
+			// delete in case it is lingering
+			console.DeleteMonitor("es-alert-test/" + name)
+			Expect(console.MakeAlertingMonitor("es-alert-test/" + name)).To(Succeed(), "should have created monitor")
+		})
+
+		AfterEach(func() {
+			Expect(console.DeleteMonitor("es-alert-test/" + name)).To(Succeed())
 		})
 
 		It("should not generate data during the warmup period", func() {
 			name := "my-warmingup-monitor"
-			err := console.MakeAlertingMonitor("es-alert-test/" + name)
-			Expect(err).ToNot(HaveOccurred(), "should have created monitor")
 			time.Sleep(5*time.Second)
-			err = prom.HasNoData(fmt.Sprintf("model{name=\"%v\"}", name))
+			err := prom.HasNoData(fmt.Sprintf("model{name=\"%v\"}", name))
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
