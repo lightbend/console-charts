@@ -163,8 +163,6 @@ var _ = Describe("all:prometheus", func() {
 		Metric("kube_workload_generation_lag"),
 	)
 
-	// TODO: Check kube-state-metrics logs
-
 	Context("k8s service discovery", func() {
 		It("can discover a pod", func() {
 			appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)

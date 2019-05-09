@@ -3,8 +3,10 @@ package alertmanager
 import (
 	"errors"
 	"fmt"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"strings"
 	"testing"
+	"time"
 
 	"k8s.io/client-go/kubernetes/typed/apps/v1"
 
@@ -131,6 +133,21 @@ var _ = Describe("all:alertmanager", func() {
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, args.ConsoleNamespace))
 			})
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
+	Context("warmup period", func() {
+		BeforeEach(func() {
+			Expect(lbc.Install([]string{}, []string{"--set defaultMonitorWarmup=10m"})).To(Succeed(), "install with PVs")
+		})
+
+		It("should not generate data during the warmup period", func() {
+			name := "my-warmingup-monitor"
+			err := console.MakeAlertingMonitor("es-alert-test/" + name)
+			Expect(err).ToNot(HaveOccurred(), "should have created monitor")
+			time.Sleep(5*time.Second)
+			err = prom.HasNoData(fmt.Sprintf("model{name=\"%v\"}", name))
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

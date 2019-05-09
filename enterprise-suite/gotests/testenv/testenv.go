@@ -66,14 +66,6 @@ func InitEnv() {
 	// For test set-up installation, ignore any PVC warnings by setting --delete-pvcs.
 	lbcArgs := []string{"--delete-pvcs"}
 
-	// Always enable persistent volumes to improve our test coverage with this important configuration.
-	// This should work in all known standard clusters (except for Minishift, which doesn't provide a default StorageClass).
-	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080", "--set usePersistentVolumes=true",
-		"--set defaultMonitorWarmup=1s"}
-	if isMinikube {
-		helmArgs = append(helmArgs, "--set exposeServices=NodePort")
-	}
-
 	// Create an async goroutine to report when install is taking a while.
 	ticker := time.NewTicker(15 * time.Second)
 	start := time.Now()
@@ -97,7 +89,7 @@ func InitEnv() {
 	defer ticker.Stop()
 
 	// Install console
-	if err := lbc.Install(lbcArgs, helmArgs); err != nil {
+	if err := lbc.Install(lbcArgs, []string{}); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 

@@ -1,6 +1,7 @@
 package lbc
 
 import (
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
 	"strings"
 	"time"
 
@@ -18,6 +19,17 @@ func Install(lbcArgs, helmArgs []string) error {
 		"--set prometheusDomain=console-backend-e2e.io"}
 	cmdArgs = append(cmdArgs, lbcArgs...)
 	cmdArgs = append(cmdArgs, "--", "--wait", "--timeout", "110")
+	// Default values - these can be overridden by passing an additional set into the Install function.
+	cmdArgs = append(cmdArgs,
+		"--set esConsoleURL=http://console.test.bogus:30080",
+		// Always enable persistent volumes to improve our test coverage with this important configuration.
+		// This should work in all known standard clusters (except for Minishift, which doesn't provide a default StorageClass).
+		"--set usePersistentVolumes=true",
+		// Set warmup to 1s so we don't need to wait for get monitor results.
+		"--set defaultMonitorWarmup=1s")
+	if minikube.IsRunning() {
+		cmdArgs = append(cmdArgs, "--set exposeServices=NodePort")
+	}
 	cmdArgs = append(cmdArgs, helmArgs...)
 	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
 	if args.TillerNamespace != "" {
