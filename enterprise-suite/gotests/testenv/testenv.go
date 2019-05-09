@@ -68,7 +68,8 @@ func InitEnv() {
 
 	// Always enable persistent volumes to improve our test coverage with this important configuration.
 	// This should work in all known standard clusters (except for Minishift, which doesn't provide a default StorageClass).
-	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080", "--set usePersistentVolumes=true"}
+	helmArgs := []string{"--set esConsoleURL=http://console.test.bogus:30080", "--set usePersistentVolumes=true",
+		"--set defaultMonitorWarmup=1s"}
 	if isMinikube {
 		helmArgs = append(helmArgs, "--set exposeServices=NodePort")
 	}

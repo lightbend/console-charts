@@ -157,7 +157,7 @@ var _ = Describe("all:prometheus", func() {
 			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
 			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
 		},
-		Metric("kube_container_restarts"),
+		Metric("kube_container_restarting"),
 		Metric("kube_pod_not_ready"),
 		Metric("kube_pod_not_running"),
 		Metric("kube_workload_generation_lag"),
