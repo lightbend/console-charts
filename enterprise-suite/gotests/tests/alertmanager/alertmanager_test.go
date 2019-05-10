@@ -3,10 +3,11 @@ package alertmanager
 import (
 	"errors"
 	"fmt"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 
 	"k8s.io/client-go/kubernetes/typed/apps/v1"
 
@@ -141,10 +142,12 @@ var _ = Describe("all:alertmanager", func() {
 		const name = "my-warmingup-monitor"
 
 		BeforeEach(func() {
-			Expect(lbc.Install([]string{}, []string{"--set defaultMonitorWarmup=10m"})).To(Succeed(), "install with PVs")
+			installer := lbc.DefaultInstaller()
+			installer.MonitorWarmup = "10m"
+			Expect(installer.Install()).To(Succeed(), "install with PVs")
 			// delete in case it is lingering
-			console.DeleteMonitor("es-alert-test/" + name)
-			Expect(console.MakeAlertingMonitor("es-alert-test/" + name)).To(Succeed(), "should have created monitor")
+			console.TryDeleteMonitor("es-alert-test/" + name)
+			Expect(console.MakeAlertingMonitor("es-alert-test/"+name)).To(Succeed(), "should have created monitor")
 		})
 
 		AfterEach(func() {
@@ -153,7 +156,7 @@ var _ = Describe("all:alertmanager", func() {
 
 		It("should not generate data during the warmup period", func() {
 			name := "my-warmingup-monitor"
-			time.Sleep(5*time.Second)
+			time.Sleep(5 * time.Second)
 			err := prom.HasNoData(fmt.Sprintf("model{name=\"%v\"}", name))
 			Expect(err).ToNot(HaveOccurred())
 		})

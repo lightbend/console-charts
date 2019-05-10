@@ -63,9 +63,6 @@ func InitEnv() {
 		Expect(err).To(Succeed(), "new k8sclient")
 	}
 
-	// For test set-up installation, ignore any PVC warnings by setting --delete-pvcs.
-	lbcArgs := []string{"--delete-pvcs"}
-
 	// Create an async goroutine to report when install is taking a while.
 	ticker := time.NewTicker(15 * time.Second)
 	start := time.Now()
@@ -89,7 +86,7 @@ func InitEnv() {
 	defer ticker.Stop()
 
 	// Install console
-	if err := lbc.Install(lbcArgs, []string{}); err != nil {
+	if err := lbc.DefaultInstaller().Install(); err != nil {
 		Expect(err).To(Succeed(), "lbc.Install")
 	}
 

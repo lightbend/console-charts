@@ -66,6 +66,12 @@ func (m *Connection) MakeAlertingMonitor(name string) error {
 	return m.MakeThresholdMonitor(name, "up", "1m", "5e-324", "!=", "-1")
 }
 
+func (m *Connection) TryDeleteMonitor(name string) {
+	if err := m.DeleteMonitor(name); err != nil {
+		// ignore error
+	}
+}
+
 func (m *Connection) DeleteMonitor(name string) error {
 	url := fmt.Sprintf("%v/monitors/%v", m.url, name)
 
