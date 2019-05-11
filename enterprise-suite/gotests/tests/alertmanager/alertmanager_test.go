@@ -204,7 +204,7 @@ var _ = Describe("all:alertmanager", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			//deleteAlert(name)
+			deleteAlert(name)
 		})
 
 		It("is firing in prometheus", func() {
@@ -217,7 +217,7 @@ var _ = Describe("all:alertmanager", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			//deleteAlert(name)
+			deleteAlert(name)
 		})
 
 		It("has correct generator URL", func() {
