@@ -26,10 +26,11 @@ echo "19d29910fd0e51765d47b59b9276df016441ad4c6c48e3b27e5aa9acb5d1da26 $prom_fil
 tar xzvf ${prom_file}
 sudo cp prometheus-${prom_version}.linux-amd64/promtool /usr/local/bin/
 
-# install helm
-helm_file="helm-v2.13.1-linux-amd64.tar.gz"
+# Install helm.
+# Keep this at 2.10.0 so we can test that console will install with older versions.
+helm_file="helm-v2.10.0-linux-amd64.tar.gz"
 curl -LO https://storage.googleapis.com/kubernetes-helm/${helm_file}
-echo "c1967c1dfcd6c921694b80ededdb9bd1beb27cb076864e58957b1568bc98925a ${helm_file}" | sha256sum --check
+echo "0fa2ed4983b1e4a3f90f776d08b88b0c73fd83f305b5b634175cb15e61342ffe ${helm_file}" | sha256sum --check
 tar xzvf ${helm_file}
 sudo cp linux-amd64/helm /usr/local/bin/
 helm init -c
