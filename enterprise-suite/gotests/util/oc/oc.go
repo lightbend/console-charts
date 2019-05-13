@@ -54,7 +54,7 @@ func Expose(service string) error {
 		return nil
 	}
 
-	if err := util.Cmd("oc", "create", "route", "edge", "--service=" + service).Run(); err != nil {
+	if err := util.Cmd("oc", "create", "route", "edge", "--service="+service).Run(); err != nil {
 		return err
 	}
 	return nil
