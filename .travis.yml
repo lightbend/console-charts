@@ -188,7 +188,7 @@ jobs:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - travis_retry scripts/setup-openshift.sh ${OC_DEMO_TOKEN2}
-    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set defaultStorageClass=gp2
+    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set usePersistentStorage=yes
 
 branches:
   only:
