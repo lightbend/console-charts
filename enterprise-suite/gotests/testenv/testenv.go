@@ -121,7 +121,7 @@ func InitEnv() {
 			panic(fmt.Sprintf("unable to get openshift address: %v", err))
 		}
 
-		ConsoleAddr = fmt.Sprintf("http://%v", addr)
+		ConsoleAddr = fmt.Sprintf("https://%v", addr)
 	}
 
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
