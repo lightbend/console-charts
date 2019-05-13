@@ -57,17 +57,16 @@ var _ = BeforeSuite(func() {
 	esMonitor, err = monitor.NewConnection(testenv.ConsoleAPIAddr)
 	Expect(err).To(Succeed())
 
-	waitForScrapes := func(metric string) {
-		err = util.WaitUntilSuccess(util.LongWait, func() error {
+	waitForScrapes := func(metric string) error {
+		return util.WaitUntilSuccess(util.LongWait, func() error {
 			return prom.HasNScrapes(metric, 3)
 		})
-		Expect(err).To(Succeed())
 	}
 
 	// wait until there's some scrapes finished
-	waitForScrapes("prometheus_notifications_dropped_rate")
-	waitForScrapes("health{name=\"prometheus_notifications_dropped\"}")
-	waitForScrapes("kube_pod_info")
+	Expect(waitForScrapes("prometheus_notifications_dropped_rate")).To(Succeed())
+	Expect(waitForScrapes("model{name=\"prometheus_notifications_dropped\"}")).To(Succeed())
+	Expect(waitForScrapes("kube_pod_info")).To(Succeed())
 })
 
 var _ = AfterSuite(func() {

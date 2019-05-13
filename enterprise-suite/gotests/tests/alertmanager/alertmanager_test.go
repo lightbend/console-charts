@@ -3,11 +3,9 @@ package alertmanager
 import (
 	"errors"
 	"fmt"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 
 	"k8s.io/client-go/kubernetes/typed/apps/v1"
 
@@ -132,7 +130,7 @@ var _ = Describe("all:alertmanager", func() {
 	Context("es-alert-test app", func() {
 		It("has visible metrics", func() {
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasData(fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, args.ConsoleNamespace))
+				return prom.HasData(`count( count by (instance) (ohai{es_workload="es-alert-test", namespace="%v"}) ) == 1`, args.ConsoleNamespace)
 			})
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -156,9 +154,14 @@ var _ = Describe("all:alertmanager", func() {
 
 		It("should not generate data during the warmup period", func() {
 			name := "my-warmingup-monitor"
-			time.Sleep(5 * time.Second)
-			err := prom.HasNoData(fmt.Sprintf("model{name=\"%v\"}", name))
-			Expect(err).ToNot(HaveOccurred())
+
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				return prom.HasData(`model{name="%s"}`, name)
+			})
+			Expect(err).ToNot(HaveOccurred(), "should have gotten model data for %s", name)
+
+			err = prom.HasNoData(`health{name="%s"}`, name)
+			Expect(err).ToNot(HaveOccurred(), "should not have gotten health data for %s", name)
 		})
 	})
 
