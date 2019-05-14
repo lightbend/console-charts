@@ -130,13 +130,11 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasNoData("{__name__=~\"container_.+\", es_workload=\"\"}")).To(Succeed())
 		// All targets should be reachable
 		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(Succeed())
-		// jsravn: Exclude misbehaving CP2 node 10.0.78.32 - remove that filter when the node is rebuilt.
-		Expect(prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints", instance != "ip-10-0-78-32.us-east-2.compute.internal"} == 0`)).To(Succeed())
+		Expect(prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 0`)).To(Succeed())
 		// None of the metrics should have kubernetes_namespace label
 		Expect(prom.HasNoData("{kubernetes_namespace!=\"\"}")).To(Succeed())
 		// make sure the number of node_names matches the number of kubelets
-		// jsravn: Exclude misbehaving CP2 node 10.0.78.32 - remove that filter when the node is rebuilt.
-		Expect(prom.HasData(`count (count by (node_name) ({node_name!~"|ip-10-0-78-32.us-east-2.compute.internal", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
+		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
 	})
 
 	DescribeTable("kube state metrics",
