@@ -3,9 +3,10 @@ package alertmanager
 import (
 	"errors"
 	"fmt"
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"strings"
 	"testing"
+
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 
 	"k8s.io/client-go/kubernetes/typed/apps/v1"
 
