@@ -98,6 +98,7 @@ spec:
             - --prometheusTemplate=/etc/console-api-prometheus/prometheus.yml
             - --prometheusDomain={{ .Values.prometheusDomain }}
             - --alertmanagers={{ .Values.alertManagers }}
+            - --defaultMonitorWarmup={{ .Values.consoleAPI.defaultMonitorWarmup }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config

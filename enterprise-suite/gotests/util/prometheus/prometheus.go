@@ -63,12 +63,12 @@ func (p *Connection) Query(query string) (*PromResponse, error) {
 	return nil, fmt.Errorf("prometheus response status %v", resp.StatusCode)
 }
 
-func (p *Connection) HasData(query string) error {
-	return p.checkForData(query, true)
+func (p *Connection) HasData(query string, formatArgs ...interface{}) error {
+	return p.checkForData(fmt.Sprintf(query, formatArgs...), true)
 }
 
-func (p *Connection) HasNoData(query string) error {
-	return p.checkForData(query, false)
+func (p *Connection) HasNoData(query string, formatArgs ...interface{}) error {
+	return p.checkForData(fmt.Sprintf(query, formatArgs...), false)
 }
 
 func (p *Connection) checkForData(query string, expectResults bool) error {

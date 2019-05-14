@@ -50,25 +50,38 @@ var _ = Describe("all:lbc.py", func() {
 
 	Context("upgrades", func() {
 		Context("disable persistent volumes", func() {
+			var installer *lbc.Installer
+
 			BeforeEach(func() {
-				Expect(lbc.Install([]string{}, []string{"--set usePersistentVolumes=true"})).To(Succeed(), "install with PVs")
+				preInstaller := lbc.DefaultInstaller()
+				preInstaller.UsePersistentVolumes = "true"
+				Expect(preInstaller.Install()).To(Succeed(), "install with PVs")
+
 				write(valuesFile, `usePersistentVolumes: false`)
+				installer = lbc.DefaultInstaller()
+				installer.AdditionalHelmArgs = []string{"-f " + valuesFile.Name()}
 			})
 
 			It("should fail if we don't provide --delete-pvcs", func() {
-				Expect(lbc.Install([]string{}, []string{"-f " + valuesFile.Name()})).ToNot(Succeed())
+				installer.UsePersistentVolumes = ""
+				installer.ForceDeletePVCs = false
+				Expect(installer.Install()).ToNot(Succeed())
 			})
 
 			It("should succeed if we provide --delete-pvcs", func() {
-				Expect(lbc.Install([]string{"--delete-pvcs"}, []string{"-f " + valuesFile.Name()})).To(Succeed())
+				installer.UsePersistentVolumes = ""
+				installer.ForceDeletePVCs = true
+				Expect(installer.Install()).To(Succeed())
 			})
 		})
 	})
 
 	Context("arg parsing", func() {
 		It("should fail if conflicting namespaces", func() {
-			Expect(lbc.Install([]string{"--namespace=" + args.ConsoleNamespace},
-				[]string{"--namespace=my-busted-namespace"})).ToNot(Succeed())
+			installer := lbc.DefaultInstaller()
+			installer.AdditionalLBCArgs = []string{"--namespace=" + args.ConsoleNamespace}
+			installer.AdditionalHelmArgs = []string{"--namespace=my-busted-namespace"}
+			Expect(installer.Install()).ToNot(Succeed())
 		})
 	})
 })

@@ -57,17 +57,16 @@ var _ = BeforeSuite(func() {
 	esMonitor, err = monitor.NewConnection(testenv.ConsoleAPIAddr)
 	Expect(err).To(Succeed())
 
-	waitForScrapes := func(metric string) {
-		err = util.WaitUntilSuccess(util.LongWait, func() error {
+	waitForScrapes := func(metric string) error {
+		return util.WaitUntilSuccess(util.LongWait, func() error {
 			return prom.HasNScrapes(metric, 3)
 		})
-		Expect(err).To(Succeed())
 	}
 
 	// wait until there's some scrapes finished
-	waitForScrapes("prometheus_notifications_dropped_rate")
-	waitForScrapes("health{name=\"prometheus_notifications_dropped\"}")
-	waitForScrapes("kube_pod_info")
+	Expect(waitForScrapes("prometheus_notifications_dropped_rate")).To(Succeed())
+	Expect(waitForScrapes("model{name=\"prometheus_notifications_dropped\"}")).To(Succeed())
+	Expect(waitForScrapes("kube_pod_info")).To(Succeed())
 })
 
 var _ = AfterSuite(func() {
@@ -115,7 +114,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_scrape_time"),
 	)
 
-	FIt("has the expected labels", func() {
+	It("has the expected labels", func() {
 		// PromData with "es_workload" should also have a "namespace" label
 		Expect(prom.HasNoData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(Succeed())
 		// Health should have "es_workload" label, with a few known exceptions
@@ -131,13 +130,11 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasNoData("{__name__=~\"container_.+\", es_workload=\"\"}")).To(Succeed())
 		// All targets should be reachable
 		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(Succeed())
-		// jsravn: Exclude misbehaving CP2 node 10.0.78.32 - remove that filter when the node is rebuilt.
-		Expect(prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints", instance != "ip-10-0-78-32.us-east-2.compute.internal"} == 0`)).To(Succeed())
+		Expect(prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 0`)).To(Succeed())
 		// None of the metrics should have kubernetes_namespace label
 		Expect(prom.HasNoData("{kubernetes_namespace!=\"\"}")).To(Succeed())
 		// make sure the number of node_names matches the number of kubelets
-		// jsravn: Exclude misbehaving CP2 node 10.0.78.32 - remove that filter when the node is rebuilt.
-		Expect(prom.HasData(`count (count by (node_name) ({node_name!~"|ip-10-0-78-32.us-east-2.compute.internal", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
+		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
 	})
 
 	DescribeTable("kube state metrics",
@@ -157,13 +154,11 @@ var _ = Describe("all:prometheus", func() {
 			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
 			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
 		},
-		Metric("kube_container_restarts"),
+		Metric("kube_container_restarting"),
 		Metric("kube_pod_not_ready"),
 		Metric("kube_pod_not_running"),
 		Metric("kube_workload_generation_lag"),
 	)
-
-	// TODO: Check kube-state-metrics logs
 
 	Context("k8s service discovery", func() {
 		It("can discover a pod", func() {

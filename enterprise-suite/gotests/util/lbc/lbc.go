@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
+
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
@@ -12,13 +14,44 @@ import (
 const localChartPath = "../../../."
 const lbcPath = "../../../scripts/lbc.py"
 
-func Install(lbcArgs, helmArgs []string) error {
+type Installer struct {
+	UsePersistentVolumes string
+	MonitorWarmup        string
+	ForceDeletePVCs      bool
+	AdditionalLBCArgs    []string
+	AdditionalHelmArgs   []string
+}
+
+func DefaultInstaller() *Installer {
+	return &Installer{
+		UsePersistentVolumes: "true",
+		MonitorWarmup:        "1s",
+		ForceDeletePVCs:      true,
+	}
+}
+
+func (i *Installer) Install() error {
 	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
 		"--namespace", args.ConsoleNamespace,
 		"--set prometheusDomain=console-backend-e2e.io"}
-	cmdArgs = append(cmdArgs, lbcArgs...)
+	if i.ForceDeletePVCs {
+		cmdArgs = append(cmdArgs, "--delete-pvcs")
+	}
+	cmdArgs = append(cmdArgs, i.AdditionalLBCArgs...)
+
 	cmdArgs = append(cmdArgs, "--", "--wait", "--timeout", "110")
-	cmdArgs = append(cmdArgs, helmArgs...)
+	cmdArgs = append(cmdArgs, "--set esConsoleURL=http://console.test.bogus:30080")
+	if minikube.IsRunning() {
+		cmdArgs = append(cmdArgs, "--set exposeServices=NodePort")
+	}
+	if i.UsePersistentVolumes != "" {
+		cmdArgs = append(cmdArgs, "--set usePersistentVolumes="+i.UsePersistentVolumes)
+	}
+	if i.MonitorWarmup != "" {
+		cmdArgs = append(cmdArgs, "--set defaultMonitorWarmup="+i.MonitorWarmup)
+	}
+	cmdArgs = append(cmdArgs, i.AdditionalHelmArgs...)
+
 	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
