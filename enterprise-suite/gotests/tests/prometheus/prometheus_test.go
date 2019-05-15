@@ -154,7 +154,6 @@ var _ = Describe("all:prometheus", func() {
 		},
 		Metric("kube_container_restarting"),
 		Metric("kube_pod_not_ready"),
-		Metric("kube_workload_generation_lag"),
 	)
 
 	Context("k8s service discovery", func() {
