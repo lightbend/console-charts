@@ -11,7 +11,7 @@ describe('Grafana Test', () => {
   it('open grafana url in monitor page', () => {
     // make sure monitor is ready
     Navigation.goWorkloadPageByClick('es-demo');
-    Navigation.clickMonitor('akka_processing_time');
+    Navigation.clickMonitorByName('akka_processing_time');
 
     // start test
     cy.visit('/namespaces/lightbend/workloads/es-demo/monitors/akka_processing_time', {
