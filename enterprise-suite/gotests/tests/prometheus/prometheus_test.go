@@ -152,6 +152,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("kube_pod_ready"),
 		Metric("kube_pod_container_restarts_rate"),
 		Metric("kube_pod_failed"),
+		Metric("workload:health:max"),
 	)
 
 	DescribeTable("kube state health",

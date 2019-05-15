@@ -1,3 +1,7 @@
+#  health aggregation of instances in a workload - used by the UI for showing aggregate workload health bars.
+- record: workload:health:max
+  expr: max by (es_workload, namespace) (health{es_workload != "", namespace != ""})
+
 - record: kube_node_pressure
   expr: avg by (es_workload, condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 
