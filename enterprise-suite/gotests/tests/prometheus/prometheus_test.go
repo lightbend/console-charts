@@ -145,8 +145,6 @@ var _ = Describe("all:prometheus", func() {
 		Metric("kube_pod_ready"),
 		Metric("kube_pod_container_restarts_rate"),
 		Metric("kube_pod_failed"),
-		Metric("kube_pod_not_running"),
-		Metric("kube_workload_generation_lag"),
 	)
 
 	DescribeTable("kube state health",
@@ -156,7 +154,6 @@ var _ = Describe("all:prometheus", func() {
 		},
 		Metric("kube_container_restarting"),
 		Metric("kube_pod_not_ready"),
-		Metric("kube_pod_not_running"),
 		Metric("kube_workload_generation_lag"),
 	)
 
