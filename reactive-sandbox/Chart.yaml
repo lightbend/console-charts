@@ -1,4 +1,0 @@
-apiVersion: v1
-description: A collection of external services required to run Lightbend Reactive Platform applications
-name: reactive-sandbox
-version: 0.2.1
