@@ -1,5 +1,0 @@
-apiVersion: v1
-name: sample-project
-description: Sample Lightbend project for helming
-icon: https://repo.lightbend.com/helm-charts/lightbend.svg
-version: 0.0.1

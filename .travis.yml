@@ -11,16 +11,17 @@ jobs:
   - stage: tests
     name: Windows Unit Tests
     os: windows
+    if: tag is not present
     filter_secrets: false
     install:
     - choco install python2
     script:
     - enterprise-suite/scripts/lbc_test.py
 
-  - stage: tests
-    name: Unit tests
+  - name: Unit tests
     os: linux
     dist: xenial
+    if: tag is not present
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -43,6 +44,7 @@ jobs:
   - name: Backend E2E Go Tests - Openshift
     os: linux
     dist: xenial
+    if: tag is not present
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -60,6 +62,7 @@ jobs:
   - name: Frontend E2E Tests Subset 1 - Minikube
     os: linux
     dist: xenial
+    if: tag is not present
     cache:
       directories:
         - ~/.npm
@@ -96,61 +99,11 @@ jobs:
       - artifacts upload $(find . -name '*.mp4')
       - artifacts upload $(find . -name '*.png')
 
-  - name: Frontend E2E Tests Subset 1 - Minikube Latest
-    os: linux
-    dist: xenial
-    # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron)
-    cache:
-      directories:
-        - ~/.npm
-        - ~/.cache
-    node_js: 9.4.0
-    install:
-    - travis_retry scripts/setup-tools-for-ubuntu.sh
-    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
-    script:
-    - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite-latest frontend-tests1
-    after_script:
-      # Cypress videos.
-      - artifacts upload $(find . -name '*.mp4')
-      - artifacts upload $(find . -name '*.png')
-
-  - name: Frontend E2E Tests Subset 2 - Minikube Latest (Skip due to flaky)
-    os: linux
-    dist: xenial
-    # Only build latest in the daily cron - don't block PRs or master releases.
-    if: type in (cron) AND true = false # skip test due to flaky
-    cache:
-      directories:
-        - ~/.npm
-        - ~/.cache
-    node_js: 9.4.0
-    install:
-    - travis_retry scripts/setup-tools-for-ubuntu.sh
-    - travis_retry $(curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash)
-    script:
-    - travis_retry scripts/setup-minikube-for-linux.sh
-    - make -C enterprise-suite-latest frontend-tests2
-    after_script:
-      # Cypress videos.
-      - artifacts upload $(find . -name '*.mp4')
-      - artifacts upload $(find . -name '*.png')
-
-  - name: Reactive-sandbox test
-    os: linux
-    dist: xenial
-    install:
-    - travis_retry scripts/setup-tools-for-ubuntu.sh
-    script:
-    - make test CHARTS=reactive-sandbox
-
   - name: Console Whitesource Report
     os: linux
     dist: xenial
     # Only deploy for pushes to master (and if manually invoked)
-    if: type IN (push, api)
+    if: type IN (push, api) AND tag is not present
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -163,14 +116,15 @@ jobs:
   - stage: Deploy
     os: linux
     dist: xenial
-    name: Deploy to GCS
-    # Only deploy on tags
+    name: Publish Chart to GCS
+    # Only publish on tags
     if: type IN (push, api) AND tag is present
     install:
     # travisqueue.go ensures only a single deploy happens at a time
     - go run travisqueue.go
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
+    - make -C enterprise-suite package || travis-terminate 1
     # Decrypt credentials for GCS system account helmchart@es-repo.iam.gserviceaccount.com
     - mkdir -p /tmp/resources || travis_terminate 1
     - openssl aes-256-cbc -K $encrypted_f01ffbb90c44_key -iv $encrypted_f01ffbb90c44_iv -in resources/es-repo-7c1fefe17951.json.enc -out /tmp/resources/es-repo-7c1fefe17951.json -d || travis_terminate 1
@@ -187,6 +141,7 @@ jobs:
     - go run travisqueue.go
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
+    - make -C enterprise-suite package || travis-terminate 1
     - travis_retry scripts/setup-openshift.sh ${OC_DEMO_TOKEN2}
     - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=enterprise-suite --set usePersistentStorage=yes
 
@@ -198,11 +153,3 @@ branches:
 
 notifications:
   email: false
-  slack:
-    rooms:
-      secure: AHDrkFweHIHLOY5VFaxgfLQKlARY5b8wM/jN3XGoEzvpECQgFrgUN/KNGUmYDlWJkmxuzr4lNpVKZe6gUgYUBwGbOO7uhLjpcoPJSYj9T2dj1Dddh9hEReDlgP/VCyPKQoPSX/8/ZJF1yq1vSAXC9es1ek4dyJAcEyWmH5uYYM2jslxNm6J64XFAwZKSo2gU98jEMvbGFfjbfdlDIRQJlKmMTpJMxvWJLHZFmLMAXgK2SB3htrS4lasOh775vEqMc4fS/Cmecb/KsVnDcYHUCYT2SZpNzkde8uCTPgB5XdZZf3F7zo1HK7+3a7eygIbWtGTDk9AUisODZLAjPTRDRVDyjSt7pNKbDhipGrYvWgt397WbvlXiDZ8TeOkWJdTf2E7RM5odtJL5ZF0XklnqOQMu2b/ZXlMq4vZTYAbsof5+Nw3Fw00iqCBEUd9J9nvaoQX/86cySWfU1N/NlptIG5hY4ro3tsrvSuIkmyBM6XN3GUFp8OexeNcCtaW40XO0qnzpbYv4be7Be6yG6fPhewO+5pOIM4mL8V+ryORAzK29MIU0L+9/gChmTxZ4YmUbksYYp1ifUlAmSnJAZcMXIy2DhqrWs9pszLKeGC4dzOxmNNzWGYnL1l2X137wRC0mfKK84Bxs1RiaToxWUQO88FXffI8c8xF7m/+Zir6vMq8=
-    on_success: change
-    on_failure: always
-    on_pull_requests: false
-    template:
-    - "Build <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) of %{repository_slug}@%{branch} by %{author} %{result} in %{elapsed_time}"
