@@ -41,7 +41,7 @@ describe('History Log Test', () => {
     // go to monitor page and check history
     Util.validateUrlPath('/namespaces/lightbend/workloads/console-frontend');
     Util.validateMonitorCountGte(3);
-    Navigation.clickMonitorByName(monitorName);
+    Navigation.clickMonitorByName(monitorName); // this looks for id="name" etc.
     Util.validateUrlPath(`/namespaces/lightbend/workloads/console-frontend/monitors/${monitorName}`);
 
     History.validateCreatedIsIndex(1);
