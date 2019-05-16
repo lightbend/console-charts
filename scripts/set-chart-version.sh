@@ -4,9 +4,12 @@ set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 . $script_dir/lib.sh
 
+chart=$1
+version=$2
+
 # script
-rel_dir=$( dirname $script_dir )
-chart_dir=$rel_dir/$1
+rel_dir=$( dirname ${script_dir} )
+chart_dir=${rel_dir}/${chart}
 
 cd $chart_dir
-yq r Chart.yaml version
+yq w -i Chart.yaml version ${version}
