@@ -19,7 +19,7 @@ export class Navigation {
     }
 
     static clickMonitorByName(monId: string) {
-        cy.get(`.monitor-list .monitor-name[monitorname="${monId}"]`, {timeout: 12000}).click();
+        cy.get(`.monitor-list .monitor-name[id="${monId}"]`, {timeout: 12000}).click();
     }
 
     static goMonitorPage(namespace: string, workloadId: string, monitorId: string) {
