@@ -14,8 +14,10 @@
               "threshold": "0"
             }
           },
-          "summary": "container restarting rapidly",
-          "description": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly"
+          "alertSummary": "container restarting rapidly",
+          "alertDescription": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly",
+          "monitorDescription": "Detects if a container in a pod is continously restarting. Only triggers for containers that start running. Can be due to getting OOM killed by OS or due to a bug that causes a crash shortly after starting.",
+          "metricUnits": "restarts/s"
         }
       },
       "kube_pod_not_ready": {
@@ -31,59 +33,10 @@
               "threshold": "1"
             }
           },
-          "summary": "pod not ready",
-          "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready"
-        }
-      },
-      "kube_pod_not_running": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "kube_pod_not_running",
-          "window": "5m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "comparator": ">",
-              "threshold": "0"
-            }
-          },
-          "summary": "pod not running",
-          "description": "pod {{$labels.pod}} on {{$labels.es_workload}} not running"
-        }
-      },
-      "kube_workload_generation_lag": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "kube_workload_generation_lag",
-          "window": "5m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "comparator": ">",
-              "threshold": "0"
-            }
-          },
-          "summary": "workload not updating",
-          "description": "workload {{$labels.es_workload}} has not updated for 10 minutes"
-        }
-      },
-      "kafka_consumergroup_lag": {
-        "monitorVersion": "1",
-        "model": "growth",
-        "parameters": {
-          "metric": "kafka_consumergroup_lag",
-          "period": "5m",
-          "minslope": "1",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "window": "5m"
-            }
-          },
-          "summary": "consumergroup falling behind",
-          "description": "{{$labels.consumergroup}} is falling behind"
+          "alertSummary": "pod not ready",
+          "alertDescription": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready",
+          "monitorDescription": "Detects when a pod does not reach readiness state.",
+          "metricUnits": "boolean"
         }
       },
       "scrape_time": {
@@ -100,8 +53,8 @@
               "numsigma": "3"
             }
           },
-          "summary": "scrape time anomalous",
-          "description": "{{$labels.instance}} has anomalous scrape_duration_seconds"
+          "alertSummary": "scrape time anomalous",
+          "alertDescription": "{{$labels.instance}} has anomalous scrape_duration_seconds"
         }
       },
       "lightbend_monitor_api_errors": {
@@ -117,8 +70,8 @@
               "threshold": "0"
             }
           },
-          "summary": "lightbend console monitor errors",
-          "description": "Lightbend console api on {{$labels.instance}} has monitor errors"
+          "alertSummary": "lightbend console monitor errors",
+          "alertDescription": "Lightbend console api on {{$labels.instance}} has monitor errors"
         }
       },
 
@@ -138,8 +91,8 @@
               "window": "5m"
             }
           },
-          "summary": "actor inbox growing",
-          "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
+          "alertSummary": "actor inbox growing",
+          "alertDescription": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
         }
       },
       "akka_processing_time": {
@@ -159,8 +112,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "actor processing time is anomalous",
-          "description": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
+          "alertSummary": "actor processing time is anomalous",
+          "alertDescription": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
         }
       },
       "prometheus_notifications_dropped": {
@@ -176,8 +129,8 @@
               "threshold": "0"
             }
           },
-          "summary": "Prometheus dropping notifications",
-          "description": "Prometheus dropping alerts sent to Alertmanager"
+          "alertSummary": "Prometheus dropping notifications",
+          "alertDescription": "Prometheus dropping alerts sent to Alertmanager"
         }
       },
       "prometheus_notification_queue": {
@@ -193,8 +146,8 @@
               "threshold": "50"
             }
           },
-          "summary": "Prometheus alert queue filling",
-          "description": "Prometheus alert queue is staying over 50% full"
+          "alertSummary": "Prometheus alert queue filling",
+          "alertDescription": "Prometheus alert queue is staying over 50% full"
         }
       },
       "prometheus_rule_evaluation_failures": {
@@ -210,8 +163,8 @@
               "threshold": "0"
             }
           },
-          "summary": "Prometheus rule failures",
-          "description": "Prometheus has {{$value}} rules failing"
+          "alertSummary": "Prometheus rule failures",
+          "alertDescription": "Prometheus has {{$value}} rules failing"
         }
       },
       "prometheus_target_too_many_metrics": {
@@ -227,8 +180,8 @@
               "threshold": "0"
             }
           },
-          "summary": "Prometheus target over limit",
-          "description": "Prometheus target at {{$labels.instance}} has too many metrics"
+          "alertSummary": "Prometheus target over limit",
+          "alertDescription": "Prometheus target at {{$labels.instance}} has too many metrics"
         }
       },
       "prometheus_tsdb_reloads_failures": {
@@ -244,8 +197,8 @@
               "threshold": "1"
             }
           },
-          "summary": "Prometheus tsdb reload failing",
-          "description": "Prometheus had {{$value}} reload failures"
+          "alertSummary": "Prometheus tsdb reload failing",
+          "alertDescription": "Prometheus had {{$value}} reload failures"
         }
       },
       "prometheus_target_down": {
@@ -261,8 +214,8 @@
               "threshold": "1"
             }
           },
-          "summary": "metrics target down",
-          "description": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data"
+          "alertSummary": "metrics target down",
+          "alertDescription": "cannot connect to {{$labels.instance}} metrics endpoint for {{$labels.job}} data"
         }
       },
       "prometheus_config_reload_failed": {
@@ -278,8 +231,8 @@
               "threshold": "1"
             }
           },
-          "summary": "prometheus bad config",
-          "description": "current config for prometheus has errors, will prevent restarts"
+          "alertSummary": "prometheus bad config",
+          "alertDescription": "current config for prometheus has errors, will prevent restarts"
         }
       },
       "prometheus_scrape_time": {
@@ -295,8 +248,8 @@
               "threshold": "75"
             }
           },
-          "summary": "prometheus has long scrape times",
-          "description": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}"
+          "alertSummary": "prometheus has long scrape times",
+          "alertDescription": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}"
         }
       },
       "zookeeper_latency": {
@@ -313,8 +266,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "Zookeeper Latency",
-          "description": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}"
+          "alertSummary": "Zookeeper Latency",
+          "alertDescription": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}"
         }
       },
       "zookeeper_connections": {
@@ -331,8 +284,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "Zookeeper live connections is not normal",
-          "description": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
+          "alertSummary": "Zookeeper live connections is not normal",
+          "alertDescription": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
         }
       },
       "zookeeper_pending_syncs": {
@@ -348,8 +301,8 @@
               "threshold": "0"
             }
           },
-          "summary": "Zookeeper pending-syncs is not normal",
-          "description": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0."
+          "alertSummary": "Zookeeper pending-syncs is not normal",
+          "alertDescription": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0."
         }
       },
       "zookeeper_open_file_descriptor": {
@@ -366,44 +319,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "Zookeeper open file descriptor growth",
-          "description": "Zookeeper open file descriptors in {{$labels.es_workload}} is not normal in {{$labels.instance}}"
-        }
-      },
-      "cassandra_write_latency": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "cassandra_clientrequest_write_latency",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "0.5",
-          "severity": {
-            "critical": {
-              "numsigma": "2"
-            }
-          },
-          "summary": "Cassandra Write Latency",
-          "description": "Cassandra write latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}"
-        }
-      },
-      "cassandra_read_latency": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "cassandra_clientrequest_read_latency",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "0.5",
-          "severity": {
-            "critical": {
-              "numsigma": "2"
-            }
-          },
-          "summary": "Cassandra Read Latency",
-          "description": "Cassandra read latency is not normal on {{$labels.es_workload}} in {{$labels.instance}}"
+          "alertSummary": "Zookeeper open file descriptor growth",
+          "alertDescription": "Zookeeper open file descriptors in {{$labels.es_workload}} is not normal in {{$labels.instance}}"
         }
       },
       "redis_keyspace_miss": {
@@ -420,8 +337,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "Redis key space miss ratio growth",
-          "description": "Observing shifts in Redis key space ratio on {{$labels.es_workload}} in {{$labels.instance}}"
+          "alertSummary": "Redis key space miss ratio growth",
+          "alertDescription": "Observing shifts in Redis key space ratio on {{$labels.es_workload}} in {{$labels.instance}}"
         }
       },
       "redis_evictions": {
@@ -438,8 +355,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "Redis evictions growing",
-          "description": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}"
+          "alertSummary": "Redis evictions growing",
+          "alertDescription": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}"
         }
       },
       "redis_commands_processed": {
@@ -456,8 +373,8 @@
               "numsigma": "3"
             }
           },
-          "summary": "Redis command processed",
-          "description": "Redis commands processed on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
+          "alertSummary": "Redis command processed",
+          "alertDescription": "Redis commands processed on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
         }
       },
       "redis_connections": {
@@ -474,114 +391,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "Redis client connections is not normal",
-          "description": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
-        }
-      },
-      "kafka_incoming_messages": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "kafka_incoming_messages_rate",
-          "period": "10m",
-          "minval": "10",
-          "window": "10m",
-          "confidence": "1",
-          "severity": {
-            "critical": {
-              "numsigma": "2"
-            }
-          },
-          "summary": "Kafka incoming message rate is not normal",
-          "description": "Kafka incoming message rate on {{$labels.es_workload}} is not normal for topic {{$labels.topic}}"
-        }
-      },
-      "kafka_offline_partition": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "kafka_controller_kafkacontroller_offlinepartitionscount",
-          "window": "5m",
-          "confidence": "1",
-          "severity": {
-            "critical": {
-              "comparator": ">",
-              "threshold": "0"
-            }
-          },
-          "summary": "Kafka offline partition is not zero",
-          "description": "Kafka offline partition is high on {{$labels.es_workload}} in {{$labels.instance}}"
-        }
-      },
-      "kafka_under_replicated_partitions": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "kafka_server_replicamanager_underreplicatedpartitions",
-          "window": "5m",
-          "confidence": "1",
-          "severity": {
-            "critical": {
-              "comparator": ">",
-              "threshold": "0"
-            }
-          },
-          "summary": "Kafka under replicated partitions is up",
-          "description": "Kafka under replicated partitions is high on {{$labels.es_workload}} in {{$labels.instance}}"
-        }
-      },
-      "memcached_miss_ratio": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "memcached_miss_ratio",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "summary": "Memcached miss ratio shifts",
-          "description": "Memcached miss ratio in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
-        }
-      },
-      "memcached_current_connections": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "memcached_current_connections",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "summary": "Memcached connections are changing",
-          "description": "Memcached connections in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
-        }
-      },
-      "memcached_evictions": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "memcached_evictions_rate",
-          "period": "15m",
-          "minval": "1",
-          "window": "15m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "summary": "Memcached evictions shifts",
-          "description": "Memcached evictions in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
+          "alertSummary": "Redis client connections is not normal",
+          "alertDescription": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
         }
       },
       "akka_http_server_response_time": {
@@ -601,8 +412,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "HTTP server response time is anomalous",
-          "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+          "alertSummary": "HTTP server response time is anomalous",
+          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
         }
       },
       "akka_http_client_response_time": {
@@ -622,8 +433,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "HTTP client response time is anomalous",
-          "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+          "alertSummary": "HTTP client response time is anomalous",
+          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
         }
       },
       "akka_http_server_5xx": {
@@ -639,8 +450,8 @@
               "threshold": "0"
             }
           },
-          "summary": "HTTP 5xx errors",
-          "description": "HTTP server at {{$labels.instance}} has 5xx errors"
+          "alertSummary": "HTTP 5xx errors",
+          "alertDescription": "HTTP server at {{$labels.instance}} has 5xx errors"
         }
       },
       "play_http_client_response_time": {
@@ -660,8 +471,8 @@
               "numsigma": "2"
             }
           },
-          "summary": "HTTP client response time is anomalous",
-          "description": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+          "alertSummary": "HTTP client response time is anomalous",
+          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
         }
       },
       "lagom_circuit_breaker_state": {
@@ -677,8 +488,8 @@
               "threshold": "3"
             }
           },
-          "summary": "Circuit breaker tripped",
-          "description": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
+          "alertSummary": "Circuit breaker tripped",
+          "alertDescription": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
         }
       },
       "kafka_consumer_throughput": {
@@ -695,8 +506,8 @@
               "numsigma": "3"
             }
           },
-          "summary": "Kafka consumer throughput is anomalous",
-          "description": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
+          "alertSummary": "Kafka consumer throughput is anomalous",
+          "alertDescription": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
         }
       },
       "kafka_producer_throughput": {
@@ -713,8 +524,8 @@
               "numsigma": "3"
             }
           },
-          "summary": "Kafka producer throughput is anomalous",
-          "description": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
+          "alertSummary": "Kafka producer throughput is anomalous",
+          "alertDescription": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
         }
       },
       "kafka_consumer_lag": {
@@ -730,8 +541,8 @@
               "window": "15m"
             }
           },
-          "summary": "consumergroup falling behind",
-          "description": "{{$labels.es_workload}} has lag on {{$labels.topic}}"
+          "alertSummary": "consumergroup falling behind",
+          "alertDescription": "{{$labels.es_workload}} has lag on {{$labels.topic}}"
         }
       }
     }

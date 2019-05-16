@@ -62,7 +62,7 @@ describe('History Log Test', () => {
     Action.editMonitor();
     Action.removeMonitor();
     Util.validateUrlPath('/namespaces/lightbend/workloads/console-frontend');
-    Util.validateMonitorCountGte(3);
+    Util.validateMonitorCountGte(2);
     Util.validateNoMonitor(monitorName);
   });
 
