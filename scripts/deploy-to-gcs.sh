@@ -70,7 +70,7 @@ docker pull google/cloud-sdk:${CLOUD_SDK_VERSION}
 # volume mounts so credentials and tarballs are accessible to docker
 GCLOUD_CONFIG_CID=$( docker run -t -d \
      -v "/tmp/resources:/resources" \
-     -v "${HELM_DIR}/docs:/docs" \
+     -v "${HELM_DIR}/build:/build" \
      --name gcloud-config ${CLOUD_SDK_IMAGE} \
      gcloud auth activate-service-account --key-file /resources/es-repo-7c1fefe17951.json \
      )
@@ -81,7 +81,7 @@ docker run --rm -ti --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
 # Copy over all tarballs.  Don't include all*.yaml or .nojekyll files.
 # Optionally use '-d' and '-n' flags.
 docker run --rm -ti --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
-    gsutil -m rsync ${RSYNC_DELETE} ${RSYNC_DRY_RUN} -c -x "all.*\.yaml|\.nojekyll" /docs gs://${GCS_BUCKET}
+    gsutil -m rsync ${RSYNC_DELETE} ${RSYNC_DRY_RUN} -c -x "all.*\.yaml|\.nojekyll" /build gs://${GCS_BUCKET}
 
 # By default GCS sets the file type for index.yaml to 'application/octet-stream'.  Move to 'text/yaml'.
 # Note that this increments the Metageneration number for this file in GCS.  (In case you were wondering

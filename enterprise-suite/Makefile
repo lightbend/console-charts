@@ -34,9 +34,9 @@ ALL_YAML ?= all.yaml
 all: lint build  ## lint then build chart
 build: package allyaml  ## Build chart package (and all.yaml)
 
-# This target required by top-level helm-charts Makefile.  Will create chart tarball in docs directory
+# This target required by top-level helm-charts Makefile.  Will create chart tarball in build directory.
 .PHONY: package
-package: $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz  ## Build chart tarball
+package: $(HELM_CHARTS_DIR)/build/$(RELEASE).tgz  ## Build chart tarball
 
 .PHONY: script-tests
 script-tests: ## Run installer tests
@@ -60,9 +60,10 @@ frontend-tests2: ## Run subset 2 of frontend tests against minikube
 test: lint script-tests ## Run unit tests
 
 # Note: This works for enterprise-suite and allows us to define a latest-specific version in enterprise-suite-latest
-$(HELM_CHARTS_DIR)/docs/$(filter-out %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
+$(HELM_CHARTS_DIR)/build/$(filter-out %-latest,$(CHART))-$(VERSION).tgz: $(COMPONENTS) $(SUBCOMPONENTS)
 	$(call banner)
-	helm package -d $(HELM_CHARTS_DIR)/docs $(CHART_DIR)
+	mkdir -p $(HELM_CHARTS_DIR)/build
+	helm package -d $(HELM_CHARTS_DIR)/build $(CHART_DIR)
 
 .PHONY: lint
 lint: lint-helm lint-json lint-promql  ## Run all lint tests on chart files
@@ -81,7 +82,7 @@ lint-promql:  ## Test promql bits are well-formed
 
 .PHONY: lint-allyaml
 lint-allyaml: allyaml  ## Check that all.yaml is valid (Need Minikube running)
-	kubectl --context=minikube create --dry-run --validate -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
+	kubectl --context=minikube create --dry-run --validate -f $(HELM_CHARTS_DIR)/build/$(RELEASE_NAME)/$(ALL_YAML)
 
 .PHONY: check-default-monitors-sync
 check-default-monitors-sync:
@@ -95,14 +96,14 @@ sync-default-monitors:
 
 .PHONY: clean
 clean::  ## Delete make artifacts
-	rm -f $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)
+	rm -f $(HELM_CHARTS_DIR)/build/$(RELEASE_NAME)/$(ALL_YAML)
 
 .PHONY: allyaml
-allyaml: $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML)  ## Build all.yaml file
+allyaml: $(HELM_CHARTS_DIR)/build/$(RELEASE_NAME)/$(ALL_YAML)  ## Build all.yaml file
 
-$(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/docs/$(RELEASE).tgz
+$(HELM_CHARTS_DIR)/build/$(RELEASE_NAME)/$(ALL_YAML): $(HELM_CHARTS_DIR)/build/$(RELEASE).tgz
 	$(call banner)
-	mkdir -p $(HELM_CHARTS_DIR)/docs/$(RELEASE_NAME)
+	mkdir -p $(HELM_CHARTS_DIR)/build/$(RELEASE_NAME)
 	helm --namespace=$(NAMESPACE) template $< --set exposeServices=NodePort > $@
 
 .PHONY: install-helm
