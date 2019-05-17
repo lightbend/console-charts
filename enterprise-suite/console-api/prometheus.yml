@@ -153,10 +153,6 @@ scrape_configs:
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
 
-      # Map kube-state-metrics namespace to kubernetes_namespace label.
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: kubernetes_namespace
-
       # Map service name to kubernetes_name label.
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
