@@ -139,13 +139,25 @@ scrape_configs:
     honor_labels: true
 
     relabel_configs:
+      # Only scrape kube-state-metrics.
       - source_labels: [__meta_kubernetes_endpoints_name]
         regex: prometheus-kube-state-metrics
         action: keep
+
+      # Only scrape the kube-state-metrics in the local Console namespace.
+      - source_labels: [__meta_kubernetes_namespace]
+        regex: {{ .Namespace }}
+        action: keep
+
+      # Preserve labels on service.
       - action: labelmap
         regex: __meta_kubernetes_service_label_(.+)
+
+      # Map kube-state-metrics namespace to kubernetes_namespace label.
       - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
+        target_label: kubernetes_namespace
+
+      # Map service name to kubernetes_name label.
       - source_labels: [__meta_kubernetes_service_name]
         action: replace
         target_label: kubernetes_name

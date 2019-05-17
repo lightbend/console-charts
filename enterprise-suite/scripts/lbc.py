@@ -51,7 +51,7 @@ CONSOLE_PVCS = [
     'prometheus-storage'
 ]
 
-DEFAULT_TIMEOUT = 3
+DEFAULT_TIMEOUT = 10
 REINSTALL_WAIT_SECS = 5
 
 # Parsed commandline args
@@ -185,7 +185,7 @@ def check_kubectl(minishift=False):
     # Check if kubectl is connected to a cluster. If not connected, version query will timeout.
     returncode, _, _ = run('kubectl version', DEFAULT_TIMEOUT)
     if returncode != 0:
-        msg = 'Cannot reach cluster with kubectl'
+        msg = 'Cannot reach cluster with kubectl: `kubectl version` either timed out or failed to connect (exit code {})'.format(returncode)
         if minishift:
             # Minishift needs special configuration for kubectl to work
             msg = msg + ". Did you do 'eval $(minishift oc-env)'?"
