@@ -3,4 +3,4 @@ description: Lightbend Console
 name: enterprise-suite
 icon: https://repo.lightbend.com/helm-charts/lightbend.svg
 # This is autofilled at publish and deploy time by the Travis build.
-version: dev
+version: 0.0.0-dev
