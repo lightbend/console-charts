@@ -116,8 +116,8 @@ install-helm:  ## Install helm (tiller)
 
 .PHONY: install-dev
 install-dev:  ## Install local chart directory
-	TILLER_NAMESPACE=$(TILLER_NAMESPACE) $(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) -- \
-	    --namespace $(NAMESPACE) $(HELM_VALUES_FLAG) \
+	TILLER_NAMESPACE=$(TILLER_NAMESPACE) $(CHART_DIR)/scripts/lbc.py install --local-chart=$(CHART_DIR) --namespace $(NAMESPACE) -- \
+	    $(HELM_VALUES_FLAG) \
 	    --set exposeServices=NodePort \
 	    --wait
 
