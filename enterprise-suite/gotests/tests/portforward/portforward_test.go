@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
@@ -51,7 +52,10 @@ var _ = Describe("all:portforward", func() {
 		addr := fmt.Sprintf("http://127.0.0.1:%v", localPort)
 
 		err := util.WaitUntilSuccess(util.SmallWait, func() error {
-			resp, err := http.Get(addr)
+			client := &http.Client{
+				Timeout: 10*time.Second,
+			}
+			resp, err := client.Get(addr)
 			if err != nil {
 				return err
 			}
