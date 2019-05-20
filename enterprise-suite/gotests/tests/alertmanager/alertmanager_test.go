@@ -8,7 +8,7 @@ import (
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 
-	"k8s.io/client-go/kubernetes/typed/apps/v1"
+	gov1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
@@ -37,7 +37,7 @@ var (
 	console *monitor.Connection
 	alertm  *alertmanager.Connection
 
-	depsClient      v1.DeploymentInterface
+	depsClient      gov1.DeploymentInterface
 	oldConfigmap    *apiv1.ConfigMapVolumeSource
 	alertmanagerDep *appsv1.Deployment
 
