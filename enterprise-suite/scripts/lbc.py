@@ -786,7 +786,7 @@ def setup_args(argv):
     # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
         subparser.add_argument('--namespace', help='namespace to install console into/where it is installed',
-                               default='lightbend')
+                               required=True)
 
     # Common arguments for all subparsers
     for subparser in [install, uninstall, verify, debug_dump]:

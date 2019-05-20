@@ -63,6 +63,7 @@ var _ = Describe("all:nginx", func() {
 		By(*service)
 		resp, err := urls.Get(*service, false)
 		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.Status).To(Equal(301), "status code should be a redirect")
 		Expect(resp.Headers.Get("Location")).To(Equal(location))
 	},
 		Entry("prometheus", &testenv.PrometheusAddr, "/service/prometheus/"),
