@@ -27,7 +27,7 @@ jobs:
     script:
     - make -C enterprise-suite test
     - travis_retry make -C enterprise-suite check-default-monitors-sync
- 
+
   - name: Backend E2E Go Tests - Minikube
     os: linux
     dist: xenial
@@ -150,8 +150,8 @@ jobs:
 branches:
   only:
   - master
-  # build tags starting with `enterprise-suite`, e.g. enterprise-suite-1.0.1
-  - /^enterprise-suite-.+$/
+  # build tags starting with `v`, e.g. v1.0.1
+  - /^v.*$/
 
 notifications:
   email: false
