@@ -27,10 +27,11 @@ jobs:
     script:
     - make -C enterprise-suite test
     - travis_retry make -C enterprise-suite check-default-monitors-sync
- 
+
   - name: Backend E2E Go Tests - Minikube
     os: linux
     dist: xenial
+    if: tag is not present
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
@@ -145,13 +146,13 @@ jobs:
     - scripts/set-chart-version.sh enterprise-suite ${TRAVIS_TAG#v} || travis_terminate 1
     - make -C enterprise-suite package || travis_terminate 1
     - travis_retry scripts/setup-openshift.sh ${OC_DEMO_TOKEN2}
-    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${TRAVIS_TAG}.tgz --set usePersistentStorage=yes
+    - TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${TRAVIS_TAG#v}.tgz --set usePersistentStorage=yes
 
 branches:
   only:
   - master
-  # build tags starting with `enterprise-suite`, e.g. enterprise-suite-1.0.1
-  - /^enterprise-suite-.+$/
+  # build tags starting with `v`, e.g. v1.0.1
+  - /^v.*$/
 
 notifications:
   email: false

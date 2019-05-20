@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
@@ -19,7 +20,10 @@ func Get200(url string) (Result, error) {
 	var res Result
 
 	err := util.WaitUntilSuccess(util.SmallWait, func() error {
-		resp, err := http.Get(url)
+		client := &http.Client{
+			Timeout: 10*time.Second,
+		}
+		resp, err := client.Get(url)
 		if err != nil {
 			return err
 		}
@@ -46,7 +50,9 @@ func Get(url string, followRedirects bool) (Result, error) {
 	var res Result
 
 	err := util.WaitUntilSuccess(util.SmallWait, func() error {
-		client := &http.Client{}
+		client := &http.Client{
+			Timeout: 10*time.Second,
+		}
 		if !followRedirects {
 			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
