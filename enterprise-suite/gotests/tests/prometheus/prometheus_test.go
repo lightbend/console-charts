@@ -114,7 +114,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_scrape_time"),
 	)
 
-	It("has the expected labels", func() {
+	It("has the expected metrics", func() {
 		// PromData with "es_workload" should also have a "namespace" label
 		Expect(prom.HasNoData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(Succeed())
 		// Health should have "es_workload" label, with a few known exceptions
@@ -135,6 +135,13 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasNoData("{kubernetes_namespace!=\"\"}")).To(Succeed())
 		// make sure the number of node_names matches the number of kubelets
 		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
+	})
+
+	Context("kube-state-metrics", func() {
+		It("should only scrape a single instance", func() {
+			query := fmt.Sprintf(`count(kube_pod_status_ready{namespace="%s", es_workload="console-backend", condition="true"}) == 1`, args.ConsoleNamespace)
+			Expect(prom.HasData(query)).To(Succeed())
+		})
 	})
 
 	DescribeTable("kube state metrics",

@@ -90,6 +90,7 @@ spec:
             requests:
               cpu: {{ default .Values.defaultCPURequest .Values.esMonitorCPURequest }}
               memory: {{ default .Values.defaultMemoryRequest .Values.esMonitorMemoryRequest }}
+
           args:
             - --configPath=/etc/config/
             - --storagePath=/monitor-data/
@@ -99,6 +100,14 @@ spec:
             - --prometheusDomain={{ .Values.prometheusDomain }}
             - --alertmanagers={{ .Values.alertManagers }}
             - --defaultMonitorWarmup={{ .Values.consoleAPI.defaultMonitorWarmup }}
+            - --namespace=$(CONSOLE_NAMESPACE)
+
+          env:
+          - name: CONSOLE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -111,15 +120,18 @@ spec:
             - name: prometheus-data-volume
               mountPath: /monitor-data
               subPath: monitor-data
+
           ports:
             - name: metrics
               containerPort: 8180
+
           readinessProbe:
             failureThreshold: 3
             httpGet:
               path: /status
               port: 8180
               scheme: HTTP
+
           livenessProbe:
             failureThreshold: 3
             httpGet:

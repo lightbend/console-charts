@@ -34,7 +34,7 @@ type Connection struct {
 func (p *Connection) Query(query string) (*PromResponse, error) {
 	addr := fmt.Sprintf("%v/api/v1/query?query=%v", p.url, url.QueryEscape(query))
 	// Some of the tests with openshift clusters timed out in 20 seconds, so adding a timeout for 45 seconds.
-	timeout := time.Duration(45 * time.Second)
+	timeout := time.Duration(10 * time.Second)
 	client := http.Client{
 		Timeout: timeout,
 	}

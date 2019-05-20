@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/onsi/ginkgo"
 )
@@ -99,7 +100,9 @@ func (m *Connection) CheckHealth() error {
 }
 
 func makeRequest(req *http.Request) error {
-	httpClient := &http.Client{}
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
