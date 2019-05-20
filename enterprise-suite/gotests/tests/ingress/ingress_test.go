@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	extv1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,7 +85,9 @@ var _ = Describe("minikube:ingress", func() {
 		ip, err := minikube.Ip()
 		Expect(err).To(Succeed())
 
-		httpClient := &http.Client{}
+		httpClient := &http.Client{
+			Timeout: 10*time.Second,
+		}
 		req, err := http.NewRequest("GET", fmt.Sprintf("http://%v/es-console", ip), nil)
 		Expect(err).To(Succeed())
 
