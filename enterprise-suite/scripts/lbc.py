@@ -494,7 +494,8 @@ def install(creds_file):
             # Calculate computed values for chart to be installed.
             template_args = prune_template_args(helm_args)
             rc, template_stdout, template_stderr = run('helm template -x templates/dump-values.yaml {} {}'.
-                                                       format(template_args, chart_file))
+                                                       format(template_args, chart_file),
+                                                       show_stderr=False)
             global values
             if rc != 0:
                 printerr("warn: unable to determine computed helm values - this may lead to incorrect warnings")
