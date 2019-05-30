@@ -475,7 +475,7 @@ def install(creds_file):
             execute('helm repo add {} {}'.format(args.repo_name, args.repo))
             execute('helm repo update')
             tempdir = make_fetchdir()
-            chart_file = fetch_remote_chart(tempdir)
+            chart_file = "{}/{}".format(tempdir, fetch_remote_chart(tempdir))
 
         if args.export_yaml:
             # Tillerless path - renders kubernetes resources and prints to stdout.
