@@ -21,7 +21,7 @@ func Get200(url string) (Result, error) {
 
 	err := util.WaitUntilSuccess(util.SmallWait, func() error {
 		client := &http.Client{
-			Timeout: 10*time.Second,
+			Timeout: 10 * time.Second,
 		}
 		resp, err := client.Get(url)
 		if err != nil {
@@ -51,7 +51,7 @@ func Get(url string, followRedirects bool) (Result, error) {
 
 	err := util.WaitUntilSuccess(util.SmallWait, func() error {
 		client := &http.Client{
-			Timeout: 10*time.Second,
+			Timeout: 10 * time.Second,
 		}
 		if !followRedirects {
 			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {

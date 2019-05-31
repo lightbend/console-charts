@@ -86,7 +86,7 @@ var _ = Describe("minikube:ingress", func() {
 		Expect(err).To(Succeed())
 
 		httpClient := &http.Client{
-			Timeout: 10*time.Second,
+			Timeout: 10 * time.Second,
 		}
 		req, err := http.NewRequest("GET", fmt.Sprintf("http://%v/es-console", ip), nil)
 		Expect(err).To(Succeed())

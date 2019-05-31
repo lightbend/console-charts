@@ -647,7 +647,7 @@ def debug_dump(args):
             printout(content)
         else:
             # Put to a zipfile
-            dest.writestr(filename, stdout)
+            dest.writestr(filename, content)
 
     def get_pod_containers(pod):
         # This magic gives us all the containers in a pod
@@ -660,25 +660,27 @@ def debug_dump(args):
                  .format(pod))
 
     def write_log(archive, pod, container):
-        returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {}'
+        returncode, logs_out, _ = run('kubectl --namespace {} logs {} -c {} --tail=250'
                                     .format(args.namespace, pod, container),
                                     show_stderr=False)
         if returncode == 0:
             filename = '{}+{}.log'.format(pod, container)
-            dump(archive, filename, stdout)
+            dump(archive, filename, logs_out)
         else:
-            fail(failure_msg + 'unable to get logs for container {} in a pod {}'
+            printerr(failure_msg + 'unable to get logs for container {} in a pod {}'
                  .format(container, pod))
 
         # Try to get previous logs too
-        returncode, stdout, _ = run('kubectl --namespace {} logs {} -c {} -p'
+        returncode, logs_out, _ = run('kubectl --namespace {} logs {} -c {} -p --tail=250'
                                     .format(args.namespace, pod, container),
                                     show_stderr=False)
         if returncode == 0:
             filename = '{}+{}+prev.log'.format(pod, container)
-            dump(archive, filename, stdout)
+            dump(archive, filename, logs_out)
 
-    failure_msg = 'Failed to get diagnostic data: '
+    printerr('Capturing debug information, this can take a few minutes')
+
+    failure_msg = 'Failed to get diagnostic data (this is likely harmless): '
 
     archive = None
     if not args.print:
@@ -686,7 +688,7 @@ def debug_dump(args):
         filename = 'console-diagnostics-{}.zip'.format(timestamp)
         archive = zipfile.ZipFile(filename, 'w')
 
-    # List all resources in our namespace
+    printerr('Listing Console resources')
     returncode, stdout, _ = run('kubectl --namespace {} get all'.format(args.namespace),
                                 show_stderr=False)
     if returncode == 0:
@@ -695,7 +697,7 @@ def debug_dump(args):
         fail(failure_msg + 'unable to list k8s resources in {} namespace'
              .format(args.namespace))
 
-    # Describe all resources
+    printerr('Describing Console resources')
     returncode, stdout, _ = run('kubectl --namespace {} describe all'.format(args.namespace),
                                 show_stderr=False)
     if returncode == 0:
@@ -704,7 +706,7 @@ def debug_dump(args):
         fail(failure_msg + 'unable to describe k8s resources in {} namespace'
              .format(args.namespace))
 
-    # Describe PVCs
+    printerr('Describing Console PVCs')
     returncode, stdout, _ = run('kubectl --namespace {} get pvc'.format(args.namespace),
                                 show_stderr=False)
     if returncode == 0:
@@ -713,7 +715,7 @@ def debug_dump(args):
         fail(failure_msg + 'unable to describe k8s resources in {} namespace'
              .format(args.namespace))
 
-    # Iterate over pods
+    printerr('Retrieving Console logs')
     returncode, stdout, _ = run('kubectl --namespace {} get pods --no-headers'.format(args.namespace))
     if returncode == 0:
         for line in stdout.split('\n'):
@@ -729,6 +731,7 @@ def debug_dump(args):
     if archive != None:
         archive.close()
         printerr('Lightbend Console diagnostic data written to {}'.format(filename))
+        printerr('Please attach this zip file to a support ticket')
 
 
 def setup_args(argv):

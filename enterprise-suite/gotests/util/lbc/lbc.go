@@ -11,8 +11,10 @@ import (
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 )
 
-const localChartPath = "../../../."
-const lbcPath = "../../../scripts/lbc.py"
+const (
+	localChartPath = "../../../."
+	Path           = "../../../scripts/lbc.py"
+)
 
 type Installer struct {
 	UsePersistentVolumes string
@@ -31,7 +33,7 @@ func DefaultInstaller() *Installer {
 }
 
 func (i *Installer) Install() error {
-	cmdArgs := []string{lbcPath, "install", "--local-chart", localChartPath,
+	cmdArgs := []string{Path, "install", "--local-chart", localChartPath,
 		"--namespace", args.ConsoleNamespace,
 		"--set prometheusDomain=console-backend-e2e.io"}
 	if i.ForceDeletePVCs {
@@ -87,7 +89,7 @@ func logDebugInfo(namespace string) {
 }
 
 func Verify(namespace, tillerNamespace string) error {
-	cmd := util.Cmd(lbcPath, "verify", "--namespace", namespace)
+	cmd := util.Cmd(Path, "verify", "--namespace", namespace)
 	if tillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", tillerNamespace)
 	}

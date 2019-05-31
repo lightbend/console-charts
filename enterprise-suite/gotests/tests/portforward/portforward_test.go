@@ -53,7 +53,7 @@ var _ = Describe("all:portforward", func() {
 
 		err := util.WaitUntilSuccess(util.SmallWait, func() error {
 			client := &http.Client{
-				Timeout: 10*time.Second,
+				Timeout: 10 * time.Second,
 			}
 			resp, err := client.Get(addr)
 			if err != nil {
