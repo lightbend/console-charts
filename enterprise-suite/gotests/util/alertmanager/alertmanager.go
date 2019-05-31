@@ -38,7 +38,7 @@ type Connection struct {
 func (a *Connection) Alerts() ([]Alert, error) {
 	addr := fmt.Sprintf("%v/api/v1/alerts", a.url)
 	client := &http.Client{
-		Timeout: 10*time.Second,
+		Timeout: 10 * time.Second,
 	}
 	resp, err := client.Get(addr)
 	if err != nil {

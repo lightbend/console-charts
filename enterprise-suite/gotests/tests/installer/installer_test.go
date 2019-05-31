@@ -1,11 +1,14 @@
 package installer
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
@@ -82,6 +85,42 @@ var _ = Describe("all:lbc.py", func() {
 			installer.AdditionalLBCArgs = []string{"--namespace=" + args.ConsoleNamespace}
 			installer.AdditionalHelmArgs = []string{"--namespace=my-busted-namespace"}
 			Expect(installer.Install()).ToNot(Succeed())
+		})
+	})
+
+	Context("debug-dump", func() {
+		It("should contain the pod logs", func() {
+			Expect(util.Cmd("/bin/bash", "-c", lbc.Path+" debug-dump --namespace="+args.ConsoleNamespace).
+				Timeout(0).Run()).To(Succeed())
+
+			dir, err := ioutil.TempDir("", "lbcpytest")
+			fmt.Printf("%s\n", dir)
+			defer os.RemoveAll(dir)
+			if err != nil {
+				panic(err)
+			}
+			Expect(util.Cmd("/bin/bash", "-c", "mv *.zip "+dir+"/").Run()).To(Succeed())
+			files, err := ioutil.ReadDir(dir)
+			if err != nil {
+				panic(err)
+			}
+
+			Expect(files).To(HaveLen(1))
+			zipFile := dir + "/" + files[0].Name()
+			Expect(util.Cmd("/bin/bash", "-c", "cd "+dir+" && unzip "+zipFile).Run()).To(Succeed())
+
+			matches, err := filepath.Glob(dir + "/console-backend*prometheus-server.log")
+			if err != nil {
+				panic(err)
+			}
+			Expect(matches).To(HaveLen(1), "should have found prometheus-server.log")
+			promLogFile := matches[0]
+			contents, err := ioutil.ReadFile(promLogFile)
+			if err != nil {
+				panic(err)
+			}
+			Expect(string(contents)).To(ContainSubstring("Completed loading of configuration file"),
+				"%s should contain logs", promLogFile)
 		})
 	})
 })
