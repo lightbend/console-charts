@@ -88,7 +88,7 @@ var _ = Describe("all:lbc.py", func() {
 		})
 	})
 
-	FContext("debug-dump", func() {
+	Context("debug-dump", func() {
 		It("should contain the pod logs", func() {
 			Expect(util.Cmd("/bin/bash", "-c", lbc.Path+" debug-dump --namespace="+args.ConsoleNamespace).
 				Timeout(0).Run()).To(Succeed())
