@@ -101,8 +101,15 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("health metrics available",
 		func(metric string) {
-			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
-			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
+			err := util.WaitUntilSuccess(util.SmallWait, func() error {
+				if err := prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric)); err != nil {
+					return fmt.Errorf("no model: %v", err)
+				}
+				if err := prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric)); err != nil {
+					return fmt.Errorf("no health: %v", err)
+				}
+			})
+			Expect(err).To(BeNil())
 		},
 		Metric("prometheus_notifications_dropped"),
 		Metric("prometheus_notification_queue"),
@@ -146,7 +153,10 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("kube state metrics",
 		func(metric string) {
-			Expect(prom.AnyData(metric)).To(Succeed())
+			err := util.WaitUntilSuccess(util.SmallWait, func() error {
+				return prom.AnyData(metric)
+			})
+			Expect(err).To(BeNil())
 		},
 		Metric("kube_pod_info"),
 		Metric("kube_pod_ready"),
