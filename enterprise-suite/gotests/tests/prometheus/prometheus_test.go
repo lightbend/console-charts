@@ -86,7 +86,7 @@ var _ = Describe("all:prometheus", func() {
 		return Entry(name, name)
 	}
 
-	DescribeTable("basic metrics available",
+	DescribeTable("base metrics available",
 		func(metric string) {
 			Expect(prom.AnyData(metric)).To(Succeed())
 		},
@@ -97,6 +97,7 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_tsdb_reloads_failures_rate"),
 		Metric("prometheus_config_last_reload_successful"),
 		Metric("prometheus_target_sync_percent"),
+		Metric("workload:health:max"),
 	)
 
 	DescribeTable("health metrics available",
@@ -152,7 +153,6 @@ var _ = Describe("all:prometheus", func() {
 		Metric("kube_pod_ready"),
 		Metric("kube_pod_container_restarts_rate"),
 		Metric("kube_pod_failed"),
-		Metric("workload:health:max"),
 	)
 
 	DescribeTable("kube state health",
