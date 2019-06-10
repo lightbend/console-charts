@@ -50,7 +50,7 @@ func (i *Installer) Install() error {
 		cmdArgs = append(cmdArgs, "--set usePersistentVolumes="+i.UsePersistentVolumes)
 	}
 	if i.MonitorWarmup != "" {
-		cmdArgs = append(cmdArgs, "--set defaultMonitorWarmup="+i.MonitorWarmup)
+		cmdArgs = append(cmdArgs, "--set consoleAPI.defaultMonitorWarmup="+i.MonitorWarmup)
 	}
 	cmdArgs = append(cmdArgs, i.AdditionalHelmArgs...)
 

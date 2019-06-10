@@ -86,7 +86,7 @@ var _ = Describe("all:prometheus", func() {
 		return Entry(name, name)
 	}
 
-	DescribeTable("basic metrics available",
+	DescribeTable("base metrics available",
 		func(metric string) {
 			Expect(prom.AnyData(metric)).To(Succeed())
 		},
@@ -97,20 +97,13 @@ var _ = Describe("all:prometheus", func() {
 		Metric("prometheus_tsdb_reloads_failures_rate"),
 		Metric("prometheus_config_last_reload_successful"),
 		Metric("prometheus_target_sync_percent"),
+		Metric("workload:health:max"),
 	)
 
 	DescribeTable("health metrics available",
 		func(metric string) {
-			err := util.WaitUntilSuccess(util.SmallWait, func() error {
-				if err := prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric)); err != nil {
-					return fmt.Errorf("no model: %v", err)
-				}
-				if err := prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric)); err != nil {
-					return fmt.Errorf("no health: %v", err)
-				}
-				return nil
-			})
-			Expect(err).To(BeNil())
+			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
 		},
 		Metric("prometheus_notifications_dropped"),
 		Metric("prometheus_notification_queue"),
@@ -154,16 +147,12 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("kube state metrics",
 		func(metric string) {
-			err := util.WaitUntilSuccess(util.SmallWait, func() error {
-				return prom.AnyData(metric)
-			})
-			Expect(err).To(BeNil())
+			Expect(prom.AnyData(metric)).To(Succeed())
 		},
 		Metric("kube_pod_info"),
 		Metric("kube_pod_ready"),
 		Metric("kube_pod_container_restarts_rate"),
 		Metric("kube_pod_failed"),
-		Metric("workload:health:max"),
 	)
 
 	DescribeTable("kube state health",
