@@ -108,6 +108,7 @@ var _ = Describe("all:prometheus", func() {
 				if err := prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric)); err != nil {
 					return fmt.Errorf("no health: %v", err)
 				}
+				return nil
 			})
 			Expect(err).To(BeNil())
 		},
