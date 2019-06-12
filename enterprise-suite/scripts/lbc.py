@@ -645,7 +645,7 @@ def check_install(external_alertmanager=False):
 
     status_ok = check_deployments(CONSOLE_DEPLOYMENTS) 
     if not status_ok:
-        printerr('\nIt appears you are running older version of console, checking old deployment names...\n')
+        printerr('\nIt appears you might be running older version of console, checking old deployment names...\n')
         status_ok = check_deployments(CONSOLE_DEPLOYMENTS_OLD)
 
     if status_ok:
