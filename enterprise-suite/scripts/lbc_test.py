@@ -339,6 +339,19 @@ class HelmCommandsTest(unittest.TestCase):
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
                    stdout='prometheus-alertmanager 1 1 1 1 15m')
 
+        # Installer will check old deployment names if the new ones fail
+        expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',
+                   stdout='console-backend 2 2 2 2 15m')
+        # Grafana is not running
+        expect_cmd(r'kubectl --namespace monitoring get deploy/grafana-server --no-headers',
+                   stdout='console-frontend 1 1 1 0 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-server --no-headers',
+                   stdout='grafana 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
+                   stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
+        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
+                   stdout='prometheus-alertmanager 1 1 1 1 15m') 
+
         # Expect verify to fail
         with self.assertRaises(TestFailException):
             lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])

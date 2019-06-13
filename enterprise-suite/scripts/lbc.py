@@ -41,6 +41,14 @@ CONSOLE_DEPLOYMENTS = [
     'prometheus-kube-state-metrics',
 ]
 
+# Deployments for 1.1 and older versions of Console, install script needs to be compatible
+CONSOLE_DEPLOYMENTS_OLD = [
+    'es-console',
+    'grafana-server',
+    'prometheus-server',
+    'prometheus-kube-state-metrics',
+]
+
 # Alertmanager deployment, this check can be turned off with --external-alertmanager
 CONSOLE_ALERTMANAGER_DEPLOYMENT = 'prometheus-alertmanager'
 
@@ -625,14 +633,20 @@ def check_install(external_alertmanager=False):
             printerr('Unable to check deployment {} status'.format(name))
         return False
 
-    status_ok = True
+    def check_deployments(deployments):
+        status_ok = True
+        deps = deployments
+        if not external_alertmanager:
+            deps = deps + [CONSOLE_ALERTMANAGER_DEPLOYMENT]
 
-    deps = CONSOLE_DEPLOYMENTS
-    if not external_alertmanager:
-        deps = deps + [CONSOLE_ALERTMANAGER_DEPLOYMENT]
+        for dep in deps:
+            status_ok &= deployment_running(dep)
+        return status_ok
 
-    for dep in deps:
-        status_ok &= deployment_running(dep)
+    status_ok = check_deployments(CONSOLE_DEPLOYMENTS) 
+    if not status_ok:
+        printerr('\nIt appears you might be running older version of console, checking old deployment names...\n')
+        status_ok = check_deployments(CONSOLE_DEPLOYMENTS_OLD)
 
     if status_ok:
         printerr('Your Lightbend Console seems to be running fine!')
