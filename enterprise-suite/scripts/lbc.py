@@ -24,6 +24,7 @@ import base64
 import urllib2 as url
 import json
 import time
+import glob
 from distutils.version import LooseVersion
 
 # Minimum required dependency versions
@@ -475,7 +476,7 @@ def install(creds_file):
             execute('helm repo add {} {}'.format(args.repo_name, args.repo))
             execute('helm repo update')
             tempdir = make_fetchdir()
-            chart_file = "{}/{}".format(tempdir, fetch_remote_chart(tempdir))
+            chart_file = fetch_remote_chart(tempdir)
 
         if args.export_yaml:
             # Tillerless path - renders kubernetes resources and prints to stdout.
@@ -820,7 +821,7 @@ def fetch_remote_chart(destdir):
         printerr("unable to reach helm repo: ", chart_url)
         printerr(fetch_stderr)
         fail("")
-    chart = os.listdir(destdir)[0]
+    chart = glob.glob(destdir + '/enterprise-suite-*.tgz')[0]
     return chart
 
 
