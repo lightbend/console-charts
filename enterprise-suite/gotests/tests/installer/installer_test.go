@@ -88,6 +88,42 @@ var _ = Describe("all:lbc.py", func() {
 		})
 	})
 
+	Context("export yaml", func() {
+		It("should be able to export the console yaml for a remote chart", func() {
+			installer := lbc.DefaultInstaller()
+			installer.AdditionalLBCArgs = []string{"--export-yaml=console", "--version=1.1.0"}
+			installer.LocalChart = false
+			installer.HelmWait = false
+			Expect(installer.Install()).To(Succeed())
+		})
+
+		It("should be able to export the Lightbend credentials for a remote chart", func() {
+			installer := lbc.DefaultInstaller()
+			installer.AdditionalLBCArgs = []string{"--export-yaml=creds", "--version=1.1.0"}
+			// jsravn: This is necessary to prevent leaking credentials in builds.
+			installer.AdditionalHelmArgs = []string{"> /dev/null"}
+			installer.LocalChart = false
+			installer.HelmWait = false
+			Expect(installer.Install()).To(Succeed())
+		})
+
+		It("should be able to export the console yaml for a local chart", func() {
+			installer := lbc.DefaultInstaller()
+			installer.AdditionalLBCArgs = []string{"--export-yaml=console"}
+			installer.HelmWait = false
+			Expect(installer.Install()).To(Succeed())
+		})
+
+		It("should be able to export the Lightbend credentials for a local chart", func() {
+			installer := lbc.DefaultInstaller()
+			installer.AdditionalLBCArgs = []string{"--export-yaml=creds"}
+			// jsravn: This is necessary to prevent leaking credentials in builds.
+			installer.AdditionalHelmArgs = []string{"> /dev/null"}
+			installer.HelmWait = false
+			Expect(installer.Install()).To(Succeed())
+		})
+	})
+
 	Context("debug-dump", func() {
 		It("should contain the pod logs", func() {
 			Expect(util.Cmd("/bin/bash", "-c", lbc.Path+" debug-dump --namespace="+args.ConsoleNamespace).

@@ -20,6 +20,8 @@ type Installer struct {
 	UsePersistentVolumes string
 	MonitorWarmup        string
 	ForceDeletePVCs      bool
+	HelmWait             bool
+	LocalChart           bool
 	AdditionalLBCArgs    []string
 	AdditionalHelmArgs   []string
 }
@@ -29,19 +31,27 @@ func DefaultInstaller() *Installer {
 		UsePersistentVolumes: "true",
 		MonitorWarmup:        "1s",
 		ForceDeletePVCs:      true,
+		HelmWait:             true,
+		LocalChart:           true,
 	}
 }
 
 func (i *Installer) Install() error {
-	cmdArgs := []string{Path, "install", "--local-chart", localChartPath,
+	cmdArgs := []string{Path, "install",
 		"--namespace", args.ConsoleNamespace,
 		"--set prometheusDomain=console-backend-e2e.io"}
+	if i.LocalChart {
+		cmdArgs = append(cmdArgs, "--local-chart", localChartPath)
+	}
 	if i.ForceDeletePVCs {
 		cmdArgs = append(cmdArgs, "--delete-pvcs")
 	}
 	cmdArgs = append(cmdArgs, i.AdditionalLBCArgs...)
+	cmdArgs = append(cmdArgs, "--")
 
-	cmdArgs = append(cmdArgs, "--", "--wait", "--timeout", "110")
+	if i.HelmWait {
+		cmdArgs = append(cmdArgs, "--wait", "--timeout", "110")
+	}
 	cmdArgs = append(cmdArgs, "--set esConsoleURL=http://console.test.bogus:30080")
 	if minikube.IsRunning() {
 		cmdArgs = append(cmdArgs, "--set exposeServices=NodePort")
