@@ -27,3 +27,6 @@ npx cypress open --env configFile=minikube,skipKnownError=true
 npx cypress run --env configFile=minikube,skipKnownError=true
 
 ```
+
+# How to disable single e2e test in travis-ci
+In travis-ci, we only run tests in field 'travis-prs-subset1' in file package.json, so if you want to disable a single test in travis-ci, please modify file `package.json`, move the test from field 'travis-prs-subset1' to 'travis-prs-subset2'.
