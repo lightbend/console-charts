@@ -3,6 +3,8 @@
 #
 consoleUIConfig:
   logo: ""
+  isMonitorEditEnabled: false
+
 
 #################################################
 # Update these versions for a release.
