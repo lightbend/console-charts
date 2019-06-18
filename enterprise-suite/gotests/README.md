@@ -12,10 +12,6 @@ kubectl create serviceaccount --namespace kube-system tiller
 kubectl create clusterrolebinding kube-system:tiller --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
 helm init --wait --service-account tiller --tiller-namespace=kube-system
 ```
-Alternatively, you can use `go-tests` and `go-tests-start-minikube` targets in the `enterprise-suite/Makefile`.
-
-Running all tests locally:
-`ginkgo -r`
 
 If Tiller is installed in other namespace than `kube-system`, you can specify that with a flag:
 `ginkgo -r -- --tiller-namespace=lightbend-test`
@@ -24,6 +20,8 @@ Note: this is not a ginkgo flag, but a custom flag in the test suites so it come
 Running only minikube or openshift:
 `ginkgo -r --skip=.*minikube.*`
 `ginkgo -r --skip=.*openshift.*`
+
+You can also use `gotests-minikube` and `gotests-openshift` makefile targets in `enterprise-suite/Makefile`.
 
 Running a single test suite:
 `ginkgo tests/prometheus`

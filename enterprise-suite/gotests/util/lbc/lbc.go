@@ -1,6 +1,7 @@
 package lbc
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ type Installer struct {
 	ForceDeletePVCs      bool
 	HelmWait             bool
 	LocalChart           bool
+	FailOnWarnings       bool
 	AdditionalLBCArgs    []string
 	AdditionalHelmArgs   []string
 }
@@ -33,6 +35,7 @@ func DefaultInstaller() *Installer {
 		ForceDeletePVCs:      true,
 		HelmWait:             true,
 		LocalChart:           true,
+		FailOnWarnings:       false,
 	}
 }
 
@@ -69,9 +72,22 @@ func (i *Installer) Install() error {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 
+	var stderr strings.Builder
+	if i.FailOnWarnings {
+		cmd.CaptureStderr(&stderr)
+	}
+
 	if err := cmd.Timeout(time.Minute * 2).Run(); err != nil {
 		logDebugInfo(args.ConsoleNamespace)
 		return err
+	}
+
+	if i.FailOnWarnings {
+		for _, line := range strings.Split(stderr.String(), "\n") {
+			if strings.HasPrefix(line, "warning:") {
+				return fmt.Errorf("Found unexpected warning line: \"%v\"", line)
+			}
+		}
 	}
 
 	return nil

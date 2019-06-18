@@ -51,6 +51,18 @@ var _ = Describe("all:lbc.py", func() {
 		Expect(err).To(Succeed())
 	})
 
+	Context("install", func() {
+		// Note: this test depends on remote service being up, consider disabling it if it causes problems
+		It("should be able to install a remote chart at specified version", func() {
+			installer := lbc.DefaultInstaller()
+			installer.FailOnWarnings = true
+			installer.LocalChart = false
+			installer.AdditionalLBCArgs = []string{"--version=1.1"}
+
+			Expect(installer.Install()).To(Succeed())
+		})
+	})
+
 	Context("upgrades", func() {
 		Context("disable persistent volumes", func() {
 			var installer *lbc.Installer
