@@ -45,7 +45,7 @@ jobs:
   - name: Backend E2E Go Tests - Openshift
     os: linux
     dist: xenial
-    if: tag is not present
+    if: tag is not present AND false # skip openshift test until openshift cluster is healthy
     install:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
