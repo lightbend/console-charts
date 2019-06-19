@@ -828,8 +828,10 @@ def fetch_remote_chart(destdir):
     extra_args = ""
     if args.version:
         extra_args = "--version %s" % args.version
-    chart_url = 'helm fetch --destination {} {} {} {}/{}'\
-        .format(destdir, extra_args, args.repo, args.repo_name, args.chart)
+    # `helm repo add & helm repo update` is always done before, inside install(),
+    # so it's safe to use this form of helm fetch here`
+    chart_url = 'helm fetch --destination {} {} {}/{}'\
+        .format(destdir, extra_args, args.repo_name, args.chart)
     rc, fetch_stdout, fetch_stderr = run(chart_url, DEFAULT_TIMEOUT, show_stderr=False)
     if rc != 0:
         printerr("unable to reach helm repo: ", chart_url)
