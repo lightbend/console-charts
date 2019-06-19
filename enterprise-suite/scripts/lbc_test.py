@@ -133,7 +133,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_export_yaml_console(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template --name enterprise-suite --namespace lightbend\s+\S+\.tgz')
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console'])
 
@@ -144,14 +144,14 @@ class HelmCommandsTest(unittest.TestCase):
     def test_export_yaml_creds(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template --name enterprise-suite --namespace lightbend  --execute templates/commercial-credentials\.yaml\s+--values \S+ \S+\.tgz')
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--export-yaml=creds'])
 
     def test_install(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+')
@@ -160,7 +160,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_install_wait(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+\s+--wait')
@@ -183,7 +183,7 @@ class HelmCommandsTest(unittest.TestCase):
         # Failed previous install, no PVCs or clusterroles found for reuse
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=0,
                    stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
@@ -193,7 +193,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_install_not_finished(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=0,
                    stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: PENDING_INSTALL\nNOTES: blah')
@@ -205,7 +205,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_upgrade(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=0)
         expect_cmd(r'helm upgrade enterprise-suite es-repo/enterprise-suite\s+--values \S+')
@@ -214,7 +214,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_force_install(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=0)
         expect_cmd(r'helm delete --purge enterprise-suite')
@@ -224,7 +224,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_helm_args(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+ --set minikube=true --fakearg')
@@ -233,7 +233,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_helm_args_namespace(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --values \S+ --set minikube=true --fakearg --namespace=foobar')
@@ -242,7 +242,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_helm_args_namespace_val(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --values \S+ --set minikube=true --fakearg --namespace foobar')
@@ -264,7 +264,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_helm_set(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --values \S+ --set minikube=true --set usePersistentVolumes=true ')
@@ -273,7 +273,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_helm_set_array(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --values \S+ --set alertmanagers=alertmgr-00\\,alertmgr-01\\,alertmgr-02 ')
@@ -283,7 +283,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_specify_version(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --version 1\.0\.0-rc\.9 --values \S+')
@@ -298,7 +298,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_install_override_repo(self):
         expect_cmd(r'helm repo add es-repo https://repo.bintray.com/helm')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.bintray.com/helm es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status enterprise-suite', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --values \S+')
@@ -307,7 +307,7 @@ class HelmCommandsTest(unittest.TestCase):
     def test_install_override_name(self):
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
-        expect_cmd(r'helm fetch .* https://repo.lightbend.com/helm-charts es-repo/enterprise-suite')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         expect_cmd(r'helm status lb-console', returncode=-1)
         expect_cmd(r'helm install es-repo/enterprise-suite --name lb-console --namespace lightbend --values \S+')

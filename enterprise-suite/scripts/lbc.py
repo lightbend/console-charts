@@ -368,7 +368,7 @@ def check_pv_usage(uninstalling=False):
                                                        DEFAULT_TIMEOUT, show_stderr=False)
 
     if 'usePersistentVolumes' not in values:
-        printerr("warn: can't determine the value of usePersistentVolumes, unable to parse helm values")
+        printerr("warning: can't determine the value of usePersistentVolumes, unable to parse helm values")
         return
 
     wants_pvcs = values['usePersistentVolumes'] is True
@@ -459,7 +459,7 @@ def install(creds_file):
 
         if ns_args.namespace is not None:
             if args.namespace != "lightbend" and args.namespace != ns_args.namespace:
-                printerr("WARNING: Conflicting namespace values provided in arguments {} and {} ".format(
+                printerr("warning: conflicting namespace values provided in arguments {} and {} ".format(
                     args.namespace, ns_args.namespace))
                 fail("Invoke again with correct namespace value...")
             namespace_arg = ""
@@ -501,20 +501,21 @@ def install(creds_file):
             # Tiller path - installs console directly to a k8s cluster in a given namespace
 
             # Calculate computed values for chart to be installed.
+            # Note: older versions (1.1 and older) will not have dump-values.yaml, so warning will be printed
             template_args = prune_template_args(helm_args)
             rc, template_stdout, template_stderr = run('helm template -x templates/dump-values.yaml {} {}'.
                                                        format(template_args, chart_file),
                                                        show_stderr=False)
             global values
             if rc != 0:
-                printerr("warn: unable to determine computed helm values - this may lead to incorrect warnings")
+                printerr("warning: unable to determine computed helm values - this may lead to incorrect warnings")
                 values = {}
             else:
                 try:
                     computed = template_stdout.splitlines()[-2][2:]
                     values = json.loads(computed)
                 except Exception as e:
-                    printerr("warn: unable to parse helm values - this may lead to incorrect warnings")
+                    printerr("warning: unable to parse helm values - this may lead to incorrect warnings")
                     printerr(e)
                     values = {}
 
@@ -828,8 +829,10 @@ def fetch_remote_chart(destdir):
     extra_args = ""
     if args.version:
         extra_args = "--version %s" % args.version
-    chart_url = 'helm fetch --destination {} {} {} {}/{}'\
-        .format(destdir, extra_args, args.repo, args.repo_name, args.chart)
+    # `helm repo add & helm repo update` is always done before, inside install(),
+    # so it's safe to use this form of helm fetch here`
+    chart_url = 'helm fetch --destination {} {} {}/{}'\
+        .format(destdir, extra_args, args.repo_name, args.chart)
     rc, fetch_stdout, fetch_stderr = run(chart_url, DEFAULT_TIMEOUT, show_stderr=False)
     if rc != 0:
         printerr("unable to reach helm repo: ", chart_url)

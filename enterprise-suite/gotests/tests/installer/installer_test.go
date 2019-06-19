@@ -51,6 +51,22 @@ var _ = Describe("all:lbc.py", func() {
 		Expect(err).To(Succeed())
 	})
 
+	Context("install", func() {
+		// Note: this test depends on remote service being up, consider disabling it if it causes problems
+		It("should be able to install a remote chart at specified version", func() {
+			installer := lbc.DefaultInstaller()
+			installer.FailOnWarnings = true
+			installer.LocalChart = false
+			installer.AdditionalLBCArgs = []string{"--version=1.1"}
+
+			// The test fails currently because version 1.1 doesn't have values-dump.yaml needed to compute helm values
+			want := "Found unexpected warning line: \"warning: unable to determine computed helm values - this may lead to incorrect warnings\""
+			err := installer.Install()
+			Expect(err).NotTo(Succeed())
+			Expect(err.Error()).To(Equal(want))
+		})
+	})
+
 	Context("upgrades", func() {
 		Context("disable persistent volumes", func() {
 			var installer *lbc.Installer
