@@ -501,6 +501,7 @@ def install(creds_file):
             # Tiller path - installs console directly to a k8s cluster in a given namespace
 
             # Calculate computed values for chart to be installed.
+            # Note: older versions (1.1 and older) will not have dump-values.yaml, so warning will be printed
             template_args = prune_template_args(helm_args)
             rc, template_stdout, template_stderr = run('helm template -x templates/dump-values.yaml {} {}'.
                                                        format(template_args, chart_file),
