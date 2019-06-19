@@ -6,8 +6,8 @@
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_container_restarts_rate",
-          "window": "5m",
-          "confidence": "1",
+          "window": "15m",
+          "confidence": "0.25",
           "severity": {
             "warning": {
               "comparator": ">",
@@ -16,7 +16,7 @@
           },
           "alertSummary": "container restarting rapidly",
           "alertDescription": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly",
-          "monitorDescription": "Detects if a container in a pod is continously restarting. Only triggers for containers that start running. Can be due to getting OOM killed by OS or due to a bug that causes a crash shortly after starting.",
+          "monitorDescription": "Detects if a container in a pod is continuously restarting. Can be due to getting OOM killed by OS or due to a bug that causes a crash shortly after starting.",
           "metricUnits": "restarts/s"
         }
       },
@@ -25,17 +25,17 @@
         "model": "threshold",
         "parameters": {
           "metric": "kube_pod_ready",
-          "window": "5m",
-          "confidence": "1",
+          "window": "1m",
+          "confidence": "5e-324",
           "severity": {
-            "critical": {
+            "warning": {
               "comparator": "<",
               "threshold": "1"
             }
           },
           "alertSummary": "pod not ready",
           "alertDescription": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready",
-          "monitorDescription": "Detects when a pod does not reach readiness state.",
+          "monitorDescription": "Detects if the pod's readiness probe failed. Use Kubernetes to get more information on the pod's status.",
           "metricUnits": "boolean"
         }
       },
