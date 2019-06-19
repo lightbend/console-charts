@@ -1,6 +1,6 @@
 {{ if (and .Values.createAlertManager .Values.usePersistentVolumes) }}
 kind: PersistentVolumeClaim
-apiVersion: v1
+apiVersion: {{ .Values.coreApiVersion }}
 metadata:
   name: alertmanager-storage
   labels:

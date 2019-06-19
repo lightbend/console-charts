@@ -1,6 +1,6 @@
 {{ if .Values.usePersistentVolumes }}
 kind: PersistentVolumeClaim
-apiVersion: v1
+apiVersion: {{ .Values.coreApiVersion }}
 metadata:
   name: prometheus-storage
   labels:

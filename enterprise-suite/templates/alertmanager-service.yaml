@@ -1,5 +1,5 @@
 {{ if .Values.createAlertManager }}
-apiVersion: v1
+apiVersion: {{ .Values.coreApiVersion }}
 kind: Service
 metadata:
   name: alertmanager

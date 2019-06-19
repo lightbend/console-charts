@@ -55,6 +55,7 @@ busyboxImage: busybox
 #################################################
 # Kubernetes Api Versions
 #
+coreApiVersion: v1
 rbacApiVersion: rbac.authorization.k8s.io/v1
 apiGroupVersion: rbac.authorization.k8s.io
 deploymentApiVersion: apps/v1beta2
