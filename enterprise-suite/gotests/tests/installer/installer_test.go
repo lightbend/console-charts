@@ -60,10 +60,10 @@ var _ = Describe("all:lbc.py", func() {
 			installer.AdditionalLBCArgs = []string{"--version=1.1"}
 
 			// The test fails currently because version 1.1 doesn't have values-dump.yaml needed to compute helm values
-			want := "Found unexpected warning line: \"warning: unable to determine computed helm values - this may lead to incorrect warnings\""
+			want := "warning: unable to determine computed helm values - this may lead to incorrect warnings"
 			err := installer.Install()
 			Expect(err).NotTo(Succeed())
-			Expect(err.Error()).To(Equal(want))
+			Expect(err.Error()).To(ContainSubstring(want), "got error: %v", err)
 		})
 	})
 
