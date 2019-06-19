@@ -136,22 +136,6 @@ func (cb *CmdBuilder) start() error {
 	cb.cmdStdout = cmdStdout
 	cb.cmdStderr = cmdStderr
 
-	// Run the command
-	if err := cb.cmd.Start(); err != nil {
-		// If command is unavailable on the system we end up here
-		return fmt.Errorf("%v: unable to execute: %v", cb, err)
-	}
-
-	return nil
-}
-
-func (cb *CmdBuilder) wait(ignoreExitErr bool) error {
-	if cb == nil || cb.cmd == nil {
-		return fmt.Errorf("%v: tried to Wait() for a command that was never started", cb)
-	}
-	// Ensure we clean up the golang command context.
-	defer cb.cancelFunc()
-
 	// Copy stdout/stderr to potential destinations
 	// Always print stdout/stderr to GinkgoWriter so that we can see all output in verbose mode and when test fails.
 	stdoutWriters := []io.Writer{ginkgo.GinkgoWriter}
@@ -173,13 +157,33 @@ func (cb *CmdBuilder) wait(ignoreExitErr bool) error {
 		stderrWriters = append(stderrWriters, os.Stderr)
 	}
 
-	if _, err := io.Copy(io.MultiWriter(stdoutWriters...), cb.cmdStdout); err != nil {
-		panic(fmt.Errorf("%v: unable to copy process stdout: %v", cb, err))
+	go func() {
+		if _, err := io.Copy(io.MultiWriter(stdoutWriters...), cb.cmdStdout); err != nil {
+			fmt.Fprintf(ginkgo.GinkgoWriter, "%v: unable to copy process stdout: %v", cb, err)
+		}
+	}()
+
+	go func() {
+		if _, err := io.Copy(io.MultiWriter(stderrWriters...), cb.cmdStderr); err != nil {
+			fmt.Fprintf(ginkgo.GinkgoWriter, "%v: unable to copy process stderr: %v", cb, err)
+		}
+	}()
+
+	// Run the command
+	if err := cb.cmd.Start(); err != nil {
+		// If command is unavailable on the system we end up here
+		return fmt.Errorf("%v: unable to execute: %v", cb, err)
 	}
 
-	if _, err := io.Copy(io.MultiWriter(stderrWriters...), cb.cmdStderr); err != nil {
-		panic(fmt.Errorf("%v: unable to copy process stderr: %v", cb, err))
+	return nil
+}
+
+func (cb *CmdBuilder) wait(ignoreExitErr bool) error {
+	if cb == nil || cb.cmd == nil {
+		return fmt.Errorf("%v: tried to Wait() for a command that was never started", cb)
 	}
+	// Ensure we clean up the golang command context.
+	defer cb.cancelFunc()
 
 	if err := cb.cmd.Wait(); err != nil {
 		if _, ok := err.(*exec.ExitError); ok && ignoreExitErr {
