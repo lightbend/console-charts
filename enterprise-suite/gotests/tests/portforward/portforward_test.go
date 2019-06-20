@@ -51,7 +51,7 @@ var _ = Describe("all:portforward", func() {
 	It("forwards 127.0.0.1 requests to console", func() {
 		addr := fmt.Sprintf("http://127.0.0.1:%v", localPort)
 
-		err := util.WaitUntilSuccess(util.SmallWait, func() error {
+		err := util.WaitUntilSuccess(util.LongWait, func() error {
 			client := &http.Client{
 				Timeout: 10 * time.Second,
 			}
