@@ -53,7 +53,7 @@ var _ = Describe("all:lbc.py", func() {
 
 	Context("install", func() {
 		// Note: this test depends on remote service being up, consider disabling it if it causes problems
-		It("should be able to install a remote chart at specified version", func() {
+		XIt("should be able to install a remote chart at specified version", func() {
 			installer := lbc.DefaultInstaller()
 			installer.FailOnWarnings = true
 			installer.LocalChart = false

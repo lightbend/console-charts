@@ -9,11 +9,11 @@ consoleUIConfig:
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v1.0.8
+esConsoleVersion: v1.0.9
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api
 esMonitorVersion: v1.1.6
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.2.4
+esGrafanaVersion: v0.2.5
 # prom/prometheus
 prometheusVersion: v2.9.2
 # prom/alertmanager
