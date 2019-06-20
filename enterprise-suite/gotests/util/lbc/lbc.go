@@ -85,7 +85,7 @@ func (i *Installer) Install() error {
 	if i.FailOnWarnings {
 		for _, line := range strings.Split(stderr.String(), "\n") {
 			if strings.HasPrefix(line, "warning:") {
-				return fmt.Errorf("Found unexpected warning line: \"%v\"", line)
+				return fmt.Errorf("found unexpected warning line: %q", line)
 			}
 		}
 	}
