@@ -1,6 +1,6 @@
 {{ if .Values.usePersistentVolumes }}
 kind: PersistentVolumeClaim
-apiVersion: {{ .Values.coreApiVersion }}
+apiVersion: v1
 metadata:
   name: es-grafana-storage
   labels:

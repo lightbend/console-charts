@@ -1,4 +1,4 @@
-apiVersion: {{ .Values.coreApiVersion }}
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: exporter-graphs-cm

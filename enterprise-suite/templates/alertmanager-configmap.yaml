@@ -1,5 +1,5 @@
 {{ if .Values.createAlertManager }}
-apiVersion: {{ .Values.coreApiVersion }}
+apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
