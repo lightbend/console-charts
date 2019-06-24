@@ -1,7 +1,6 @@
 package installer
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -146,7 +145,6 @@ var _ = Describe("all:lbc.py", func() {
 				Timeout(0).Run()).To(Succeed())
 
 			dir, err := ioutil.TempDir("", "lbcpytest")
-			fmt.Printf("%s\n", dir)
 			defer os.RemoveAll(dir)
 			if err != nil {
 				panic(err)
