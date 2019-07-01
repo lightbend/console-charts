@@ -1,14 +1,17 @@
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: v1
+kind: ReplicationController
 metadata:
-  name: es-test-via-service
+  name: es-test-with-replication-controller-via-service
 spec:
   replicas: 2
+  selector:
+    app: es-test-with-replication-controller-via-service
   template:
     metadata:
+      name: es-test-with-replication-controller-via-service
       labels:
-        app: es-test-via-service
+        app: es-test-with-replication-controller-via-service
     spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
@@ -22,13 +25,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: es-test-via-service
+  name: es-test-with-replication-controller-via-service
   annotations:
     console-backend-e2e.io/scrape: "true"
 spec:
   ports:
-    - port: 80
-      targetPort: 8080
-      name: metrics
+  - port: 80
+    targetPort: 8080
+    name: metrics
   selector:
-    app: es-test-via-service
+    app: es-test-with-replication-controller-via-service
