@@ -38,7 +38,7 @@ func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comp
 		  "summary": "summ",
 		  "description": "desc"
 		}
-	}`, metric, window, confidence, comparator, threshold)
+	}`, metric, window, confidence, warmup, comparator, threshold)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(json))
 	if err != nil {
