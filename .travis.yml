@@ -50,7 +50,7 @@ jobs:
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     # travisqueue.go ensures only a single build runs at a time on Openshift
-    - go run travisqueue.go
+    - travis_retry go run travisqueue.go
     - travis_retry scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN2}
     - travis_retry make -C enterprise-suite/gotests setup-tools
     - make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=console-backend-go-tests || true
@@ -122,7 +122,7 @@ jobs:
     if: type IN (push, api) AND tag is present
     install:
     # travisqueue.go ensures only a single deploy happens at a time
-    - go run travisqueue.go
+    - travis_retry go run travisqueue.go
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - scripts/set-chart-version.sh enterprise-suite ${TRAVIS_TAG#v} || travis_terminate 1
@@ -140,7 +140,7 @@ jobs:
     if: type in (push, api) AND tag is present
     install:
     # travisqueue.go ensures only a single build runs at a time on Openshift
-    - go run travisqueue.go
+    - travis_retry go run travisqueue.go
     - travis_retry scripts/setup-tools-for-ubuntu.sh
     script:
     - scripts/set-chart-version.sh enterprise-suite ${TRAVIS_TAG#v} || travis_terminate 1

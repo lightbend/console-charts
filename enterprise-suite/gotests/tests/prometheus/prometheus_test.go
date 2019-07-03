@@ -26,10 +26,12 @@ var esMonitor *monitor.Connection
 
 // Resource yaml file to deployment name map
 var appYamls = map[string]string{
-	"../../resources/app.yaml":                             "es-test",
-	"../../resources/app_with_service.yaml":                "es-test-via-service",
-	"../../resources/app_service_with_only_endpoints.yaml": "",
-	"../../resources/app_with_multiple_ports.yaml":         "es-test-with-multiple-ports",
+	"../../resources/app.yaml":                                         "es-test",
+	"../../resources/app_with_service.yaml":                            "es-test-via-service",
+	"../../resources/app_service_with_only_endpoints.yaml":             "",
+	"../../resources/app_with_multiple_ports.yaml":                     "es-test-with-multiple-ports",
+	"../../resources/app_with_replication_controller.yaml":             "",
+	"../../resources/app_with_replication_controller_via_service.yaml": "",
 }
 
 var _ = BeforeSuite(func() {
@@ -192,20 +194,33 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover a pod with multiple ports", func() {
-			appInstancesWithMultiplePortsQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", args.ConsoleNamespace)
+			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasData(appInstancesWithMultiplePortsQuery)
+				return prom.HasData(appInstances)
 			})
 			Expect(err).To(Succeed())
 		})
 
 		It("can discover k8s `Service` resources", func() {
-			appInstancesViaServiceQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
-				if err := prom.HasData(appInstancesViaServiceQuery); err != nil {
-					return fmt.Errorf("unable to discover app via 'Service' service discovery: %v", err)
-				}
-				return nil
+				return prom.HasData(appInstances)
+			})
+			Expect(err).To(Succeed())
+		})
+
+		It("can discover a pod managed by a replication controller", func() {
+			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-replication-controller\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				return prom.HasData(appInstances)
+			})
+			Expect(err).To(Succeed())
+		})
+
+		It("can discover a pod managed by a replication controller via `Service`", func() {
+			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-replication-controller-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				return prom.HasData(appInstances)
 			})
 			Expect(err).To(Succeed())
 		})

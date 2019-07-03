@@ -17,7 +17,7 @@ type Connection struct {
 
 // MakeThresholdMonitor creates a new threshold monitor with given values.
 // Confidence is a string because console-api accepts only certain values - 5e-324, 0.25, 0.5, 0.75, 0.95 and 1.
-func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comparator, threshold string) error {
+func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comparator, threshold, warmup string) error {
 	url := fmt.Sprintf("%v/monitors/%v", m.url, name)
 
 	json := fmt.Sprintf(`
@@ -28,7 +28,7 @@ func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comp
 		  "metric": "%s",
 		  "window": "%s",
 		  "confidence": "%s",
-		  "warmup": "1s",
+          "warmup": "%s",
 		  "severity": {
 				"warning": {
 					"comparator": "%s",
@@ -38,7 +38,7 @@ func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comp
 		  "summary": "summ",
 		  "description": "desc"
 		}
-	}`, metric, window, confidence, comparator, threshold)
+	}`, metric, window, confidence, warmup, comparator, threshold)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(json))
 	if err != nil {
@@ -55,16 +55,16 @@ func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comp
 
 // MakeSimpleMonitor creates a simple threshold monitor.
 func (m *Connection) MakeSimpleMonitor(name string, metric string) error {
-	return m.MakeThresholdMonitor(name, metric, "5m", "1", ">", "9999")
+	return m.MakeThresholdMonitor(name, metric, "5m", "1", ">", "9999", "1s")
 }
 
 // MakeAlertingMonitor creates a monitor which is always alerting.
-func (m *Connection) MakeAlertingMonitor(name string) error {
+func (m *Connection) MakeAlertingMonitor(name, warmup string) error {
 	if err := m.DeleteMonitor(name); err != nil {
 		// Delete monitor in case it exists
 		// ignore any error
 	}
-	return m.MakeThresholdMonitor(name, "up", "1m", "5e-324", "!=", "-1")
+	return m.MakeThresholdMonitor(name, "up", "1m", "5e-324", "!=", "-1", warmup)
 }
 
 func (m *Connection) TryDeleteMonitor(name string) {

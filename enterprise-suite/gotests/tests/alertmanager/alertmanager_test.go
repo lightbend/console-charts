@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
-
 	gov1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
@@ -141,12 +139,13 @@ var _ = Describe("all:alertmanager", func() {
 		const name = "my-warmingup-monitor"
 
 		BeforeEach(func() {
-			installer := lbc.DefaultInstaller()
-			installer.MonitorWarmup = "10m"
-			Expect(installer.Install()).To(Succeed(), "install with PVs")
 			// delete in case it is lingering
 			console.TryDeleteMonitor("es-alert-test/" + name)
-			Expect(console.MakeAlertingMonitor("es-alert-test/"+name)).To(Succeed(), "should have created monitor")
+			err := util.WaitUntilSuccess(util.LongWait, func() error {
+				return prom.HasNoData(`model{name="%s"}`, name)
+			})
+			Expect(err).ToNot(HaveOccurred(), "should have successfully removed lingering monitor %s", name)
+			Expect(console.MakeAlertingMonitor("es-alert-test/"+name, "10m")).To(Succeed(), "should have created monitor")
 		})
 
 		AfterEach(func() {
@@ -168,7 +167,7 @@ var _ = Describe("all:alertmanager", func() {
 
 	Context("alerting", func() {
 		setupAlert := func(name string) {
-			err := console.MakeAlertingMonitor("es-alert-test/" + name)
+			err := console.MakeAlertingMonitor("es-alert-test/"+name, "1s")
 			Expect(err).ToNot(HaveOccurred(), "should have created monitor")
 			err = util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasModel(name)
