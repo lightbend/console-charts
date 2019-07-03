@@ -29,7 +29,6 @@ func (m *Connection) MakeThresholdMonitor(name, metric, window, confidence, comp
 		  "window": "%s",
 		  "confidence": "%s",
           "warmup": "%s",
-		  "warmup": "1s",
 		  "severity": {
 				"warning": {
 					"comparator": "%s",
