@@ -26,11 +26,11 @@ var esMonitor *monitor.Connection
 
 // Resource yaml file to deployment name map
 var appYamls = map[string]string{
-	"../../resources/app.yaml":                             "es-test",
-	"../../resources/app_with_service.yaml":                "es-test-via-service",
-	"../../resources/app_service_with_only_endpoints.yaml": "",
-	"../../resources/app_with_multiple_ports.yaml":         "es-test-with-multiple-ports",
-	"../../resources/app_with_replication_controller.yaml": "",
+	"../../resources/app.yaml":                                         "es-test",
+	"../../resources/app_with_service.yaml":                            "es-test-via-service",
+	"../../resources/app_service_with_only_endpoints.yaml":             "",
+	"../../resources/app_with_multiple_ports.yaml":                     "es-test-with-multiple-ports",
+	"../../resources/app_with_replication_controller.yaml":             "",
 	"../../resources/app_with_replication_controller_via_service.yaml": "",
 }
 
