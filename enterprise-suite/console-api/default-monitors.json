@@ -83,7 +83,7 @@
           "filters": {
             "quantile": "0.5"
           },
-          "period": "15m",
+          "period": "5m",
           "minslope": "0.1",
           "confidence": "1",
           "severity": {
@@ -492,7 +492,7 @@
           "alertDescription": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
         }
       },
-      "kafka_consumer_throughput": {
+      "pipelines_kafka_consumer_throughput": {
         "monitorVersion": "1",
         "model": "sma",
         "parameters": {
@@ -510,7 +510,7 @@
           "alertDescription": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
         }
       },
-      "kafka_producer_throughput": {
+      "pipelines_kafka_producer_throughput": {
         "monitorVersion": "1",
         "model": "sma",
         "parameters": {
@@ -528,7 +528,7 @@
           "alertDescription": "{{$labels.es_workload}} has unusual throughput on {{$labels.topic}}"
         }
       },
-      "kafka_consumer_lag": {
+      "pipelines_kafka_consumer_lag": {
         "monitorVersion": "1",
         "model": "growth",
         "parameters": {
