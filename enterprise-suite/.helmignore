@@ -19,6 +19,7 @@ README.md
 *.swp
 *.bak
 *.tmp
+*.pyc
 *~
 # Various IDEs
 .project
