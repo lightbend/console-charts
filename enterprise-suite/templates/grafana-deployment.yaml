@@ -36,8 +36,6 @@ spec:
       annotations:
         {{ .Values.prometheusDomain }}/scrape: "true"
         {{ .Values.prometheusDomain }}/port: "3000"
-        checksum/datasource-config: {{ include (print $.Template.BasePath "/grafana-configmap-datasource.yaml") . | sha256sum }}
-        checksum/plugin-config: {{ (.Files.Glob "es-grafana/*").AsConfig | sha256sum }}
 
     spec:
       {{ if .Values.podUID }}
@@ -76,29 +74,15 @@ spec:
           {{- end }}
         ports:
           - containerPort: 3000
-        lifecycle:
-          postStart:
-            exec:
-              command: ["/bin/sh", "-c", "echo \"Waiting for grafana to enable cinnamon plugin...\"; until curl --output /dev/null --silent --head --fail curl http://127.0.0.1:3000; do echo -n '.' ;  sleep 2; done ; curl -XPOST 'admin:admin@127.0.0.1:3000/api/plugins/cinnamon-prometheus-app/settings?enabled=true' -d '' || true" ]
         readinessProbe:
           httpGet:
             path: /api/health
             port: 3000
         volumeMounts:
-        - name: grafana-dashboards
-          mountPath: /usr/share/grafana/public/conf
-        - name: grafana-datasources
-          mountPath: /etc/grafana/provisioning/datasources/
         - name: grafana-data
           mountPath: /var/lib/grafana
 
       volumes:
-      - name: grafana-dashboards
-        configMap:
-          name: exporter-graphs-cm
-      - name: grafana-datasources
-        configMap:
-          name: grafana-datasource-cm
       - name: grafana-data
         {{ if .Values.usePersistentVolumes }}
         persistentVolumeClaim:
