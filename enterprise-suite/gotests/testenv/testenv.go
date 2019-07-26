@@ -26,7 +26,6 @@ var (
 	PrometheusAddr       string
 	ConsoleAPIAddr       string
 	GrafanaAddr          string
-	AlertmanagerAddr     string
 	LegacyMonitorAPIAddr string
 
 	isMinikube  bool
@@ -34,7 +33,7 @@ var (
 
 	openshiftConsoleService = "console-server"
 	helmReleaseName         = "enterprise-suite"
-	consolePVCs             = []string{"prometheus-storage", "es-grafana-storage", "alertmanager-storage"}
+	consolePVCs             = []string{"prometheus-storage", "es-grafana-storage"}
 
 	testEnvInitialized = false
 )
@@ -117,7 +116,6 @@ func InitEnv() {
 	PrometheusAddr = fmt.Sprintf("%v/service/prometheus", ConsoleAddr)
 	ConsoleAPIAddr = fmt.Sprintf("%v/service/console-api", ConsoleAddr)
 	GrafanaAddr = fmt.Sprintf("%v/service/grafana", ConsoleAddr)
-	AlertmanagerAddr = fmt.Sprintf("%v/service/alertmanager", ConsoleAddr)
 	LegacyMonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
 
 	testEnvInitialized = true

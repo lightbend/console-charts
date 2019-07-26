@@ -174,8 +174,6 @@ class HelmCommandsTest(unittest.TestCase):
                    stdout='grafana 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace lightbend get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m')
 
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--wait'])
 
@@ -336,8 +334,6 @@ class HelmCommandsTest(unittest.TestCase):
                    stdout='grafana 1 1 1 0 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m')
 
         # Installer will check old deployment names if the new ones fail
         expect_cmd(r'kubectl --namespace monitoring get deploy/es-console --no-headers',
@@ -349,8 +345,6 @@ class HelmCommandsTest(unittest.TestCase):
                    stdout='grafana 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m') 
 
         # Expect verify to fail
         with self.assertRaises(TestFailException):
@@ -365,8 +359,6 @@ class HelmCommandsTest(unittest.TestCase):
                    stdout='grafana 1 1 1 1 15m')
         expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-kube-state-metrics --no-headers',
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
-        expect_cmd(r'kubectl --namespace monitoring get deploy/prometheus-alertmanager --no-headers',
-                   stdout='prometheus-alertmanager 1 1 1 1 15m')
 
         lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])
 

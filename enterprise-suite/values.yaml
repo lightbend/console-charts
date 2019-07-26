@@ -16,8 +16,6 @@ esMonitorVersion: v1.1.7
 esGrafanaVersion: v0.2.10
 # prom/prometheus
 prometheusVersion: v2.9.2
-# prom/alertmanager
-alertManagerVersion: v0.16.0
 # jimmidyson/configmap-reload
 configMapReloadVersion: v0.2.2
 # gcr.io/google_containers/kube-state-metrics
@@ -40,8 +38,6 @@ esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/consol
 esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
 # prometheus image
 prometheusImage: prom/prometheus
-# alertmanager image
-alertManagerImage: prom/alertmanager
 # configmap-reload image
 configMapReloadImage: jimmidyson/configmap-reload
 # kube-state-metrics image
@@ -76,14 +72,8 @@ imageCredentials:
 #  username: setme
 #  password: setme
 
-# If true, an alertmanager will be deployed. Set to false and modify `alertManagers` list to use existing alertmanager(s).
-createAlertManager: true
-
 # Comma separated list of alertmanager addresses (can be k8s local DNS service names)
-alertManagers: alertmanager:9093
-
-# Alertmanager ConfigMap. Set to the name of a ConfigMap, with a file `alertmanager.yml`.
-alertManagerConfigMap: alertmanager-default
+alertManagers:
 
 # Service type for exposing Console outside the cluster. Can be "NodePort", "LoadBalancer" or "false".
 exposeServices: false
@@ -132,8 +122,6 @@ usePersistentVolumes: true
 
 # Prometheus volume size - used for storing metrics data.
 prometheusVolumeSize: 256Gi
-# Alertmanager volume size - used for storing silences.
-alertmanagerVolumeSize: 32Gi
 # Grafana volume size - used for storing users, custom dashboards, and plugins.
 esGrafanaVolumeSize: 32Gi
 
