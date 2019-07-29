@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chaos-akka-http
+data:
+  my.conf: |-
+    include "application"
+
+    akka.loglevel = "INFO"
+
+    chaosapp {
+      requestsPerSecond = 10
+
+      network {
+        delay {
+          average = 0 milliseconds
+        }
+      }
+
+      server {
+        processingTime {
+          average = 10 milliseconds
+          increasePerSecond = 1 milliseconds
+          increasePeriod = 15 minutes
+          quietPeriod = 10 minutes
+        }
+        failureProbability = 0.0
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-akka-http
+  labels:
+    app.kubernetes.io/name: chaos-akka-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chaos-akka-http
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chaos-akka-http
+        prometheus.io/scrape: "true"
+
+    spec:
+      containers:
+      - name: chaos-akka-http
+        image: lightbend-docker-registry.bintray.io/console-chaos-apps/chaos-akka-http:latest
+        imagePullPolicy: Never
+        args: ["-Dconfig.file=/config/my.conf"]
+
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: 8080
+
+        ports:
+        - name: metrics
+          containerPort: 9091
+          protocol: TCP
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+
+        volumeMounts:
+        - name: config-volume
+          mountPath: /config
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: chaos-akka-http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-akka-http-svc
+  annotations:
+    "prometheus.io/scrape": "true"
+    "prometheus.io/scheme": http
+spec:
+  selector:
+    app.kubernetes.io/name: chaos-akka-http
+  # NodePort, use kubectl get svc to find the port. This lets you retrieve metrics at http://$(minikube ip):<nodeport>/metrics.
+  type: NodePort
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9091
+      targetPort: 9091
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
