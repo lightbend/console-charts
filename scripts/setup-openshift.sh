@@ -8,7 +8,7 @@ tarball="openshift-origin-client-tools-${full_version}.tar.gz"
 curl -OL https://github.com/openshift/origin/releases/download/${version}/${tarball}
 echo "4b0f07428ba854174c58d2e38287e5402964c9a9355f6c359d1242efd0990da3  ${tarball}" | sha256sum -c
 tar --strip 1 -xvzf ${tarball} && chmod +x oc && sudo cp oc /usr/local/bin/ && rm oc
-oc login https://centralpark2.lightbend.com --token=$1
+oc login https://centralpark2.lightbend.com --token="$1"
 oc status
 oc project
 oc get pods

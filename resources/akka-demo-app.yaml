@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: console-akka-demoapp
+  labels:
+    app.kubernetes.io/name: console-akka-demoapp
+    prometheus.io/scrape: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: console-akka-demoapp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: console-akka-demoapp
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: console-akka-demoapp
+        image: lightbend-docker-registry.bintray.io/console-chaos-apps/chaos-akka:0.0.2
+        args: ["highProcessingTime"]
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9091
+        livenessProbe:
+          tcpSocket:
+            port: 9091
+        ports:
+        - name: metrics
+          containerPort: 9091
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: console-akka-demoapp-svc
+  annotations:
+    "prometheus.io/scrape": "true"
+    "prometheus.io/scheme": http
+    "prometheus.io/path": "/metrics"
+    "prometheus.io/port": "9091"
+spec:
+  selector:
+    app.kubernetes.io/name: console-akka-demoapp
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9091
+      targetPort: 9091 
