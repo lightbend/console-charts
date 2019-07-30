@@ -44,7 +44,6 @@ var _ = Describe("all:apiserverproxy", func() {
 		Entry("console-api", "console-api", "/status"),
 		Entry("prometheus-server", "prometheus-server", "/-/healthy"),
 		Entry("grafana-server", "grafana-server", "/api/org"),
-		Entry("alertmanager", "alertmanager", "/-/healthy"),
 	)
 })
 

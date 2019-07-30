@@ -27,6 +27,11 @@ const consoleServiceName = "expose-es-console"
 // Name of Ingress that this test creates
 const testIngressName = "console-test-ingress"
 
+func TestIngress(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Ingress Suite")
+}
+
 var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 })
@@ -108,8 +113,3 @@ var _ = Describe("minikube:ingress", func() {
 		Expect(err).To(Succeed())
 	})
 })
-
-func TestIngress(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Ingress Suite")
-}

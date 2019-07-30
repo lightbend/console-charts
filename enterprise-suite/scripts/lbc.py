@@ -50,12 +50,8 @@ CONSOLE_DEPLOYMENTS_OLD = [
     'prometheus-kube-state-metrics',
 ]
 
-# Alertmanager deployment, this check can be turned off with --external-alertmanager
-CONSOLE_ALERTMANAGER_DEPLOYMENT = 'prometheus-alertmanager'
-
 # PVCs we need to pay attention to.
 CONSOLE_PVCS = [
-    'alertmanager-storage',
     'es-grafana-storage',
     'prometheus-storage'
 ]
@@ -610,7 +606,7 @@ def import_credentials():
     return creds
 
 
-def check_install(external_alertmanager=False):
+def check_install():
     def deployment_running(name):
         printout('Checking deployment {} ... '.format(name), end='')
         returncode, stdout, _ = run('kubectl --namespace {} get deploy/{} --no-headers'
@@ -638,8 +634,6 @@ def check_install(external_alertmanager=False):
     def check_deployments(deployments):
         status_ok = True
         deps = deployments
-        if not external_alertmanager:
-            deps = deps + [CONSOLE_ALERTMANAGER_DEPLOYMENT]
 
         for dep in deps:
             status_ok &= deployment_running(dep)
@@ -787,10 +781,6 @@ def setup_args(argv):
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
 
-    # Verify arguments
-    verify.add_argument('--external-alertmanager',
-                        help='skips alertmanager check (for use with existing alertmanagers)',
-                        action='store_true')
 
     # Common arguments for install and uninstall
     for subparser in [install, uninstall]:
@@ -881,10 +871,7 @@ def main(argv):
     if args.subcommand == 'verify' or force_verify:
         if not args.skip_checks:
             check_kubectl()
-        if force_verify:
-            check_install()
-        else:
-            check_install(args.external_alertmanager)
+        check_install()
 
     if args.subcommand == 'uninstall':
         if not args.skip_checks:

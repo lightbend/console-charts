@@ -45,7 +45,6 @@ var _ = Describe("all:nginx", func() {
 		Entry("grafana", "/service/grafana/"),
 		Entry("prometheus", "/service/prometheus/"),
 		Entry("console-api", "/service/console-api/status"),
-		Entry("alertmanager", "/service/alertmanager"),
 	)
 
 	DescribeTable("favicon.ico", func(base string) {
@@ -68,7 +67,6 @@ var _ = Describe("all:nginx", func() {
 	},
 		Entry("prometheus", &testenv.PrometheusAddr, "/service/prometheus/"),
 		Entry("grafana", &testenv.GrafanaAddr, "/service/grafana/"),
-		Entry("alertmanager", &testenv.AlertmanagerAddr, "/service/alertmanager/"),
 	)
 
 	DescribeTable("caching is off", func(addr string) {
@@ -95,7 +93,6 @@ var _ = Describe("all:nginx", func() {
 		Entry("workload", "/workloads/prometheus-server"),
 		Entry("prometheus", "/service/prometheus/"),
 		Entry("grafana", "/service/grafana/"),
-		Entry("alertmanager", "/service/alertmanager/"),
 		// es-monitor-api fails DENY check
 		XEntry("console-api", "/service/es-monitor-api/"),
 	)
