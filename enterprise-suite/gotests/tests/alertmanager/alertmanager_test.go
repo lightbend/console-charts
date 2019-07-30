@@ -30,10 +30,10 @@ var (
 	prom    *prometheus.Connection
 	console *monitor.Connection
 
-	depsClient      gov1.DeploymentInterface
+	depsClient gov1.DeploymentInterface
 
-	appYaml    = "../../resources/alert-app.yaml"
-	appName    = "es-alert-test"
+	appYaml = "../../resources/alert-app.yaml"
+	appName = "es-alert-test"
 )
 
 var _ = BeforeSuite(func() {
