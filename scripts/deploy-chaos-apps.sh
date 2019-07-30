@@ -14,6 +14,5 @@ get_file https://raw.githubusercontent.com/lightbend/console-chaos-apps/master/a
 get_file https://raw.githubusercontent.com/lightbend/console-chaos-apps/master/akka/chaos-akka.yaml build/chaos-akka.yaml
 
 # Remove old deployment first to force a redeploy
-kubectl delete -n "$namespace" --ignore-not-found deployment chaos-akka-http
-kubectl delete -n "$namespace" --ignore-not-found deployment chaos-akka
+kubectl delete -n "$namespace" --ignore-not-found deployment -l app.kubernetes.io/part-of=chaos-apps
 kubectl apply -n "$namespace" -f build/
