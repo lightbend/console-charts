@@ -55,8 +55,6 @@ scrape_configs:
     metric_relabel_configs:
       - source_labels: [pod_name]
         target_label: kubernetes_pod_name
-      - regex: pod_name
-        action: labeldrop
       # pause containers have all the network stats for a pod
       - source_labels: [container_name, __name__]
         regex: POD;container_(network).*
@@ -303,8 +301,11 @@ scrape_configs:
 
       # Set the kubernetes_pod_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_name]
-        action: replace
         target_label: kubernetes_pod_name
+
+      # Set the pod label from metadata. To match the format of https://github.com/coreos/prometheus-operator.
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
 
     # Set the workload label from the ReplicaSet name (assumed to be managed by a Deployment).
       - source_labels: [__meta_kubernetes_pod_controller_kind, __meta_kubernetes_pod_controller_name, es_workload]
@@ -388,17 +389,18 @@ scrape_configs:
 
       # Set the kubernetes_pod_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_name]
-        action: replace
         target_label: kubernetes_pod_name
+
+      # Set the pod label from metadata. To match the format of https://github.com/coreos/prometheus-operator.
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
 
       # Set the node_name label from metadata.
       - source_labels: [__meta_kubernetes_pod_node_name]
-        action: replace
         target_label: node_name
 
       # Set the node_ip label from metadata.
       - source_labels: [__meta_kubernetes_pod_host_ip]
-        action: replace
         target_label: node_ip
 
       # Set the workload label from the ReplicaSet name (assumed to be managed by a Deployment).

@@ -67,7 +67,7 @@ var _ = BeforeSuite(func() {
 
 	// wait until there's some scrapes finished
 	Expect(waitForScrapes("prometheus_notifications_dropped_rate")).To(Succeed())
-	Expect(waitForScrapes("model{name=\"prometheus_notifications_dropped\"}")).To(Succeed())
+	Expect(waitForScrapes(`model{name="prometheus_notifications_dropped"}`)).To(Succeed())
 	Expect(waitForScrapes("kube_pod_info")).To(Succeed())
 })
 
@@ -104,8 +104,8 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("health metrics available",
 		func(metric string) {
-			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
-			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf(`model{name="%v"}`, metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf(`health{name="%v"}`, metric))).To(Succeed())
 		},
 		Metric("prometheus_notifications_dropped"),
 		Metric("prometheus_notification_queue"),
@@ -118,24 +118,38 @@ var _ = Describe("all:prometheus", func() {
 	)
 
 	It("has the expected metrics", func() {
-		// PromData with "es_workload" should also have a "namespace" label
-		Expect(prom.HasNoData("count({es_workload=~\".+\", namespace=\"\", name!~\"node.*|kube_node.*\", __name__!~\"node.*|kube_node.*\"})")).To(Succeed())
+		// Verify namespace/pod labels
+		Expect(prom.HasNoData(`{es_workload=~".+", namespace="", name!~"node.*|kube_node.*", __name__!~"node.*|kube_node.*"}`)).To(Succeed(),
+			"metrics with `es_workload` should have a `namespace` label")
+		Expect(prom.HasData(`{es_workload=~".+", namespace=~".+"}`)).To(Succeed(),
+			"at least one metric with `es_workload` and `namespace` label")
+
+		Expect(prom.HasNoData(`{es_workload=~".+", pod="", name!~"node_.*|kube_.*|container_.*", __name__!~"node_.*|kube_.*|container_.*|workload:.*|container_starts_total"}`)).To(Succeed(),
+			"metrics with `es_workload` should have a `pod` label")
+		Expect(prom.HasData(`{es_workload=~".+", pod=~".+"}`)).To(Succeed(),
+			"at least one metric with `es_workload` and `pod` label")
+
+		Expect(prom.HasNoData(`{es_workload=~".+", pod_name="", __name__=~"container.*", __name__!="container_starts_total"}`)).To(Succeed(),
+			"container_* metrics with `es_workload` should have a `pod_name` label")
+		Expect(prom.HasData(`{es_workload=~".+", pod_name=~".+", __name__=~"container.*"}`)).To(Succeed(),
+			"at least one container_* metric with `es_workload` and `pod_name` label")
+
 		// Health should have "es_workload" label, with a few known exceptions
-		Expect(prom.HasNoData("health{es_workload=\"\", name!~\"node.*|kube_node.*|prometheus_target_down|scrape_time\"}")).To(Succeed())
+		Expect(prom.HasNoData(`health{es_workload="", name!~"node.*|kube_node.*|prometheus_target_down|scrape_time"}`)).To(Succeed())
 
 		// kube_pod_info must have es_workload labels (flaky!)
 		//Expect(prom.HasData("kube_pd_info{es_workload=~\".+\"}")).To(BeTrue())
 
-		Expect(prom.HasNoData("kube_pod_info{es_workload=\"\"}")).To(Succeed())
+		Expect(prom.HasNoData(`kube_pod_info{es_workload=""}`)).To(Succeed())
 		// kube data mapped pod to workload labels
-		Expect(prom.HasNoData("{__name__=~ \"kube_.+\", pod!=\"\", es_workload=\"\"}")).To(Succeed())
+		Expect(prom.HasNoData(`{__name__=~ "kube_.+", pod!="", es_workload=""}`)).To(Succeed())
 		// All container data have a workload label
-		Expect(prom.HasNoData("{__name__=~\"container_.+\", es_workload=\"\"}")).To(Succeed())
+		Expect(prom.HasNoData(`{__name__=~"container_.+", es_workload=""}`)).To(Succeed())
 		// All targets should be reachable
-		Expect(prom.HasData("up{kubernetes_name != \"es-test-service-with-only-endpoints\"} == 1")).To(Succeed())
+		Expect(prom.HasData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 1`)).To(Succeed())
 		Expect(prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 0`)).To(Succeed())
 		// None of the metrics should have kubernetes_namespace label
-		Expect(prom.HasNoData("{kubernetes_namespace!=\"\"}")).To(Succeed())
+		Expect(prom.HasNoData(`{kubernetes_namespace!=""}`)).To(Succeed())
 		// make sure the number of node_names matches the number of kubelets
 		Expect(prom.HasData(`count (count by (node_name) ({node_name!="", job="kube-state-metrics"})) == count (kubelet_running_pod_count)`)).To(Succeed())
 	})
@@ -162,8 +176,8 @@ var _ = Describe("all:prometheus", func() {
 
 	DescribeTable("kube state health",
 		func(metric string) {
-			Expect(prom.AnyData(fmt.Sprintf("model{name=\"%v\"}", metric))).To(Succeed())
-			Expect(prom.AnyData(fmt.Sprintf("health{name=\"%v\"}", metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf(`model{name="%v"}`, metric))).To(Succeed())
+			Expect(prom.AnyData(fmt.Sprintf(`health{name="%v"}`, metric))).To(Succeed())
 		},
 		Metric("kube_container_restarting"),
 		Metric("kube_pod_not_ready"),
@@ -171,7 +185,7 @@ var _ = Describe("all:prometheus", func() {
 
 	Context("k8s service discovery", func() {
 		It("can discover a pod", func() {
-			appInstancesQuery := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstancesQuery := fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-test", namespace="%v"}) ) == 2`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstancesQuery)
 			})
@@ -194,7 +208,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover a pod with multiple ports", func() {
-			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-multiple-ports\", namespace=\"%v\"}) ) == 4", args.ConsoleNamespace)
+			appInstances := fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-test-with-multiple-ports", namespace="%v"}) ) == 4`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstances)
 			})
@@ -202,7 +216,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover k8s `Service` resources", func() {
-			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstances := fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-test-via-service", namespace="%v"}) ) == 2`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstances)
 			})
@@ -210,7 +224,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover a pod managed by a replication controller", func() {
-			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-replication-controller\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstances := fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-test-with-replication-controller", namespace="%v"}) ) == 2`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstances)
 			})
@@ -218,7 +232,7 @@ var _ = Describe("all:prometheus", func() {
 		})
 
 		It("can discover a pod managed by a replication controller via `Service`", func() {
-			appInstances := fmt.Sprintf("count( count by (instance) (ohai{es_workload=\"es-test-with-replication-controller-via-service\", namespace=\"%v\"}) ) == 2", args.ConsoleNamespace)
+			appInstances := fmt.Sprintf(`count( count by (instance) (ohai{es_workload="es-test-with-replication-controller-via-service", namespace="%v"}) ) == 2`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
 				return prom.HasData(appInstances)
 			})
@@ -234,7 +248,7 @@ var _ = Describe("all:prometheus", func() {
 			Expect(err).To(Succeed())
 
 			err = util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasData("up{es_workload=\"es-test-via-service\", es_monitor_type=\"es-test-via-service\"}")
+				return prom.HasData(`up{es_workload="es-test-via-service", es_monitor_type="es-test-via-service"}`)
 			})
 			Expect(err).To(Succeed())
 
@@ -243,9 +257,9 @@ var _ = Describe("all:prometheus", func() {
 
 		It("can discover Services without any pods, only endpoints, to support external redirection", func() {
 			err := util.WaitUntilSuccess(util.LongWait, func() error {
-				return prom.HasData(fmt.Sprintf("count( count by (instance) (up{ "+
-					"job=\"kubernetes-services\", kubernetes_name=\"es-test-service-with-only-endpoints\", namespace=\"%v\""+
-					"}) ) == 1", args.ConsoleNamespace))
+				return prom.HasData(fmt.Sprintf(`count( count by (instance) (up{ `+
+					`job="kubernetes-services", kubernetes_name="es-test-service-with-only-endpoints", namespace="%v"`+
+					`}) ) == 1`, args.ConsoleNamespace))
 			})
 			Expect(err).To(Succeed())
 		})
