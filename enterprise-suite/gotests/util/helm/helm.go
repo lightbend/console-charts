@@ -19,16 +19,16 @@ import (
 
 const ServiceAccountName = "tiller"
 
-func IsInstalled() bool {
+func IsInstalled() error {
 	cmd := util.Cmd("helm", "version")
 	if args.TillerNamespace != "" {
 		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
 	}
 	if err := cmd.Run(); err != nil {
-		return false
+		return err
 	}
 
-	return true
+	return nil
 }
 
 // ReleaseExists returns true if given helm release name is present in any state - deployed, pending or failed
