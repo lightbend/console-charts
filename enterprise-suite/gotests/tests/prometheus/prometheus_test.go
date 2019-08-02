@@ -129,7 +129,7 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasData(`{es_workload=~".+", pod=~".+"}`)).To(Succeed(),
 			"at least one metric with `es_workload` and `pod` label")
 
-		Expect(prom.HasNoData(`{es_workload=~".+", pod_name="", __name__=~"container.*", __name__!="container_starts_total|model|health"}`)).To(Succeed(),
+		Expect(prom.HasNoData(`{es_workload=~".+", pod_name="", __name__=~"container.*", __name__!~"container_starts_total|model|health"}`)).To(Succeed(),
 			"container_* metrics with `es_workload` should have a `pod_name` label")
 		Expect(prom.HasData(`{es_workload=~".+", pod_name=~".+", __name__=~"container.*"}`)).To(Succeed(),
 			"at least one container_* metric with `es_workload` and `pod_name` label")
