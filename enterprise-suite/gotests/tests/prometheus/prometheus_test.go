@@ -124,12 +124,12 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasData(`{es_workload=~".+", namespace=~".+"}`)).To(Succeed(),
 			"at least one metric with `es_workload` and `namespace` label")
 
-		Expect(prom.HasNoData(`{es_workload=~".+", pod="", name!~"node_.*|kube_.*|container_.*", __name__!~"node_.*|kube_.*|container_.*|workload:.*|container_starts_total"}`)).To(Succeed(),
+		Expect(prom.HasNoData(`{es_workload=~".+", pod="", name!~"node_.*|kube_.*|container_.*", __name__!~"node_.*|kube_.*|container_.*|workload:.*|container_starts_total|model|health"}`)).To(Succeed(),
 			"metrics with `es_workload` should have a `pod` label")
 		Expect(prom.HasData(`{es_workload=~".+", pod=~".+"}`)).To(Succeed(),
 			"at least one metric with `es_workload` and `pod` label")
 
-		Expect(prom.HasNoData(`{es_workload=~".+", pod_name="", __name__=~"container.*", __name__!="container_starts_total"}`)).To(Succeed(),
+		Expect(prom.HasNoData(`{es_workload=~".+", pod_name="", __name__=~"container.*", __name__!="container_starts_total|model|health"}`)).To(Succeed(),
 			"container_* metrics with `es_workload` should have a `pod_name` label")
 		Expect(prom.HasData(`{es_workload=~".+", pod_name=~".+", __name__=~"container.*"}`)).To(Succeed(),
 			"at least one container_* metric with `es_workload` and `pod_name` label")
