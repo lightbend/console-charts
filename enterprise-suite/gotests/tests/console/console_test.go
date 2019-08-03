@@ -46,7 +46,7 @@ var _ = Describe("openshift:verify", func() {
 var _ = Describe("all:verify", func() {
 	Context("Helm", func() {
 		It("is installed", func() {
-			Expect(helm.IsInstalled()).Should(BeTrue())
+			Expect(helm.IsInstalled()).To(Succeed())
 		})
 	})
 
