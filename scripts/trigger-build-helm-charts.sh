@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eu
+
 body='{
 "request": {
 "branch":"master"

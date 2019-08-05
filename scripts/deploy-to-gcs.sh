@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -x
+set -x
 
 set -eu
 
@@ -66,27 +66,30 @@ trap cleanup 0
 
 docker pull google/cloud-sdk:${CLOUD_SDK_VERSION}
 
+# Create volume to hold the various files. This works even in a containerized build environment.
+GCLOUD_CONFIG_CID=$(docker create -v /build -v /resources --name files alpine:3.8 /bin/true)
+docker cp /tmp/resources/. files:/resources
+docker cp "$HELM_DIR/build/." files:/build
+
 # Use the decrypted service account credentials to authenticate the command line tool and setup
 # volume mounts so credentials and tarballs are accessible to docker
-GCLOUD_CONFIG_CID=$( docker run -t -d \
-     -v "/tmp/resources:/resources" \
-     -v "${HELM_DIR}/build:/build" \
-     --name gcloud-config ${CLOUD_SDK_IMAGE} \
-     gcloud auth activate-service-account --key-file /resources/es-repo-7c1fefe17951.json \
-     )
+docker run -t -d \
+    --volumes-from files \
+    --name gcloud-config ${CLOUD_SDK_IMAGE} \
+    gcloud auth activate-service-account --key-file /resources/es-repo-7c1fefe17951.json
 
-docker run --rm -ti --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
+docker run --rm -ti --volumes-from files --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
     gcloud config set project ${GCS_PROJECT}
 
 # Copy over all tarballs.  Don't include all*.yaml or .nojekyll files.
 # Optionally use '-d' and '-n' flags.
-docker run --rm -ti --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
+docker run --rm -ti --volumes-from files --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
     gsutil -m rsync ${RSYNC_DELETE} ${RSYNC_DRY_RUN} -c -x "all.*\.yaml|\.nojekyll" /build gs://${GCS_BUCKET}
 
 # By default GCS sets the file type for index.yaml to 'application/octet-stream'.  Move to 'text/yaml'.
 # Note that this increments the Metageneration number for this file in GCS.  (In case you were wondering
 # why it seems to be 2 all the time...)
 if [ -f "${HELM_DIR}/docs/index.yaml" ] ; then  # should always be there but test anyway...
-	docker run --rm -ti --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
+	docker run --rm -ti --volumes-from files --volumes-from gcloud-config ${CLOUD_SDK_IMAGE} \
 		gsutil setmeta -h 'Content-Type: text/yaml' gs://${GCS_BUCKET}/index.yaml
 fi
