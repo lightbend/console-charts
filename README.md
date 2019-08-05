@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/lightbend/console-charts.svg?branch=master)](https://travis-ci.org/lightbend/console-charts)
+[![Build Status](https://travis-ci.com/lightbend/console-charts.svg?branch=master)](https://travis-ci.com/lightbend/console-charts)
 
 # console-charts
 
