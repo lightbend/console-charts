@@ -101,13 +101,13 @@ jobs:
     - checkout
     - queue/until_front_of_line:
         consider-branch: false
-    # - run: scripts/setup-tools-for-debian.sh
-    # - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-    # - run: make -C enterprise-suite package
-    # - run: mkdir -p /tmp/resources
-    # - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
-    # - setup_remote_docker
-    # - run: scripts/deploy-to-gcs.sh
+    - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
+    - run: make -C enterprise-suite package
+    - run: mkdir -p /tmp/resources
+    - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
+    - setup_remote_docker
+    - run: scripts/deploy-to-gcs.sh
     - run: scripts/trigger-build-helm-charts.sh
 
   deploy_demo:
