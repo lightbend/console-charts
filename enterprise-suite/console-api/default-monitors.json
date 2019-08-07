@@ -17,7 +17,8 @@
           "alertSummary": "container restarting rapidly",
           "alertDescription": "container {{$labels.container}} in pod {{$labels.pod}} of {{$labels.es_workload}} restarting rapidly",
           "monitorDescription": "Detects if a container in a pod is continuously restarting. Can be due to getting OOM killed by OS or due to a bug that causes a crash shortly after starting.",
-          "metricUnits": "restarts/s"
+          "metricUnits": "restarts/s",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/kubernetes.html#kube-container-restarting"
         }
       },
       "kube_pod_not_ready": {
@@ -36,7 +37,8 @@
           "alertSummary": "pod not ready",
           "alertDescription": "pod {{$labels.pod}} on {{$labels.es_workload}} not ready",
           "monitorDescription": "Detects if the pod's readiness probe failed. Use Kubernetes to get more information on the pod's status.",
-          "metricUnits": "boolean"
+          "metricUnits": "boolean",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/kubernetes.html#kube-pod-not-ready"
         }
       },
       "scrape_time": {
@@ -74,46 +76,50 @@
           "alertDescription": "Lightbend console api on {{$labels.instance}} has monitor errors"
         }
       },
-
-      "akka_inbox_growth": {
+      "akka_inbox_queue_time": {
         "monitorVersion": "1",
         "model": "growth",
         "parameters": {
-          "metric": "akka_actor_mailbox_size",
+          "metric": "akka_actor_mailbox_time_ms",
           "filters": {
-            "quantile": "0.5"
+            "quantile": "0.99"
           },
-          "period": "5m",
-          "minslope": "0.1",
-          "confidence": "1",
+          "period": "3m",
+          "minslope": "0.2",
+          "confidence": "0.5",
           "severity": {
-            "critical": {
-              "window": "5m"
+            "warning": {
+              "window": "2m"
             }
           },
-          "alertSummary": "actor inbox growing",
-          "alertDescription": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a growing inbox"
+          "alertSummary": "actor inbox time growing",
+          "alertDescription": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has a rapidly growing mailbox time",
+          "monitorDescription": "Detects if amount of time messages spend in an inbox is growing.",
+          "metricUnits": "ms",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/akka.html#akka-inbox-queue-time"
         }
       },
       "akka_processing_time": {
         "monitorVersion": "1",
-        "model": "sma",
+        "model": "growth",
         "parameters": {
-          "metric": "akka_actor_processing_time_ns",
+          "metric": "akka_actor_processing_time_ms",
           "filters": {
-            "quantile": "0.5"
+            "quantile": "0.99"
           },
-          "period": "15m",
-          "minval": "100000000",
-          "window": "15m",
+          "period": "3m",
+          "minslope": "0.2",
           "confidence": "0.5",
           "severity": {
             "warning": {
-              "numsigma": "2"
+              "window": "5m"
             }
           },
-          "alertSummary": "actor processing time is anomalous",
-          "alertDescription": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has unusual processing time"
+          "alertSummary": "actor processing time is growing",
+          "alertDescription": "actor {{$labels.actor}} in {{$labels.app}} on {{$labels.instance}} has growing processing time",
+          "monitorDescription": "Detects if message processing time is growing.",
+          "metricUnits": "ms",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/akka.html#akka-processing-time"
         }
       },
       "prometheus_notifications_dropped": {
@@ -252,189 +258,50 @@
           "alertDescription": "prometheus is taking {{$value}}% of the {{$labels.interval}} interval to get {{$labels.scrape_job}} metrics from {{$labels.instance}}"
         }
       },
-      "zookeeper_latency": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "zk_avg_latency",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "0.5",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "alertSummary": "Zookeeper Latency",
-          "alertDescription": "ZooKeeper latency is not normal in {{$labels.es_workload}} on {{$labels.instance}}"
-        }
-      },
-      "zookeeper_connections": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "zk_num_alive_connections",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "alertSummary": "Zookeeper live connections is not normal",
-          "alertDescription": "Zookeeper live connection in {{$labels.es_workload}} is not normal on {{$labels.instance}}"
-        }
-      },
-      "zookeeper_pending_syncs": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "zk_pending_syncs",
-          "window": "5m",
-          "confidence": "1",
-          "severity": {
-            "critical": {
-              "comparator": ">",
-              "threshold": "0"
-            }
-          },
-          "alertSummary": "Zookeeper pending-syncs is not normal",
-          "alertDescription": "Zookeeper Pending syncs in {{$labels.es_workload}} is greater than 0."
-        }
-      },
-      "zookeeper_open_file_descriptor": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "zk_open_file_descriptor_count",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "alertSummary": "Zookeeper open file descriptor growth",
-          "alertDescription": "Zookeeper open file descriptors in {{$labels.es_workload}} is not normal in {{$labels.instance}}"
-        }
-      },
-      "redis_keyspace_miss": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "redis_keyspace_miss_ratio",
-          "period": "10m",
-          "minval": "1",
-          "window": "10m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "alertSummary": "Redis key space miss ratio growth",
-          "alertDescription": "Observing shifts in Redis key space ratio on {{$labels.es_workload}} in {{$labels.instance}}"
-        }
-      },
-      "redis_evictions": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "redis_evicted_keys_total",
-          "period": "10m",
-          "minval": "1",
-          "window": "10m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "alertSummary": "Redis evictions growing",
-          "alertDescription": "Redis evictions on {{$labels.es_workload}} are growing in {{$labels.instance}}"
-        }
-      },
-      "redis_commands_processed": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "redis_commands_processed_total",
-          "period": "5m",
-          "minval": "10",
-          "window": "5m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "3"
-            }
-          },
-          "alertSummary": "Redis command processed",
-          "alertDescription": "Redis commands processed on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
-        }
-      },
-      "redis_connections": {
-        "monitorVersion": "1",
-        "model": "sma",
-        "parameters": {
-          "metric": "redis_connected_clients",
-          "period": "15m",
-          "minval": "10",
-          "window": "15m",
-          "confidence": "1",
-          "severity": {
-            "warning": {
-              "numsigma": "2"
-            }
-          },
-          "alertSummary": "Redis client connections is not normal",
-          "alertDescription": "Redis client connections on {{$labels.es_workload}} is not normal in {{$labels.instance}}"
-        }
-      },
       "akka_http_server_response_time": {
         "monitorVersion": "1",
-        "model": "sma",
+        "model": "growth",
         "parameters": {
-          "metric": "akka_http_http_server_response_time_ns",
+          "metric": "akka_http_server_response_time_ms",
           "filters": {
-            "quantile": "0.5"
+            "quantile": "0.99"
           },
-          "period": "15m",
-          "minval": "100000000",
-          "window": "15m",
-          "confidence": "0.5",
+          "period": "5m",
+          "minslope": "0.1",
+          "confidence": "1",
           "severity": {
             "warning": {
-              "numsigma": "2"
+              "window": "1m"
             }
           },
           "alertSummary": "HTTP server response time is anomalous",
-          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time",
+          "monitorDescription": "Detects if the HTTP server response times have been increasing.",
+          "metricUnits": "ms",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/akka.html#akka-http-server-response-time"
         }
       },
       "akka_http_client_response_time": {
         "monitorVersion": "1",
-        "model": "sma",
+        "model": "growth",
         "parameters": {
-          "metric": "akka_http_http_client_http_client_service_response_time_ns",
+          "metric": "akka_http_client_service_response_time_ms",
           "filters": {
-            "quantile": "0.5"
+            "quantile": "0.99"
           },
-          "period": "15m",
-          "minval": "100000000",
-          "window": "15m",
-          "confidence": "0.5",
+          "period": "5m",
+          "minslope": "0.1",
+          "confidence": "1",
           "severity": {
             "warning": {
-              "numsigma": "2"
+              "window": "1m"
             }
           },
           "alertSummary": "HTTP client response time is anomalous",
-          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has a growing response time",
+          "monitorDescription": "Detects if the Akka HTTP client request times have been increasing.",
+          "metricUnits": "ms",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/akka.html#akka-http-client-response-time"
         }
       },
       "akka_http_server_5xx": {
@@ -442,8 +309,8 @@
         "model": "threshold",
         "parameters": {
           "metric": "akka_http_http_server_responses_5xx_rate",
-          "window": "5m",
-          "confidence": "1",
+          "window": "1m",
+          "confidence": "5e-324",
           "severity": {
             "warning": {
               "comparator": ">",
@@ -451,28 +318,32 @@
             }
           },
           "alertSummary": "HTTP 5xx errors",
-          "alertDescription": "HTTP server at {{$labels.instance}} has 5xx errors"
+          "alertDescription": "HTTP server at {{$labels.instance}} has 5xx errors",
+          "monitorDescription": "Detects if Akka HTTP server is producing 5xx errors.",
+          "metricUnits": "errors/s",
+          "docLink": "https://developer.lightbend.com/docs/console/current/monitors/akka.html#akka-http-server-5xx"
         }
       },
       "play_http_client_response_time": {
         "monitorVersion": "1",
-        "model": "sma",
+        "model": "growth",
         "parameters": {
-          "metric": "play_http_client_play_client_service_response_time_ns",
+          "metric": "play_http_client_service_response_time_ms",
           "filters": {
-            "quantile": "0.5"
+            "quantile": "0.99"
           },
-          "period": "15m",
-          "minval": "100000000",
-          "window": "15m",
-          "confidence": "0.5",
+          "period": "5m",
+          "minslope": "0.1",
+          "confidence": "1",
           "severity": {
             "warning": {
-              "numsigma": "2"
+              "window": "1m"
             }
           },
-          "alertSummary": "HTTP client response time is anomalous",
-          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has unusual response time"
+          "alertSummary": "HTTP client response time is growing",
+          "alertDescription": "{{$labels.app}} on {{$labels.instance}} has a growing response time",
+          "monitorDescription": "Detects if the Play HTTP client request times have been increasing.",
+          "metricUnits": "ms"
         }
       },
       "lagom_circuit_breaker_state": {
@@ -483,13 +354,18 @@
           "window": "1m",
           "confidence": "5e-324",
           "severity": {
+            "warning": {
+              "comparator": "==",
+              "threshold": "2"
+            },
             "critical": {
-              "comparator": "<",
-              "threshold": "3"
+              "comparator": "==",
+              "threshold": "1"
             }
           },
           "alertSummary": "Circuit breaker tripped",
-          "alertDescription": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}"
+          "alertDescription": "Circuit breaker {{$labels.circuit_breaker}} tripped on {{$labels.instance}}",
+          "monitorDescription": "Detects if a circuit breaker in a Lagom application has tripped."
         }
       },
       "pipelines_kafka_consumer_throughput": {
@@ -532,19 +408,47 @@
         "monitorVersion": "1",
         "model": "growth",
         "parameters": {
-          "metric": "kafka_consumer_topic_lag_max",
-          "period": "15m",
+          "metric": "kafka_consumer_topic_lag",
+          "period": "5m",
           "minslope": "0.1",
           "confidence": "1",
           "severity": {
             "warning": {
-              "window": "15m"
+              "window": "1m"
             }
           },
           "alertSummary": "consumergroup falling behind",
-          "alertDescription": "{{$labels.es_workload}} has lag on {{$labels.topic}}"
+          "alertDescription": "{{$labels.es_workload}} has lag on {{$labels.topic}}",
+          "monitorDescription": "Detects if consumer topic lag is increasing.",
+          "metricUnits": "records"
         }
-      }
+      },
+
+      "kube_container_restarts": null,
+      "kube_pod_not_running": null,
+      "akka_inbox_growth": null,
+      "zookeeper_latency": null,
+      "zookeeper_connections": null,
+      "zookeeper_pending_syncs": null,
+      "zookeeper_open_file_descriptor": null,
+      "cassandra_write_latency": null,
+      "cassandra_read_latency": null,
+      "redis_keyspace_miss": null,
+      "redis_evictions": null,
+      "redis_commands_processed": null,
+      "redis_connections": null,
+      "kafka_under_replicated_partitions": null,
+      "memcached_miss_ratio": null,
+      "memcached_current_connections": null,
+      "memcached_evictions": null,
+      "kafka_consumer_throughput": null,
+      "kafka_producer_throughput": null,
+      "kafka_consumer_lag": null,
+
+      "kafka_consumergroup_lag": null,
+      "kafka_incoming_messages": null,
+      "kafka_offline_partition": null,
+      "kube_workload_generation_lag": null
     }
   }
 }
