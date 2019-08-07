@@ -101,13 +101,13 @@ jobs:
     - checkout
     - queue/until_front_of_line:
         consider-branch: false
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-    - run: make -C enterprise-suite package
-    - run: mkdir -p /tmp/resources
-    - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
-    - setup_remote_docker
-    - run: scripts/deploy-to-gcs.sh
+    # - run: scripts/setup-tools-for-debian.sh
+    # - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
+    # - run: make -C enterprise-suite package
+    # - run: mkdir -p /tmp/resources
+    # - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
+    # - setup_remote_docker
+    # - run: scripts/deploy-to-gcs.sh
     - run: scripts/trigger-build-helm-charts.sh
 
   deploy_demo:
@@ -131,15 +131,22 @@ workflows:
     jobs:
     - unit_tests
 
+    # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
     - backend_e2e_openshift:
         requires:
         - unit_tests
+        branches:
+          ignore: master
     - backend_e2e_minishift:
         requires:
         - unit_tests
+        branches:
+          ignore: master
     - frontend_e2e_minishift:
         requires:
         - unit_tests
+        branches:
+          ignore: master
 
     # Whitesource, release, and deploy happens on a tag only.
     - whitesource:
