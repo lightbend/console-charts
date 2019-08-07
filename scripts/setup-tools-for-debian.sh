@@ -2,19 +2,16 @@
 
 set -eux
 
-# git-lfs repo key, needed for apt update as of 2018/01/07 on travis
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-
-# yq
-sudo add-apt-repository -y ppa:rmescandon/yq
 sudo apt update
-sudo apt install -y yq
 
 # jq
 sudo apt install -y jq
 
-# libgconf2-4
-sudo apt install -y libgconf2-4
+# yq
+curl -LO https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64
+echo "99a01ae32f0704773c72103adb7050ef5c5cad14b517a8612543821ef32d6cc9 yq_linux_amd64" | sha256sum --check
+sudo mv yq_linux_amd64 /usr/local/bin/yq
+sudo chmod +x /usr/local/bin/yq
 
 # promtool
 mkdir -p build

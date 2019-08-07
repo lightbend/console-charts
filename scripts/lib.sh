@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 
-if ! command -v yq > /dev/null; then
-    >&2 echo "Please install yq:"
-    >&2 echo "* brew install yq" 
-    >&2 echo "* go get github.com/mikefarah/yq"
-    >&2 echo "See https://github.com/mikefarah/yq for more options"
-    echo "yq_missing"
-    exit 1
+if yqpath=$(command -v yq); then
+    if command -v go; then
+        go get github.com/mikefarah.yq
+        yqpath=$(command -v yq)
+    fi
 fi
+
+yq() {
+    if [ "$yqpath" != "" ]; then
+        "$yqpath" $@
+    else
+        echo "No yq or docker available, bailing..."
+        exit 1
+    fi
+}
