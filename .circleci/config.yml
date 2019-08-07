@@ -135,18 +135,21 @@ workflows:
     - backend_e2e_openshift:
         requires:
         - unit_tests
-        branches:
-          ignore: master
+        filters:
+          branches:
+            ignore: master
     - backend_e2e_minishift:
         requires:
         - unit_tests
-        branches:
-          ignore: master
+        filters:
+          branches:
+            ignore: master
     - frontend_e2e_minishift:
         requires:
         - unit_tests
-        branches:
-          ignore: master
+        filters:
+          branches:
+            ignore: master
 
     # Whitesource, release, and deploy happens on a tag only.
     - whitesource:
