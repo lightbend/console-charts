@@ -60,9 +60,6 @@ jobs:
     machine:
       image: ubuntu-1604:201903-01
 
-    environment:
-      NAMESPACE: console-backend-go-tests
-
     steps:
     - checkout
     - run:
@@ -76,16 +73,16 @@ jobs:
           nvm alias default v9.4.0
           echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
           echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
-    - restore_cache:
-        key: dependency-cache-{{ checksum "enterprise-suite/tests/e2e/package.json" }}
+    # - restore_cache:
+    #     key: dependency-cache-{{ checksum "enterprise-suite/tests/e2e/package.json" }}
     - run: scripts/setup-tools-for-debian.sh
     - run: scripts/setup-minikube-for-linux.sh
     - run: curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
     - run: make -C enterprise-suite frontend-tests1
-    - save_cache:
-        key: dependency-cache-{{ checksum "enterprise-suite/tests/e2e/package.json" }}
-        paths:
-        - enterprise-suite/tests/e2e/node_modules
+    # - save_cache:
+    #     key: dependency-cache-{{ checksum "enterprise-suite/tests/e2e/package.json" }}
+    #     paths:
+    #     - enterprise-suite/tests/e2e/node_modules
     - run: artifacts upload $(find . -name '*.mp4')
     - run: artifacts upload $(find . -name '*.png')
 
