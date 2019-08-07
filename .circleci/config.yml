@@ -138,7 +138,7 @@ workflows:
   version: 2
   build:
     # We only run tests on PRs - they are too expensive to run on every master commit as well.
-    # Release and deploy happens on a tag only.
+    # Whitesource, release, and deploy happens on a tag only.
     jobs:
     - unit_tests:
         filters:
@@ -163,6 +163,13 @@ workflows:
         filters:
           branches:
             ignore: master
+
+    - whitesource:
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /v.*/
 
     - release:
         filters:
