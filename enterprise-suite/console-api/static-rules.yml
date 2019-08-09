@@ -12,9 +12,6 @@
 - record: kube_pod_container_restarts_rate
   expr: rate(kube_pod_container_status_restarts_total[1m])>=0 unless on (pod) avg by (pod) (kube_pod_container_status_terminated) == 1
 
-- record: container_starts_total
-  expr: sum by (es_workload, namespace, es_monitor_type) (1 + kube_pod_container_status_restarts_total)
-
 - record: kube_pod_failed
   expr: kube_pod_status_phase{phase="Failed"}
 
@@ -45,8 +42,8 @@
 - record: prometheus_tsdb_reloads_failures_rate
   expr: irate(prometheus_tsdb_reloads_failures_total[5m])
 
-- record: akka_processing_time_seconds
-  expr: akka_actor_processing_time_ns{quantile="0.5"} / 1000000000
+- record: akka_actor_processing_time_ms
+  expr: akka_actor_processing_time_ns / 1000000
 
 - record: zk_open_file_ratio
   expr: (zk_open_file_descriptor_count/zk_max_file_descriptor_count) * 100
@@ -69,11 +66,23 @@
 - record: akka_http_http_server_responses_5xx_rate
   expr: irate(akka_http_http_server_responses_5xx[5m]) and akka_http_http_server_responses_5xx offset 1m
 
+- record: akka_http_server_response_time_ms
+  expr: akka_http_http_server_response_time_ns / 1000000
+
+- record: akka_http_client_service_response_time_ms
+  expr: akka_http_http_client_http_client_service_response_time_ns / 1000000
+
+- record: akka_actor_mailbox_time_ms
+  expr: akka_actor_mailbox_time_ns / 1000000
+
+- record: play_http_client_service_response_time_ms
+  expr: play_http_client_play_client_service_response_time_ns / 1000000
+
 - record: kafka_consumer_topic_consumed_rate
   expr: sum by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic) (kafka_consumer_consumer_fetch_manager_metrics_records_consumed_rate)
 
 - record: kafka_producer_topic_send_rate
   expr: sum by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic) (kafka_producer_producer_metrics_record_send_rate)
 
-- record: kafka_consumer_topic_lag_max
-  expr: max by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic, instance) (clamp_min(kafka_consumer_consumer_fetch_manager_metrics_records_lag_max,0))
+- record: kafka_consumer_topic_lag
+  expr: sum by (app_kubernetes_io_component, app_kubernetes_io_managed_by, app_kubernetes_io_name, app_kubernetes_io_part_of, es_monitor_type, es_workload, namespace, topic) (kafka_consumer_consumer_fetch_manager_metrics_records_lag)

@@ -77,8 +77,9 @@ jobs:
     - run: scripts/setup-minikube-for-linux.sh
     - run: curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
     - run: make -C enterprise-suite frontend-tests1
-    - run: artifacts upload $(find . -name '*.mp4')
-    - run: artifacts upload $(find . -name '*.png')
+
+    - store_artifacts:
+        path: enterprise-suite/tests/e2e/cypress/videos
 
   whitesource:
     docker:
