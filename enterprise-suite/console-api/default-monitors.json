@@ -1,3 +1,4 @@
+/usr/bin/go
 {
   "monitors": {
     "_": {
@@ -84,12 +85,12 @@
           "filters": {
             "quantile": "0.99"
           },
-          "period": "3m",
+          "period": "5m",
           "minslope": "0.2",
           "confidence": "0.5",
           "severity": {
             "warning": {
-              "window": "2m"
+              "window": "1m"
             }
           },
           "alertSummary": "actor inbox time growing",
@@ -107,12 +108,12 @@
           "filters": {
             "quantile": "0.99"
           },
-          "period": "3m",
+          "period": "5m",
           "minslope": "0.2",
           "confidence": "0.5",
           "severity": {
             "warning": {
-              "window": "5m"
+              "window": "1m"
             }
           },
           "alertSummary": "actor processing time is growing",

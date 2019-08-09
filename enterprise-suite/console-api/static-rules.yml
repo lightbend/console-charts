@@ -1,3 +1,4 @@
+/usr/bin/go
 #  health aggregation of instances in a workload - used by the UI for showing aggregate workload health bars.
 - record: workload:health:max
   expr: max by (es_workload, namespace) (health{es_workload != "", namespace != ""})
