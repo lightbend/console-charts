@@ -111,6 +111,23 @@ jobs:
     - run: scripts/deploy-to-gcs.sh
     - run: scripts/trigger-build-helm-charts.sh
 
+  release_nightly:
+    docker:
+    - image: circleci/buildpack-deps:stretch-curl
+
+    steps:
+    - checkout
+    - queue/until_front_of_line:
+        consider-branch: false
+    - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/set-chart-version.sh enterprise-suite $(scripts/get-nightly-version.sh)
+    - run: make -C enterprise-suite package
+    - run: mkdir -p /tmp/resources
+    - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
+    - setup_remote_docker
+    - run: scripts/deploy-to-gcs.sh
+    - run: scripts/trigger-build-helm-charts.sh
+
   deploy_demo:
     docker:
     - image: circleci/buildpack-deps:stretch-curl
@@ -173,3 +190,14 @@ workflows:
             ignore: /.*/
           tags:
             only: /v.*/
+
+  nightly:
+    triggers:
+    - schedule:
+        cron: "0 0 * * * "
+        filters:
+          branches:
+            only: master
+
+    jobs:
+    - release_nightly
