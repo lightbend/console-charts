@@ -16,7 +16,7 @@ import (
 	"github.com/onsi/ginkgo"
 )
 
-const DefaultTimeout = 5 * time.Second
+const DefaultTimeout = 15 * time.Second
 
 type CmdBuilder struct {
 	name                 string

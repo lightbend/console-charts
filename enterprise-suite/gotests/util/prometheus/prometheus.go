@@ -78,19 +78,25 @@ func (p *Connection) checkForData(query string, expectResults bool) error {
 		return fmt.Errorf("%s returned an error: %v", query, err)
 	}
 
-	// Cast result to array of anything
+	// Cast result to array of anything.
 	arr, ok := resp.Data.Result.([]interface{})
 	if !ok {
 		return fmt.Errorf("expected array of values, but was %q: %s ->\n%s", reflect.TypeOf(resp.Data.Result),
 			query, util.IndentJson(resp.Original))
 	}
 
+	// Limit the output in case of very large queries.
+	detail := util.IndentJson(resp.Original)
+	if len(detail) > 2048 {
+		detail = detail[:2048] + "..."
+	}
+
 	if len(arr) == 0 && expectResults {
-		return fmt.Errorf("expected >1 result, got 0: %s ->\n%s", query, util.IndentJson(resp.Original))
+		return fmt.Errorf("expected >1 result, got 0: %s ->\n%s", query, detail)
 	}
 
 	if len(arr) > 0 && !expectResults {
-		return fmt.Errorf("expected 0 results, got %d: %s ->\n%s", len(arr), query, util.IndentJson(resp.Original))
+		return fmt.Errorf("expected 0 results, got %d: %s ->\n%s", len(arr), query, detail)
 	}
 
 	return nil

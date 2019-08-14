@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+set -eu
+
 body='{
 "request": {
 "branch":"master"
 }}'
 
-curl -s -X POST \
+curl -f -X POST \
    -H "Content-Type: application/json" \
    -H "Accept: application/json" \
    -H "Travis-API-Version: 3" \
