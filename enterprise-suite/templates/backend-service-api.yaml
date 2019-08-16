@@ -13,6 +13,9 @@ spec:
     - name: http
       port: 80
       targetPort: 8180
+    - name: elasticsearch
+      port: 9200
+      targetPort: 9200
   selector:
     app.kubernetes.io/name: {{ template "name" . }}
     app.kubernetes.io/component: console-backend

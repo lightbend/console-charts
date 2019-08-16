@@ -201,6 +201,42 @@ spec:
             - name: prometheus-data-volume
               mountPath: /data
               subPath: prometheus-data
+        
+        - name: elasticsearch-server
+          image: {{ .Values.elasticsearchImage }}:{{ .Values.elasticsearchVersion }}
+
+          env:
+            - name: "discovery.type"
+              value: "single-node"
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms512m -Xmx512m"
+
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.elasticsearchCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.elasticsearchMemoryRequest }}
+        
+          ports:
+            - name: elasticsearch
+              containerPort: 9200
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9200
+            timeoutSeconds: 30
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9200
+            timeoutSeconds: 30
+            initialDelaySeconds: 15
+
+          volumeMounts:
+            - name: elasticsearch-data-volume
+              mountPath: /usr/share/elasticsearch/data
+              subPath: elasticsearch-data
 
       terminationGracePeriodSeconds: 300
       volumes:
@@ -219,6 +255,13 @@ spec:
           {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
             claimName: prometheus-storage
+          {{ else }}
+          emptyDir: {}
+          {{ end }}
+        - name: elasticsearch-data-volume
+          {{ if .Values.usePersistentVolumes }}
+          persistentVolumeClaim:
+            claimName: elasticsearch-storage
           {{ else }}
           emptyDir: {}
           {{ end }}
