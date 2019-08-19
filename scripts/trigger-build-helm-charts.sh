@@ -2,15 +2,4 @@
 
 set -eu
 
-body='{
-"request": {
-"branch":"master"
-}}'
-
-curl -f -X POST \
-   -H "Content-Type: application/json" \
-   -H "Accept: application/json" \
-   -H "Travis-API-Version: 3" \
-   -H "Authorization: token $TRAVIS_CI_TOKEN" \
-   -d "$body" \
-   https://api.travis-ci.com/repo/lightbend%2Fbuild-helm-charts/requests
+curl -X POST "https://circleci.com/api/v1.1/project/github/lightbend/build-helm-charts/build?circle-token=${CIRCLE_CI_TOKEN}&branch=master"
