@@ -11,7 +11,7 @@ consoleUIConfig:
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
 esConsoleVersion: v1.2.4
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api
-esMonitorVersion: v1.2.2
+esMonitorVersion: v1.2.3
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
 esGrafanaVersion: v0.3.0
 # prom/prometheus
