@@ -123,8 +123,8 @@ usePersistentVolumes: true
 # Application-specific storage classes. If unspecified (and usePersistentVolumes is true), the application-specific
 # PVCs will use the defaultStorageClass setting.
 #prometheusStorageClass:
-#esAlertmanagerStorageClass:
 #esGrafanaStorageClass:
+#elasticsearchStorageClass:
 
 # Prometheus volume size - used for storing metrics data.
 prometheusVolumeSize: 256Gi
