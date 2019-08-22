@@ -2,6 +2,10 @@
 - record: workload:health:max
   expr: max by (es_workload, namespace) (health{es_workload != "", namespace != ""})
 
+# health aggregation of a single pod - used by the UI to show aggregate health for a pod.
+- record: pod:health:max
+  expr: max by (pod, pod_name, namespace) (health)
+
 - record: kube_node_pressure
   expr: avg by (es_workload, condition, node_ip, node_name) (kube_node_status_condition{condition!="Ready", status="true"})
 
