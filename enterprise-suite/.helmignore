@@ -30,7 +30,6 @@ README.md
 tests/
 gotests/
 scripts/
-operator/
 .vscode/
 .venv/
 .ws.conf
