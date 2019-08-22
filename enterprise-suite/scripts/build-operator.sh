@@ -11,6 +11,8 @@ operator-sdk new console-operator --type=helm --kind=LBConsole \
     --api-version=lightbend.com/v1alpha1 --helm-chart-repo=https://repo.lightbend.com/helm-charts \
     --helm-chart=enterprise-suite --helm-chart-version=${console_version}
 
+cd console-operator
+
 operator-sdk build ${full_docker_name}
 
 docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD) ${docker_registry}
