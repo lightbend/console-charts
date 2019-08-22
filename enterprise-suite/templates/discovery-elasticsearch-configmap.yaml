@@ -7,6 +7,6 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/component: console-backend
-  name: discovery-elasticsearch-configmap
+  name: discovery-elasticsearch
 data:
   address: console-api:9200
