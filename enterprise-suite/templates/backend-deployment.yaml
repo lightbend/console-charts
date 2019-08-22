@@ -234,7 +234,10 @@ spec:
             initialDelaySeconds: 15
 
           volumeMounts:
-            - name: elasticsearch-data-volume
+            # Elasticseach data is kept in prometheus volume.
+            # Openshift doesn't support mounting multiple volumes to a single pod and renaming the volume
+            # would break backwards compatibility with older console versions.
+            - name: prometheus-data-volume
               mountPath: /usr/share/elasticsearch/data
               subPath: elasticsearch-data
 
@@ -255,13 +258,6 @@ spec:
           {{ if .Values.usePersistentVolumes }}
           persistentVolumeClaim:
             claimName: prometheus-storage
-          {{ else }}
-          emptyDir: {}
-          {{ end }}
-        - name: elasticsearch-data-volume
-          {{ if .Values.usePersistentVolumes }}
-          persistentVolumeClaim:
-            claimName: elasticsearch-storage
           {{ else }}
           emptyDir: {}
           {{ end }}

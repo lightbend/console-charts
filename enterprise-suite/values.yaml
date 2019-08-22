@@ -124,14 +124,11 @@ usePersistentVolumes: true
 # PVCs will use the defaultStorageClass setting.
 #prometheusStorageClass:
 #esGrafanaStorageClass:
-#elasticsearchStorageClass:
 
-# Prometheus volume size - used for storing metrics data.
+# Prometheus volume size - used for storing metrics timeseries data, monitors and elasticsearch data.
 prometheusVolumeSize: 256Gi
 # Grafana volume size - used for storing users, custom dashboards, and plugins.
 esGrafanaVolumeSize: 32Gi
-# Elasticsearch volume size - used for storing events
-elasticsearchVolumeSize: 8Gi
 
 #################################################
 # Grafana environment variables
