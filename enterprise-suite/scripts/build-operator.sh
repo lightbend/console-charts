@@ -15,5 +15,5 @@ cd console-operator
 
 operator-sdk build ${full_docker_name}
 
-docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD) ${docker_registry}
+docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
 docker push ${full_docker_name}
