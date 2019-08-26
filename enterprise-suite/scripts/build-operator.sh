@@ -3,6 +3,7 @@
 set -e
 
 operator_name="console-operator"
+api_version="lightbend.com/v1alpha1"
 console_version=${CONSOLE_TAG:-"latest"}
 docker_registry="lightbend-docker-commercial-registry.bintray.io"
 image_name="enterprise-suite/console-operator"
@@ -16,12 +17,12 @@ rm -r ${operator_name} || true
 if [[ ! -z ${CONSOLE_TAG} ]]; then
     echo "Using published ${CONSOLE_TAG} helm chart..."
     operator-sdk new ${operator_name} --type=helm --kind=LBConsole \
-        --api-version=lightbend.com/v1alpha1 --helm-chart-repo=https://repo.lightbend.com/helm-charts \
+        --api-version=${api_version} --helm-chart-repo=https://repo.lightbend.com/helm-charts \
         --helm-chart=enterprise-suite --helm-chart-version=${CONSOLE_TAG}
 else
     echo "Using local helm chart..."
     operator-sdk new ${operator_name} --type=helm --kind=LBConsole \
-            --api-version=lightbend.com/v1alpha1 --helm-chart=.
+            --api-version=${api_version} --helm-chart=.
 fi
 
 cd console-operator
