@@ -27,7 +27,13 @@ fi
 cd console-operator
 
 operator-sdk build ${full_docker_name}
-sed -i "" "s#REPLACE_IMAGE#${full_docker_name}#g" deploy/operator.yaml
+
+# OS X sed behaves differently in this case
+if [ "$(uname)" == "Darwin" ]; then
+    sed -i "" "s#REPLACE_IMAGE#${full_docker_name}#g" deploy/operator.yaml
+else
+    sed -i "s#REPLACE_IMAGE#${full_docker_name}#g" deploy/operator.yaml
+fi
 
 cd ..
 
