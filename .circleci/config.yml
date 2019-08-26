@@ -163,8 +163,7 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: scripts/setup-operator-sdk.sh
-    - run: CONSOLE_TAG=1.2.0 make -C enterprise-suite build-operator
-    #- run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C enterprise-suite build-operator
+    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C enterprise-suite build-operator
 
 workflows:
   version: 2
