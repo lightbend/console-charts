@@ -152,7 +152,18 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: scripts/setup-operator-sdk.sh
-    - run: enterprise-suite/scripts/build-operator.sh
+    - run: make -C enterprise-suite verify-operator
+
+  publish_operator:
+    docker:
+    - image: circleci/golang:1.11
+
+    steps:
+    - setup_remote_docker
+    - checkout
+    - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/setup-operator-sdk.sh
+    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C enterprise-suite build-operator
 
 workflows:
   version: 2

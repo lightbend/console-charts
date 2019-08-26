@@ -6,4 +6,5 @@
 build
 node_modules
 whitesource*
+enterprise-suite/console-operator/helm-charts
 __pycache__
