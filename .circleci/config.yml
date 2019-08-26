@@ -172,7 +172,6 @@ workflows:
     jobs:
     - unit_tests
     - build_operator
-    - publish_operator
 
     # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
     - backend_e2e_openshift:
@@ -210,6 +209,13 @@ workflows:
             only: /v.*/
 
     - deploy_demo:
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /v.*/
+
+    - publish_operator:
         filters:
           branches:
             ignore: /.*/

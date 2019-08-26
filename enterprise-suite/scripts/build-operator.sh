@@ -16,12 +16,12 @@ rm -r ${operator_name} || true
 
 if [[ ! -z ${CONSOLE_TAG} ]]; then
     echo "Using published ${CONSOLE_TAG} helm chart..."
-    operator-sdk new ${operator_name} --type=helm --kind=LBConsole \
+    operator-sdk new ${operator_name} --type=helm --kind=Console \
         --api-version=${api_version} --helm-chart-repo=https://repo.lightbend.com/helm-charts \
         --helm-chart=enterprise-suite --helm-chart-version=${CONSOLE_TAG}
 else
     echo "Using local helm chart..."
-    operator-sdk new ${operator_name} --type=helm --kind=LBConsole \
+    operator-sdk new ${operator_name} --type=helm --kind=Console \
             --api-version=${api_version} --helm-chart=.
 fi
 
