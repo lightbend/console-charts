@@ -88,6 +88,15 @@ scrape_configs:
         regex: (.*)-[0-9]{13}-driver;
         replacement: ${1}-driver
         target_label: es_workload
+    # flink workload
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[a-z,0-9]+-tm;
+        replacement: ${1}-tm
+        target_label: es_workload
+      - source_labels: [kubernetes_pod_name, es_workload]
+        regex: (.*)-[a-z,0-9]+-jm;
+        replacement: ${1}-jm
+        target_label: es_workload
       # extract workload from workload-num
       - source_labels: [kubernetes_pod_name, es_workload]
         regex: (.*)-[0-9]{1,4};
