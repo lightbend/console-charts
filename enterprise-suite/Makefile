@@ -138,7 +138,7 @@ gotests-openshift: preflight-check
 	# Clean up after the tests.
 	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
 
-.PHONY: update-operator
+.PHONY: build-operator
 build-operator:
 	scripts/build-operator.sh
 
