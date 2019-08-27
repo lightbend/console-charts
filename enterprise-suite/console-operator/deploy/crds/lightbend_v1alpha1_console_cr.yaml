@@ -1,7 +1,7 @@
 apiVersion: lightbend.com/v1alpha1
-kind: LBConsole
+kind: Console
 metadata:
-  name: example-lbconsole
+  name: example-console
 spec:
   # Default values copied from <project_dir>/helm-charts/enterprise-suite/values.yaml
   

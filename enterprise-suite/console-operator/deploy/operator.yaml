@@ -15,7 +15,6 @@ spec:
       serviceAccountName: console-operator
       containers:
         - name: console-operator
-          # Replace this with the built image name
           image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-operator:latest
           imagePullPolicy: Always
           env:

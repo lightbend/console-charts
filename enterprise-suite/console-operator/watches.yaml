@@ -1,5 +1,5 @@
 ---
 - version: v1alpha1
   group: lightbend.com
-  kind: LBConsole
+  kind: Console
   chart: /opt/helm/helm-charts/enterprise-suite
