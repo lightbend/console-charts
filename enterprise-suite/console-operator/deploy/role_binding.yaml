@@ -1,13 +1,11 @@
-kind: ClusterRoleBinding
+kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: console-operator
 subjects:
 - kind: ServiceAccount
   name: console-operator
-  # Replace this with the namespace the operator is deployed in.
-  namespace: REPLACE_NAMESPACE
 roleRef:
-  kind: ClusterRole
+  kind: Role
   name: console-operator
   apiGroup: rbac.authorization.k8s.io

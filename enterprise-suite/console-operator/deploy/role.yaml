@@ -1,5 +1,5 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   creationTimestamp: null
   name: console-operator
@@ -7,38 +7,32 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
+  - pods
+  - services
+  - serviceaccounts
+  - services/finalizers
+  - endpoints
+  - persistentvolumeclaims
+  - events
   - configmaps
   - secrets
-  verbs:
-  - '*'
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - clusterroles
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - persistentvolumeclaims
-  - serviceaccounts
-  - services
   verbs:
   - '*'
 - apiGroups:
   - apps
   resources:
   - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
   verbs:
   - '*'
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -54,18 +48,6 @@ rules:
   - deployments/finalizers
   verbs:
   - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  verbs:
-  - get
 - apiGroups:
   - console.lightbend.com
   resources:
