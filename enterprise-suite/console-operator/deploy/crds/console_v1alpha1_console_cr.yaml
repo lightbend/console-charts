@@ -1,4 +1,4 @@
-apiVersion: lightbend.com/v1alpha1
+apiVersion: console.lightbend.com/v1alpha1
 kind: Console
 metadata:
   name: example-console

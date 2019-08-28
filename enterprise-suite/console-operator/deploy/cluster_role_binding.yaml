@@ -5,8 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: console-operator
-  # Replace this with the namespace the operator is deployed in.
-  namespace: REPLACE_NAMESPACE
+  namespace: lightbend
 roleRef:
   kind: ClusterRole
   name: console-operator
