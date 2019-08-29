@@ -143,11 +143,34 @@ jobs:
     - run: TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${CIRCLE_TAG#v}.tgz --set usePersistentStorage=yes
     - run: scripts/deploy-chaos-apps.sh console-demo
 
+  build_operator:
+    docker:
+    - image: circleci/golang:1.11
+
+    steps:
+    - setup_remote_docker
+    - checkout
+    - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/setup-operator-sdk.sh
+    - run: make -C enterprise-suite verify-operator
+
+  publish_operator:
+    docker:
+    - image: circleci/golang:1.11
+
+    steps:
+    - setup_remote_docker
+    - checkout
+    - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/setup-operator-sdk.sh
+    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C enterprise-suite build-operator
+
 workflows:
   version: 2
   build:
     jobs:
     - unit_tests
+    - build_operator
 
     # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
     - backend_e2e_openshift:
@@ -185,6 +208,13 @@ workflows:
             only: /v.*/
 
     - deploy_demo:
+        filters:
+          branches:
+            ignore: /.*/
+          tags:
+            only: /v.*/
+
+    - publish_operator:
         filters:
           branches:
             ignore: /.*/
