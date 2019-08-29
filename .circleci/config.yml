@@ -125,7 +125,7 @@ jobs:
     - run: mkdir -p /tmp/resources
     - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
     - setup_remote_docker
-    - run: scripts/deploy-to-gcs.sh
+    - run: GCS_BUCKET=lightbend-console-charts-nightly scripts/deploy-to-gcs.sh
     - run: scripts/trigger-build-helm-charts.sh
 
   deploy_demo:
