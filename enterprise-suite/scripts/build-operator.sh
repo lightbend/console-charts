@@ -5,7 +5,7 @@ set -e
 operator_name="console-operator"
 api_version="console.lightbend.com/v1alpha1"
 console_version=${CONSOLE_TAG:-"latest"}
-docker_registry="lightbend-docker-commercial-registry.bintray.io"
+docker_registry="lightbend-docker-registry.bintray.io"
 image_name="enterprise-suite/console-operator"
 full_docker_name="${docker_registry}/${image_name}:${console_version}"
 

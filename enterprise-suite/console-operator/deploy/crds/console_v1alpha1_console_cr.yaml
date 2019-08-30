@@ -16,13 +16,15 @@ spec:
   # Update these versions for a release.
   #
   # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-  esConsoleVersion: v1.2.5
+  esConsoleVersion: v1.2.6
   # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api
-  esMonitorVersion: v1.2.2
+  esMonitorVersion: v1.2.3
   # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
   esGrafanaVersion: v0.3.0
   # prom/prometheus
   prometheusVersion: v2.9.2
+  # elasticsearch
+  elasticsearchVersion: 7.2.0
   # jimmidyson/configmap-reload
   configMapReloadVersion: v0.2.2
   # gcr.io/google_containers/kube-state-metrics
@@ -45,6 +47,8 @@ spec:
   esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
   # prometheus image
   prometheusImage: prom/prometheus
+  # elasticsearch image
+  elasticsearchImage: elasticsearch
   # configmap-reload image
   configMapReloadImage: jimmidyson/configmap-reload
   # kube-state-metrics image
@@ -113,6 +117,8 @@ spec:
   defaultMemoryRequest: 50Mi
   # Prometheus resource request for memory
   prometheusMemoryRequest: 250Mi
+  # Elasticsearch resource request for memory
+  elasticsearchMemoryRequest: 510Mi
   
   #################################################
   # Persistent Volumes
@@ -124,10 +130,9 @@ spec:
   # Application-specific storage classes. If unspecified (and usePersistentVolumes is true), the application-specific
   # PVCs will use the defaultStorageClass setting.
   #prometheusStorageClass:
-  #esAlertmanagerStorageClass:
   #esGrafanaStorageClass:
   
-  # Prometheus volume size - used for storing metrics data.
+  # Prometheus volume size - used for storing metrics timeseries data, monitors and elasticsearch data.
   prometheusVolumeSize: 256Gi
   # Grafana volume size - used for storing users, custom dashboards, and plugins.
   esGrafanaVolumeSize: 32Gi

@@ -15,7 +15,7 @@ spec:
       serviceAccountName: console-operator
       containers:
         - name: console-operator
-          image: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-operator:latest
+          image: lightbend-docker-registry.bintray.io/enterprise-suite/console-operator:latest
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
