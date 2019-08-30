@@ -159,11 +159,11 @@ var _ = Describe("all:lbc.py", func() {
 			zipFile := dir + "/" + files[0].Name()
 			Expect(util.Cmd("/bin/bash", "-c", "cd "+dir+" && unzip "+zipFile).Run()).To(Succeed())
 
-			matches, err := filepath.Glob(dir + "/console-backend*prometheus-server.log")
+			matches, err := filepath.Glob(dir + "/console-backend*prometheus.log")
 			if err != nil {
 				panic(err)
 			}
-			Expect(matches).To(HaveLen(1), "should have found prometheus-server.log")
+			Expect(matches).To(HaveLen(1), "should have found prometheus.log")
 			promLogFile := matches[0]
 			contents, err := ioutil.ReadFile(promLogFile)
 			if err != nil {
