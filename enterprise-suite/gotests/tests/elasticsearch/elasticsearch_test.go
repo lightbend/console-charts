@@ -21,6 +21,7 @@ var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 	installer := lbc.DefaultInstaller()
 	installer.AdditionalHelmArgs = []string{"--set enableElasticsearch=true"}
+	Expect(installer.Install()).To(Succeed(), "install with Elasticsearch enabled")
 })
 
 var _ = AfterSuite(func() {
