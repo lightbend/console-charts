@@ -81,7 +81,7 @@ spec:
 
         {{ if .Values.enableElasticsearch -}}
         # Same as prometheus-data, but for elasticsearch-data.
-        - name: change-prometheus-data-volume-ownership
+        - name: elasticsearch-data-volume-ownership
           image: {{ .Values.busyboxImage }}:{{ .Values.busyboxVersion }}
           command:
             - sh
@@ -173,7 +173,7 @@ spec:
           - name: console-api-prometheus-volume
             mountPath: /etc/console-api-prometheus
 
-        - name: prometheus-server
+        - name: prometheus
           image: {{ .Values.prometheusImage }}:{{ .Values.prometheusVersion }}
 
           resources:
@@ -217,7 +217,7 @@ spec:
               subPath: prometheus-data
 
         {{ if .Values.enableElasticsearch -}}
-        - name: elasticsearch-server
+        - name: elasticsearch
           image: {{ .Values.elasticsearchImage }}:{{ .Values.elasticsearchVersion }}
 
           env:
@@ -280,13 +280,12 @@ spec:
 
         # Prometheus data storage.
         - name: prometheus-data-volume
-          {{ if .Values.usePersistentVolumes }}
+          {{ if .Values.usePersistentVolumes -}}
           persistentVolumeClaim:
             claimName: prometheus-storage
-          {{ else }}
+          {{ else -}}
           emptyDir: {}
           {{ end }}
-
         # Bootstrap files for prometheus.
         - name: bare-prometheus
           configMap:
