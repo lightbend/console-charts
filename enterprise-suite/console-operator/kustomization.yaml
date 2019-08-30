@@ -7,5 +7,4 @@ resources:
   - deploy/cluster_role.yaml
   - deploy/cluster_role_binding.yaml
   - deploy/operator.yaml
-patchesStrategicMerge:
-  - patch-operator.yaml
+  - deploy/crds/console_v1alpha1_console_cr.yaml

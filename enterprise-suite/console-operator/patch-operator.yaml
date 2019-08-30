@@ -1,9 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: console-operator
-spec:
-  template:
-    spec:
-      imagePullSecrets:
-        - name: commercial-credentials
