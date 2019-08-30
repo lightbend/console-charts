@@ -31,6 +31,7 @@ var _ = AfterSuite(func() {
 var _ = Describe("all:elasticsearch", func() {
 	It("can access Elasticsearch", func() {
 		addr := fmt.Sprintf("%v/%v", testenv.ConsoleAddr, "service/elasticsearch/")
-		Expect(urls.Get200(addr)).To(Succeed(), addr)
+		_, err := urls.Get200(addr)
+		Expect(err).To(BeNil(), addr)
 	})
 })

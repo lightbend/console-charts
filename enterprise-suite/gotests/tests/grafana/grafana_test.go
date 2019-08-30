@@ -1,16 +1,17 @@
 package console
 
 import (
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/kube"
 
+	"regexp"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"regexp"
 )
 
 func TestGrafana(t *testing.T) {
