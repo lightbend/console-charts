@@ -154,7 +154,7 @@ var _ = Describe("all:alertmanager", func() {
 
 			var promContainer *apiv1.Container
 			for _, c := range pod.Spec.Containers {
-				if c.Name == "prometheus-server" {
+				if c.Name == "prometheus" {
 					promContainer = &c
 					break
 				}

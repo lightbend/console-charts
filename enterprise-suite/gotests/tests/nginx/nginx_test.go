@@ -44,7 +44,6 @@ var _ = Describe("all:nginx", func() {
 		Entry("console", ""),
 		Entry("grafana", "/service/grafana/"),
 		Entry("prometheus", "/service/prometheus/"),
-		Entry("elasticsearch", "/service/elasticsearch/"),
 		Entry("console-api", "/service/console-api/status"),
 	)
 
