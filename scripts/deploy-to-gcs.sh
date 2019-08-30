@@ -69,7 +69,9 @@ docker pull google/cloud-sdk:${CLOUD_SDK_VERSION}
 # Create volume to hold the various files. This works even in a containerized build environment.
 GCLOUD_CONFIG_CID=$(docker create -v /build -v /resources --name files alpine:3.8 /bin/true)
 docker cp /tmp/resources/. files:/resources
-docker cp "$HELM_DIR/build/." files:/build
+for tarball in "$HELM_DIR"/build/enterprise-suite*.tgz; do
+    docker cp "$tarball" files:/build/
+done
 
 # Use the decrypted service account credentials to authenticate the command line tool and setup
 # volume mounts so credentials and tarballs are accessible to docker
