@@ -90,12 +90,8 @@ scrape_configs:
         target_label: es_workload
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[a-z,0-9]+-tm;
-        replacement: ${1}-tm
-        target_label: es_workload
-      - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[a-z,0-9]+-jm;
-        replacement: ${1}-jm
+        regex: (.*)-[a-z,0-9]+-(jm|tm);
+        replacement: ${1}-${2}
         target_label: es_workload
       # extract workload from workload-num
       - source_labels: [kubernetes_pod_name, es_workload]
@@ -211,12 +207,8 @@ scrape_configs:
         target_label: es_workload
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [pod, es_workload]
-        regex: (.*)-[a-z,0-9]+-tm;
-        replacement: ${1}-tm
-        target_label: es_workload
-      - source_labels: [pod, es_workload]
-        regex: (.*)-[a-z,0-9]+-jm;
-        replacement: ${1}-jm
+        regex: (.*)-[a-z,0-9]+-(jm|tm);
+        replacement: ${1}-${2}
         target_label: es_workload
       # extract workload from workload-num
       - source_labels: [pod, es_workload]
@@ -349,12 +341,8 @@ scrape_configs:
 
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[a-z,0-9]+-tm;
-        replacement: ${1}-tm
-        target_label: es_workload
-      - source_labels: [[kubernetes_pod_name, es_workload]
-        regex: (.*)-[a-z,0-9]+-jm;
-        replacement: ${1}-jm
+        regex: (.*)-[a-z,0-9]+-(jm|tm);
+        replacement: ${1}-${2}
         target_label: es_workload
 
     # If all else fails, use the pod name.
@@ -461,12 +449,8 @@ scrape_configs:
 
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[a-z,0-9]+-tm;
-        replacement: ${1}-tm
-        target_label: es_workload
-      - source_labels: [[kubernetes_pod_name, es_workload]
-        regex: (.*)-[a-z,0-9]+-jm;
-        replacement: ${1}-jm
+        regex: (.*)-[a-z,0-9]+-(jm|tm);
+        replacement: ${1}-${2}
         target_label: es_workload
 
     # If all else fails, use the pod name.
