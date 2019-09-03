@@ -81,12 +81,8 @@ scrape_configs:
         target_label: es_workload
       # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]+;
-        replacement: ${1}-exec
-        target_label: es_workload
-      - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-driver;
-        replacement: ${1}-driver
+        regex: (.*)-[0-9]{13}-(exec|driver)-[0-9]+;
+        replacement: ${1}-${2}
         target_label: es_workload
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [kubernetes_pod_name, es_workload]
@@ -198,12 +194,8 @@ scrape_configs:
         target_label: es_workload
       # spark workload
       - source_labels: [pod, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]+;
-        replacement: ${1}-exec
-        target_label: es_workload
-      - source_labels: [pod, es_workload]
-        regex: (.*)-[0-9]{13}-driver;
-        replacement: ${1}-driver
+        regex: (.*)-[0-9]{13}-(exec|driver)-[0-9]+;
+        replacement: ${1}-${2}
         target_label: es_workload
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [pod, es_workload]
@@ -331,12 +323,8 @@ scrape_configs:
 
       # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]+;
-        replacement: ${1}-exec
-        target_label: es_workload
-      - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-driver;
-        replacement: ${1}-driver
+        regex: (.*)-[0-9]{13}-(exec|driver)-[0-9]+;
+        replacement: ${1}-${2}
         target_label: es_workload
 
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
@@ -439,13 +427,8 @@ scrape_configs:
 
       # spark workload
       - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-exec-[0-9]+;
-        replacement: ${1}-exec
-        target_label: es_workload
-      - source_labels: [kubernetes_pod_name, es_workload]
-        regex: (.*)-[0-9]{13}-driver;
-        replacement: ${1}-driver
-        target_label: es_workload
+        regex: (.*)-[0-9]{13}-(exec|driver)-[0-9]+;
+        replacement: ${1}-${2}
 
     # flink workload — of the form 'taxi-ride-fare-seglo-processor-dde77c7d-jm' or 'taxi-ride-fare-seglo-processor-dde77c7d-tm'
       - source_labels: [kubernetes_pod_name, es_workload]
