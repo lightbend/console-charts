@@ -41,6 +41,17 @@ func DeleteConfigMap(namespace string, name string) error {
 	return util.Cmd("kubectl", "-n", namespace, "delete", "configmap", name).Run()
 }
 
+func FileOwner(namespace, pod, container, path string) (string, error) {
+	cmd := util.Cmd("kubectl", "-n", namespace, "exec", pod, "-c", container, "--", "stat", "-c", "%u", path)
+	sb := strings.Builder{}
+	cmd.CaptureStdout(&sb)
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("unable to stat %s/%s/%s [%s]: %v", namespace, pod, container, path, err)
+	}
+	return strings.TrimSpace(sb.String()), nil
+}
+
 func DeletePvc(k8sClient *kubernetes.Clientset, namespace string, name string) error {
 	pvcClient := k8sClient.CoreV1().PersistentVolumeClaims(namespace)
 

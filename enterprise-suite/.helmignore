@@ -29,6 +29,7 @@ README.md
 \#
 tests/
 gotests/
+console-operator/
 scripts/
 .vscode/
 .venv/

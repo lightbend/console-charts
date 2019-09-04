@@ -1,0 +1,5 @@
+---
+- version: v1alpha1
+  group: console.lightbend.com
+  kind: Console
+  chart: /opt/helm/helm-charts/enterprise-suite
