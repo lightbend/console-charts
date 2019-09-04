@@ -79,6 +79,20 @@ spec:
               mountPath: /data
               subPath: prometheus-data
 
+        {{ if .Values.enableElasticsearch -}}
+        # Same as prometheus-data, but for elasticsearch-data.
+        - name: elasticsearch-data-volume-ownership
+          image: {{ .Values.busyboxImage }}:{{ .Values.busyboxVersion }}
+          command:
+            - sh
+            - -c
+            - "chown -Rc 1000:1000 /data 2>/dev/null || true"
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: /data
+              subPath: elasticsearch-data
+        {{ end }}
+
       imagePullSecrets:
         - name: commercial-credentials
 
@@ -159,7 +173,7 @@ spec:
           - name: console-api-prometheus-volume
             mountPath: /etc/console-api-prometheus
 
-        - name: prometheus-server
+        - name: prometheus
           image: {{ .Values.prometheusImage }}:{{ .Values.prometheusVersion }}
 
           resources:
@@ -201,8 +215,9 @@ spec:
             - name: prometheus-data-volume
               mountPath: /data
               subPath: prometheus-data
-        
-        - name: elasticsearch-server
+
+        {{ if .Values.enableElasticsearch -}}
+        - name: elasticsearch
           image: {{ .Values.elasticsearchImage }}:{{ .Values.elasticsearchVersion }}
 
           env:
@@ -240,27 +255,38 @@ spec:
             - name: prometheus-data-volume
               mountPath: /usr/share/elasticsearch/data
               subPath: elasticsearch-data
-
+          {{ end }}
       terminationGracePeriodSeconds: 300
+
       volumes:
+        # Used by console-api to write the final Prometheus configuration.
         - name: config-volume
           emptyDir: {}
+
+        # Default monitors.
         - name: console-api-default-monitors-volume
           configMap:
             name: {{ .Values.consoleAPI.defaultMonitorsConfigMap}}
+
+        # Static Prometheus rules.
         - name: console-api-static-rules-volume
           configMap:
             name: {{ .Values.consoleAPI.staticRulesConfigMap}}
+
+        # Prometheus configuration template.
         - name: console-api-prometheus-volume
           configMap:
             name: console-api-prometheus
+
+        # Prometheus data storage.
         - name: prometheus-data-volume
-          {{ if .Values.usePersistentVolumes }}
+          {{ if .Values.usePersistentVolumes -}}
           persistentVolumeClaim:
             claimName: prometheus-storage
-          {{ else }}
+          {{ else -}}
           emptyDir: {}
           {{ end }}
+        # Bootstrap files for prometheus.
         - name: bare-prometheus
           configMap:
             name: bare-prometheus
