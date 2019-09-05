@@ -98,10 +98,12 @@ func logDebugInfo(namespace string) {
 
 	debugCmds := []string{
 		"get events --sort-by=.metadata.resourceVersion",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=es-console --all-containers",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=es-console --all-containers -p",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=prometheus --all-containers",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=prometheus --all-containers -p",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-frontend --all-containers",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-frontend --all-containers -p",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-backend --all-containers",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-backend --all-containers -p",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=grafana --all-containers",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=grafana --all-containers -p",
 	}
 
 	for _, cmd := range debugCmds {
