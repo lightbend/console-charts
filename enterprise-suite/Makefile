@@ -144,7 +144,7 @@ build-operator:
 
 .PHONY: verify-operator
 verify-operator:
-	scripts/build-operator.sh --verify-diff
+	scripts/build-operator.sh --validate-diff
 
 .PHONY: help
 help:  ## Print help for targets
