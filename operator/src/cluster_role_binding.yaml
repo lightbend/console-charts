@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: console-operator
-  namespace: lightbend
+  namespace: REPLACE_NAMESPACE
 roleRef:
   kind: ClusterRole
   name: console-operator
