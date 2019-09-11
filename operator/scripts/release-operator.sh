@@ -10,8 +10,11 @@ if [[ "$VERSION" == "latest" ]]; then
     exit 1
 fi
 
+if [[ "${DOCKER_USERNAME:-}" != "" ]]; then
+    docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} lightbend-docker-registry.bintray.io
+fi
+
 echo "Pushing to docker registry ${docker_registry}..."
-docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} ${docker_registry}
 docker push ${full_docker_name}
 latest="${docker_registry}/${image_name}:latest"
 docker tag ${full_docker_name} ${latest}

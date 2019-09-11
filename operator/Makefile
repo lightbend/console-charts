@@ -3,7 +3,7 @@ all: build check
 
 .PHONY: build
 build:
-	./build-operator.sh
+	scripts/build-operator.sh
 
 .PHONY: check
 check:
@@ -11,8 +11,8 @@ check:
 
 .PHONY: setup-operator-sdk
 setup-operator-sdk:
-	./setup-operator-sdk.sh
+	scripts/setup-operator-sdk.sh
 
 .PHONY: release
 release:
-	./release-operator.sh
+	scripts/release-operator.sh

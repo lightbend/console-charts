@@ -6,21 +6,12 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 echo "Building operator image ${full_docker_name}..."
 
+# Create operator-sdk project and build image
 cd "$script_dir"/..
-if [[ "$VERSION" == "latest" ]]; then
-    echo "Using local helm chart..."
-    new_operator_args=--helm-chart="$script_dir"/../../enterprise-suite
-else
-    echo "Using published ${CONSOLE_TAG} helm chart..."
-    new_operator_args=--helm-chart-repo=https://repo.lightbend.com/helm-charts \
-        --helm-chart=enterprise-suite --helm-chart-version="${CONSOLE_TAG}"
-fi
-
 rm -rf build && mkdir build
-
 cd build
-operator-sdk new console-operator --type=helm --kind=Console --api-version=console.lightbend.com/v1alpha1 \
-    ${new_operator_args}
+operator-sdk new console-operator --type=helm --kind=Console \
+    --api-version=console.lightbend.com/v1alpha1 --helm-chart="$script_dir"/../../enterprise-suite
 
 cd console-operator
 operator-sdk build "${full_docker_name}"
