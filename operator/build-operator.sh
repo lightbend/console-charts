@@ -31,14 +31,10 @@ operator-sdk new console-operator --type=helm --kind=Console --api-version=${api
 cd console-operator
 operator-sdk build "${full_docker_name}"
 
-sed -i'' "s#REPLACE_IMAGE#${full_docker_name}#g" deploy/operator.yaml
-sed -i'' "/Replace\ this\ with\ the\ built\ image\ name/d" deploy/operator.yaml
-
 # Create final manifests folder
 cd "$script_dir"
 rm -rf manifests && mkdir manifests
 cp -r build/console-operator/deploy/* manifests/
-cp -r src/* manifests/
 
 find manifests/
 echo "Done creating operator and manifests."
