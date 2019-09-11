@@ -1,10 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - manifests/crds/console.lightbend.com_consoles_crd.yaml
   - manifests/service_account.yaml
   - manifests/role.yaml
   - manifests/role_binding.yaml
   - manifests/cluster_role.yaml
   - manifests/cluster_role_binding.yaml
   - manifests/operator.yaml
-  - manifests/crds/console_v1alpha1_console_cr.yaml
