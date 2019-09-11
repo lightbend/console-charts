@@ -151,10 +151,10 @@ jobs:
     - setup_remote_docker
     - checkout
     - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/setup-operator-sdk.sh
-    - run: make -C enterprise-suite verify-operator
+    - run: operator/setup-operator-sdk.sh
+    - run: make -C operator build check
 
-  publish_operator:
+  release_operator:
     docker:
     - image: circleci/golang:1.11
 
@@ -162,8 +162,8 @@ jobs:
     - setup_remote_docker
     - checkout
     - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/setup-operator-sdk.sh
-    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C enterprise-suite build-operator
+    - run: operator/setup-operator-sdk.sh
+    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C operator build publish
 
 workflows:
   version: 2
@@ -214,7 +214,7 @@ workflows:
           tags:
             only: /v.*/
 
-    - publish_operator:
+    - release_operator:
         filters:
           branches:
             ignore: /.*/
