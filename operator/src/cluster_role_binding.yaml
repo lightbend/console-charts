@@ -5,7 +5,8 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: console-operator
-  namespace: REPLACE_NAMESPACE
+  # kustomize will add the namespace.
+  # namespace: FILLIN
 roleRef:
   kind: ClusterRole
   name: console-operator

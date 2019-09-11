@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: lightbend
 
 images:
-- name: console-operator
+- name: REPLACE_IMAGE
   newName: lightbend-docker-registry.bintray.io/enterprise-suite/console-operator
   newTag: latest
 
@@ -17,12 +17,10 @@ resources:
 - src/cluster_role.yaml
 - src/cluster_role_binding.yaml
 
-patches:
-- patch: |-
-    - op: add
-      path: /rules/0/resources/-
-      value: serviceaccounts
-
+patchesJson6902:
+- path: src/add_serviceaccounts_role.yaml
   target:
+    group: rbac.authorization.k8s.io
+    version: v1
     kind: Role
     name: console-operator
