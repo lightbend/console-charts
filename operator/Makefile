@@ -7,8 +7,12 @@ build:
 
 .PHONY: check
 check:
-	scripts/build-operator.sh --validate-diff
+	git diff --summary --exit-code manifests
 
 .PHONY: setup-operator-sdk
 setup-operator-sdk:
 	./setup-operator-sdk.sh
+
+.PHONY: release
+release:
+	./release-operator.sh

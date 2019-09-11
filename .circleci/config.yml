@@ -163,7 +163,7 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: operator/setup-operator-sdk.sh
-    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C operator build publish
+    - run: CONSOLE_TAG=${CIRCLE_TAG#v} make -C operator build release
 
 workflows:
   version: 2
