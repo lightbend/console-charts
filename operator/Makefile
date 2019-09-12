@@ -9,8 +9,8 @@ build:
 check:
 	git diff --summary --exit-code manifests
 
-.PHONY: setup-operator-sdk
-setup-operator-sdk:
+.PHONY: setup
+setup:
 	scripts/setup-operator-sdk.sh
 
 .PHONY: release

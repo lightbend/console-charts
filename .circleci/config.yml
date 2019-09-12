@@ -151,8 +151,7 @@ jobs:
     - setup_remote_docker
     - checkout
     - run: scripts/setup-tools-for-debian.sh
-    - run: operator/setup-operator-sdk.sh
-    - run: make -C operator build check
+    - run: make -C operator setup build check
 
   release_operator:
     docker:
@@ -163,8 +162,7 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-    - run: operator/setup-operator-sdk.sh
-    - run: VERSION=${CIRCLE_TAG#v} make -C operator build release
+    - run: VERSION=${CIRCLE_TAG#v} make -C operator setup build release
 
 workflows:
   version: 2
