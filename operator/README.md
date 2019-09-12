@@ -1,12 +1,54 @@
 # Console Operator
 
-This directory provides files to install the Console Operator. To install, use the kustomization.yaml file:
+_Note: This operator is experimental, and only supports a simple installation. It does not support
+upgrades yet._
+
+This directory provides files to install the Console Operator, which can be used to install
+Console itself.
+
+To install the operator, first edit the [kustomization.yaml](kustomization.yaml) file to your needs,
+then apply it with `kubectl`:
 
 ``` sh
 kubectl apply -k .
 ```
 
 This will set up the Console operator.
+
+For production usage, it is recommended you create your own `kustomization.yaml`, and use this
+directory as a base. See kustomize.io for more details.
+
+## Install Console
+
+The operator will install Console for you. It looks for a `Console` resource inside of its
+namespace. Once this resource is created, it will spin up an instance of Console.
+
+There is a [complete example available](manifests/crds/console_v1alpha1_console_cr.yaml).
+
+To get started quickly, create a file `console.yaml` with contents:
+
+``` yaml
+apiVersion: console.lightbend.com/v1alpha1
+kind: Console
+metadata:
+  name: console
+spec:
+  imageCredentials:
+    registry: lightbend-docker-commercial-registry.bintray.io
+    username: my-lightbend-username
+    password: my-lightbend-password
+  exposeServices: NodePort
+```
+
+Replace username and password with your commercial credentials. Then apply this file, assuming the
+operator is installed in the `lightbend` namespace:
+
+``` sh
+kubectl apply -n lightbend console.yaml
+```
+
+After this you should see an instance of Console created in the namespace. You can then access it as
+normal. If on Minikube, you can use the NodePort service to access at `https://$(minikube ip):30080`.
 
 ## Directory Structure
 

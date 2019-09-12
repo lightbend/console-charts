@@ -1,8 +1,9 @@
+#!/usr/bin/env bash
 
 set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-. "$script_dir"/vars.sh
+. "$script_dir/vars.sh"
 
 echo "Building operator image ${full_docker_name}..."
 
