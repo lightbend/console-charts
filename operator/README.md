@@ -34,7 +34,6 @@ metadata:
   name: console
 spec:
   imageCredentials:
-    registry: lightbend-docker-commercial-registry.bintray.io
     username: my-lightbend-username
     password: my-lightbend-password
   exposeServices: NodePort
