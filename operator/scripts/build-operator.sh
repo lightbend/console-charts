@@ -17,6 +17,8 @@ operator-sdk new console-operator --type=helm --kind=Console \
 cd console-operator
 operator-sdk build "${full_docker_name}"
 
+# Create OLM manifests for operatorhub.io
+
 # Create final manifests folder
 cd "$script_dir/.."
 rm -rf manifests && mkdir manifests
