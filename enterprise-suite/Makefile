@@ -138,14 +138,6 @@ gotests-openshift: preflight-check
 	# Clean up after the tests.
 	-$(MAKE) -C gotests purge-console-openshift NAMESPACE=$(NAMESPACE)
 
-.PHONY: build-operator
-build-operator:
-	scripts/build-operator.sh
-
-.PHONY: verify-operator
-verify-operator:
-	scripts/build-operator.sh --verify-diff
-
 .PHONY: help
 help:  ## Print help for targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(lastword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

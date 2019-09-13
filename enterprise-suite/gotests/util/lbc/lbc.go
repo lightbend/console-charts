@@ -116,6 +116,19 @@ func logDebugInfo(namespace string) {
 	}
 }
 
+func (i *Installer) Uninstall() error {
+	cmdArgs := []string{Path, "uninstall", "--namespace", args.ConsoleNamespace}
+	cmd := util.Cmd("/bin/bash", "-c", strings.Join(cmdArgs, " "))
+	if args.TillerNamespace != "" {
+		cmd = cmd.Env("TILLER_NAMESPACE", args.TillerNamespace)
+	}
+	var stderr strings.Builder
+	if i.FailOnWarnings {
+		cmd.CaptureStderr(&stderr)
+	}
+	return cmd.Run()
+}
+
 func Verify(namespace, tillerNamespace string) error {
 	cmd := util.Cmd(Path, "verify", "--namespace", namespace)
 	if tillerNamespace != "" {

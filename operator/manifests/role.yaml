@@ -9,7 +9,6 @@ rules:
   resources:
   - pods
   - services
-  - serviceaccounts
   - services/finalizers
   - endpoints
   - persistentvolumeclaims
@@ -34,6 +33,13 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - '*'
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
@@ -48,6 +54,18 @@ rules:
   - deployments/finalizers
   verbs:
   - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
 - apiGroups:
   - console.lightbend.com
   resources:

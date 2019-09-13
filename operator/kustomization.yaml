@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Change this to the namespace you want to install the Console operator.
+namespace: lightbend
+
+images:
+- name: REPLACE_IMAGE
+  newName: lightbend-docker-registry.bintray.io/enterprise-suite/console-operator
+  # Change this to a released version - see https://github.com/lightbend/console-charts/releases.
+  newTag: latest
+
+resources:
+- manifests/crds/console_v1alpha1_console_crd.yaml
+- manifests/service_account.yaml
+- manifests/role.yaml
+- manifests/role_binding.yaml
+- manifests/operator.yaml
+- src/cluster_role.yaml
+- src/cluster_role_binding.yaml
+
+# The operator-sdk generator doesn't add the ability to create serviceaccounts by default.
+# So patch the Role to allow the operator to create serviceaccounts, required for Console.
+patchesJson6902:
+- path: src/add_serviceaccounts_role.yaml
+  target:
+    group: rbac.authorization.k8s.io
+    version: v1
+    kind: Role
+    name: console-operator

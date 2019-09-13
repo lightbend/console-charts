@@ -64,14 +64,30 @@ func (p *Connection) Query(query string) (*PromResponse, error) {
 }
 
 func (p *Connection) HasData(query string, formatArgs ...interface{}) error {
-	return p.checkForData(fmt.Sprintf(query, formatArgs...), true)
+	return p.checkForData(fmt.Sprintf(query, formatArgs...), func(result []interface{}, query, detail string) error {
+		if len(result) == 0 {
+			return fmt.Errorf("expected >1 result, got 0: %s ->\n%s", query, detail)
+		}
+		return nil
+	})
 }
 
 func (p *Connection) HasNoData(query string, formatArgs ...interface{}) error {
-	return p.checkForData(fmt.Sprintf(query, formatArgs...), false)
+	return p.HasNData(0, query, formatArgs...)
 }
 
-func (p *Connection) checkForData(query string, expectResults bool) error {
+func (p *Connection) HasNData(n int, query string, formatArgs ...interface{}) error {
+	return p.checkForData(fmt.Sprintf(query, formatArgs...), func(result []interface{}, query, detail string) error {
+		if len(result) != n {
+			return fmt.Errorf("expected %d results, got %d: %s ->\n%s", n, len(result), query, detail)
+		}
+		return nil
+	})
+}
+
+type resultHandler func(result []interface{}, query, detail string) error
+
+func (p *Connection) checkForData(query string, handler resultHandler) error {
 	resp, err := p.Query(query)
 
 	if err != nil {
@@ -91,15 +107,7 @@ func (p *Connection) checkForData(query string, expectResults bool) error {
 		detail = detail[:2048] + "..."
 	}
 
-	if len(arr) == 0 && expectResults {
-		return fmt.Errorf("expected >1 result, got 0: %s ->\n%s", query, detail)
-	}
-
-	if len(arr) > 0 && !expectResults {
-		return fmt.Errorf("expected 0 results, got %d: %s ->\n%s", len(arr), query, detail)
-	}
-
-	return nil
+	return handler(arr, query, detail)
 }
 
 // find any instance of query over past 10 minutes

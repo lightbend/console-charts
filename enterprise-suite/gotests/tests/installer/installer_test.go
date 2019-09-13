@@ -141,6 +141,10 @@ var _ = Describe("all:lbc.py", func() {
 
 	Context("debug-dump", func() {
 		It("should contain the pod logs", func() {
+			// Install with default values, otherwise prior tests will cause problems.
+			installer := lbc.DefaultInstaller()
+			Expect(installer.Install()).To(Succeed())
+
 			Expect(util.Cmd("/bin/bash", "-c", lbc.Path+" debug-dump --namespace="+args.ConsoleNamespace).
 				Timeout(0).Run()).To(Succeed())
 
