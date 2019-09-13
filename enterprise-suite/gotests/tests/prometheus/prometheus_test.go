@@ -158,9 +158,9 @@ var _ = Describe("all:prometheus", func() {
 
 	Context("kube-state-metrics", func() {
 		It("should only scrape a single instance", func() {
-			query := fmt.Sprintf(`count(kube_pod_status_ready{namespace="%s", es_workload="console-backend", condition="true"} == 1) == 1`, args.ConsoleNamespace)
+			query := fmt.Sprintf(`kube_pod_status_ready{namespace="%s", es_workload="console-backend", condition="true"} == 1`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.MedWait, func() error {
-				return prom.HasData(query)
+				return prom.HasNData(1, query)
 			})
 			Expect(err).To(Succeed())
 		})
