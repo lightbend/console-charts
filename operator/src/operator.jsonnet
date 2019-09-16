@@ -8,9 +8,14 @@ local addNamespace(key, obj) = obj { metadata+: { namespace: defaultNamespace } 
 
 local operatorManifests = {
   'operator.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/operator.yaml')[0],
-  'role.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/role.yaml')[0],
-  'role_binding.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/role_binding.yaml')[0],
   'service_account.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/service_account.yaml')[0],
+
+  local tweakRoleRules(idx, rule) = (
+    if idx == 0 then rule { resources+: ["serviceaccounts"] } else rule
+  ),
+  local role = kubecfg.parseYaml(importstr '../build/console-operator/deploy/role.yaml')[0],
+  'role.yaml': role { rules: std.mapWithIndex(tweakRoleRules, role.rules) },
+  'role_binding.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/role_binding.yaml')[0],
 
   'cluster_role.yaml': kube.ClusterRole("console-operator") {
     rules: [
