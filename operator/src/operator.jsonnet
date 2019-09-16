@@ -4,8 +4,6 @@ local kubecfg = import "kubecfg.libsonnet";
 local kube = import "kube-libsonnet/kube.libsonnet";
 
 local operatorManifests = {
-  local m = self,
-
   'operator.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/operator.yaml'),
   'role.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/role.yaml'),
   'role_binding.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/role_binding.yaml'),
@@ -22,7 +20,8 @@ local operatorManifests = {
   },
 
   'cluster_role_binding.yaml': kube.ClusterRoleBinding("console-operator") {
-    // subjects_: [ m["service_account.yaml"] ],
+    // local sa = $["service_account.yaml"] { metadata: { namespace: "placeholder"  }},
+    subjects_+: $["service_account.yaml"],
     roleRef_: $["cluster_role.yaml"],
   },
 };
