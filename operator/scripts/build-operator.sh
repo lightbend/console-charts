@@ -22,7 +22,7 @@ echo "Building operator image ${full_docker_name}..."
 # Create final manifests folder
 cd "$script_dir/.."
 rm -rf manifests && mkdir manifests
-kubecfg -J vendor show -o yaml src/operator.jsonnet > manifests/operator.yaml
+kubecfg -J vendor show -o yaml src/operator.jsonnet > manifests/console-operator.yaml
 #jsonnet -J vendor -m manifests operator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
 
 find manifests/
