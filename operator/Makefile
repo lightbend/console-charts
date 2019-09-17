@@ -7,7 +7,7 @@ build:
 
 .PHONY: check
 check:
-	git diff --summary --exit-code .
+	git diff --summary --exit-code manifests
 
 .PHONY: setup
 setup:

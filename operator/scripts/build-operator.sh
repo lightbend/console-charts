@@ -22,10 +22,11 @@ operator-sdk build "${full_docker_name}"
 # Create final manifests folder
 cd "$script_dir/.."
 rm -rf manifests && mkdir manifests
-kubecfg -J vendor show -o yaml src/operator.jsonnet > manifests/console-operator.yaml
-
-# Create kustomization.yaml
-kubecfg -J vendor --ext-str version="$VERSION" show -o yaml src/kustomization.jsonnet > kustomization.yaml
+for f in src/*.jsonnet; do
+    base=$(basename "$f")
+    base=${base%.jsonnet}
+    kubecfg -J vendor --ext-str version="$VERSION" show -o yaml src/"$base.jsonnet" > manifests/"$base.yaml"
+done
 
 find manifests/
 echo "Done creating operator and manifests."
