@@ -1,6 +1,10 @@
 .PHONY: all
 all: build check
 
+.PHONY: clean
+clean:
+	rm -rf build
+
 .PHONY: build
 build:
 	scripts/build-operator.sh

@@ -6,6 +6,15 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 . "$script_dir/vars.sh"
 
 echo "Building operator image ${full_docker_name}..."
+echo "Checking if minikube is available - this is required to use operator-sdk for helm charts"
+if ! minikube status > /dev/null; then
+    echo "minikube is down"
+    exit 1
+fi
+if ! kubectl version > /dev/null; then
+    echo "kubernetes inaccessible"
+    exit 1
+fi
 
 # Create operator-sdk project and build image
 cd "$script_dir"/..

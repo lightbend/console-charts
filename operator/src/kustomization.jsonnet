@@ -1,7 +1,7 @@
 // This file generates `kustomization.yaml`.
 
 local k = import "kube-libsonnet/kube.libsonnet";
-local o = import "operator.jsonnet";
+local o = import "operator.libsonnet";
 
 {
   apiVersion: "kustomize.config.k8s.io/v1beta1",

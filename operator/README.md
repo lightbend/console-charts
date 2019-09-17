@@ -23,7 +23,7 @@ directory as a base. See kustomize.io for more details.
 The operator will install Console for you. It looks for a `Console` resource inside of its
 namespace. Once this resource is created, it will spin up an instance of Console.
 
-There is a [complete example available](manifests/crds/console_v1alpha1_console_cr.yaml).
+There is a [complete example available](manifests/console_cr.yaml).
 
 To get started quickly, create a file `console.yaml` with contents:
 
