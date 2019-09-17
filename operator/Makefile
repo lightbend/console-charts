@@ -7,11 +7,12 @@ build:
 
 .PHONY: check
 check:
-	git diff --summary --exit-code manifests
+	git diff --summary --exit-code .
 
 .PHONY: setup
 setup:
 	scripts/setup-operator-sdk.sh
+	go get -u github.com/bitnami/kubecfg
 
 .PHONY: release
 release:

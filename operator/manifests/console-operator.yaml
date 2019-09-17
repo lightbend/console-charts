@@ -1,40 +1,4 @@
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: console-operator
-  namespace: lightbend
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: console-operator
-subjects:
-- kind: ServiceAccount
-  name: console-operator
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: console-operator
-  namespace: lightbend
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  annotations: {}
-  labels:
-    name: console-operator
-  name: console-operator
-  namespace: lightbend
-rules:
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterroles
-  - clusterrolebindings
-  verbs:
-  - '*'
----
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
@@ -85,7 +49,7 @@ spec:
       serviceAccountName: console-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   creationTimestamp: null
   name: console-operator
@@ -94,30 +58,8 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  - services
-  - services/finalizers
-  - endpoints
-  - persistentvolumeclaims
-  - events
-  - configmaps
-  - secrets
-  - serviceaccounts
-  verbs:
-  - '*'
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
   - namespaces
+  - serviceaccounts
   verbs:
   - get
 - apiGroups:
@@ -125,6 +67,28 @@ rules:
   resources:
   - configmaps
   - secrets
+  verbs:
+  - '*'
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - persistentvolumeclaims
+  - serviceaccounts
+  - services
   verbs:
   - '*'
 - apiGroups:
@@ -158,5 +122,42 @@ rules:
   - console.lightbend.com
   resources:
   - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: console-operator
+  namespace: lightbend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: console-operator
+subjects:
+- kind: ServiceAccount
+  name: console-operator
+  namespace: REPLACE_NAMESPACE
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: console-operator
+  namespace: lightbend
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  annotations: {}
+  labels:
+    name: console-operator
+  name: console-operator
+  namespace: lightbend
+rules:
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  - clusterrolebindings
   verbs:
   - '*'
