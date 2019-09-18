@@ -78,7 +78,7 @@ func (i *Installer) Install() error {
 	}
 
 	if err := cmd.Timeout(time.Minute * 2).Run(); err != nil {
-		logDebugInfo(args.ConsoleNamespace)
+		util.LogDebugInfo()
 		return err
 	}
 
@@ -91,29 +91,6 @@ func (i *Installer) Install() error {
 	}
 
 	return nil
-}
-
-func logDebugInfo(namespace string) {
-	util.LogG("\n********************************************\nInstall failed, printing debug information:\n\n")
-
-	debugCmds := []string{
-		"get events --sort-by=.metadata.resourceVersion",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-frontend --all-containers",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-frontend --all-containers -p",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-backend --all-containers",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-backend --all-containers -p",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=grafana --all-containers",
-		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=grafana --all-containers -p",
-	}
-
-	for _, cmd := range debugCmds {
-		kubectlArgs := []string{"-n", namespace}
-		kubectlArgs = append(kubectlArgs, strings.Split(cmd, " ")...)
-		if err := util.Cmd("kubectl", kubectlArgs...).PrintCommand().Run(); err != nil {
-			util.LogG("Could not gather debug info: %v\n", err)
-		}
-		util.LogG("\n")
-	}
 }
 
 func (i *Installer) Uninstall() error {
