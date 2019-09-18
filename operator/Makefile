@@ -1,6 +1,10 @@
 .PHONY: all
 all: build check
 
+.PHONY: clean
+clean:
+	rm -rf build
+
 .PHONY: build
 build:
 	scripts/build-operator.sh
@@ -12,6 +16,7 @@ check:
 .PHONY: setup
 setup:
 	scripts/setup-operator-sdk.sh
+	go get -u github.com/bitnami/kubecfg
 
 .PHONY: release
 release:

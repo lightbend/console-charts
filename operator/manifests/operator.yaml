@@ -1,7 +1,9 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: console-operator
+  namespace: lightbend
 spec:
   replicas: 1
   selector:
@@ -12,20 +14,19 @@ spec:
       labels:
         name: console-operator
     spec:
-      serviceAccountName: console-operator
       containers:
-        - name: console-operator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
-          imagePullPolicy: Always
-          env:
-            - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: OPERATOR_NAME
-              value: "console-operator"
+      - env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: console-operator
+        image: REPLACE_IMAGE
+        imagePullPolicy: Always
+        name: console-operator
+      serviceAccountName: console-operator

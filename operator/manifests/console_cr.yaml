@@ -1,0 +1,56 @@
+---
+apiVersion: app.lightbend.com/v1alpha1
+kind: Console
+metadata:
+  name: example-console
+  namespace: lightbend
+spec:
+  alertManagers: null
+  alpineImage: alpine
+  alpineVersion: "3.8"
+  apiGroupVersion: rbac.authorization.k8s.io
+  busyboxImage: busybox
+  busyboxVersion: "1.30"
+  configMapReloadImage: jimmidyson/configmap-reload
+  configMapReloadVersion: v0.2.2
+  consoleAPI:
+    defaultMonitorWarmup: 1m
+    defaultMonitorsConfigMap: console-api-default-monitors
+    staticRulesConfigMap: console-api-static-rules
+  consoleUIConfig:
+    isMonitorEditEnabled: false
+    logo: ""
+  daemonSetApiVersion: apps/v1beta2
+  defaultCPURequest: 100m
+  defaultMemoryRequest: 50Mi
+  deploymentApiVersion: apps/v1beta2
+  elasticsearchImage: elasticsearch
+  elasticsearchMemoryRequest: 510Mi
+  elasticsearchVersion: 7.2.0
+  enableElasticsearch: false
+  esConsoleExposePort: 30080
+  esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
+  esConsoleVersion: v1.2.6
+  esGrafanaEnvVars: null
+  esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
+  esGrafanaVersion: v0.3.0
+  esGrafanaVolumeSize: 32Gi
+  esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api'
+  esMonitorVersion: v1.2.3
+  exposeServices: false
+  goDnsmasqImage: lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq
+  goDnsmasqVersion: v0.1.7-1
+  imageCredentials:
+    registry: lightbend-docker-commercial-registry.bintray.io
+  imagePullPolicy: IfNotPresent
+  kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
+  kubeStateMetricsVersion: v1.2.0
+  minikube: false
+  podUID: null
+  prometheusDomain: prometheus.io
+  prometheusImage: prom/prometheus
+  prometheusMemoryRequest: 250Mi
+  prometheusVersion: v2.9.2
+  prometheusVolumeSize: 256Gi
+  rbacApiVersion: rbac.authorization.k8s.io/v1
+  usePersistentVolumes: true

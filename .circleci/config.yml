@@ -144,23 +144,23 @@ jobs:
     - run: scripts/deploy-chaos-apps.sh console-demo
 
   build_operator:
-    docker:
-    - image: circleci/golang:1.11
+    machine:
+      image: ubuntu-1604:201903-01
 
     steps:
-    - setup_remote_docker
     - checkout
     - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/setup-minikube-for-linux.sh
     - run: make -C operator setup build check
 
   release_operator:
-    docker:
-    - image: circleci/golang:1.11
+    machine:
+      image: ubuntu-1604:201903-01
 
     steps:
-    - setup_remote_docker
     - checkout
     - run: scripts/setup-tools-for-debian.sh
+    - run: scripts/setup-minikube-for-linux.sh
     - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
     - run: VERSION=${CIRCLE_TAG#v} make -C operator setup build release
 
