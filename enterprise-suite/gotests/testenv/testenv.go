@@ -128,5 +128,6 @@ func CloseEnv() {
 	}
 
 	testEnvInitialized = false
+
 	util.LogDebugInfo()
 }
