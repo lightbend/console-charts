@@ -2,10 +2,7 @@
 
 set -e
 
-version="v0.10.0"
-
-mkdir -p $GOPATH/src/github.com/operator-framework
-cd $GOPATH/src/github.com/operator-framework
-git clone --branch ${version} --depth 1 https://github.com/operator-framework/operator-sdk
-cd operator-sdk
-make install
+RELEASE_VERSION="v0.10.0"
+curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
+sudo mv operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk
+chmod +x /usr/local/bin/operator-sdk
