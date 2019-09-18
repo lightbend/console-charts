@@ -4,7 +4,6 @@
 
 set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-. $script_dir/lib.sh
 
 # script
 if [ "$#" -lt 1 ]; then

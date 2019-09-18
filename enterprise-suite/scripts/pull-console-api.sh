@@ -6,9 +6,6 @@
 # ./pull-console-api.sh v1.0.13 monitors/default-monitors.json
 
 set -u
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-# shellcheck source=../../scripts/lib.sh
-. "$script_dir/../../scripts/lib.sh"
 
 # Expect two arguments
 if [ $# -ne 2 ]
