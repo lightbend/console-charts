@@ -2,7 +2,6 @@
 
 set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-. $script_dir/lib.sh
 
 chart=$1
 version=$2

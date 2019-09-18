@@ -4,8 +4,6 @@
 
 set -eu
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-# shellcheck source=lib.sh
-. "$script_dir/lib.sh"
 
 values="$script_dir/../enterprise-suite/values.yaml"
 consoleVersion=$(yq r "$values" esConsoleVersion)
