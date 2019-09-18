@@ -120,6 +120,8 @@ func InitEnv() {
 	LegacyMonitorAPIAddr = fmt.Sprintf("%v/service/es-monitor-api", ConsoleAddr)
 
 	testEnvInitialized = true
+
+	util.LogDebugInfo()
 }
 
 func CloseEnv() {
@@ -128,6 +130,4 @@ func CloseEnv() {
 	}
 
 	testEnvInitialized = false
-
-	util.LogDebugInfo()
 }

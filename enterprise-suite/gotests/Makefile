@@ -35,7 +35,7 @@ purge-console-openshift: purge-console
 purge-console:
 	-TILLER_NAMESPACE=$(TILLER_NAMESPACE) ../scripts/lbc.py uninstall --delete-pvcs
 
-ginkgo_args := -r -compilers=2 --progress --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(TILLER_NAMESPACE)
+ginkgo_args := -r -compilers=2 --progress --fastFail --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(TILLER_NAMESPACE)
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
