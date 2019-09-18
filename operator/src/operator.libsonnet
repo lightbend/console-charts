@@ -7,8 +7,8 @@ local defaultNamespace = "lightbend";
 local addNamespace(key, obj) = obj { metadata+: { namespace: defaultNamespace } };
 
 local operatorManifests = {
-  'console_crd.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/crds/console_v1alpha1_console_crd.yaml')[0],
-  'console_cr.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/crds/console_v1alpha1_console_cr.yaml')[0],
+  'console_crd.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/crds/app_v1alpha1_console_crd.yaml')[0],
+  'console_cr.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/crds/app_v1alpha1_console_cr.yaml')[0],
 
   'operator.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/operator.yaml')[0],
   'service_account.yaml': kubecfg.parseYaml(importstr '../build/console-operator/deploy/service_account.yaml')[0],

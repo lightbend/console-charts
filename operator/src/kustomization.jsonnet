@@ -1,5 +1,3 @@
-// This file generates `kustomization.yaml`.
-
 local k = import "kube-libsonnet/kube.libsonnet";
 local o = import "operator.libsonnet";
 
@@ -15,5 +13,5 @@ local o = import "operator.libsonnet";
     newTag: std.extVar("version"),
   }],
 
-  resources: ["manifests/console-operator.yaml"],
+  resources: [f for f in std.objectFields(o) if f != "console_cr.yaml"],
 }

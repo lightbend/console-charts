@@ -6,17 +6,16 @@ upgrades yet._
 This directory provides files to install the Console Operator, which can be used to install
 Console itself.
 
-To install the operator, first edit the [kustomization.yaml](kustomization.yaml) file to your needs,
-then apply it with `kubectl`:
+To install the operator, apply the `manifests/kustomization.yaml` file with `kubectl`:
 
 ``` sh
-kubectl apply -k .
+kubectl apply -k manifests
 ```
 
-This will set up the Console operator.
+This will set up the Console operator. This requires at least kubectl 1.14.
 
-For production usage, it is recommended you create your own `kustomization.yaml`, and use this
-directory as a base. See kustomize.io for more details.
+For production usage, it is recommended you create your own `kustomization.yaml`, and use the
+manifests directory as a base inside your own repository. See kustomize.io for more details.
 
 ## Install Console
 
@@ -28,10 +27,10 @@ There is a [complete example available](manifests/console_cr.yaml).
 To get started quickly, create a file `console.yaml` with contents:
 
 ``` yaml
-apiVersion: console.lightbend.com/v1alpha1
+apiVersion: app.lightbend.com/v1alpha1
 kind: Console
 metadata:
-  name: console
+  name: my-console
 spec:
   imageCredentials:
     username: my-lightbend-username
@@ -48,6 +47,15 @@ kubectl apply -n lightbend console.yaml
 
 After this you should see an instance of Console created in the namespace. You can then access it as
 normal. If on Minikube, you can use the NodePort service to access at `https://$(minikube ip):30080`.
+
+### Uninstall
+
+You can uninstall the console instance by deleting it using kubectl. Assuming you used the prior
+example with name `my-console` in namespace `lightbend`:
+
+``` sh
+kubectl delete -n lightbend console my-console
+```
 
 ## Directory Structure
 

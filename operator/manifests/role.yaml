@@ -71,22 +71,8 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - console.lightbend.com
+  - app.lightbend.com
   resources:
   - '*'
   verbs:
   - '*'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: console-operator
-  namespace: lightbend
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: console-operator
-subjects:
-- kind: ServiceAccount
-  name: console-operator
-  namespace: lightbend

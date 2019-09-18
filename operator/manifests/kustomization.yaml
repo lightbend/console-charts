@@ -7,4 +7,8 @@ images:
 kind: Kustomization
 namespace: lightbend
 resources:
-- manifests/console-operator.yaml
+- console_crd.yaml
+- operator.yaml
+- role.yaml
+- role_binding.yaml
+- service_account.yaml

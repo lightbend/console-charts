@@ -30,9 +30,3 @@ spec:
         imagePullPolicy: Always
         name: console-operator
       serviceAccountName: console-operator
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: console-operator
-  namespace: lightbend

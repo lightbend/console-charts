@@ -21,7 +21,7 @@ cd "$script_dir"/..
 rm -rf build && mkdir build
 cd build
 operator-sdk new console-operator --type=helm --kind=Console \
-    --api-version=console.lightbend.com/v1alpha1 --helm-chart="$script_dir"/../../enterprise-suite
+    --api-version=app.lightbend.com/v1alpha1 --helm-chart="$script_dir"/../../enterprise-suite
 
 cd console-operator
 operator-sdk build "${full_docker_name}"
