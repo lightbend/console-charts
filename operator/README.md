@@ -78,4 +78,5 @@ These files are added to https://github.com/operator-framework, in both the
 upstream-community-operators and community-operators folders.
 
 To test, you can follow the process at
-https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md.
+https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md -
+the relevant files are located in [olm/test](olm/test).
