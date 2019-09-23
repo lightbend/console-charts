@@ -263,7 +263,7 @@ spec:
               memory: {{ default .Values.defaultMemoryRequest .Values.logstashMemoryRequest }}
 
           volumeMounts:
-          - name: console-api-logstash-conf-volume
+          - name: console-api-logstash-volume
             mountPath: /usr/share/logstash/pipeline
         {{ end }}
 
