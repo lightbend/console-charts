@@ -44,6 +44,8 @@ prometheusImage: prom/prometheus
 elasticsearchImage: elasticsearch
 # logstash image
 logstashImage: logstash
+# kibana image
+kibanaImage: kibana
 # configmap-reload image
 configMapReloadImage: jimmidyson/configmap-reload
 # kube-state-metrics image

@@ -16,6 +16,9 @@ spec:
     - name: elasticsearch
       port: 9200
       targetPort: 9200
+    - name: kibana
+      port: 5601
+      targetPort: 5601
     - name: logstash
       port: 5000
       targetPort: 5000

@@ -254,6 +254,20 @@ spec:
               mountPath: /usr/share/elasticsearch/data
               subPath: elasticsearch-data
 
+        - name: kibana
+          image: {{ .Values.kibanaImage }}:{{ .Values.elasticsearchVersion }}
+
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: http://127.0.0.1:9200
+            - name: SERVER_BASEPATH
+              value: "/service/kibana"
+
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.kibanaCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.kibanaMemoryRequest }}
+
         - name: logstash
           image: {{ .Values.logstashImage }}:{{ .Values.elasticsearchVersion }}
 
