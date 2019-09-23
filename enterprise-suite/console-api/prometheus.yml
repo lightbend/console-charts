@@ -415,7 +415,7 @@ scrape_configs:
         replacement: ${1}-${2}
         target_label: es_workload
 
-    # If all else fails, use the pod name.
+    # If all else fails, use the pod name
       - source_labels: [__meta_kubernetes_pod_name, es_workload]
         action: replace
         regex: '(.*);'
