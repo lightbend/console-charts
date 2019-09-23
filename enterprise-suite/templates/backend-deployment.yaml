@@ -249,13 +249,24 @@ spec:
             initialDelaySeconds: 15
 
           volumeMounts:
-            # Elasticseach data is kept in prometheus volume.
-            # Openshift doesn't support mounting multiple volumes to a single pod and renaming the volume
-            # would break backwards compatibility with older console versions.
+            # Elasticseach data is kept in the pod's persistent volume.
             - name: prometheus-data-volume
               mountPath: /usr/share/elasticsearch/data
               subPath: elasticsearch-data
-          {{ end }}
+
+        - name: logstash
+          image: {{ .Values.logstashImage }}:{{ .Values.elasticsearchVersion }}
+
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.logstashCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.logstashMemoryRequest }}
+
+          volumeMounts:
+          - name: console-api-logstash-conf-volume
+            mountPath: /usr/share/logstash/pipeline
+        {{ end }}
+
       terminationGracePeriodSeconds: 300
 
       volumes:
@@ -277,6 +288,13 @@ spec:
         - name: console-api-prometheus-volume
           configMap:
             name: console-api-prometheus
+
+        {{ if .Values.enableElasticsearch -}}
+        # Logstash configuration for when elasticsearch is enabled.
+        - name: console-api-logstash-volume
+          configMap:
+            name: console-api-logstash
+        {{ end }}
 
         # Prometheus data storage.
         - name: prometheus-data-volume
