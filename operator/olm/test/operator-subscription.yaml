@@ -1,0 +1,10 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: lightbend-subscription
+  namespace: marketplace
+spec:
+  channel: alpha
+  name: lightbend-console-operator
+  source: lightbend-operators
+  sourceNamespace: marketplace

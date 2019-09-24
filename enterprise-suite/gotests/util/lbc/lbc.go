@@ -53,7 +53,7 @@ func (i *Installer) Install() error {
 	cmdArgs = append(cmdArgs, "--")
 
 	if i.HelmWait {
-		cmdArgs = append(cmdArgs, "--wait", "--timeout", "110")
+		cmdArgs = append(cmdArgs, "--wait", "--timeout", "180")
 	}
 	cmdArgs = append(cmdArgs, "--set esConsoleURL=http://console.test.bogus:30080")
 	if minikube.IsRunning() {

@@ -73,8 +73,8 @@ podUID:
 # Commercial image credentials - set `username` and `password` to install as Kubernetes Secret.
 imageCredentials:
   registry: lightbend-docker-commercial-registry.bintray.io
-#  username: setme
-#  password: setme
+  username: setme
+  password: setme
 
 # Comma separated list of alertmanager addresses (can be k8s local DNS service names)
 alertManagers:
