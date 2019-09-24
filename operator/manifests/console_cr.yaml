@@ -26,7 +26,7 @@ spec:
   deploymentApiVersion: apps/v1beta2
   elasticsearchImage: elasticsearch
   elasticsearchMemoryRequest: 510Mi
-  elasticsearchVersion: 7.2.0
+  elasticsearchVersion: 7.3.2
   enableElasticsearch: false
   esConsoleExposePort: 30080
   esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
@@ -45,8 +45,10 @@ spec:
     registry: lightbend-docker-commercial-registry.bintray.io
     username: setme
   imagePullPolicy: IfNotPresent
+  kibanaImage: kibana
   kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
   kubeStateMetricsVersion: v1.2.0
+  logstashImage: logstash
   minikube: false
   podUID: null
   prometheusDomain: prometheus.io
