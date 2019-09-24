@@ -155,7 +155,7 @@ jobs:
     - run: make -C operator setup
     # jsravn: Unfortunately, the operator-sdk output isn't deterministic, so this can occasionally fail (about 10% of the time).
     # All we can do for now is retry.
-    - run-with-retry:
+    - run-with-retry/run-with-retry:
         command: make -C operator build check
         sleep: 0
         retry-count: 3
