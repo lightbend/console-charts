@@ -10,7 +10,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/lightbend/console-charts/enterprise-suite/gotests/util"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/lbc"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/minikube"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/util/oc"
