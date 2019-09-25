@@ -25,6 +25,8 @@ var _ = BeforeSuite(func() {
 	testenv.InitEnv()
 	installer := lbc.DefaultInstaller()
 	installer.AdditionalHelmArgs = []string{"--set enableElasticsearch=true"}
+	// ES can take a while to start up
+	installer.HelmWait = "240"
 	Expect(installer.Install()).To(Succeed(), "install with Elasticsearch enabled")
 })
 
