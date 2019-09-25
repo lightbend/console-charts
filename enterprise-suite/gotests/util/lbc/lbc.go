@@ -51,7 +51,9 @@ func (i *Installer) Install() error {
 	}
 	cmdArgs = append(cmdArgs, i.AdditionalLBCArgs...)
 	cmdArgs = append(cmdArgs, "--")
-	cmdArgs = append(cmdArgs, "--wait", "--timeout", i.HelmWait)
+	if i.HelmWait != "" && i.HelmWait != "0" {
+		cmdArgs = append(cmdArgs, "--wait", "--timeout", i.HelmWait)
+	}
 	cmdArgs = append(cmdArgs, "--set esConsoleURL=http://console.test.bogus:30080")
 	if minikube.IsRunning() {
 		cmdArgs = append(cmdArgs, "--set exposeServices=NodePort")
