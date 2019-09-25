@@ -34,7 +34,7 @@ jobs:
     - queue/until_front_of_line:
         consider-branch: false
     - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
-    - run: make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=${NAMESPACE}
+    - run: make -C enterprise-suite/gotests run-tests-all run-tests-openshift NAMESPACE=${NAMESPACE}
     - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
 
   backend_e2e_minishift:
