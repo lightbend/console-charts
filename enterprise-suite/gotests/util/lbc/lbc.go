@@ -77,7 +77,7 @@ func (i *Installer) Install() error {
 		cmd.CaptureStderr(&stderr)
 	}
 
-	if err := cmd.Timeout(time.Minute * 2).Run(); err != nil {
+	if err := cmd.Timeout(time.Minute * 5).Run(); err != nil {
 		util.LogDebugInfo()
 		return err
 	}
