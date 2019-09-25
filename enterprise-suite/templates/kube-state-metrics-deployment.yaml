@@ -11,6 +11,12 @@ metadata:
 spec:
   replicas: 1
 
+  strategy:
+    # Always Recreate to ensure we don't get duplicate metrics.
+    type: Recreate
+    # Needed for helm upgrade to succeed.
+    rollingUpdate: null
+
   selector:
     matchLabels:
       app: prometheus
