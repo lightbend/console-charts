@@ -2,6 +2,8 @@
 
 set -eux
 
+sudo apt update
+
 # jq
 sudo apt install -y jq
 
