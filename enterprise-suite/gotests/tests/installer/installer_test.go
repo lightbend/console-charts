@@ -108,7 +108,7 @@ var _ = Describe("all:lbc.py", func() {
 			installer := lbc.DefaultInstaller()
 			installer.AdditionalLBCArgs = []string{"--export-yaml=console", "--version=1.1.0"}
 			installer.LocalChart = false
-			installer.HelmWait = false
+			installer.HelmWait = "0"
 			Expect(installer.Install()).To(Succeed())
 		})
 
@@ -118,14 +118,14 @@ var _ = Describe("all:lbc.py", func() {
 			// jsravn: This is necessary to prevent leaking credentials in builds.
 			installer.AdditionalHelmArgs = []string{"> /dev/null"}
 			installer.LocalChart = false
-			installer.HelmWait = false
+			installer.HelmWait = "0"
 			Expect(installer.Install()).To(Succeed())
 		})
 
 		It("should be able to export the console yaml for a local chart", func() {
 			installer := lbc.DefaultInstaller()
 			installer.AdditionalLBCArgs = []string{"--export-yaml=console"}
-			installer.HelmWait = false
+			installer.HelmWait = "0"
 			Expect(installer.Install()).To(Succeed())
 		})
 
@@ -134,7 +134,7 @@ var _ = Describe("all:lbc.py", func() {
 			installer.AdditionalLBCArgs = []string{"--export-yaml=creds"}
 			// jsravn: This is necessary to prevent leaking credentials in builds.
 			installer.AdditionalHelmArgs = []string{"> /dev/null"}
-			installer.HelmWait = false
+			installer.HelmWait = "0"
 			Expect(installer.Install()).To(Succeed())
 		})
 	})

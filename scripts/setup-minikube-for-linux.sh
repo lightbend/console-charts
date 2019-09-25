@@ -23,7 +23,7 @@ mkdir -p $HOME/.kube
 touch $HOME/.kube/config
 
 export KUBECONFIG=$HOME/.kube/config
-sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION}
+sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION} --cpus 2 --memory 2000
 sudo -E minikube addons enable ingress
 sudo chown -R $USER $HOME/.minikube
 sudo chgrp -R $USER $HOME/.minikube

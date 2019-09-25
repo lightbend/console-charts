@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   # https://circleci.com/orbs/registry/orb/eddiewebb/queue
   queue: eddiewebb/queue@1.1.3
+  run-with-retry: kimh/run-with-retry@1.0.0
 
 jobs:
   unit_tests:
@@ -33,7 +34,7 @@ jobs:
     - queue/until_front_of_line:
         consider-branch: false
     - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
-    - run: make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=${NAMESPACE}
+    - run: make -C enterprise-suite/gotests run-tests-all run-tests-openshift NAMESPACE=${NAMESPACE}
     - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
 
   backend_e2e_minishift:
@@ -151,7 +152,13 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: scripts/setup-minikube-for-linux.sh
-    - run: make -C operator setup build check
+    - run: make -C operator setup
+    # jsravn: Unfortunately, the operator-sdk output isn't deterministic, so this can occasionally fail (about 10% of the time).
+    # All we can do for now is retry.
+    - run-with-retry/run-with-retry:
+        command: make -C operator build check
+        sleep: 0
+        retry-count: 3
 
   release_operator:
     machine:

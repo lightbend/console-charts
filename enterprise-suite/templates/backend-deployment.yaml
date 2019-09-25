@@ -225,6 +225,12 @@ spec:
               value: "single-node"
             - name: "ES_JAVA_OPTS"
               value: "-Xms512m -Xmx512m"
+            - name: http.cors.enabled
+              value: "true"
+            - name: http.cors.allow-origin
+              value: "*"
+            - name: http.cors.allow-headers
+              value: "Authorization,X-Requested-With,Content-Type,Content-Length"
 
           resources:
             requests:
@@ -249,13 +255,38 @@ spec:
             initialDelaySeconds: 15
 
           volumeMounts:
-            # Elasticseach data is kept in prometheus volume.
-            # Openshift doesn't support mounting multiple volumes to a single pod and renaming the volume
-            # would break backwards compatibility with older console versions.
+            # Elasticseach data is kept in the pod's persistent volume.
             - name: prometheus-data-volume
               mountPath: /usr/share/elasticsearch/data
               subPath: elasticsearch-data
-          {{ end }}
+
+        - name: kibana
+          image: {{ .Values.kibanaImage }}:{{ .Values.elasticsearchVersion }}
+
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: http://127.0.0.1:9200
+            - name: SERVER_BASEPATH
+              value: "/service/kibana"
+
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.kibanaCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.kibanaMemoryRequest }}
+
+        - name: logstash
+          image: {{ .Values.logstashImage }}:{{ .Values.elasticsearchVersion }}
+
+          resources:
+            requests:
+              cpu: {{ default .Values.defaultCPURequest .Values.logstashCPURequest }}
+              memory: {{ default .Values.defaultMemoryRequest .Values.logstashMemoryRequest }}
+
+          volumeMounts:
+          - name: console-api-logstash-volume
+            mountPath: /usr/share/logstash/pipeline
+        {{ end }}
+
       terminationGracePeriodSeconds: 300
 
       volumes:
@@ -277,6 +308,13 @@ spec:
         - name: console-api-prometheus-volume
           configMap:
             name: console-api-prometheus
+
+        {{ if .Values.enableElasticsearch -}}
+        # Logstash configuration for when elasticsearch is enabled.
+        - name: console-api-logstash-volume
+          configMap:
+            name: console-api-logstash
+        {{ end }}
 
         # Prometheus data storage.
         - name: prometheus-data-volume

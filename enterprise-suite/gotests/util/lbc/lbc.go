@@ -21,7 +21,7 @@ type Installer struct {
 	UsePersistentVolumes string
 	MonitorWarmup        string
 	ForceDeletePVCs      bool
-	HelmWait             bool
+	HelmWait             string
 	LocalChart           bool
 	FailOnWarnings       bool
 	AdditionalLBCArgs    []string
@@ -33,7 +33,7 @@ func DefaultInstaller() *Installer {
 		UsePersistentVolumes: "true",
 		MonitorWarmup:        "1s",
 		ForceDeletePVCs:      true,
-		HelmWait:             true,
+		HelmWait:             "180",
 		LocalChart:           true,
 		FailOnWarnings:       false,
 	}
@@ -51,9 +51,8 @@ func (i *Installer) Install() error {
 	}
 	cmdArgs = append(cmdArgs, i.AdditionalLBCArgs...)
 	cmdArgs = append(cmdArgs, "--")
-
-	if i.HelmWait {
-		cmdArgs = append(cmdArgs, "--wait", "--timeout", "180")
+	if i.HelmWait != "" && i.HelmWait != "0" {
+		cmdArgs = append(cmdArgs, "--wait", "--timeout", i.HelmWait)
 	}
 	cmdArgs = append(cmdArgs, "--set esConsoleURL=http://console.test.bogus:30080")
 	if minikube.IsRunning() {
@@ -77,7 +76,7 @@ func (i *Installer) Install() error {
 		cmd.CaptureStderr(&stderr)
 	}
 
-	if err := cmd.Timeout(time.Minute * 2).Run(); err != nil {
+	if err := cmd.Timeout(time.Minute * 5).Run(); err != nil {
 		util.LogDebugInfo()
 		return err
 	}

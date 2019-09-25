@@ -149,7 +149,9 @@ var _ = Describe("all:prometheus", func() {
 		Expect(prom.HasNoData(`{__name__=~"container_.+", es_workload=""}`)).To(Succeed())
 		// All targets should be reachable
 		Expect(prom.HasData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 1`)).To(Succeed())
-		Expect(prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 0`)).To(Succeed())
+		Expect(util.WaitUntilSuccess(util.SmallWait, func() error {
+			return prom.HasNoData(`up{kubernetes_name != "es-test-service-with-only-endpoints"} == 0`)
+		})).To(Succeed())
 		// None of the metrics should have kubernetes_namespace label
 		Expect(prom.HasNoData(`{kubernetes_namespace!=""}`)).To(Succeed())
 		// make sure the number of node_names matches the number of kubelets
@@ -158,12 +160,12 @@ var _ = Describe("all:prometheus", func() {
 
 	Context("kube-state-metrics", func() {
 		It("should only scrape a single instance", func() {
-			util.LogG("Logging debug info to debug flaky test")
-			util.LogDebugInfo()
 			query := fmt.Sprintf(`kube_pod_status_ready{namespace="%s", es_workload="console-backend", condition="true"} == 1`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.MedWait, func() error {
 				return prom.HasNData(1, query)
 			})
+			util.LogG("**** Debug flaky test")
+			util.LogDebugInfo()
 			Expect(err).To(Succeed())
 		})
 	})
