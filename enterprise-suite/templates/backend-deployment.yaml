@@ -224,7 +224,7 @@ spec:
             - name: "discovery.type"
               value: "single-node"
             - name: "ES_JAVA_OPTS"
-              value: "-Xms512m -Xmx512m"
+              value: "-Xmx512m"
             - name: http.cors.enabled
               value: "true"
             - name: http.cors.allow-origin
