@@ -158,12 +158,12 @@ var _ = Describe("all:prometheus", func() {
 
 	Context("kube-state-metrics", func() {
 		It("should only scrape a single instance", func() {
-			util.LogG("**** debug flaky test")
-			util.LogDebugInfo()
 			query := fmt.Sprintf(`kube_pod_status_ready{namespace="%s", es_workload="console-backend", condition="true"} == 1`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.MedWait, func() error {
 				return prom.HasNData(1, query)
 			})
+			util.LogG("**** Debug flaky test")
+			util.LogDebugInfo()
 			Expect(err).To(Succeed())
 		})
 	})
