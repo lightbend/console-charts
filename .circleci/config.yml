@@ -29,7 +29,7 @@ jobs:
     steps:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN}
+    - run: scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN} console-backend-go-tests
     - run: make -C enterprise-suite/gotests setup-tools
     - queue/until_front_of_line:
         consider-branch: false
@@ -140,7 +140,7 @@ jobs:
     - run: scripts/setup-tools-for-debian.sh
     - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
     - run: make -C enterprise-suite package
-    - run: scripts/setup-openshift.sh ${OC_DEMO_TOKEN}
+    - run: scripts/setup-openshift.sh ${OC_DEMO_TOKEN} console-demo
     - run: TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${CIRCLE_TAG#v}.tgz --set usePersistentStorage=yes
     - run: scripts/deploy-chaos-apps.sh console-demo
 
