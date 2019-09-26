@@ -244,7 +244,7 @@ const (
 	// Use for operations which are expected to succeed quickly.
 	SmallWait = WaitTime(5 * time.Second)
 	// Use for operators that can take a little while to start working.
-	MedWait = WaitTime(15 * time.Second)
+	MedWait = WaitTime(30 * time.Second)
 	// Use for operations which can take a while to succeed.
 	LongWait = WaitTime(70 * time.Second)
 	// Should not be used! Might be useful during development.
