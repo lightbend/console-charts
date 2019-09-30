@@ -66,9 +66,8 @@ var _ = BeforeSuite(func() {
 	}
 
 	// wait until there's some scrapes finished
-	Expect(waitForScrapes("prometheus_notifications_dropped_rate")).To(Succeed())
-	Expect(waitForScrapes(`model{name="prometheus_notifications_dropped"}`)).To(Succeed())
 	Expect(waitForScrapes("kube_pod_info")).To(Succeed())
+	Expect(waitForScrapes("prometheus_rule_evaluation_failures_rate")).To(Succeed())
 })
 
 var _ = AfterSuite(func() {
@@ -92,8 +91,6 @@ var _ = Describe("all:prometheus", func() {
 		func(metric string) {
 			Expect(prom.AnyData(metric)).To(Succeed())
 		},
-		Metric("prometheus_notifications_dropped_rate"),
-		Metric("prometheus_notification_queue_percent"),
 		Metric("prometheus_rule_evaluation_failures_rate"),
 		Metric("prometheus_target_scrapes_exceeded_sample_limit_rate"),
 		Metric("prometheus_tsdb_reloads_failures_rate"),
@@ -107,8 +104,6 @@ var _ = Describe("all:prometheus", func() {
 			Expect(prom.AnyData(fmt.Sprintf(`model{name="%v"}`, metric))).To(Succeed())
 			Expect(prom.AnyData(fmt.Sprintf(`health{name="%v"}`, metric))).To(Succeed())
 		},
-		Metric("prometheus_notifications_dropped"),
-		Metric("prometheus_notification_queue"),
 		Metric("prometheus_rule_evaluation_failures"),
 		Metric("prometheus_target_too_many_metrics"),
 		Metric("prometheus_tsdb_reloads_failures"),
