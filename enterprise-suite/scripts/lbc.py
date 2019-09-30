@@ -667,8 +667,9 @@ def debug_dump(args):
         if returncode == 0:
             return containers.split()
         else:
-            fail(failure_msg + 'unable to get containers in a pod {}'
+            printerr(failure_msg + 'unable to get containers in a pod {}'
                  .format(pod))
+            return []
 
     def write_log(archive, pod, container):
         returncode, logs_out, _ = run('kubectl --namespace {} logs {} -c {} --tail=250'

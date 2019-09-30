@@ -36,7 +36,7 @@ spec:
   esGrafanaVersion: v0.3.0
   esGrafanaVolumeSize: 32Gi
   esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api'
-  esMonitorVersion: v1.2.3
+  esMonitorVersion: v1.2.4
   exposeServices: false
   goDnsmasqImage: lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq
   goDnsmasqVersion: v0.1.7-1

@@ -122,40 +122,6 @@
           "docLink": "https://developer.lightbend.com/docs/console/current/monitors/akka.html#akka-processing-time"
         }
       },
-      "prometheus_notifications_dropped": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "prometheus_notifications_dropped_rate",
-          "window": "10m",
-          "confidence": "0.25",
-          "severity": {
-            "warning": {
-              "comparator": ">",
-              "threshold": "0"
-            }
-          },
-          "alertSummary": "Prometheus dropping notifications",
-          "alertDescription": "Prometheus dropping alerts sent to Alertmanager"
-        }
-      },
-      "prometheus_notification_queue": {
-        "monitorVersion": "1",
-        "model": "threshold",
-        "parameters": {
-          "metric": "prometheus_notification_queue_percent",
-          "window": "10m",
-          "confidence": "0.5",
-          "severity": {
-            "warning": {
-              "comparator": ">",
-              "threshold": "50"
-            }
-          },
-          "alertSummary": "Prometheus alert queue filling",
-          "alertDescription": "Prometheus alert queue is staying over 50% full"
-        }
-      },
       "prometheus_rule_evaluation_failures": {
         "monitorVersion": "1",
         "model": "threshold",
