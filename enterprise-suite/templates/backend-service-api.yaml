@@ -22,6 +22,7 @@ spec:
     - name: logstash
       port: 5000
       targetPort: 5000
+      protocol: UDP
   selector:
     app.kubernetes.io/name: {{ template "name" . }}
     app.kubernetes.io/component: console-backend
