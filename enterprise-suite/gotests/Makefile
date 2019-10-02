@@ -43,11 +43,7 @@ run-tests-minikube:
 
 .PHONY: run-tests-openshift
 run-tests-openshift:
-	ginkgo --focus=openshift:.* $(ginkgo_args)
-
-.PHONY: run-tests-all
-run-tests-all:
-	ginkgo --focus=all:.* $(ginkgo_args)
+	ginkgo --focus=(openshift|all):.* $(ginkgo_args)
 
 .PHONY: format
 format:
