@@ -19,7 +19,7 @@ jobs:
 
   backend_e2e_openshift:
     docker:
-    - image: circleci/golang:1.11
+    - image: circleci/golang:latest
 
     environment:
       NAMESPACE: console-backend-go-tests
