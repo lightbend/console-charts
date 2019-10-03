@@ -152,8 +152,7 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: |
-        sudo which go
-        sudo apt-get remove golang-go
+        sudo rm -rf /usr/local/go
         sudo add-apt-repository ppa:longsleep/golang-backports
         sudo apt-get update
         sudo apt-get install golang-go
@@ -175,7 +174,7 @@ jobs:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
     - run: |
-        sudo apt-get remove golang-go
+        sudo rm -rf /usr/local/go
         sudo add-apt-repository ppa:longsleep/golang-backports
         sudo apt-get update
         sudo apt-get install golang-go
