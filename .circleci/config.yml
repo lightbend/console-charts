@@ -39,7 +39,7 @@ jobs:
 
   backend_e2e_minishift:
     machine:
-      image: ubuntu-1604:latest
+      image: ubuntu-1604:201903-01
 
     environment:
       NAMESPACE: console-backend-go-tests
@@ -59,7 +59,7 @@ jobs:
 
   frontend_e2e_minishift:
     machine:
-      image: ubuntu-1604:latest
+      image: ubuntu-1604:201903-01
 
     steps:
     - checkout
@@ -146,11 +146,12 @@ jobs:
 
   build_operator:
     machine:
-      image: ubuntu-1604:latest
+      image: ubuntu-1604:201903-01
 
     steps:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
+    - run: sudo apt install -y golang-go
     - run: scripts/setup-minikube-for-linux.sh
     - run: make -C operator setup
     # jsravn: Unfortunately, the operator-sdk output isn't deterministic, so this can occasionally fail (about 10% of the time).
@@ -162,11 +163,12 @@ jobs:
 
   release_operator:
     machine:
-      image: ubuntu-1604:latest
+      image: ubuntu-1604:201903-01
 
     steps:
     - checkout
     - run: scripts/setup-tools-for-debian.sh
+    - run: sudo apt install -y golang-go
     - run: scripts/setup-minikube-for-linux.sh
     - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
     - run: VERSION=${CIRCLE_TAG#v} make -C operator setup build release
