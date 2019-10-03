@@ -39,11 +39,11 @@ ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowS
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
-	ginkgo --focus=minikube:.* $(ginkgo_args)
+	ginkgo --focus='minikube:.*' $(ginkgo_args)
 
 .PHONY: run-tests-openshift
 run-tests-openshift:
-	ginkgo --focus=(openshift|all):.* $(ginkgo_args)
+	ginkgo --focus='(openshift|all):.*' $(ginkgo_args)
 
 .PHONY: format
 format:
