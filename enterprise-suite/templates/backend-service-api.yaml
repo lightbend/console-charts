@@ -19,9 +19,14 @@ spec:
     - name: kibana
       port: 5601
       targetPort: 5601
-    - name: logstash
+    - name: logstash-tcp
       port: 5000
       targetPort: 5000
+      protocol: TCP
+    - name: logstash-udp
+      port: 5000
+      targetPort: 5000
+      protocol: UDP
   selector:
     app.kubernetes.io/name: {{ template "name" . }}
     app.kubernetes.io/component: console-backend
