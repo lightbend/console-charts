@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/onsi/ginkgo"
 )
 
@@ -300,4 +301,27 @@ func IndentJson(in string) string {
 		panic(err)
 	}
 	return buf.String()
+}
+
+func LogDebugInfo() {
+	LogG("\n********************************************\nPrinting debug information:\n\n")
+
+	debugCmds := []string{
+		"get events --sort-by=.metadata.resourceVersion",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-frontend --all-containers",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-frontend --all-containers -p",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-backend --all-containers",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=console-backend --all-containers -p",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=grafana --all-containers",
+		"logs -lapp.kubernetes.io/name=lightbend-console,app.kubernetes.io/component=grafana --all-containers -p",
+	}
+
+	for _, cmd := range debugCmds {
+		kubectlArgs := []string{"-n", args.ConsoleNamespace}
+		kubectlArgs = append(kubectlArgs, strings.Split(cmd, " ")...)
+		if err := Cmd("kubectl", kubectlArgs...).PrintCommand().Run(); err != nil {
+			LogG("Could not gather debug info: %v\n", err)
+		}
+		LogG("\n")
+	}
 }

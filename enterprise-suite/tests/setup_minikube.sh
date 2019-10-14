@@ -14,6 +14,14 @@ function test_context() {
     echo minikube
 }
 
+function diagnostics() {
+    # diagnostics
+    minikube status
+    kubectl get namespace
+    kubectl get pod -n ${NAMESPACE}
+    kubectl get events -n ${NAMESPACE}
+}
+
 function setup() {
     kubectl create namespace ${NAMESPACE}
     if [ "${NAMESPACE}" != "${TILLER_NAMESPACE}" ]; then

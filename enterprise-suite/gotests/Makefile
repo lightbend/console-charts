@@ -35,7 +35,6 @@ purge-console-openshift: purge-console
 purge-console:
 	-TILLER_NAMESPACE=$(TILLER_NAMESPACE) ../scripts/lbc.py uninstall --delete-pvcs
 
-# failFast is required in order to get CircleCI to perform the Kubernetes diagnostics accurately.
 ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowSpecThreshold=30 -- --namespace=$(NAMESPACE) --tiller-namespace=$(TILLER_NAMESPACE)
 
 .PHONY: run-tests-minikube
