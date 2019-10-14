@@ -37,7 +37,7 @@ jobs:
           consider-branch: false
       - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
       - run: make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=${NAMESPACE}
-      - diagnose-kubernetes:
+      - kubernetes-diagnostics/diagnose-kubernetes:
           namespace: "${NAMESPACE}"
       - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
 
@@ -60,7 +60,7 @@ jobs:
       - run: make -C enterprise-suite install-helm TILLER_NAMESPACE=${NAMESPACE}
       - run: make -C enterprise-suite/gotests setup-tools
       - run: make -C enterprise-suite/gotests run-tests-minikube NAMESPACE=${NAMESPACE}
-      - diagnose-kubernetes:
+      - kubernetes-diagnostics/diagnose-kubernetes:
           namespace: "${NAMESPACE}"
 
   frontend_e2e_minishift:
@@ -84,7 +84,7 @@ jobs:
       - run: scripts/setup-minikube-for-linux.sh
       - run: curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
       - run: make -C enterprise-suite frontend-tests1
-      - diagnose-kubernetes:
+      - kubernetes-diagnostics/diagnose-kubernetes:
           namespace: "${NAMESPACE}"
       - store_artifacts:
           path: enterprise-suite/tests/e2e/cypress/videos
