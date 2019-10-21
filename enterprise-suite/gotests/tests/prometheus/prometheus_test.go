@@ -159,8 +159,6 @@ var _ = Describe("all:prometheus", func() {
 			err := util.WaitUntilSuccess(util.MedWait, func() error {
 				return prom.HasNData(1, query)
 			})
-			util.LogG("**** Debug flaky test")
-			util.LogDebugInfo()
 			Expect(err).To(Succeed())
 		})
 	})

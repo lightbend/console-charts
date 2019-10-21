@@ -4,22 +4,24 @@ orbs:
   # https://circleci.com/orbs/registry/orb/eddiewebb/queue
   queue: eddiewebb/queue@1.1.3
   run-with-retry: kimh/run-with-retry@1.0.0
+  # TODO: Move this to the lightbend namespace once someone with permissions has created it.
+  kubernetes-diagnostics: bottech/kubernetes-diagnostics@0.0.4
 
 jobs:
   unit_tests:
     docker:
-    - image: circleci/buildpack-deps:stretch-curl
+      - image: circleci/buildpack-deps:stretch-curl
 
     steps:
-    - checkout
-    - run: scripts/setup-tools-for-debian.sh
-    - run: make -C enterprise-suite test
-    - run: make -C enterprise-suite check-default-monitors-sync
-    - run: echo success!
+      - checkout
+      - run: scripts/setup-tools-for-debian.sh
+      - run: make -C enterprise-suite test
+      - run: make -C enterprise-suite check-default-monitors-sync
+      - run: echo success!
 
   backend_e2e_openshift:
     docker:
-    - image: circleci/golang:1.13
+      - image: circleci/golang:1.13
 
     environment:
       NAMESPACE: console-backend-go-tests
@@ -27,15 +29,17 @@ jobs:
     working_directory: /go/src/github.com/lightbend/console-charts
 
     steps:
-    - checkout
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN} console-backend-go-tests
-    - run: make -C enterprise-suite/gotests setup-tools
-    - queue/until_front_of_line:
-        consider-branch: false
-    - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
-    - run: make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=${NAMESPACE}
-    - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
+      - checkout
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN} console-backend-go-tests
+      - run: make -C enterprise-suite/gotests setup-tools
+      - queue/until_front_of_line:
+          consider-branch: false
+      - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
+      - run: make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=${NAMESPACE}
+      - kubernetes-diagnostics/diagnose-kubernetes:
+          namespace: "${NAMESPACE}"
+      - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
 
   backend_e2e_minishift:
     machine:
@@ -48,204 +52,207 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/lightbend/console-charts
 
     steps:
-    - checkout
-    - run: echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
-    - run: echo $PATH
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/setup-minikube-for-linux.sh
-    - run: make -C enterprise-suite install-helm TILLER_NAMESPACE=${NAMESPACE}
-    - run: make -C enterprise-suite/gotests setup-tools
-    - run: make -C enterprise-suite/gotests run-tests-minikube NAMESPACE=${NAMESPACE}
+      - checkout
+      - run: echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+      - run: echo $PATH
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/setup-minikube-for-linux.sh
+      - run: make -C enterprise-suite install-helm TILLER_NAMESPACE=${NAMESPACE}
+      - run: make -C enterprise-suite/gotests setup-tools
+      - run: make -C enterprise-suite/gotests run-tests-minikube NAMESPACE=${NAMESPACE}
+      - kubernetes-diagnostics/diagnose-kubernetes:
+          namespace: "${NAMESPACE}"
 
   frontend_e2e_minishift:
     machine:
       image: ubuntu-1604:201903-01
 
     steps:
-    - checkout
-    - run:
-        name: Install node@9.4.0
-        command: |
-          set +e
-          curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash
-          export NVM_DIR="/opt/circleci/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install v9.4.0
-          nvm alias default v9.4.0
-          echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
-          echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/setup-minikube-for-linux.sh
-    - run: curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
-    - run: make -C enterprise-suite frontend-tests1
-
-    - store_artifacts:
-        path: enterprise-suite/tests/e2e/cypress/videos
+      - checkout
+      - run:
+          name: Install node@9.4.0
+          command: |
+            set +e
+            curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install v9.4.0
+            nvm alias default v9.4.0
+            echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+            echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/setup-minikube-for-linux.sh
+      - run: curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
+      - run: make -C enterprise-suite frontend-tests1
+      - kubernetes-diagnostics/diagnose-kubernetes:
+          namespace: "${NAMESPACE}"
+      - store_artifacts:
+          path: enterprise-suite/tests/e2e/cypress/videos
 
   whitesource:
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8-jdk
 
     steps:
-    - checkout
-    - setup_remote_docker
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/pull-console-images.sh
-    - run: curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
-    - run: java -version
-    - run: java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
+      - checkout
+      - setup_remote_docker
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/pull-console-images.sh
+      - run: curl -sLJO https://github.com/whitesource/fs-agent-distribution/raw/master/standAlone/whitesource-fs-agent.jar
+      - run: java -version
+      - run: java -jar whitesource-fs-agent.jar -apiKey ${WHITESOURCE_API_KEY} -c enterprise-suite/.ws.conf
 
   release:
     docker:
-    - image: circleci/buildpack-deps:stretch-curl
+      - image: circleci/buildpack-deps:stretch-curl
 
     steps:
-    - checkout
-    - queue/until_front_of_line:
-        consider-branch: false
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-    - run: make -C enterprise-suite package
-    - run: mkdir -p /tmp/resources
-    - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
-    - setup_remote_docker
-    - run: scripts/deploy-to-gcs.sh
-    - run: scripts/trigger-build-helm-charts.sh
+      - checkout
+      - queue/until_front_of_line:
+          consider-branch: false
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
+      - run: make -C enterprise-suite package
+      - run: mkdir -p /tmp/resources
+      - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
+      - setup_remote_docker
+      - run: scripts/deploy-to-gcs.sh
+      - run: scripts/trigger-build-helm-charts.sh
 
   release_nightly:
     docker:
-    - image: circleci/buildpack-deps:stretch-curl
+      - image: circleci/buildpack-deps:stretch-curl
 
     steps:
-    - checkout
-    - queue/until_front_of_line:
-        consider-branch: false
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/set-chart-version.sh enterprise-suite $(scripts/get-nightly-version.sh)
-    - run: make -C enterprise-suite package
-    - run: mkdir -p /tmp/resources
-    - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
-    - setup_remote_docker
-    - run: GCS_BUCKET=lightbend-console-charts-nightly scripts/deploy-to-gcs.sh
-    - run: scripts/trigger-build-helm-charts.sh
+      - checkout
+      - queue/until_front_of_line:
+          consider-branch: false
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/set-chart-version.sh enterprise-suite $(scripts/get-nightly-version.sh)
+      - run: make -C enterprise-suite package
+      - run: mkdir -p /tmp/resources
+      - run: gpg --batch --passphrase ${GCS_DEC_KEY} --output /tmp/resources/es-repo-7c1fefe17951.json --decrypt resources/es-repo-7c1fefe17951.json.enc
+      - setup_remote_docker
+      - run: GCS_BUCKET=lightbend-console-charts-nightly scripts/deploy-to-gcs.sh
+      - run: scripts/trigger-build-helm-charts.sh
 
   deploy_demo:
     docker:
-    - image: circleci/buildpack-deps:stretch-curl
+      - image: circleci/buildpack-deps:stretch-curl
 
     steps:
-    - checkout
-    - queue/until_front_of_line:
-        consider-branch: false
-    - run: scripts/setup-tools-for-debian.sh
-    - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-    - run: make -C enterprise-suite package
-    - run: scripts/setup-openshift.sh ${OC_DEMO_TOKEN} console-demo
-    - run: TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${CIRCLE_TAG#v}.tgz --set usePersistentStorage=yes
-    - run: scripts/deploy-chaos-apps.sh console-demo
+      - checkout
+      - queue/until_front_of_line:
+          consider-branch: false
+      - run: scripts/setup-tools-for-debian.sh
+      - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
+      - run: make -C enterprise-suite package
+      - run: scripts/setup-openshift.sh ${OC_DEMO_TOKEN} console-demo
+      - run: TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${CIRCLE_TAG#v}.tgz --set usePersistentStorage=yes
+      - run: scripts/deploy-chaos-apps.sh console-demo
 
   build_operator:
     machine:
       image: ubuntu-1604:201903-01
 
     steps:
-    - checkout
-    - run: scripts/setup-tools-for-debian.sh
-    - run: |
-        sudo rm -rf /usr/local/go
-        sudo add-apt-repository ppa:longsleep/golang-backports
-        sudo apt-get update
-        sudo apt-get install golang-go
-        go version
-    - run: scripts/setup-minikube-for-linux.sh
-    - run: make -C operator setup
-    # jsravn: Unfortunately, the operator-sdk output isn't deterministic, so this can occasionally fail (about 10% of the time).
-    # All we can do for now is retry.
-    - run-with-retry/run-with-retry:
-        command: make -C operator build check
-        sleep: 0
-        retry-count: 3
+      - checkout
+      - run: scripts/setup-tools-for-debian.sh
+      - run: |
+          sudo rm -rf /usr/local/go
+          sudo add-apt-repository ppa:longsleep/golang-backports
+          sudo apt-get update
+          sudo apt-get install golang-go
+          go version
+      - run: scripts/setup-minikube-for-linux.sh
+      - run: make -C operator setup
+      # jsravn: Unfortunately, the operator-sdk output isn't deterministic, so this can occasionally fail (about 10% of the time).
+      # All we can do for now is retry.
+      - run-with-retry/run-with-retry:
+          command: make -C operator build check
+          sleep: 0
+          retry-count: 3
 
   release_operator:
     machine:
       image: ubuntu-1604:201903-01
 
     steps:
-    - checkout
-    - run: scripts/setup-tools-for-debian.sh
-    - run: |
-        sudo rm -rf /usr/local/go
-        sudo add-apt-repository ppa:longsleep/golang-backports
-        sudo apt-get update
-        sudo apt-get install golang-go
-        go version
-    - run: scripts/setup-minikube-for-linux.sh
-    - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-    - run: VERSION=${CIRCLE_TAG#v} make -C operator setup build release
+      - checkout
+      - run: scripts/setup-tools-for-debian.sh
+      - run: |
+          sudo rm -rf /usr/local/go
+          sudo add-apt-repository ppa:longsleep/golang-backports
+          sudo apt-get update
+          sudo apt-get install golang-go
+          go version
+      - run: scripts/setup-minikube-for-linux.sh
+      - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
+      - run: VERSION=${CIRCLE_TAG#v} make -C operator setup build release
 
 workflows:
   version: 2
   build:
     jobs:
-    - unit_tests
-    - build_operator
+      - unit_tests
+      - build_operator
 
-    # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
-    - backend_e2e_openshift:
-        requires:
-        - unit_tests
-        filters:
-          branches:
-            ignore: master
-    - backend_e2e_minishift:
-        requires:
-        - unit_tests
-        filters:
-          branches:
-            ignore: master
-    - frontend_e2e_minishift:
-        requires:
-        - unit_tests
-        filters:
-          branches:
-            ignore: master
+      # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
+      - backend_e2e_openshift:
+          requires:
+            - unit_tests
+          filters:
+            branches:
+              ignore: master
+      - backend_e2e_minishift:
+          requires:
+            - unit_tests
+          filters:
+            branches:
+              ignore: master
+      - frontend_e2e_minishift:
+          requires:
+            - unit_tests
+          filters:
+            branches:
+              ignore: master
 
-    # Whitesource, release, and deploy happens on a tag only.
-    - whitesource:
-        filters:
-          branches:
-            ignore: /.*/
-          tags:
-            only: /v.*/
+      # Whitesource, release, and deploy happens on a tag only.
+      - whitesource:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
 
-    - release:
-        filters:
-          branches:
-            ignore: /.*/
-          tags:
-            only: /v.*/
+      - release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
 
-    - deploy_demo:
-        filters:
-          branches:
-            ignore: /.*/
-          tags:
-            only: /v.*/
+      - deploy_demo:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
 
-    - release_operator:
-        filters:
-          branches:
-            ignore: /.*/
-          tags:
-            only: /v.*/
+      - release_operator:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
 
   nightly:
     triggers:
-    - schedule:
-        cron: "0 0 * * * "
-        filters:
-          branches:
-            only: master
+      - schedule:
+          cron: "0 0 * * * "
+          filters:
+            branches:
+              only: master
 
     jobs:
-    - release_nightly
+      - release_nightly

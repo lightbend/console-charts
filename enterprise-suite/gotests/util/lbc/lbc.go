@@ -77,7 +77,6 @@ func (i *Installer) Install() error {
 	}
 
 	if err := cmd.Timeout(time.Minute * 5).Run(); err != nil {
-		util.LogDebugInfo()
 		return err
 	}
 
