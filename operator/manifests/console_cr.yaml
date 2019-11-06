@@ -47,7 +47,8 @@ spec:
   imagePullPolicy: IfNotPresent
   kibanaImage: kibana
   kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
-  kubeStateMetricsVersion: v1.2.0
+  kubeStateMetricsVersion: v1.3.0
+  kubeStateMetricsScrapeNamespaces: ""
   logstashImage: logstash
   minikube: false
   podUID: null
