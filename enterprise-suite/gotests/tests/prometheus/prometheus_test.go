@@ -3,6 +3,7 @@ package prometheus
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
