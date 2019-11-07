@@ -3,6 +3,7 @@ package prometheus
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/args"
 	"github.com/lightbend/console-charts/enterprise-suite/gotests/testenv"
@@ -155,6 +156,7 @@ var _ = Describe("all:prometheus", func() {
 
 	Context("kube-state-metrics", func() {
 		It("should only scrape a single instance", func() {
+			time.Sleep(11 * time.Second)
 			query := fmt.Sprintf(`kube_pod_status_ready{namespace="%s", es_workload="console-backend", condition="true"} == 1`, args.ConsoleNamespace)
 			err := util.WaitUntilSuccess(util.MedWait, func() error {
 				return prom.HasNData(1, query)

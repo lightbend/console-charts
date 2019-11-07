@@ -45,6 +45,7 @@ spec:
           image: {{ .Values.kubeStateMetricsImage }}:{{ .Values.kubeStateMetricsVersion }}
           args:
             - --port=8080
+            - --namespace={{ .Values.kubeStateMetricsScrapeNamespaces }}
             - --telemetry-port=8081
           resources:
             requests:
@@ -53,4 +54,3 @@ spec:
           ports:
             - name: metrics
               containerPort: 8080
-
