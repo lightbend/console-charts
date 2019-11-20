@@ -483,33 +483,37 @@ def install(creds_file):
             chart_file = fetch_remote_chart(tempdir)
 
         if args.export_yaml:
-            # Tillerless path - renders kubernetes resources and prints to stdout.
+            # Renders kubernetes resources and prints to stdout.
             creds_exec_arg = ''
             if args.export_yaml == 'creds':
+                # FIXME: --execute is gone
                 creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
                 printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
 
-            execute('helm template --name {} {} {} {} {}'.format(args.helm_name, namespace_arg,
-                                                                 helm_args, creds_exec_arg, chart_file),
+            execute('helm template {} {} {} {} {}'.format(args.helm_name, namespace_arg,
+                                                          helm_args, creds_exec_arg, chart_file),
                     print_to_stdout=True)
 
         else:
-            # Tiller path - installs console directly to a k8s cluster in a given namespace
+            # Installs console directly to a k8s cluster in a given namespace
 
             # Calculate computed values for chart to be installed.
             # Note: older versions (1.1 and older) will not have dump-values.yaml, so warning will be printed
             template_args = prune_template_args(helm_args)
-            rc, template_stdout, template_stderr = run('helm template -x templates/dump-values.yaml {} {}'.
-                                                       format(template_args, chart_file),
-                                                       show_stderr=False)
+            cmd = 'helm show values {}'.format(chart_file)
+            # cmd = 'helm template -x templates/dump-values.yaml {} {}'.format(template_args, chart_file)
+            printout(cmd)
+            rc, template_stdout, template_stderr = run(cmd, show_stderr=False)
             global values
             if rc != 0:
                 printerr("warning: unable to determine computed helm values - this may lead to incorrect warnings")
+                printerr("warning: ", template_stderr)
                 values = {}
             else:
                 try:
-                    computed = template_stdout.splitlines()[-2][2:]
-                    values = json.loads(computed)
+                    # computed = template_stdout.splitlines()[-2][2:]
+                    # values = json.loads(computed)
+                    values = yaml.safe_load(template_stdout)
                 except Exception as e:
                     printerr("warning: unable to parse helm values - this may lead to incorrect warnings")
                     printerr(e)
@@ -558,10 +562,13 @@ def install(creds_file):
             else:
                 full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
                 full_args = ' '.join(filter(None, full_args))
-                execute('helm install {} --name {}'.format(chart_name, full_args))
+                execute('helm install {} {}'.format(chart_name, full_args))
     finally:
         if tempdir:
-            shutil.rmtree(tempdir)
+            if args.keep_temp:
+                printout('info: Keeping temporary directory: ', tempdir)
+            else:
+                shutil.rmtree(tempdir)
 
 
 def uninstall(status=None, namespace=None):
@@ -639,7 +646,7 @@ def check_install():
             status_ok &= deployment_running(dep)
         return status_ok
 
-    status_ok = check_deployments(CONSOLE_DEPLOYMENTS) 
+    status_ok = check_deployments(CONSOLE_DEPLOYMENTS)
     if not status_ok:
         printerr('\nIt appears you might be running older version of console, checking old deployment names...\n')
         status_ok = check_deployments(CONSOLE_DEPLOYMENTS_OLD)
@@ -781,6 +788,7 @@ def setup_args(argv):
                          action='store_true')
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
+    install.add_argument('--keep-temp', help='does not delete the temporary directory', action='store_true')
 
 
     # Common arguments for install and uninstall
