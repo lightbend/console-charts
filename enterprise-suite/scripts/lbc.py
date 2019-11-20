@@ -30,6 +30,8 @@ from distutils.version import LooseVersion
 # Minimum required dependency versions
 REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
+# Helm tends to break backwards compatibility this is the maximum version.
+MAX_VER_HELM = '3.x'
 REQ_VER_MINIKUBE = '0.29'
 REQ_VER_MINISHIFT = '1.20'
 REQ_VER_OC = '3.9'
@@ -132,10 +134,9 @@ def execute(cmd, can_fail=False, print_to_stdout=False):
     return 0
 
 
-version_re = re.compile(r'([0-9]+\.[0-9]+(\.[0-9]+)?)')
+version_re = re.compile(r'(?:(?P<major>[0-9]+)\.(?P<minor>[0-9]+)(?P<patch>\.[0-9]+)?)')
 
-
-def require_version(cmd, required_version):
+def require_version(cmd, required_version, max_version=None):
     # Use first word as a program name in messages
     name = cmd.partition(' ')[0]
 
@@ -150,7 +151,11 @@ def require_version(cmd, required_version):
             current = LooseVersion(match.group())
             required = LooseVersion(required_version)
             if current >= required:
-                return
+                if max_version == None or current < LooseVersion(max_version):
+                    return match.groupdict()
+                else:
+                    fail("Installed version of '" + name + "' is too new. Found: {}, required: {}"
+                        .format(current, max_version))
             else:
                 fail("Installed version of '" + name + "' is too old. Found: {}, required: {}"
                      .format(current, required))
@@ -180,7 +185,7 @@ def is_running_minishift():
 # Helm check is a separate function because we also need it when not doing full
 # preflight check, eg. when using --export-yaml argument
 def check_helm():
-    require_version('helm version --client --short', REQ_VER_HELM)
+    return require_version('helm version --client --short', REQ_VER_HELM, MAX_VER_HELM)
 
 
 # Kubectl check is needed both in install and verify subcommands
@@ -470,6 +475,19 @@ def install(creds_file):
             for key, val in parse_set_string(s):
                 helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
 
+    # Check the version of Helm.
+    helm_version_parts = check_helm()
+    if helm_version_parts == None:
+        printerr('warning: Unable to determine the version of helm. Assuming version 3.x.')
+        helm_version = 3
+    else:
+        helm_version = int(helm_version_parts['major'])
+
+    if helm_version == 2:
+        helm_template_option = '--execute'
+    else:
+        helm_template_option = '--show-only'
+
     tempdir = None
     try:
         if args.local_chart:
@@ -486,11 +504,13 @@ def install(creds_file):
             # Renders kubernetes resources and prints to stdout.
             creds_exec_arg = ''
             if args.export_yaml == 'creds':
-                # FIXME: --execute is gone
-                creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
+                creds_exec_arg = '{} templates/commercial-credentials.yaml {}'.format(helm_template_option, creds_arg)
                 printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
-
-            execute('helm template {} {} {} {} {}'.format(args.helm_name, namespace_arg,
+            if helm_version == 2:
+                helm_template_name = '--name ' + args.helm_name
+            else:
+                helm_template_name = args.helm_name
+            execute('helm template {} {} {} {} {}'.format(helm_template_name, namespace_arg,
                                                           helm_args, creds_exec_arg, chart_file),
                     print_to_stdout=True)
 
@@ -500,20 +520,20 @@ def install(creds_file):
             # Calculate computed values for chart to be installed.
             # Note: older versions (1.1 and older) will not have dump-values.yaml, so warning will be printed
             template_args = prune_template_args(helm_args)
-            cmd = 'helm show values {}'.format(chart_file)
-            # cmd = 'helm template -x templates/dump-values.yaml {} {}'.format(template_args, chart_file)
+            cmd = 'helm template {} templates/dump-values.yaml {} {}'.format(helm_template_option, template_args, chart_file)
             printout(cmd)
-            rc, template_stdout, template_stderr = run(cmd, show_stderr=False)
+            rc, template_stdout, _ = run(cmd)
             global values
             if rc != 0:
                 printerr("warning: unable to determine computed helm values - this may lead to incorrect warnings")
-                printerr("warning: ", template_stderr)
                 values = {}
             else:
                 try:
-                    # computed = template_stdout.splitlines()[-2][2:]
-                    # values = json.loads(computed)
-                    values = yaml.safe_load(template_stdout)
+                    if helm_version == 2:
+                        computed = template_stdout.splitlines()[-2][2:]
+                    else:
+                        computed = template_stdout.splitlines()[-1][2:]
+                    values = json.loads(computed)
                 except Exception as e:
                     printerr("warning: unable to parse helm values - this may lead to incorrect warnings")
                     printerr(e)
@@ -555,14 +575,19 @@ def install(creds_file):
             if not args.delete_pvcs:
                 check_pv_usage()
 
+            # TODO: Helm 3 upgrade.
             if should_upgrade:
                 full_args = [args.helm_name, chart_name, version_arg, creds_arg, helm_args]
                 full_args = ' '.join(filter(None, full_args))
                 execute('helm upgrade {}'.format(full_args))
-            else:
+            elif helm_version == 2:
                 full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
                 full_args = ' '.join(filter(None, full_args))
-                execute('helm install {} {}'.format(chart_name, full_args))
+                execute('helm install {} --name {}'.format(chart_name, full_args))
+            else:
+                full_args = [namespace_arg, version_arg, creds_arg, helm_args]
+                full_args = ' '.join(filter(None, full_args))
+                execute('helm install {} {} {}'.format(args.helm_name, chart_name, full_args))
     finally:
         if tempdir:
             if args.keep_temp:
