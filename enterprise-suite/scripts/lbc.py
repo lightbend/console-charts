@@ -155,7 +155,7 @@ def require_version(cmd, required_version, max_version=None):
                 if max_version is None or current < LooseVersion(max_version):
                     return match.groupdict()
                 else:
-                    fail("Installed version of {} is too new. Found {} but the newest supported version is {}."
+                    fail("Installed version of {} is too new. Found {} but the latest supported version is {}."
                         .format(name, current, max_version))
             else:
                 fail("Installed version of {} is too old. Found {} but the oldest supported version is {}."
