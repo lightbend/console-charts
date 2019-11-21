@@ -155,10 +155,10 @@ def require_version(cmd, required_version, max_version=None):
                 if max_version is None or current < LooseVersion(max_version):
                     return match.groupdict()
                 else:
-                    fail("Installed version of {} is too new. Found: {}, required: {}"
+                    fail("Installed version of {} is too new. Found {} but the newest supported version is {}."
                         .format(name, current, max_version))
             else:
-                fail("Installed version of {} is too old. Found: {}, required: {}"
+                fail("Installed version of {} is too old. Found {} but the oldest supported version is {}."
                     .format(name, current, required))
 
     # Non-critical warning
@@ -311,10 +311,9 @@ def helm_migration_check():
             fail('\nwarning: Failed to check for legacy helm 2 installations.')
         elif stdout != '':
             message = (
-                '\nerror: Detected a previous Console installation which was installed with helm 2 '
-                'which has not been migrated to helm 3.\n'
-                'You must migrate these manually by following the instructions on '
-                'https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/'
+                '\nerror: Detected a previous Console installation which was installed with helm 2.\n'
+                'To use {} you must migrate the installation manually by '.format(helm_version) +
+                'following the instructions on https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/'
             )
             if platform.system() == 'Darwin':
                 message += '\nIf you are using homebrew then you can install both helm and helm@2'
