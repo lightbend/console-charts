@@ -144,24 +144,38 @@ def require_version(cmd, required_version, max_version=None):
     returncode, stdout, _ = run(cmd, 1)
 
     if returncode == None:
-        fail("Required program '" + name + "' not found")
+        fail("Required program {} not found".format(name))
     elif returncode == 0 and stdout != '':
         match = version_re.search(stdout)
         if match != None:
             current = LooseVersion(match.group())
             required = LooseVersion(required_version)
             if current >= required:
-                if max_version == None or current < LooseVersion(max_version):
+                if max_version is None or current < LooseVersion(max_version):
                     return match.groupdict()
                 else:
-                    fail("Installed version of '" + name + "' is too new. Found: {}, required: {}"
-                        .format(current, max_version))
+                    fail("Installed version of {} is too new. Found: {}, required: {}"
+                        .format(name, current, max_version))
             else:
-                fail("Installed version of '" + name + "' is too old. Found: {}, required: {}"
-                     .format(current, required))
+                fail("Installed version of {} is too old. Found: {}, required: {}"
+                    .format(name, current, required))
 
-                # Non-critical warning
-    printerr("warning: unable to determine installed version of '" + name + "'")
+    # Non-critical warning
+    printerr("warning: Unable to determine installed version of '" + name + "'")
+
+
+def determine_version(cmd):
+    # Use first word as a program name in messages
+    name = cmd.partition(' ')[0]
+    returncode, stdout, _ = run(cmd, DEFAULT_TIMEOUT)
+    if returncode == None:
+        fail("Required program {} not found".format(name))
+    if returncode != 0 or stdout == '':
+        fail("Unable to determine installed version of {}".format(name))
+    match = version_re.search(stdout)
+    if match is None:
+        fail("Unable to parse version of {}".format(name))
+    return match.groupdict()
 
 
 def is_running_minikube():
@@ -185,7 +199,13 @@ def is_running_minishift():
 # Helm check is a separate function because we also need it when not doing full
 # preflight check, eg. when using --export-yaml argument
 def check_helm():
-    return require_version('helm version --client --short', REQ_VER_HELM, MAX_VER_HELM)
+    require_version('helm version --client --short', REQ_VER_HELM, MAX_VER_HELM)
+
+
+def determine_helm_version():
+    global helm_version
+    helm_version_parts = determine_version('helm version --client --short')
+    helm_version = int(helm_version_parts['major'])
 
 
 # Kubectl check is needed both in install and verify subcommands
@@ -293,11 +313,6 @@ def preinstall_check(creds, minikube=False, minishift=False):
         require_version('minishift version', REQ_VER_MINISHIFT)
         require_version('oc version', REQ_VER_OC)
 
-    # Check if helm is set up inside a cluster
-    returncode, _, _ = run('helm version', DEFAULT_TIMEOUT)
-    if returncode != 0:
-        fail('Cannot get helm status. Did you set up helm inside your cluster?')
-
     # TODO: Check if RBAC rules for tiller are set up
 
     if not check_credentials(creds):
@@ -306,12 +321,17 @@ def preinstall_check(creds, minikube=False, minishift=False):
                  'proceeding with the installation anyway')
 
 
-# Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
+# Returns one of 'deployed', 'deleted', 'superseded', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    returncode, stdout, _ = run('helm status ' + release_name,
+    if helm_version == 2:
+        namespace = None
+        namespace_arg = ''
+    else:
+        namespace = args.namespace
+        namespace_arg = '--namespace ' + namespace
+    returncode, stdout, _ = run('helm status {} {}'.format(namespace_arg, release_name),
                                 DEFAULT_TIMEOUT, show_stderr=False)
-    namespace = None
     if returncode != 0:
         return 'notfound', namespace
 
@@ -319,20 +339,27 @@ def install_status(release_name):
     if match:
         namespace = match.group(1)
 
-    if 'STATUS: DEPLOYED' in stdout or (stdout == ''):
-        status = 'deployed'
-    elif 'STATUS: FAILED' in stdout:
-        status = 'failed'
-    elif 'STATUS: PENDING_INSTALL' in stdout:
-        status = 'pending'
-    elif 'STATUS: PENDING_UPGRADE' in stdout:
-        status = 'pending'
-    elif 'STATUS: DELETING' in stdout:
-        status = 'deleting'
-    else:
-        status = 'unknown'
+    match = re.search(r'^STATUS: (.*)$', stdout, re.MULTILINE)
+    if match is None:
+        fail('Unable to determine status of release {}'.format(release_name))
+    status = match.group(1).lower()
 
-    return status, namespace
+    # https://github.com/helm/helm/blob/release-2.16/_proto/hapi/release/status.proto
+    # https://github.com/helm/helm/blob/release-3.0/pkg/release/status.go
+    statuses = {
+        'deployed': 'deployed',
+        'deleted': 'deleted',
+        'uninstalled': 'deleted',
+        'superseded': 'superseded',
+        'failed': 'failed',
+        'deleting': 'deleting',
+        'uninstalling': 'deleting',
+        'pending_install': 'pending',
+        'pending_upgrade': 'pending',
+        'pending_rollback': 'pending',
+    }
+
+    return statuses.get(status, 'unknown'), namespace
 
 
 # Helper function that runs a command, then looks for expected strings
@@ -365,7 +392,11 @@ def check_resource_list(cmd, expected, fail_msg):
 # Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
 def check_pv_usage(uninstalling=False):
     # Retrieve the current helm installation computed values.
-    returncode, helm_get_stdout, helm_get_stderr = run('helm get ' + args.helm_name,
+    if helm_version == 2:
+        namespace_arg = ''
+    else:
+        namespace_arg = '--namespace ' + args.namespace
+    returncode, helm_get_stdout, helm_get_stderr = run('helm get {} {}'.format(namespace_arg, args.helm_name),
                                                        DEFAULT_TIMEOUT, show_stderr=False)
 
     if 'usePersistentVolumes' not in values:
@@ -475,14 +506,6 @@ def install(creds_file):
             for key, val in parse_set_string(s):
                 helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
 
-    # Check the version of Helm.
-    helm_version_parts = check_helm()
-    if helm_version_parts == None:
-        printerr('warning: Unable to determine the version of helm. Assuming version 3.x.')
-        helm_version = 3
-    else:
-        helm_version = int(helm_version_parts['major'])
-
     if helm_version == 2:
         helm_template_option = '--execute'
     else:
@@ -575,19 +598,24 @@ def install(creds_file):
             if not args.delete_pvcs:
                 check_pv_usage()
 
-            # TODO: Helm 3 upgrade.
             if should_upgrade:
-                full_args = [args.helm_name, chart_name, version_arg, creds_arg, helm_args]
-                full_args = ' '.join(filter(None, full_args))
-                execute('helm upgrade {}'.format(full_args))
-            elif helm_version == 2:
-                full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
-                full_args = ' '.join(filter(None, full_args))
-                execute('helm install {} --name {}'.format(chart_name, full_args))
+                if helm_version == 2:
+                    full_args = [args.helm_name, chart_name, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm upgrade {}'.format(full_args))
+                else:
+                    full_args = [args.helm_name, namespace_arg, chart_name, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm upgrade {}'.format(full_args))
             else:
-                full_args = [namespace_arg, version_arg, creds_arg, helm_args]
-                full_args = ' '.join(filter(None, full_args))
-                execute('helm install {} {} {}'.format(args.helm_name, chart_name, full_args))
+                if helm_version == 2:
+                    full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm install {} --name {}'.format(chart_name, full_args))
+                else:
+                    full_args = [namespace_arg, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm install {} {} {}'.format(args.helm_name, chart_name, full_args))
     finally:
         if tempdir:
             if args.keep_temp:
@@ -874,6 +902,7 @@ def main(argv):
     if args.subcommand == 'install':
         creds = import_credentials()
 
+        determine_helm_version()
         if not args.skip_checks:
             if args.export_yaml == None:
                 minikube = is_running_minikube()
@@ -908,6 +937,7 @@ def main(argv):
         check_install()
 
     if args.subcommand == 'uninstall':
+        determine_helm_version()
         if not args.skip_checks:
             check_helm()
         uninstall()
