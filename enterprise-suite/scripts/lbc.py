@@ -203,9 +203,8 @@ def check_helm():
 
 
 def determine_helm_version():
-    global helm_version
     helm_version_parts = determine_version('helm version --client --short')
-    helm_version = int(helm_version_parts['major'])
+    return int(helm_version_parts['major'])
 
 
 # Kubectl check is needed both in install and verify subcommands
@@ -324,10 +323,9 @@ def preinstall_check(creds, minikube=False, minishift=False):
 # Returns one of 'deployed', 'deleted', 'superseded', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    if helm_version == 2:
-        namespace = None
-        namespace_arg = ''
-    else:
+    namespace = None
+    namespace_arg = ''
+    if helm_version > 2 and hasattr(args, 'namespace'):
         namespace = args.namespace
         namespace_arg = '--namespace ' + namespace
     returncode, stdout, _ = run('helm status {} {}'.format(namespace_arg, release_name),
@@ -637,7 +635,11 @@ def uninstall(status=None, namespace=None):
             check_pv_usage(uninstalling=True)
 
         printerr("info: Deleting previous console installation {} with status '{}'".format(args.helm_name, status))
-        execute('helm delete --purge ' + args.helm_name)
+        if helm_version == 2:
+            delete_args = '--purge'
+        else:
+            delete_args = '--namespace ' + args.namespace
+        execute('helm delete {} {}'.format(delete_args, args.helm_name))
         printerr('warning: Helm delete does not wait for resources to be fully removed. If a subsequent install fails, '
                  'please re-run it after waiting for all resources to be removed.')
 
@@ -860,6 +862,10 @@ def setup_args(argv):
         subparser.add_argument('--namespace', help='namespace to install console into/where it is installed',
                                required=True)
 
+    # Namespace is also required for uninstall if using helm3
+    uninstall.add_argument('--namespace', help='namespace to install console into/where it is installed. Required for helm 3.',
+                           required=helm_version > 2)
+
     # Common arguments for all subparsers
     for subparser in [install, uninstall, verify, debug_dump]:
         subparser.add_argument('--skip-checks', help='skip environment checks',
@@ -895,14 +901,17 @@ def fetch_remote_chart(destdir):
 
 
 def main(argv):
+    global helm_version
+    helm_version = None
     global args
     args = setup_args(argv)
-
     force_verify = False
     if args.subcommand == 'install':
+        helm_version = determine_helm_version()
+        args = setup_args(argv)
+
         creds = import_credentials()
 
-        determine_helm_version()
         if not args.skip_checks:
             if args.export_yaml == None:
                 minikube = is_running_minikube()
@@ -937,7 +946,8 @@ def main(argv):
         check_install()
 
     if args.subcommand == 'uninstall':
-        determine_helm_version()
+        helm_version = determine_helm_version()
+        args = setup_args(argv)
         if not args.skip_checks:
             check_helm()
         uninstall()
