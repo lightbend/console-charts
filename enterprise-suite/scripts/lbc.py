@@ -323,6 +323,21 @@ def preinstall_check(creds, minikube=False, minishift=False):
 # Returns one of 'deployed', 'deleted', 'superseded', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
+    if helm_version > 2:
+        cmd = ('kubectl get configmap --namespace {} --selector OWNER=TILLER,NAME={} '
+               '--ignore-not-found=true'.format(args.tiller_namespace, args.helm_name))
+        printout(cmd)
+        returncode, stdout, _ = run(cmd)
+        if returncode != 0:
+            printerr('warning: Failed to check for legacy helm 2 installations. If you have '
+                     'previously installed Console with helm 2 then you must migrate it manually '
+                     'by following the instructions on https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/')
+        elif stdout != '':
+            printout(stdout)
+            fail('Detected legacy helm 2 installations which have not been migrated completely.'
+                 'You must migrate these manually by following the instructions on '
+                 'https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/')
+
     namespace = None
     namespace_arg = ''
     if helm_version > 2 and hasattr(args, 'namespace'):
@@ -856,6 +871,8 @@ def setup_args(argv):
         subparser.add_argument('rest',
                                help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set usePersistentVolumes=false')",
                                nargs='*')
+        subparser.add_argument('--tiller-namespace', help='Tiller namespace. Used to detect legacy helm 2 installations.',
+                               default=os.environ.get('TILLER_NAMESPACE', 'kube-system'))
 
     # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
