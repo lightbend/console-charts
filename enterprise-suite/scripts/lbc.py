@@ -26,6 +26,7 @@ import json
 import time
 import glob
 from distutils.version import LooseVersion
+import platform
 
 # Minimum required dependency versions
 REQ_VER_KUBECTL = '1.10'
@@ -300,10 +301,32 @@ def check_new_install_script():
         printout("info: New installer is available. Use the following command to download it: curl -O {}".format(installer_url))
 
 
+def helm_migration_check():
+    if helm_version > 2:
+        cmd = ('kubectl get configmap --namespace {} --selector OWNER=TILLER,NAME={} '
+               '--ignore-not-found=true'.format(args.tiller_namespace, args.helm_name))
+        printout(cmd)
+        returncode, stdout, _ = run(cmd)
+        if returncode != 0:
+            fail('\nwarning: Failed to check for legacy helm 2 installations.')
+        elif stdout != '':
+            message = (
+                '\nerror: Detected a previous Console installation which was installed with helm 2 '
+                'which has not been migrated to helm 3.\n'
+                'You must migrate these manually by following the instructions on '
+                'https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/'
+            )
+            if platform.system() == 'Darwin':
+                message += '\nIf you are using homebrew then you can install both helm and helm@2'
+            message += '\nMake sure to also run the cleanup steps.'
+            fail(message)
+
+
 def preinstall_check(creds, minikube=False, minishift=False):
     check_helm()
     check_kubectl()
     check_new_install_script()
+    helm_migration_check()
 
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
@@ -323,21 +346,6 @@ def preinstall_check(creds, minikube=False, minishift=False):
 # Returns one of 'deployed', 'deleted', 'superseded', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    if helm_version > 2:
-        cmd = ('kubectl get configmap --namespace {} --selector OWNER=TILLER,NAME={} '
-               '--ignore-not-found=true'.format(args.tiller_namespace, args.helm_name))
-        printout(cmd)
-        returncode, stdout, _ = run(cmd)
-        if returncode != 0:
-            printerr('warning: Failed to check for legacy helm 2 installations. If you have '
-                     'previously installed Console with helm 2 then you must migrate it manually '
-                     'by following the instructions on https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/')
-        elif stdout != '':
-            printout(stdout)
-            fail('Detected legacy helm 2 installations which have not been migrated completely.'
-                 'You must migrate these manually by following the instructions on '
-                 'https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/')
-
     namespace = None
     namespace_arg = ''
     if helm_version > 2 and hasattr(args, 'namespace'):
@@ -967,6 +975,7 @@ def main(argv):
         args = setup_args(argv)
         if not args.skip_checks:
             check_helm()
+            helm_migration_check()
         uninstall()
 
     if args.subcommand == 'debug-dump':
