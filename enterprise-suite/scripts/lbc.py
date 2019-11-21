@@ -639,8 +639,8 @@ def install(creds_file):
                     execute('helm install {} {} {}'.format(args.helm_name, chart_name, full_args))
     finally:
         if tempdir:
-            if args.keep_temp:
-                printout('info: Keeping temporary directory: ', tempdir)
+            if args.keep_chart:
+                printout('info: Keeping downloaded chart: ', tempdir)
             else:
                 shutil.rmtree(tempdir)
 
@@ -866,7 +866,7 @@ def setup_args(argv):
                          action='store_true')
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
-    install.add_argument('--keep-temp', help='does not delete the temporary directory', action='store_true')
+    install.add_argument('--keep-chart', help='does not delete the downloaded chart', action='store_true')
 
 
     # Common arguments for install and uninstall
