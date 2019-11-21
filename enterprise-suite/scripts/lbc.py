@@ -879,8 +879,9 @@ def setup_args(argv):
         subparser.add_argument('rest',
                                help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set usePersistentVolumes=false')",
                                nargs='*')
-        subparser.add_argument('--tiller-namespace', help='Tiller namespace. Used to detect legacy helm 2 installations.',
-                               default=os.environ.get('TILLER_NAMESPACE', 'kube-system'))
+        if helm_version != 2:
+            subparser.add_argument('--tiller-namespace', help='Tiller namespace. Used to detect legacy helm 2 installations (helm 3 only).',
+                                   default=os.environ.get('TILLER_NAMESPACE', 'kube-system'))
 
     # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
@@ -888,8 +889,9 @@ def setup_args(argv):
                                required=True)
 
     # Namespace is also required for uninstall if using helm3
-    uninstall.add_argument('--namespace', help='namespace to install console into/where it is installed. Required for helm 3.',
-                           required=helm_version > 2)
+    if helm_version != 2:
+        uninstall.add_argument('--namespace', help='namespace to install console into/where it is installed (helm 3 only)',
+                               required=helm_version > 2)
 
     # Common arguments for all subparsers
     for subparser in [install, uninstall, verify, debug_dump]:
