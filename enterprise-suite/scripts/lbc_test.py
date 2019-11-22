@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from abc import ABCMeta, abstractmethod, abstractproperty
 import lbc
 import re
 import collections
@@ -39,9 +40,10 @@ def expect_cmd(re_pattern, returncode=0, stdout=''):
 
 def test_run(cmd, timeout=None, stdin=None, show_stderr=True):
     cmd_re, returncode, stdout, tb = expected_cmds.popleft()
+    cmd_re = '^' + cmd_re + '$'
     if re.match(cmd_re, cmd) != None:
         return returncode, stdout, None
-    raise UnexpectedCmdException("Expected a command that matches '{}', instead got '{}'.\n\nTest traceback:\n{}".format(cmd_re, cmd, tb))
+    raise UnexpectedCmdException("Expected a command that matches:\n'{}'\ninstead got:\n'{}'\n\nTest traceback:\n{}".format(cmd_re, cmd, tb))
 
 
 # Checks if all commands were executed, clears queue
@@ -93,7 +95,7 @@ class LbcTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             lbc.parse_set_string("key=val1,key2=val1,val2")
-        
+
         with self.assertRaises(ValueError):
             lbc.parse_set_string("key=val1,key2==val1")
 
@@ -105,7 +107,9 @@ class LbcTest(unittest.TestCase):
         self.assertEqual(expected, lbc.prune_template_args(helm_args))
 
 
-class HelmCommandsTest(unittest.TestCase):
+class HelmCommandsTest():
+    __metaclass__ = ABCMeta
+
     def setUpFakeChartfile(self):
         # Create tempdir & fake chartfile there for export yaml tests.
         # They will be removed by lbc itself, so no need to clean up.
@@ -130,41 +134,93 @@ class HelmCommandsTest(unittest.TestCase):
 
         self.assertEqual(len(expected_cmds), 0)
 
+    @abstractproperty
+    def helm_version(self):
+        pass
+
+    def expect_helm_version(self):
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
+
+    @abstractmethod
+    def expect_helm_status_notfound(self, name='enterprise-suite', namespace='lightbend'):
+        pass
+
+    @abstractmethod
+    def expect_helm_status_status(self, status):
+        pass
+
+    @abstractmethod
+    def expect_helm_status_deployed(self):
+        pass
+
+    @abstractmethod
+    def expect_helm_status_failed(self):
+        pass
+
+    @abstractmethod
+    def expect_helm_status_pending_install(self):
+        pass
+
+    @abstractmethod
+    def expect_helm_template(self, chart=r'\S+\.tgz', template=None, args=[]):
+        pass
+
+    @abstractmethod
+    def expect_helm_install(self, name='enterprise-suite', chart='es-repo/enterprise-suite', namespace='lightbend', version=None, args=[]):
+        pass
+
+    @abstractmethod
+    def expect_helm_upgrade(self):
+        pass
+
+    @abstractmethod
+    def expect_helm_delete(self):
+        pass
+
+    @abstractmethod
+    def uninstall(self, args=[]):
+        pass
+
     def test_export_yaml_console(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
-        expect_cmd(r'helm template --name enterprise-suite --namespace lightbend\s+\S+\.tgz')
+        self.expect_helm_template()
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console'])
 
     def test_export_yaml_local_chart(self):
-        expect_cmd(r'helm template --name enterprise-suite --namespace lightbend   chart\.tgz')
+        self.expect_helm_version()
+        self.expect_helm_template(chart='chart.tgz')
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console', '--local-chart=chart.tgz'])
 
     def test_export_yaml_creds(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
-        expect_cmd(r'helm template --name enterprise-suite --namespace lightbend  --execute templates/commercial-credentials\.yaml\s+--values \S+ \S+\.tgz')
+        self.expect_helm_template(template=r'templates/commercial-credentials\.yaml', args=['--values', r'\S+'])
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--export-yaml=creds'])
 
     def test_install(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install()
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file])
-    
+
     def test_install_wait(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+\s+--wait')
-        
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(args=['--wait'])
+
         # Verify happens automatically when --wait is provided
         expect_cmd(r'kubectl --namespace lightbend get deploy/console-backend --no-headers',
                    stdout='console-backend 2 2 2 2 15m')
@@ -179,150 +235,162 @@ class HelmCommandsTest(unittest.TestCase):
 
     def test_install_helm_failed(self):
         # Failed previous install, no PVCs or clusterroles found for reuse
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=0,
-                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: FAILED\nNOTES: blah')
-        expect_cmd(r'helm upgrade enterprise-suite es-repo/enterprise-suite\s+--values \S+')
+        self.expect_helm_status_failed()
+        self.expect_helm_upgrade()
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file])
 
     def test_install_not_finished(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=0,
-                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: PENDING_INSTALL\nNOTES: blah')
+        self.expect_helm_status_pending_install()
 
         # Expect install to fail when previous install is still pending
         with self.assertRaises(TestFailException):
             lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file])
 
     def test_upgrade(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=0)
-        expect_cmd(r'helm upgrade enterprise-suite es-repo/enterprise-suite\s+--values \S+')
+        self.expect_helm_status_deployed()
+        self.expect_helm_upgrade()
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file])
 
     def test_force_install(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=0)
-        expect_cmd(r'helm delete --purge enterprise-suite')
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+')
+        self.expect_helm_status_deployed()
+        self.expect_helm_delete()
+        self.expect_helm_install()
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--force-install', '--delete-pvcs'])
 
     def test_helm_args(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend\s+--values \S+ --set minikube=true --fakearg')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(args=['--set', 'minikube=true', '--fakearg'])
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg'])
 
     def test_helm_args_namespace(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --values \S+ --set minikube=true --fakearg --namespace=foobar')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(args=['--set', 'minikube=true', '--fakearg', '--namespace=foobar'])
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg', '--namespace=foobar'])
 
     def test_helm_args_namespace_val(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --values \S+ --set minikube=true --fakearg --namespace foobar')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(args=['--set', 'minikube=true', '--fakearg', '--namespace', 'foobar'])
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'foobar'])
 
     def test_helm_args_conflicting_namespace(self):
         with self.assertRaises(TestFailException):
+            self.expect_helm_version()
             lbc.main(['install', '--namespace=lightbend', '--namespace', 'foo', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs',
                       '--', '--set', 'minikube=true', '--fakearg', '--namespace', 'bar'])
-    
+
     # At some point lbc ate `--timeout` and passed to helm only the number 110
     def test_helm_args_timeout(self):
+        self.expect_helm_version()
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install . --name enterprise-suite --namespace foo --values \S+ --timeout 110')
+        self.expect_helm_status_notfound(namespace='foo')
+        self.expect_helm_install(chart='.', namespace='foo', args=['--timeout', '110'])
         lbc.main(['install', '--namespace=lightbend', '--local-chart', '.', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--namespace', 'foo', '--', '--timeout', '110'])
 
-
     def test_helm_set(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --values \S+ --set minikube=true --set usePersistentVolumes=true ')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(args=['--set', 'minikube=true', '--set', 'usePersistentVolumes=true'])
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--set', 'minikube=true', '--set', 'usePersistentVolumes=true'])
 
     def test_helm_set_array(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --values \S+ --set alertmanagers=alertmgr-00\\,alertmgr-01\\,alertmgr-02 ')
-
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(args=['--set', r'alertmanagers=alertmgr-00\\,alertmgr-01\\,alertmgr-02'])
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--delete-pvcs', '--set', 'alertmanagers=alertmgr-00,alertmgr-01,alertmgr-02'])
 
     def test_specify_version(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --version 1\.0\.0-rc\.9 --values \S+')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(version=r'1\.0\.0-rc\.9')
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--version=1.0.0-rc.9'])
 
     def test_install_local_chart(self):
+        self.expect_helm_version()
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install chart.tgz --name enterprise-suite --namespace lightbend --values \S+')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install(chart='chart.tgz')
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--local-chart=chart.tgz'])
 
     def test_install_override_repo(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.bintray.com/helm')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name enterprise-suite --namespace lightbend --values \S+')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install()
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm'])
 
     def test_install_override_name(self):
+        self.expect_helm_version()
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
-        expect_cmd(r'helm status lb-console', returncode=-1)
-        expect_cmd(r'helm install es-repo/enterprise-suite --name lb-console --namespace lightbend --values \S+')
+        self.expect_helm_status_notfound('lb-console')
+        self.expect_helm_install(name='lb-console')
         lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--helm-name=lb-console'])
 
     def test_uninstall(self):
-        expect_cmd(r'helm status enterprise-suite', returncode=0,
-                  stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: DEPLOYED\nNOTES: blah')
-        expect_cmd(r'helm delete --purge enterprise-suite')
-        lbc.main(['uninstall', '--skip-checks', '--delete-pvcs'])
+        self.expect_helm_version()
+        self.expect_helm_status_deployed()
+        self.expect_helm_delete()
+        self.uninstall(['--skip-checks', '--delete-pvcs'])
 
     def test_uninstall_not_found(self):
-        expect_cmd(r'helm status enterprise-suite', returncode=-1)
+        self.expect_helm_version()
+        self.expect_helm_status_notfound()
 
         # Expect uninstall to fail
         with self.assertRaises(TestFailException):
-            lbc.main(['uninstall', '--skip-checks'])
+            self.uninstall(['--skip-checks'])
 
     def test_verify_fail(self):
         expect_cmd(r'kubectl --namespace monitoring get deploy/console-backend --no-headers',
@@ -361,6 +429,108 @@ class HelmCommandsTest(unittest.TestCase):
                    stdout='prometheus-kube-state-metrics 1 1 1 1 15m')
 
         lbc.main(['verify', '--skip-checks', '--namespace=monitoring'])
+
+
+class HelmV2CommandsTest(HelmCommandsTest, unittest.TestCase):
+    @property
+    def helm_version(self):
+        return 'Client: v2.16.1+gbbdfe5e'
+
+    def expect_helm_status_notfound(self, name='enterprise-suite', namespace='lightbend'):
+        expect_cmd('helm status ' + name, returncode=-1)
+
+    def expect_helm_status_status(self, status):
+        expect_cmd('helm status enterprise-suite', returncode=0,
+                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: {}\nNOTES: blah'.format(status))
+
+    def expect_helm_status_deployed(self):
+        self.expect_helm_status_status('DEPLOYED')
+
+    def expect_helm_status_failed(self):
+        self.expect_helm_status_status('FAILED')
+
+    def expect_helm_status_pending_install(self):
+        self.expect_helm_status_status('PENDING_INSTALL')
+
+    def expect_helm_template(self, chart=r'\S+\.tgz', template=None, args=[]):
+        full_args = []
+        if template:
+            full_args.extend(['--execute', template])
+        full_args.extend(args)
+        full_args.append(chart)
+        full_args = ' '.join(filter(None, full_args))
+        expect_cmd('helm template --name enterprise-suite --namespace lightbend ' + full_args)
+
+    def expect_helm_install(self, name='enterprise-suite', chart='es-repo/enterprise-suite', namespace='lightbend', version=None, args=[]):
+        full_args = [chart, '--name', name]
+        if not any(item.startswith('--namespace') for item in args):
+            full_args.extend(['--namespace', namespace])
+        if version:
+            full_args.extend(['--version', version])
+        full_args.extend(['--values', r'\S+'])
+        full_args.extend(args)
+        full_args = ' '.join(filter(None, full_args))
+        expect_cmd('helm install ' + full_args)
+
+    def expect_helm_upgrade(self):
+        expect_cmd(r'helm upgrade enterprise-suite es-repo/enterprise-suite --values \S+')
+
+    def expect_helm_delete(self):
+        expect_cmd('helm delete --purge enterprise-suite')
+
+    def uninstall(self, args=[]):
+        lbc.main(['uninstall'] + args)
+
+
+class HelmV3CommandsTest(HelmCommandsTest, unittest.TestCase):
+    @property
+    def helm_version(self):
+        return 'v3.0.0+ge29ce2a'
+
+    def expect_helm_status_notfound(self, name='enterprise-suite', namespace='lightbend'):
+        expect_cmd('helm status --namespace {} {}'.format(namespace, name), returncode=-1)
+
+    def expect_helm_status_status(self, status):
+        expect_cmd('helm status --namespace lightbend enterprise-suite', returncode=0,
+                   stdout='LAST DEPLOYED: Tue Nov 13 09:59:46 2018\nNAMESPACE: lightbend\nSTATUS: {}\nNOTES: blah'.format(status))
+
+    def expect_helm_status_deployed(self):
+        self.expect_helm_status_status('deployed')
+
+    def expect_helm_status_failed(self):
+        self.expect_helm_status_status('failed')
+
+    def expect_helm_status_pending_install(self):
+        self.expect_helm_status_status('pending_install')
+
+    def expect_helm_template(self, chart=r'\S+\.tgz', template=None, args=[]):
+        full_args = []
+        if template:
+            full_args.extend(['--show-only', template])
+        full_args.extend(args)
+        full_args.append(chart)
+        full_args = ' '.join(filter(None, full_args))
+        expect_cmd('helm template enterprise-suite --namespace lightbend ' + full_args)
+
+    def expect_helm_install(self, name='enterprise-suite', chart='es-repo/enterprise-suite', namespace='lightbend', version=None, args=[]):
+        full_args = [name, chart]
+        if not any(item.startswith('--namespace') for item in args):
+            full_args.extend(['--namespace', namespace])
+        if version:
+            full_args.extend(['--version', version])
+        full_args.extend(['--values', r'\S+'])
+        full_args.extend(args)
+        full_args = ' '.join(filter(None, full_args))
+        expect_cmd('helm install ' + full_args)
+
+    def expect_helm_upgrade(self):
+        expect_cmd(r'helm upgrade enterprise-suite --namespace lightbend es-repo/enterprise-suite --values \S+')
+
+    def expect_helm_delete(self):
+        expect_cmd('helm delete --namespace lightbend enterprise-suite')
+
+    def uninstall(self, args=[]):
+        lbc.main(['uninstall', '--namespace', 'lightbend'] + args)
 
 
 if __name__ == '__main__':

@@ -345,13 +345,13 @@ def preinstall_check(creds, minikube=False, minishift=False):
 # Returns one of 'deployed', 'deleted', 'superseded', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    namespace = None
-    namespace_arg = ''
     if helm_version > 2 and hasattr(args, 'namespace'):
         namespace = args.namespace
-        namespace_arg = '--namespace ' + namespace
-    returncode, stdout, _ = run('helm status {} {}'.format(namespace_arg, release_name),
-                                DEFAULT_TIMEOUT, show_stderr=False)
+        cmd = 'helm status --namespace {} {}'.format(namespace, release_name)
+    else:
+        namespace = None
+        cmd = 'helm status {}'.format(release_name)
+    returncode, stdout, _ = run(cmd, DEFAULT_TIMEOUT, show_stderr=False)
     if returncode != 0:
         return 'notfound', namespace
 
@@ -520,11 +520,11 @@ def install(creds_file):
 
     # Add '--set' arguments to helm_args
     if args.set:
-        if helm_args:
-            helm_args += ' '
         for s in args.set:
             for key, val in parse_set_string(s):
-                helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
+                if helm_args:
+                    helm_args += ' '
+                helm_args += '--set {}={}'.format(key, val.replace(',', '\\,'))
 
     if helm_version == 2:
         helm_template_option = '--execute'
@@ -553,9 +553,9 @@ def install(creds_file):
                 helm_template_name = '--name ' + args.helm_name
             else:
                 helm_template_name = args.helm_name
-            execute('helm template {} {} {} {} {}'.format(helm_template_name, namespace_arg,
-                                                          helm_args, creds_exec_arg, chart_file),
-                    print_to_stdout=True)
+            full_args = [helm_template_name, namespace_arg, helm_args, creds_exec_arg, chart_file]
+            full_args = ' '.join(filter(None, full_args))
+            execute('helm template {}'.format(full_args), print_to_stdout=True)
 
         else:
             # Installs console directly to a k8s cluster in a given namespace
@@ -613,7 +613,9 @@ def install(creds_file):
                      .format(args.helm_name, status))
 
             if args.wait:
-                helm_args += ' --wait'
+                if helm_args:
+                    helm_args += ' '
+                helm_args += '--wait'
 
             if not args.delete_pvcs:
                 check_pv_usage()
