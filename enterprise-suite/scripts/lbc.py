@@ -137,6 +137,7 @@ def execute(cmd, can_fail=False, print_to_stdout=False):
 
 version_re = re.compile(r'(?:(?P<major>[0-9]+)\.(?P<minor>[0-9]+)(?P<patch>\.[0-9]+)?)')
 
+
 def require_version(cmd, required_version, max_version=None):
     # Use first word as a program name in messages
     name = cmd.partition(' ')[0]
