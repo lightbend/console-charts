@@ -313,7 +313,7 @@ def helm_migration_check():
         elif stdout != '':
             message = (
                 '\nerror: Detected a previous Console installation which was installed with helm 2.\n'
-                'To use {} you must migrate the installation manually by '.format(helm_version) +
+                'To use helm {} you must migrate the installation manually by '.format(helm_version) +
                 'following the instructions on https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/'
             )
             if platform.system() == 'Darwin':
