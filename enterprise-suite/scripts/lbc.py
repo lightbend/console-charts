@@ -26,10 +26,13 @@ import json
 import time
 import glob
 from distutils.version import LooseVersion
+import platform
 
 # Minimum required dependency versions
 REQ_VER_KUBECTL = '1.10'
 REQ_VER_HELM = '2.10'
+# Helm tends to break backwards compatibility this is the maximum version.
+MAX_VER_HELM = '3.x'
 REQ_VER_MINIKUBE = '0.29'
 REQ_VER_MINISHIFT = '1.20'
 REQ_VER_OC = '3.9'
@@ -132,10 +135,10 @@ def execute(cmd, can_fail=False, print_to_stdout=False):
     return 0
 
 
-version_re = re.compile(r'([0-9]+\.[0-9]+(\.[0-9]+)?)')
+version_re = re.compile(r'(?:(?P<major>[0-9]+)\.(?P<minor>[0-9]+)(?P<patch>\.[0-9]+)?)')
 
 
-def require_version(cmd, required_version):
+def require_version(cmd, required_version, max_version=None):
     # Use first word as a program name in messages
     name = cmd.partition(' ')[0]
 
@@ -143,20 +146,38 @@ def require_version(cmd, required_version):
     returncode, stdout, _ = run(cmd, 1)
 
     if returncode == None:
-        fail("Required program '" + name + "' not found")
+        fail("Required program {} not found".format(name))
     elif returncode == 0 and stdout != '':
         match = version_re.search(stdout)
         if match != None:
             current = LooseVersion(match.group())
             required = LooseVersion(required_version)
             if current >= required:
-                return
+                if max_version is None or current < LooseVersion(max_version):
+                    return match.groupdict()
+                else:
+                    fail("Installed version of {} is too new. Found {} but the latest supported version is {}."
+                        .format(name, current, max_version))
             else:
-                fail("Installed version of '" + name + "' is too old. Found: {}, required: {}"
-                     .format(current, required))
+                fail("Installed version of {} is too old. Found {} but the oldest supported version is {}."
+                    .format(name, current, required))
 
-                # Non-critical warning
-    printerr("warning: unable to determine installed version of '" + name + "'")
+    # Non-critical warning
+    printerr("warning: Unable to determine installed version of '" + name + "'")
+
+
+def determine_version(cmd):
+    # Use first word as a program name in messages
+    name = cmd.partition(' ')[0]
+    returncode, stdout, _ = run(cmd, DEFAULT_TIMEOUT)
+    if returncode == None:
+        fail("Required program {} not found".format(name))
+    if returncode != 0 or stdout == '':
+        fail("Unable to determine installed version of {}".format(name))
+    match = version_re.search(stdout)
+    if match is None:
+        fail("Unable to parse version of {}".format(name))
+    return match.groupdict()
 
 
 def is_running_minikube():
@@ -180,7 +201,12 @@ def is_running_minishift():
 # Helm check is a separate function because we also need it when not doing full
 # preflight check, eg. when using --export-yaml argument
 def check_helm():
-    require_version('helm version --client --short', REQ_VER_HELM)
+    require_version('helm version --client --short', REQ_VER_HELM, MAX_VER_HELM)
+
+
+def determine_helm_version():
+    helm_version_parts = determine_version('helm version --client --short')
+    return int(helm_version_parts['major'])
 
 
 # Kubectl check is needed both in install and verify subcommands
@@ -276,10 +302,31 @@ def check_new_install_script():
         printout("info: New installer is available. Use the following command to download it: curl -O {}".format(installer_url))
 
 
+def helm_migration_check():
+    if helm_version > 2:
+        cmd = ('kubectl get configmap --namespace {} --selector OWNER=TILLER,NAME={} '
+               '--ignore-not-found=true'.format(args.tiller_namespace, args.helm_name))
+        printout(cmd)
+        returncode, stdout, _ = run(cmd)
+        if returncode != 0:
+            fail('\nwarning: Failed to check for legacy helm 2 installations.')
+        elif stdout != '':
+            message = (
+                '\nerror: Detected a previous Console installation which was installed with helm 2.\n'
+                'To use helm {} you must migrate the installation manually by '.format(helm_version) +
+                'following the instructions on https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/'
+            )
+            if platform.system() == 'Darwin':
+                message += '\nIf you are using homebrew then you can install both helm and helm@2'
+            message += '\nMake sure to also run the cleanup steps.'
+            fail(message)
+
+
 def preinstall_check(creds, minikube=False, minishift=False):
     check_helm()
     check_kubectl()
     check_new_install_script()
+    helm_migration_check()
 
     if minikube:
         require_version('minikube version', REQ_VER_MINIKUBE)
@@ -287,11 +334,6 @@ def preinstall_check(creds, minikube=False, minishift=False):
     if minishift:
         require_version('minishift version', REQ_VER_MINISHIFT)
         require_version('oc version', REQ_VER_OC)
-
-    # Check if helm is set up inside a cluster
-    returncode, _, _ = run('helm version', DEFAULT_TIMEOUT)
-    if returncode != 0:
-        fail('Cannot get helm status. Did you set up helm inside your cluster?')
 
     # TODO: Check if RBAC rules for tiller are set up
 
@@ -301,12 +343,16 @@ def preinstall_check(creds, minikube=False, minishift=False):
                  'proceeding with the installation anyway')
 
 
-# Returns one of 'deployed', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
+# Returns one of 'deployed', 'deleted', 'superseded', 'failed', 'pending', 'deleting', 'notfound' or 'unknown'
 # Also returns the namespace.  Useful for uninstall.
 def install_status(release_name):
-    returncode, stdout, _ = run('helm status ' + release_name,
-                                DEFAULT_TIMEOUT, show_stderr=False)
-    namespace = None
+    if helm_version > 2 and hasattr(args, 'namespace'):
+        namespace = args.namespace
+        cmd = 'helm status --namespace {} {}'.format(namespace, release_name)
+    else:
+        namespace = None
+        cmd = 'helm status {}'.format(release_name)
+    returncode, stdout, _ = run(cmd, DEFAULT_TIMEOUT, show_stderr=False)
     if returncode != 0:
         return 'notfound', namespace
 
@@ -314,20 +360,27 @@ def install_status(release_name):
     if match:
         namespace = match.group(1)
 
-    if 'STATUS: DEPLOYED' in stdout or (stdout == ''):
-        status = 'deployed'
-    elif 'STATUS: FAILED' in stdout:
-        status = 'failed'
-    elif 'STATUS: PENDING_INSTALL' in stdout:
-        status = 'pending'
-    elif 'STATUS: PENDING_UPGRADE' in stdout:
-        status = 'pending'
-    elif 'STATUS: DELETING' in stdout:
-        status = 'deleting'
-    else:
-        status = 'unknown'
+    match = re.search(r'^STATUS: (.*)$', stdout, re.MULTILINE)
+    if match is None:
+        fail('Unable to determine status of release {}'.format(release_name))
+    status = match.group(1).lower()
 
-    return status, namespace
+    # https://github.com/helm/helm/blob/release-2.16/_proto/hapi/release/status.proto
+    # https://github.com/helm/helm/blob/release-3.0/pkg/release/status.go
+    statuses = {
+        'deployed': 'deployed',
+        'deleted': 'deleted',
+        'uninstalled': 'deleted',
+        'superseded': 'superseded',
+        'failed': 'failed',
+        'deleting': 'deleting',
+        'uninstalling': 'deleting',
+        'pending_install': 'pending',
+        'pending_upgrade': 'pending',
+        'pending_rollback': 'pending',
+    }
+
+    return statuses.get(status, 'unknown'), namespace
 
 
 # Helper function that runs a command, then looks for expected strings
@@ -360,7 +413,11 @@ def check_resource_list(cmd, expected, fail_msg):
 # Check that the use of persistentVolumes before and after the (un)install will not lead to data loss.
 def check_pv_usage(uninstalling=False):
     # Retrieve the current helm installation computed values.
-    returncode, helm_get_stdout, helm_get_stderr = run('helm get ' + args.helm_name,
+    if helm_version == 2:
+        namespace_arg = ''
+    else:
+        namespace_arg = '--namespace ' + args.namespace
+    returncode, helm_get_stdout, helm_get_stderr = run('helm get {} {}'.format(namespace_arg, args.helm_name),
                                                        DEFAULT_TIMEOUT, show_stderr=False)
 
     if 'usePersistentVolumes' not in values:
@@ -464,11 +521,16 @@ def install(creds_file):
 
     # Add '--set' arguments to helm_args
     if args.set:
-        if helm_args:
-            helm_args += ' '
         for s in args.set:
             for key, val in parse_set_string(s):
-                helm_args += '--set {}={} '.format(key, val.replace(',', '\\,'))
+                if helm_args:
+                    helm_args += ' '
+                helm_args += '--set {}={}'.format(key, val.replace(',', '\\,'))
+
+    if helm_version == 2:
+        helm_template_option = '--execute'
+    else:
+        helm_template_option = '--show-only'
 
     tempdir = None
     try:
@@ -483,32 +545,38 @@ def install(creds_file):
             chart_file = fetch_remote_chart(tempdir)
 
         if args.export_yaml:
-            # Tillerless path - renders kubernetes resources and prints to stdout.
+            # Renders kubernetes resources and prints to stdout.
             creds_exec_arg = ''
             if args.export_yaml == 'creds':
-                creds_exec_arg = '--execute templates/commercial-credentials.yaml ' + creds_arg
+                creds_exec_arg = '{} templates/commercial-credentials.yaml {}'.format(helm_template_option, creds_arg)
                 printerr('warning: credentials in yaml are not encrypted, only base64 encoded. Handle appropriately.')
-
-            execute('helm template --name {} {} {} {} {}'.format(args.helm_name, namespace_arg,
-                                                                 helm_args, creds_exec_arg, chart_file),
-                    print_to_stdout=True)
+            if helm_version == 2:
+                helm_template_name = '--name ' + args.helm_name
+            else:
+                helm_template_name = args.helm_name
+            full_args = [helm_template_name, namespace_arg, helm_args, creds_exec_arg, chart_file]
+            full_args = ' '.join(filter(None, full_args))
+            execute('helm template {}'.format(full_args), print_to_stdout=True)
 
         else:
-            # Tiller path - installs console directly to a k8s cluster in a given namespace
+            # Installs console directly to a k8s cluster in a given namespace
 
             # Calculate computed values for chart to be installed.
             # Note: older versions (1.1 and older) will not have dump-values.yaml, so warning will be printed
             template_args = prune_template_args(helm_args)
-            rc, template_stdout, template_stderr = run('helm template -x templates/dump-values.yaml {} {}'.
-                                                       format(template_args, chart_file),
-                                                       show_stderr=False)
+            cmd = 'helm template {} templates/dump-values.yaml {} {}'.format(helm_template_option, template_args, chart_file)
+            printout(cmd)
+            rc, template_stdout, _ = run(cmd)
             global values
             if rc != 0:
                 printerr("warning: unable to determine computed helm values - this may lead to incorrect warnings")
                 values = {}
             else:
                 try:
-                    computed = template_stdout.splitlines()[-2][2:]
+                    if helm_version == 2:
+                        computed = template_stdout.splitlines()[-2][2:]
+                    else:
+                        computed = template_stdout.splitlines()[-1][2:]
                     values = json.loads(computed)
                 except Exception as e:
                     printerr("warning: unable to parse helm values - this may lead to incorrect warnings")
@@ -546,22 +614,37 @@ def install(creds_file):
                      .format(args.helm_name, status))
 
             if args.wait:
-                helm_args += ' --wait'
+                if helm_args:
+                    helm_args += ' '
+                helm_args += '--wait'
 
             if not args.delete_pvcs:
                 check_pv_usage()
 
             if should_upgrade:
-                full_args = [args.helm_name, chart_name, version_arg, creds_arg, helm_args]
-                full_args = ' '.join(filter(None, full_args))
-                execute('helm upgrade {}'.format(full_args))
+                if helm_version == 2:
+                    full_args = [args.helm_name, chart_name, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm upgrade {}'.format(full_args))
+                else:
+                    full_args = [args.helm_name, namespace_arg, chart_name, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm upgrade {}'.format(full_args))
             else:
-                full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
-                full_args = ' '.join(filter(None, full_args))
-                execute('helm install {} --name {}'.format(chart_name, full_args))
+                if helm_version == 2:
+                    full_args = [args.helm_name, namespace_arg, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm install {} --name {}'.format(chart_name, full_args))
+                else:
+                    full_args = [namespace_arg, version_arg, creds_arg, helm_args]
+                    full_args = ' '.join(filter(None, full_args))
+                    execute('helm install {} {} {}'.format(args.helm_name, chart_name, full_args))
     finally:
         if tempdir:
-            shutil.rmtree(tempdir)
+            if args.keep_chart:
+                printout('info: Keeping downloaded chart: ', tempdir)
+            else:
+                shutil.rmtree(tempdir)
 
 
 def uninstall(status=None, namespace=None):
@@ -577,7 +660,11 @@ def uninstall(status=None, namespace=None):
             check_pv_usage(uninstalling=True)
 
         printerr("info: Deleting previous console installation {} with status '{}'".format(args.helm_name, status))
-        execute('helm delete --purge ' + args.helm_name)
+        if helm_version == 2:
+            delete_args = '--purge'
+        else:
+            delete_args = '--namespace ' + args.namespace
+        execute('helm delete {} {}'.format(delete_args, args.helm_name))
         printerr('warning: Helm delete does not wait for resources to be fully removed. If a subsequent install fails, '
                  'please re-run it after waiting for all resources to be removed.')
 
@@ -639,7 +726,7 @@ def check_install():
             status_ok &= deployment_running(dep)
         return status_ok
 
-    status_ok = check_deployments(CONSOLE_DEPLOYMENTS) 
+    status_ok = check_deployments(CONSOLE_DEPLOYMENTS)
     if not status_ok:
         printerr('\nIt appears you might be running older version of console, checking old deployment names...\n')
         status_ok = check_deployments(CONSOLE_DEPLOYMENTS_OLD)
@@ -781,6 +868,7 @@ def setup_args(argv):
                          action='store_true')
     install.add_argument('--set', help='set a helm chart value, can be repeated for multiple values', type=str,
                          action='append')
+    install.add_argument('--keep-chart', help='does not delete the downloaded chart', action='store_true')
 
 
     # Common arguments for install and uninstall
@@ -793,11 +881,19 @@ def setup_args(argv):
         subparser.add_argument('rest',
                                help="any additional arguments separated by '--' will be passed to helm (eg. '-- --set usePersistentVolumes=false')",
                                nargs='*')
+        if helm_version != 2:
+            subparser.add_argument('--tiller-namespace', help='Tiller namespace. Used to detect legacy helm 2 installations (helm 3 only).',
+                                   default=os.environ.get('TILLER_NAMESPACE', 'kube-system'))
 
     # Common arguments for install, verify and dump
     for subparser in [install, verify, debug_dump]:
         subparser.add_argument('--namespace', help='namespace to install console into/where it is installed',
                                required=True)
+
+    # Namespace is also required for uninstall if using helm3
+    if helm_version != 2:
+        uninstall.add_argument('--namespace', help='namespace to install console into/where it is installed (helm 3 only)',
+                               required=helm_version > 2)
 
     # Common arguments for all subparsers
     for subparser in [install, uninstall, verify, debug_dump]:
@@ -834,11 +930,15 @@ def fetch_remote_chart(destdir):
 
 
 def main(argv):
+    global helm_version
+    helm_version = None
     global args
     args = setup_args(argv)
-
     force_verify = False
     if args.subcommand == 'install':
+        helm_version = determine_helm_version()
+        args = setup_args(argv)
+
         creds = import_credentials()
 
         if not args.skip_checks:
@@ -875,8 +975,11 @@ def main(argv):
         check_install()
 
     if args.subcommand == 'uninstall':
+        helm_version = determine_helm_version()
+        args = setup_args(argv)
         if not args.skip_checks:
             check_helm()
+            helm_migration_check()
         uninstall()
 
     if args.subcommand == 'debug-dump':
