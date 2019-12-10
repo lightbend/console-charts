@@ -18,7 +18,7 @@ fi
 
 tag=$1
 file=$2
-repo=https://raw.githubusercontent.com/lightbend/console-api
+repo=https://raw.githubusercontent.com/lightbend/console-monitor-api
 
 # GITHUB_TOKEN must be defined
 if [ -z "${GITHUB_TOKEN:-}" ]; then
