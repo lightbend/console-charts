@@ -198,12 +198,6 @@ workflows:
       - build_operator
 
       # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
-      - backend_e2e_openshift:
-          requires:
-            - unit_tests
-          filters:
-            branches:
-              ignore: master
       - backend_e2e_minishift:
           requires:
             - unit_tests
