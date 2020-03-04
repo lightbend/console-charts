@@ -19,28 +19,6 @@ jobs:
       - run: make -C enterprise-suite check-default-monitors-sync
       - run: echo success!
 
-  backend_e2e_openshift:
-    docker:
-      - image: circleci/golang:1.13
-
-    environment:
-      NAMESPACE: console-backend-go-tests
-
-    working_directory: /go/src/github.com/lightbend/console-charts
-
-    steps:
-      - checkout
-      - run: scripts/setup-tools-for-debian.sh
-      - run: scripts/setup-openshift.sh ${OC_GOTESTS_TOKEN} console-backend-go-tests
-      - run: make -C enterprise-suite/gotests setup-tools
-      - queue/until_front_of_line:
-          consider-branch: false
-      - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
-      - run: make -C enterprise-suite/gotests run-tests-openshift NAMESPACE=${NAMESPACE}
-      - kubernetes-diagnostics/diagnose-kubernetes:
-          namespace: "${NAMESPACE}"
-      - run: make -C enterprise-suite/gotests purge-console-openshift NAMESPACE=${NAMESPACE}
-
   backend_e2e_minishift:
     machine:
       image: ubuntu-1604:201903-01
