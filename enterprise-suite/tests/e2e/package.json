@@ -8,15 +8,16 @@
   "scripts": {
     "e2e": "cypress run",
     "e2e:minikube": "cypress run --env configFile=minikube",
+    "e2e:local": "cypress run --env configFile=local",
     "e2e:travis-prs": "NO_COLOR=1 cypress-run --env configFile=minikube",
-    "e2e:travis-prs-subset1": "NO_COLOR=1 cypress-run --spec 'cypress/integration/+(cluster-page|grafana|workload-page).spec.ts' --env configFile=minikube",
+    "e2e:travis-prs-subset1": "NO_COLOR=1 cypress-run --spec 'cypress/integration/+(cluster-page|workload-page).spec.ts' --env configFile=minikube",
     "e2e:travis-prs-subset2": "NO_COLOR=1 cypress-run --spec 'cypress/integration/+(create-monitor|local-prom-health|monitor-history).spec.ts' --env configFile=minikube",
     "e2e:travis-prs:result": "NO_COLOR=1 cypress-run --env configFile=minikube,skipKnownError=true | tee results.txt",
     "e2e:check-results": "./scripts/check_e2e_results.sh",
     "e2e:patch-minikube-ip": "./scripts/patch-minikube-ip.sh",
     "e2e:wait-es-services": "./scripts/wait_es_services.sh",
     "e2e:travis": "cypress run --env configFile=minikube,skipKnownError=true",
-    "e2e:demo-app-setup": "kubectl apply -f ./config/es-demo.yaml",
+    "e2e:demo-app-setup": "kubectl apply -f ./config/es-demo.yaml -n lightbend",
     "cypress:open": "cypress open",
     "cypress:minikube:open": "cypress open --env configFile=minikube",
     "cypress:minikube:skip-error:open": "cypress open --env configFile=minikube,skipKnownError=true"
