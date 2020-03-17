@@ -1,7 +1,7 @@
 export class Navigation {
     static goClusterPage() {
-        cy.visit('/');
-        cy.url().should('be', '/clusters');
+        cy.visit('/cluster');
+        cy.url().should('be', '/cluster');
     }
 
     static clickWorkload(workloadId: string) {
