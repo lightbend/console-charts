@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: es-demo
@@ -19,3 +19,6 @@ spec:
           ports:
             - containerPort: 9001
               name: metrics
+  selector:
+    matchLabels:
+      app: es-demo
