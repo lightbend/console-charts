@@ -7,6 +7,7 @@ metadata:
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    com.lightbend.cloudflow/instance-id: {{ .Release.Name }}
     app.kubernetes.io/component: grafana
 spec:
   replicas: 1
@@ -29,6 +30,7 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+        com.lightbend.cloudflow/instance-id: {{ .Release.Name }}
         app.kubernetes.io/component: grafana
         # Deprecated - these should be removed eventually. Kept to support upgrades with the old labels.
         app: grafana
