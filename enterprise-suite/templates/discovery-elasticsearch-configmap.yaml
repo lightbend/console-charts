@@ -6,6 +6,7 @@ metadata:
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    com.lightbend.cloudflow/instance-id: {{ .Release.Name }}
     app.kubernetes.io/component: console-backend
   name: discovery-elasticsearch
 data:
