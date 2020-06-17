@@ -21,7 +21,7 @@ jobs:
 
   backend_e2e_minishift:
     machine:
-      image: circleci/buildpack-deps:stretch-curl
+      image: ubuntu-1604:202004-01
 
     environment:
       NAMESPACE: console-backend-go-tests
@@ -43,7 +43,7 @@ jobs:
 
   frontend_e2e_minishift:
     machine:
-      image: circleci/buildpack-deps:stretch-curl
+      image: ubuntu-1604:202004-01
 
     steps:
       - checkout
@@ -131,7 +131,7 @@ jobs:
 
   build_operator:
     machine:
-      image: circleci/buildpack-deps:stretch-curl
+      image: ubuntu-1604:202004-01
 
     steps:
       - checkout
@@ -153,7 +153,7 @@ jobs:
 
   release_operator:
     machine:
-      image: circleci/buildpack-deps:stretch-curl
+      image: ubuntu-1604:202004-01
 
     steps:
       - checkout
