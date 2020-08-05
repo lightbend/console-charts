@@ -53,19 +53,30 @@ scrape_configs:
 
     # These are metric_relabel_configs since the source labels come from the scraped `/metrics`.
     metric_relabel_configs:
+      # 'pod_name' for k8s < 1.16, 'pod' for k8s > 1.13 (overlap for 1.14, 1.15)
       - source_labels: [pod_name]
         target_label: kubernetes_pod_name
+      - source_labels: [pod]
+        target_label: kubernetes_pod_name
       # pause containers have all the network stats for a pod
+      # 'container_name' for k8s < 1.16, 'container' for k8s > 1.13 (overlap for 1.14, 1.15)
       - source_labels: [container_name, __name__]
         regex: POD;container_(network).*
         target_label: container_name
+      - source_labels: [container, __name__]
+        regex: POD;container_(network).*
+        target_label: container
       # drop all other pause container stats
       - source_labels: [container_name]
         regex: POD
         action: drop
+      - source_labels: [container]
+        regex: POD
+        action: drop
       # drop system containers with no name
-      - source_labels: [container_name]
-        regex: ^$
+      # Need both labels to be empty or we'll drop everything
+      - source_labels: [container_name, container]
+        regex: ^;$
         action: drop
       # drop high cardinality debug metrics
       - source_labels: [__name__]
