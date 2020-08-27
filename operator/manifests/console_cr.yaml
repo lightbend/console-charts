@@ -55,7 +55,7 @@ spec:
   prometheusDomain: prometheus.io
   prometheusImage: prom/prometheus
   prometheusMemoryRequest: 250Mi
-  prometheusVersion: v2.9.2
+  prometheusVersion: v2.19.3
   prometheusVolumeSize: 256Gi
   rbacApiVersion: rbac.authorization.k8s.io/v1
   usePersistentVolumes: true
