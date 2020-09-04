@@ -30,10 +30,10 @@ spec:
   enableElasticsearch: false
   esConsoleExposePort: 30080
   esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
-  esConsoleVersion: v1.4.7
+  esConsoleVersion: v1.4.8
   esGrafanaEnvVars: null
   esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
-  esGrafanaVersion: v0.3.4
+  esGrafanaVersion: v0.3.5
   esGrafanaVolumeSize: 32Gi
   esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api'
   esMonitorVersion: v1.2.5
