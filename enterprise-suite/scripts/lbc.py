@@ -539,7 +539,7 @@ def install(creds_file):
             chart_file = args.local_chart
         else:
             chart_name = "{}/{}".format(args.repo_name, args.chart)
-            execute('helm repo add {} {}'.format(args.repo_name, args.repo))
+            execute('helm repo add --force-update {} {}'.format(args.repo_name, args.repo))
             execute('helm repo update')
             tempdir = make_fetchdir()
             chart_file = fetch_remote_chart(tempdir)
