@@ -3,7 +3,7 @@
 set -exu
 
 KUBERNETES_VERSION="v1.15.2"
-MINIKUBE_VERSION="v1.2.0"
+MINIKUBE_VERSION="v1.12.1"
 
 # Preflight checks
 if ! command -v helm > /dev/null; then

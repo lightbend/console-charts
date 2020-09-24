@@ -26,5 +26,8 @@ function polling_service {
   echo "$1 is up"
 }
 
+set -x
+echo "SERVICES: $SERVICES"
 polling_service $ES_CONSOLE_URL
+set +x
 echo "poll services takes $seconds sec"
