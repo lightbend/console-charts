@@ -5,7 +5,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # wait es_services are ready. polling es-prom-server/es-console/es-grafana
 SERVICES=$(minikube service list)
 CURL='curl --connect-timeout 1 --max-time 1 --output /dev/null --silent'
-ES_CONSOLE_URL=`echo "$SERVICES" | grep expose-es-console | awk  '{print $6}'`
+ES_CONSOLE_URL=`echo "$SERVICES" | grep expose-es-console | awk '{print $8}'`
 
 
 # polling es-prom-server
@@ -26,8 +26,6 @@ function polling_service {
   echo "$1 is up"
 }
 
-set -x
 echo "SERVICES: $SERVICES"
 polling_service $ES_CONSOLE_URL
-set +x
 echo "poll services takes $seconds sec"
