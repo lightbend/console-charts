@@ -190,6 +190,7 @@ class HelmCommandsTest():
         self.expect_helm_version()
         if setup_checks:
             setup_checks()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
         expect_cmd('helm repo add es-repo ' + repo)
         expect_cmd('helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
@@ -201,6 +202,7 @@ class HelmCommandsTest():
 
     def test_export_yaml_console(self):
         self.expect_helm_version()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
@@ -214,6 +216,7 @@ class HelmCommandsTest():
 
     def test_export_yaml_creds(self):
         self.expect_helm_version()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
         expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm-charts')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
@@ -330,6 +333,7 @@ class HelmCommandsTest():
 
     def test_install_override_repo(self):
         self.expect_helm_version()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
         expect_cmd(r'helm repo add es-repo https://repo.bintray.com/helm')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
@@ -458,6 +462,7 @@ class HelmV2CommandsTest(HelmCommandsTest, unittest.TestCase):
         lbc.main(['install', '--namespace=lightbend', '--delete-pvcs', '--creds='+self.creds_file])
 
 
+
 class HelmV3CommandsTest(HelmCommandsTest, unittest.TestCase):
     @property
     def helm_version(self):
@@ -534,6 +539,56 @@ class HelmV3CommandsTest(HelmCommandsTest, unittest.TestCase):
             expect_cmd('kubectl get configmap --namespace kube-system --selector OWNER=TILLER,NAME=enterprise-suite --ignore-not-found=true',
                        returncode=1)
             lbc.main(['install', '--namespace=lightbend', '--delete-pvcs', '--creds='+self.creds_file])
+
+class HelmV332AndAboveCommandsTest(HelmV3CommandsTest, unittest.TestCase):
+    @property
+    def helm_version(self):
+        return 'v3.3.2+ga61ce56'
+
+    def expect_install_setup(self, repo='https://repo.lightbend.com/helm-charts', setup_checks=None):
+        self.expect_helm_version()
+        if setup_checks:
+            setup_checks()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
+        # For Helm above 3.3.2, it is necessary to use --force-update
+        expect_cmd('helm repo add --force-update es-repo ' + repo)
+        expect_cmd('helm repo update')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
+        expect_cmd(r'helm template .*')
+
+
+    def expect_helm_status_status(self, status):
+        expect_cmd('helm status --namespace lightbend enterprise-suite', returncode=0,
+                   stdout='NAME: enterprise-suite\nLAST DEPLOYED: Mon Oct  5 16:41:58 2020\nNAMESPACE: lightbend\nSTATUS: {}\nREVISION: 1\nTEST SUITE: None\nNOTES: Thank you for installing enterprise-suite.'.format(status))
+
+    def test_install_override_repo(self):
+        self.expect_helm_version()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
+        expect_cmd(r'helm repo add --force-update es-repo https://repo.bintray.com/helm')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
+        expect_cmd(r'helm template .*')
+        self.expect_helm_status_notfound()
+        self.expect_helm_install()
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm'])
+
+    def test_export_yaml_creds(self):
+        self.expect_helm_version()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
+        expect_cmd(r'helm repo add --force-update es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
+        self.expect_helm_template(template=r'templates/commercial-credentials\.yaml', args=['--values', r'\S+'])
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--creds='+self.creds_file, '--export-yaml=creds'])
+
+    def test_export_yaml_console(self):
+        self.expect_helm_version()
+        expect_cmd(r'helm version --client --short', stdout=self.helm_version)
+        expect_cmd(r'helm repo add --force-update es-repo https://repo.lightbend.com/helm-charts')
+        expect_cmd(r'helm repo update')
+        expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
+        self.expect_helm_template()
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console'])
 
 
 if __name__ == '__main__':
