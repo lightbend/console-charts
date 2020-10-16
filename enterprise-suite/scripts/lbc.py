@@ -549,11 +549,8 @@ def install(creds_file):
             chart_name = "{}/{}".format(args.repo_name, args.chart)
 
             # helm 3.3.2+ requires helm repo add --force-update to avoid errors re-running this script
-            supports_force_flag = version_is_at_least('helm version --client --short', '3.3.2')
-            if (supports_force_flag):
-                execute('helm repo add --force-update {} {}'.format(args.repo_name, args.repo))
-            else:
-                execute('helm repo add {} {}'.format(args.repo_name, args.repo))
+            force_flag = '--force-update ' if version_is_at_least('helm version --client --short', '3.3.2') else ''
+            execute('helm repo add {}{} {}'.format(force_flag, args.repo_name, args.repo))
 
             execute('helm repo update')
             tempdir = make_fetchdir()
