@@ -180,6 +180,14 @@ def determine_version(cmd):
     return match.groupdict()
 
 
+def version_is_at_least(cmd, version):
+    version_dict = determine_version(cmd)
+    # In the returned dict, 'patch' already contains a '.'
+    found_version = LooseVersion('{}.{}{}'.format(version_dict['major'], version_dict['minor'], version_dict['patch']))
+    expected_version = LooseVersion(version)
+    return found_version >= expected_version
+
+
 def is_running_minikube():
     returncode, stdout, _ = run('minikube status')
     if returncode == 0:
@@ -539,7 +547,11 @@ def install(creds_file):
             chart_file = args.local_chart
         else:
             chart_name = "{}/{}".format(args.repo_name, args.chart)
-            execute('helm repo add {} {}'.format(args.repo_name, args.repo))
+
+            # helm 3.3.2+ requires helm repo add --force-update to avoid errors re-running this script
+            force_flag = '--force-update ' if version_is_at_least('helm version --client --short', '3.3.2') else ''
+            execute('helm repo add {}{} {}'.format(force_flag, args.repo_name, args.repo))
+
             execute('helm repo update')
             tempdir = make_fetchdir()
             chart_file = fetch_remote_chart(tempdir)
