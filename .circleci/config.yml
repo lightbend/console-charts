@@ -114,21 +114,6 @@ jobs:
       - run: GCS_BUCKET=lightbend-console-charts-nightly scripts/deploy-to-gcs.sh
       - run: scripts/trigger-build-helm-charts.sh
 
-  deploy_demo:
-    docker:
-      - image: circleci/buildpack-deps:stretch-curl
-
-    steps:
-      - checkout
-      - queue/until_front_of_line:
-          consider-branch: false
-      - run: scripts/setup-tools-for-debian.sh
-      - run: scripts/set-chart-version.sh enterprise-suite ${CIRCLE_TAG#v}
-      - run: make -C enterprise-suite package
-      - run: scripts/setup-openshift.sh ${OC_DEMO_TOKEN} console-demo
-      - run: TILLER_NAMESPACE=console-demo enterprise-suite/scripts/lbc.py install --namespace=console-demo --local-chart=build/enterprise-suite-${CIRCLE_TAG#v}.tgz --set usePersistentStorage=yes
-      - run: scripts/deploy-chaos-apps.sh console-demo
-
   build_operator:
     machine:
       image: ubuntu-1604:202004-01
@@ -198,13 +183,6 @@ workflows:
               only: /v.*/
 
       - release:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /v.*/
-
-      - deploy_demo:
           filters:
             branches:
               ignore: /.*/
