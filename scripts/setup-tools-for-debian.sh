@@ -30,7 +30,7 @@ curl -LO https://storage.googleapis.com/kubernetes-helm/${helm_file}
 echo "0fa2ed4983b1e4a3f90f776d08b88b0c73fd83f305b5b634175cb15e61342ffe ${helm_file}" | sha256sum --check
 tar xzvf ${helm_file}
 sudo cp linux-amd64/helm /usr/local/bin/
-helm init -c
+helm init -c --stable-repo-url https://charts.helm.sh/stable
 
 # socat is needed for helm init --wait to work
 sudo apt-get install -y socat
