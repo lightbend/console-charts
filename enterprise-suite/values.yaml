@@ -9,11 +9,17 @@ consoleUIConfig:
 # Update these versions for a release.
 #
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
-esConsoleVersion: v1.4.9
+# Repo: console-gui
+esConsoleVersion: v1.4.10-RC1
+
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api
+# Repo: console-monitor-ap
 esMonitorVersion: v1.2.5
+
 # lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
-esGrafanaVersion: v0.4.0
+# Repo: console-grafana
+esGrafanaVersion: v0.5.0-RC2
+
 # prom/prometheus
 prometheusVersion: v2.19.3
 # elasticsearch and logstash
@@ -25,9 +31,9 @@ kubeStateMetricsVersion: v1.3.0
 # lightbend/go-dnsmasq
 goDnsmasqVersion: v0.1.7-1
 # alpine
-alpineVersion: "3.8"
+alpineVersion: "3.12"
 # busybox
-busyboxVersion: "1.30"
+busyboxVersion: "1.32"
 
 #################################################
 # Image names to use. Combined with the versions above, gives the fully qualified docker image name.

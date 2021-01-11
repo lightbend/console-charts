@@ -7,10 +7,10 @@ metadata:
 spec:
   alertManagers: null
   alpineImage: alpine
-  alpineVersion: "3.8"
+  alpineVersion: "3.12"
   apiGroupVersion: rbac.authorization.k8s.io
   busyboxImage: busybox
-  busyboxVersion: "1.30"
+  busyboxVersion: "1.32"
   configMapReloadImage: jimmidyson/configmap-reload
   configMapReloadVersion: v0.2.2
   consoleAPI:
@@ -30,10 +30,10 @@ spec:
   enableElasticsearch: false
   esConsoleExposePort: 30080
   esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
-  esConsoleVersion: v1.4.9
+  esConsoleVersion: v1.4.10-RC1
   esGrafanaEnvVars: null
   esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
-  esGrafanaVersion: v0.4.0
+  esGrafanaVersion: v0.5.0-RC2
   esGrafanaVolumeSize: 32Gi
   esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api'
   esMonitorVersion: v1.2.5
