@@ -39,8 +39,7 @@ helm init -c --stable-repo-url https://charts.helm.sh/stable
 sudo apt-get install -y socat
 
 # kubectl
-# Keep it in sync with the version declared in scripts/setup-minikube-for-linux.sh
-KUBERNETES_VERSION="v1.15.12"
+KUBERNETES_VERSION="v1.17.17"
 curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_VERSION}/bin/linux/amd64/kubectl \
     && chmod +x kubectl && sudo cp kubectl /usr/local/bin/ && rm kubectl
 
