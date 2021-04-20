@@ -4,6 +4,9 @@ set -eux
 
 sudo apt update
 
+# conntrack: required by k8s >=1.18
+sudo apt install -y conntrack
+
 # jq
 sudo apt install -y jq
 
