@@ -22,7 +22,7 @@ function setup() {
     kubectl create serviceaccount --namespace ${TILLER_NAMESPACE} tiller
     kubectl create clusterrolebinding ${TILLER_NAMESPACE}:tiller --clusterrole=cluster-admin \
         --serviceaccount=${TILLER_NAMESPACE}:tiller
-    helm init --wait --service-account tiller --upgrade --tiller-namespace=${TILLER_NAMESPACE}
+    helm init --debug --wait --service-account tiller --upgrade --tiller-namespace=${TILLER_NAMESPACE}
 
     kubectl config set-context minikube --namespace=${NAMESPACE}
 
