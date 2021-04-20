@@ -2,7 +2,8 @@
 
 set -exu
 
-KUBERNETES_VERSION="v1.15.2"
+# Keep it in sync with the version declared in scripts/setup-tools-for-debian.sh
+KUBERNETES_VERSION="v1.18.18"
 MINIKUBE_VERSION="latest"
 
 # Preflight checks
