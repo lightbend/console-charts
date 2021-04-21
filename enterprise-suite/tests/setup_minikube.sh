@@ -31,7 +31,7 @@ function setup() {
         --set exposeServices=NodePort,esConsoleExposePort=30080 \
         --set esConsoleURL=http://console.test.bogus:30080 \
         ${ES_CONSOLE_VERSION+--set esConsoleVersion=${ES_CONSOLE_VERSION}} \
-        --wait
+        --wait --debug
 }
 
 function cleanup() {
