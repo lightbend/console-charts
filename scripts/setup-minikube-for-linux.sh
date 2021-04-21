@@ -2,8 +2,8 @@
 
 set -exu
 
-KUBERNETES_VERSION="v1.15.2"
-MINIKUBE_VERSION="v1.2.0"
+KUBERNETES_VERSION="v1.15.12"
+MINIKUBE_VERSION="latest"
 
 # Preflight checks
 if ! command -v helm > /dev/null; then
@@ -23,20 +23,8 @@ mkdir -p $HOME/.kube
 touch $HOME/.kube/config
 
 export KUBECONFIG=$HOME/.kube/config
-sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION} --cpus 2 --memory 2000
-sudo -E minikube addons enable ingress
+# --addons=[]: Enable addons. see `minikube addons list` for a list of valid addon names.
+# --wait=all: wait for and verify all Kubernetes components after starting the cluster.
+sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION} --cpus 2 --memory 2000 --addons=ingress --wait=all
 sudo chown -R $USER $HOME/.minikube
 sudo chgrp -R $USER $HOME/.minikube
-
-# this for loop waits until kubectl can access the api server that Minikube has created
-set +e
-for i in {1..60}; do # timeout after 2 minutes
-    echo "Waiting for minikube to come up..."
-    kubectl get po
-    res=$?
-    if [ ${res} -eq 0 ]; then
-        break
-    fi
-    sleep 2
-done
-exit ${res}
