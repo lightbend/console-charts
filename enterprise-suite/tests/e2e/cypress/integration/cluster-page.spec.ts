@@ -9,7 +9,6 @@ describe('Cluster Page Test', () => {
 
   it('cluster detail panel check', () => {
     ClusterDetails.infraContains('Nodes', '1');
-    ClusterDetails.infraContains('Name', 'minikube');
     ClusterDetails.workloadHealthGte('Healthy', 10);
   });
 
@@ -23,6 +22,5 @@ describe('Cluster Page Test', () => {
     ClusterPage.validateWorkloadCountGte(5);
     ClusterPage.validateWorkloadCountLte(10);
   });
-
 
 });
