@@ -23,7 +23,7 @@ repo=https://raw.githubusercontent.com/lightbend/console-monitor-api
 # GITHUB_TOKEN must be defined
 if [ -z "${GITHUB_TOKEN:-}" ]; then
     if [ -f "$HOME/.config/hub" ]; then
-        GITHUB_TOKEN=$(yq r $HOME/.config/hub '[github.com]\[0].oauth_token')
+        GITHUB_TOKEN=$(yq e '."github.com"[0].oauth_token' "$HOME/.config/hub")
         1>&2 echo "Found $HOME/.config/hub, will use that for oauth"
     else
         echo "Env variable GITHUB_TOKEN is empty; cannot fetch from private repo!"

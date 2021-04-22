@@ -11,8 +11,8 @@ sudo apt install -y conntrack
 sudo apt install -y jq
 
 # yq
-curl -LO https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64
-echo "99a01ae32f0704773c72103adb7050ef5c5cad14b517a8612543821ef32d6cc9 yq_linux_amd64" | sha256sum --check
+curl -LO https://github.com/mikefarah/yq/releases/download/v4.7.0/yq_linux_amd64
+echo "ec857c8240fda5782c3dd75b54b93196fa496a9bcf7c76979bb192b38f76da31 yq_linux_amd64" | sha256sum --check
 sudo mv yq_linux_amd64 /usr/local/bin/yq
 sudo chmod +x /usr/local/bin/yq
 
