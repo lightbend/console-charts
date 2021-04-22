@@ -57,7 +57,7 @@ configMapReloadImage: jimmidyson/configmap-reload
 # kube-state-metrics image
 kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
 # go-dnsmasq image
-goDnsmasqImage:  docker.cloudsmith.io/lightbend/registry/lightbend-go-dnsmasq
+goDnsmasqImage:  registry.lightbend.com/lightbend-go-dnsmasq
 # alpine image
 alpineImage: alpine
 # busybox image
