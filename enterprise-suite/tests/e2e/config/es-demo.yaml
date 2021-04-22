@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: es-demo
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-demo:v0.0.1
+          image: registry.lightbend.com/enterprise-suite-es-demo:v0.0.1
           ports:
             - containerPort: 9001
               name: metrics

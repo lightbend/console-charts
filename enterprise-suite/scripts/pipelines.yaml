@@ -1,3 +1,3 @@
-esConsoleImage: lightbend-docker-commercial-registry.bintray.io/enterprise-suite/pipelines-ui
+esConsoleImage: commercial-registry.lightbend.com/enterprise-suite-pipelines-ui
 esConsoleVersion: latest
 imagePullPolicy: Always

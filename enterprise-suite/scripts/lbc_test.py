@@ -122,7 +122,7 @@ class HelmCommandsTest():
         self.creds_dir = tempfile.mkdtemp()
         self.creds_file = self.creds_dir + '/commercial.credentials'
         with open(self.creds_file, 'w') as creds:
-            creds.write('realm = Bintray\nhost = dl.bintray.com\nuser = aaa\npassword = bbb\n')
+            creds.write('realm = Cloudsmith API\nhost = commercial-registry.lightbend.com\nuser = aaa\npassword = bbb\n')
 
         self.setUpFakeChartfile()
 
@@ -334,13 +334,13 @@ class HelmCommandsTest():
     def test_install_override_repo(self):
         self.expect_helm_version()
         expect_cmd(r'helm version --client --short', stdout=self.helm_version)
-        expect_cmd(r'helm repo add es-repo https://repo.bintray.com/helm')
+        expect_cmd(r'helm repo add es-repo https://repo.lightbend.com/helm')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         self.expect_helm_status_notfound()
         self.expect_helm_install()
-        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm'])
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--repo=https://repo.lightbend.com/helm'])
 
     def test_install_override_name(self):
         self.expect_install_setup()
@@ -564,13 +564,13 @@ class HelmV332AndAboveCommandsTest(HelmV3CommandsTest, unittest.TestCase):
     def test_install_override_repo(self):
         self.expect_helm_version()
         expect_cmd(r'helm version --client --short', stdout=self.helm_version)
-        expect_cmd(r'helm repo add --force-update es-repo https://repo.bintray.com/helm')
+        expect_cmd(r'helm repo add --force-update es-repo https://repo.lightbend.com/helm')
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         expect_cmd(r'helm template .*')
         self.expect_helm_status_notfound()
         self.expect_helm_install()
-        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--repo=https://repo.bintray.com/helm'])
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--delete-pvcs', '--creds='+self.creds_file, '--repo=https://repo.lightbend.com/helm'])
 
     def test_export_yaml_creds(self):
         self.expect_helm_version()
