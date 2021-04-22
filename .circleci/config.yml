@@ -163,12 +163,14 @@ workflows:
 
       # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
       - backend_e2e_minishift:
+          context: docker-commercial-credentials
           requires:
             - unit_tests
           filters:
             branches:
               ignore: master
       - frontend_e2e_minishift:
+          context: docker-commercial-credentials
           requires:
             - unit_tests
           filters:
