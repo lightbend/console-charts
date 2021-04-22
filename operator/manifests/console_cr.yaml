@@ -41,8 +41,8 @@ spec:
   goDnsmasqImage: registry.lightbend.com/lightbend-go-dnsmasq
   goDnsmasqVersion: v0.1.7-1
   imageCredentials:
-    registry: commercial-registry.lightbend.com
     password: setme
+    registry: commercial-registry.lightbend.com
     username: setme
   imagePullPolicy: IfNotPresent
   kibanaImage: kibana
