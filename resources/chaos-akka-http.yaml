@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
       - name: chaos-akka-http
-        image: lightbend-docker-registry.bintray.io/console-chaos-apps/chaos-akka-http:latest
+        image: registry.lightbend.com/console-chaos-apps-chaos-akka-http:latest
         imagePullPolicy: Never
         args: ["-Dconfig.file=/config/my.conf"]
 

@@ -11,7 +11,7 @@ if [[ "$VERSION" == "latest" ]]; then
 fi
 
 if [[ "${DOCKER_USERNAME:-}" != "" ]]; then
-    docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} lightbend-docker-registry.bintray.io
+    docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} registry.lightbend.com
 fi
 
 echo "Pushing to docker registry ${docker_registry}..."

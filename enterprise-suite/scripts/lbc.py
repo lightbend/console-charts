@@ -240,8 +240,8 @@ def is_int(s):
 
 
 def check_credentials(creds):
-    registry = 'https://lightbend-docker-commercial-registry.bintray.io/v2'
-    api_url = registry + '/enterprise-suite/console-api/tags/list'
+    registry = 'https://commercial-registry.lightbend.com/v2'
+    api_url = registry + '/enterprise-suite-console-api/tags/list'
 
     # Use curl for checking credentials by default, only do urllib2 backup in case curl isn't installed
     returncode, stdout, _ = run('curl --version')

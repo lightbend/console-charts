@@ -15,14 +15,14 @@ spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
         - name: es-test-1
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
+          image: registry.lightbend.com/enterprise-suite-es-test:v1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               name: metrics
 
         - name: es-test-2
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
+          image: registry.lightbend.com/enterprise-suite-es-test:v1
           command:
             - /app
             - -listen-address=:8081

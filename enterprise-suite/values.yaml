@@ -8,15 +8,15 @@ consoleUIConfig:
 #################################################
 # Update these versions for a release.
 #
-# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-console
+# commercial-registry.lightbend.com/enterprise-suite-es-console
 # Repo: console-gui
 esConsoleVersion: v1.4.10
 
-# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/console-api
-# Repo: console-monitor-ap
+# commercial-registry.lightbend.com/enterprise-suite-console-api
+# Repo: console-monitor-api
 esMonitorVersion: v1.2.5
 
-# lightbend-docker-commercial-registry.bintray.io/enterprise-suite/es-grafana
+# commercial-registry.lightbend.com/enterprise-suite-es-grafana
 # Repo: console-grafana
 esGrafanaVersion: v0.5.0
 
@@ -39,11 +39,11 @@ busyboxVersion: "1.32"
 # Image names to use. Combined with the versions above, gives the fully qualified docker image name.
 #
 # es-console image
-esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-console'
+esConsoleImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite-es-console'
 # console-api image
-esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/console-api'
+esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite-console-api'
 # es-grafana image
-esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite/es-grafana'
+esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite-es-grafana'
 # prometheus image
 prometheusImage: prom/prometheus
 # elasticsearch image
@@ -57,7 +57,7 @@ configMapReloadImage: jimmidyson/configmap-reload
 # kube-state-metrics image
 kubeStateMetricsImage: gcr.io/google_containers/kube-state-metrics
 # go-dnsmasq image
-goDnsmasqImage: lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq
+goDnsmasqImage:  registry.lightbend.com/lightbend-go-dnsmasq
 # alpine image
 alpineImage: alpine
 # busybox image
@@ -82,7 +82,7 @@ prometheusDomain: prometheus.io
 podUID:
 # Commercial image credentials - set `username` and `password` to install as Kubernetes Secret.
 imageCredentials:
-  registry: lightbend-docker-commercial-registry.bintray.io
+  registry: commercial-registry.lightbend.com
   username: setme
   password: setme
 

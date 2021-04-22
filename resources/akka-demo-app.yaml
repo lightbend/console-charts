@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: console-akka-demoapp
-        image: lightbend-docker-registry.bintray.io/console-chaos-apps/chaos-akka:0.0.2
+        image: registry.lightbend.com/console-chaos-apps-chaos-akka:0.0.2
         args: ["highProcessingTime"]
         readinessProbe:
           httpGet:

@@ -17,7 +17,7 @@ spec:
       containers:
         # source: https://github.com/lightbend/k8s-explore/tree/master/query/nan
         - name: es-alert-test
-          image: lightbend-docker-registry.bintray.io/enterprise-suite/es-test:v1
+          image: registry.lightbend.com/enterprise-suite-es-test:v1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

@@ -9,7 +9,7 @@ local o = import "operator.libsonnet";
 
   images: [{
     name: "REPLACE_IMAGE",
-    newName: "lightbend-docker-registry.bintray.io/lightbend/console-operator",
+    newName: "registry.lightbend.com/lightbend-console-operator",
     newTag: std.extVar("version"),
   }],
 

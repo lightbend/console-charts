@@ -22,12 +22,12 @@ alpineVersion=$(yq e .alpineVersion "$values")
 busyboxImage=$(yq e .busyboxImage "$values")
 busyboxVersion=$(yq e .busyboxVersion "$values")
 
-bintray=lightbend-docker-commercial-registry.bintray.io
-docker login -u "$LIGHTBEND_COMMERCIAL_USERNAME" -p "$LIGHTBEND_COMMERCIAL_PASSWORD" "$bintray"
-consoleRepo="$bintray/enterprise-suite"
-docker pull "$consoleRepo/es-console:$consoleVersion"
-docker pull "$consoleRepo/console-api:$monitorVersion"
-docker pull "$consoleRepo/es-grafana:$grafanaVersion"
+commercial_registry=commercial-registry.lightbend.com
+docker login -u "$LIGHTBEND_COMMERCIAL_USERNAME" -p "$LIGHTBEND_COMMERCIAL_PASSWORD" "$commercial_registry"
+consoleRepo="$commercial_registry/enterprise-suite"
+docker pull "${consoleRepo}-es-console:$consoleVersion"
+docker pull "${consoleRepo}-console-api:$monitorVersion"
+docker pull "${consoleRepo}-es-grafana:$grafanaVersion"
 docker pull "$promImage:$promVersion"
 docker pull "$configMapReloadImage:$configMapReloadVersion"
 docker pull "$kubeStateMetricsImage:$kubeStateMetricsVersion"
