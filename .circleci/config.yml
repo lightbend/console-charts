@@ -157,7 +157,8 @@ workflows:
   version: 2
   build:
     jobs:
-      - unit_tests
+      - unit_tests:
+          context: docker-commercial-credentials
       - build_operator
 
       # E2E Tests. Don't run on master, as they are too slow and cause excessive queuing. Will run on PRs only.
@@ -176,6 +177,9 @@ workflows:
 
       # Whitesource, release, and deploy happens on a tag only.
       - whitesource:
+          context:
+            - docker-credentials
+            - whitesource-keys
           filters:
             branches:
               ignore: /.*/
@@ -183,6 +187,7 @@ workflows:
               only: /v.*/
 
       - release:
+          context: circleci-api-key
           filters:
             branches:
               ignore: /.*/
@@ -190,6 +195,7 @@ workflows:
               only: /v.*/
 
       - release_operator:
+          context: docker-credentials
           filters:
             branches:
               ignore: /.*/
@@ -205,4 +211,5 @@ workflows:
               only: master
 
     jobs:
-      - release_nightly
+      - release_nightly:
+          context: circleci-api-key
