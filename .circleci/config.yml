@@ -180,7 +180,7 @@ workflows:
       # Whitesource, release, and deploy happens on a tag only.
       - whitesource:
           context:
-            - docker-credentials
+            - docker-commercial-credentials
             - whitesource-keys
           filters:
             branches:
