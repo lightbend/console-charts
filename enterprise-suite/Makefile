@@ -23,10 +23,10 @@ SCRIPTS_DIR := $(HELM_CHARTS_DIR)/scripts
 
 #####
 # Note:  These are tweaked by the hacky enterprise-suite-latest Makefile...
-VERSION ?= $(shell $(SCRIPTS_DIR)/export-chart-version.sh $(CHART))
+VERSION ?= $(shell yq e .version $(CHART_DIR)/Chart.yaml)
 RELEASE = $(CHART)-$(VERSION)
 CHART_DIR = .
-CONSOLE_API_VERSION := $(shell yq r $(CHART_DIR)/values.yaml esMonitorVersion)
+CONSOLE_API_VERSION := $(shell yq e .esMonitorVersion $(CHART_DIR)/values.yaml)
 ALL_YAML ?= all.yaml
 #####
 

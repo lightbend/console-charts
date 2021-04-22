@@ -32,7 +32,7 @@ fi
 echo "=== Releasing $chart"
 cd $chart_dir
 if [ -z "$version" ]; then
-    version_in_chart=$(yq r Chart.yaml version)
+    version_in_chart=$(yq e .version Chart.yaml)
     version_stripped=$(echo $version_in_chart | sed 's/\(.*\)-next/\1/')
     # Strip "-next" suffix if it exists
     if [ "$version_in_chart" != "$version_stripped" ] ; then
@@ -41,7 +41,7 @@ if [ -z "$version" ]; then
 fi
 if [ -n "$version" ]; then
     echo "setting version to $version"
-    yq w -i Chart.yaml version $version
+    new_version=$version yq -i e '.version = env(new_version)' Chart.yaml
     git add Chart.yaml
 fi
 echo "using version: $version"
