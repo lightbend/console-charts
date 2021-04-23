@@ -2,13 +2,11 @@
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-# wait es_services are ready. polling es-prom-server/es-console/es-grafana
-SERVICES=$(minikube service list)
-echo "List of services in minikube:"
-echo "${SERVICES}"
+NS=${NAMESPACE:-lightbend}
 
+# wait es_services are ready. polling es-prom-server/es-console/es-grafana
 CURL='curl --connect-timeout 1 --max-time 1 --output /dev/null --silent'
-ES_CONSOLE_URL=$(echo "$SERVICES" | grep expose-es-console | awk -F "|" '{ print $(NF-1)}')
+ES_CONSOLE_URL=$(minikube service --url expose-es-console -n "$NS")
 echo "ES-Console URL: ${ES_CONSOLE_URL}"
 
 # polling es-prom-server
