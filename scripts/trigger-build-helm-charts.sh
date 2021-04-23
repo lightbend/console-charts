@@ -4,7 +4,7 @@ set -eu
 
 vcs=github
 org=lightbend
-project=console-gui
+project=build-helm-charts
 
 # See details about CircleCI API:
 # https://circleci.com/docs/api/v2/#trigger-a-new-pipeline
