@@ -1,0 +1,5 @@
+esConsoleImage: commercial-registry.lightbend.com/enterprise-suite-es-console
+esMonitorImage: commercial-registry.lightbend.com/enterprise-suite-console-api
+esGrafanaImage: commercial-registry.lightbend.com/enterprise-suite-es-grafana
+imageCredentials:
+  registry: commercial-registry.lightbend.com
