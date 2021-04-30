@@ -33,7 +33,7 @@ spec:
   esConsoleVersion: v1.4.10
   esGrafanaEnvVars: null
   esGrafanaImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite-es-grafana'
-  esGrafanaVersion: v0.5.0
+  esGrafanaVersion: v0.6.0
   esGrafanaVolumeSize: 32Gi
   esMonitorImage: '{{ .Values.imageCredentials.registry }}/enterprise-suite-console-api'
   esMonitorVersion: v1.2.5

@@ -18,7 +18,7 @@ esMonitorVersion: v1.2.5
 
 # commercial-registry.lightbend.com/enterprise-suite-es-grafana
 # Repo: console-grafana
-esGrafanaVersion: v0.5.0
+esGrafanaVersion: v0.6.0
 
 # prom/prometheus
 prometheusVersion: v2.19.3
