@@ -41,6 +41,10 @@ spec:
       securityContext:
         runAsUser: {{ .Values.podUID }}
       {{ end }}
+
+      imagePullSecrets:
+      - name: commercial-credentials
+
       serviceAccountName: prometheus-kube-state-metrics
       containers:
         - name: prometheus-kube-state-metrics
