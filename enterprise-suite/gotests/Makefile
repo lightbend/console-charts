@@ -40,6 +40,7 @@ ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowS
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
+	go mod init tests
 	ginkgo --focus='minikube:.*' $(ginkgo_args)
 
 .PHONY: run-tests-openshift
