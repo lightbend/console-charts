@@ -52,9 +52,9 @@ format:
 
 .PHONY: setup-tools
 setup-tools:
-        git clone https://github.com/udhos/update-golang
-        cd update-golang
-        ./update-golang.sh
+	git clone https://github.com/udhos/update-golang
+	cd update-golang
+	sudo ./update-golang.sh
 	go get -u golang.org/x/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/onsi/ginkgo/ginkgo
