@@ -41,6 +41,7 @@ ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowS
 .PHONY: run-tests-minikube
 run-tests-minikube:
 	go mod init tests
+	go mod tidy
 	go mod vendor
 	ginkgo --focus='minikube:.*' $(ginkgo_args)
 
