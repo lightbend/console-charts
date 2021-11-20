@@ -74,7 +74,7 @@ lint-helm:  ## Run helm lint on chart files
 
 .PHONY: lint-json
 lint-json:  ## Test json files are well-formed
-	find $(CHART_DIR)/console-api $(CHART_DIR)/es-grafana -name '*.json' | xargs -tn 1 jq . >/dev/null
+	find $(CHART_DIR)/console-api -name '*.json' | xargs -tn 1 jq . >/dev/null
 
 .PHONY: lint-promql
 lint-promql:  ## Test promql bits are well-formed

@@ -37,11 +37,16 @@ func Delete() error {
 }
 
 func Ip() (string, error) {
+	println("1")
 	var result strings.Builder
+	println("2")
 	err := util.Cmd("minikube", "ip").
 		CaptureStdout(&result).
 		Run()
+	println("3")
 
 	ip := result.String()
+	println("4")
+	println(ip)
 	return strings.TrimRight(ip, "\n"), err
 }

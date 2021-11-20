@@ -207,12 +207,12 @@ class HelmCommandsTest():
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         self.expect_helm_template()
-        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console'])
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console', '--creds='+self.creds_file])
 
     def test_export_yaml_local_chart(self):
         self.expect_helm_version()
         self.expect_helm_template(chart='chart.tgz')
-        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console', '--local-chart=chart.tgz'])
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console', '--local-chart=chart.tgz', '--creds='+self.creds_file])
 
     def test_export_yaml_creds(self):
         self.expect_helm_version()
@@ -588,7 +588,7 @@ class HelmV332AndAboveCommandsTest(HelmV3CommandsTest, unittest.TestCase):
         expect_cmd(r'helm repo update')
         expect_cmd(r'helm fetch .* es-repo/enterprise-suite')
         self.expect_helm_template()
-        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console'])
+        lbc.main(['install', '--namespace=lightbend', '--skip-checks', '--export-yaml=console', '--creds='+self.creds_file])
 
 
 if __name__ == '__main__':
