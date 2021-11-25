@@ -40,6 +40,9 @@ ginkgo_args := -r -compilers=2 --progress --failFast --randomizeAllSpecs --slowS
 
 .PHONY: run-tests-minikube
 run-tests-minikube:
+	go mod init tests
+	go mod tidy
+	go mod vendor
 	ginkgo --focus='minikube:.*' $(ginkgo_args)
 
 .PHONY: run-tests-openshift
@@ -52,6 +55,8 @@ format:
 
 .PHONY: setup-tools
 setup-tools:
+	git clone https://github.com/udhos/update-golang
+	sudo /home/circleci/go/src/github.com/lightbend/console-charts/enterprise-suite/gotests/update-golang/update-golang.sh
 	go get -u golang.org/x/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/onsi/ginkgo/ginkgo
