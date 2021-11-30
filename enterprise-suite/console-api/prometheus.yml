@@ -66,6 +66,18 @@ scrape_configs:
       - source_labels: [container, __name__]
         regex: POD;container_(network).*
         target_label: container
+      # Azure AKS exports network metrics in a different way.
+      # The container_name is always empty. We must rely on both namespace and pod labels to identify such traffic.
+      - source_labels: [container_name, namespace, kubernetes_pod_name, __name__ ]
+        regex: ;(.+);(.+);container_network.*
+        target_label: container_name
+        action: replace
+        replacement: ${1}-${2}
+      - source_labels: [container, namespace, kubernetes_pod_name, __name__ ]
+        regex: ;(.+);(.+);container_network.*
+        target_label: container
+        action: replace
+        replacement: ${1}-${2}
       # drop all other pause container stats
       - source_labels: [container_name]
         regex: POD
