@@ -2,7 +2,7 @@
 
 set -exu
 
-KUBERNETES_VERSION="v1.15.12"
+KUBERNETES_VERSION="v1.16.0"
 MINIKUBE_VERSION="latest"
 
 # Preflight checks
