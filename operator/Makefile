@@ -16,7 +16,7 @@ build:
 .PHONY: check
 check:
 	git --no-pager diff manifests
-	git diff --summary manifests
+	git diff --summary --exit-code manifests
 
 .PHONY: setup
 setup:
