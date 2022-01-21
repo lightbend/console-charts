@@ -68,8 +68,8 @@ busyboxImage: busybox
 #
 rbacApiVersion: rbac.authorization.k8s.io/v1
 apiGroupVersion: rbac.authorization.k8s.io
-deploymentApiVersion: apps/v1beta2
-daemonSetApiVersion: apps/v1beta2
+deploymentApiVersion: apps/v1
+daemonSetApiVersion: apps/v1
 
 #################################################
 # Resource Settings
