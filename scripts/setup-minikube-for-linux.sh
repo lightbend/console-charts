@@ -25,6 +25,6 @@ touch $HOME/.kube/config
 export KUBECONFIG=$HOME/.kube/config
 # --addons=[]: Enable addons. see `minikube addons list` for a list of valid addon names.
 # --wait=all: wait for and verify all Kubernetes components after starting the cluster.
-sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION} --cpus 2 --memory 2000 --addons=ingress --wait=all
+sudo -E minikube start --vm-driver=none --kubernetes-version ${KUBERNETES_VERSION} --cpus 2 --memory 2000 --addons=ingress --wait=all --force
 sudo chown -R $USER $HOME/.minikube
 sudo chgrp -R $USER $HOME/.minikube
