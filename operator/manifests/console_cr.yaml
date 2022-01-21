@@ -20,10 +20,10 @@ spec:
   consoleUIConfig:
     isMonitorEditEnabled: false
     logo: ""
-  daemonSetApiVersion: apps/v1beta2
+  daemonSetApiVersion: apps/v1
   defaultCPURequest: 100m
   defaultMemoryRequest: 50Mi
-  deploymentApiVersion: apps/v1beta2
+  deploymentApiVersion: apps/v1
   elasticsearchImage: elasticsearch
   elasticsearchMemoryRequest: 510Mi
   elasticsearchVersion: 7.3.2
