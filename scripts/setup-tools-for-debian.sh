@@ -46,3 +46,6 @@ curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${KUB
 
 # semver
 sudo apt install -y node-semver
+
+# for cypress
+sudo apt install libgtk-3-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2
