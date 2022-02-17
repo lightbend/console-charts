@@ -21,7 +21,7 @@ jobs:
 
   backend_e2e_minishift:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202201-02
 
     environment:
       NAMESPACE: console-backend-go-tests
@@ -116,7 +116,7 @@ jobs:
 
   build_operator:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202201-02
 
     steps:
       - checkout
@@ -138,7 +138,7 @@ jobs:
 
   release_operator:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202201-02
 
     steps:
       - checkout
