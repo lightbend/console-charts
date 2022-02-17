@@ -43,7 +43,7 @@ jobs:
 
   frontend_e2e_minishift:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202201-02
 
     steps:
       - checkout
