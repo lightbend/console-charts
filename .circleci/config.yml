@@ -204,14 +204,14 @@ workflows:
             tags:
               only: /v.*/
 
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * * "
-          filters:
-            branches:
-              only: master
-
-    jobs:
-      - release_nightly:
-          context: circleci-api-key
+#  nightly:
+#    triggers:
+#      - schedule:
+#          cron: "0 0 * * * "
+#          filters:
+#            branches:
+#              only: master
+#
+#    jobs:
+#      - release_nightly:
+#          context: circleci-api-key
