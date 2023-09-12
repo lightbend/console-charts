@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/lightbend/console-charts.svg?style=svg)](https://circleci.com/gh/lightbend/console-charts)
+# This product is EOL in favor of using grafana or another monitoring utility directly
 
 # console-charts
 
