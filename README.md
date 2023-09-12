@@ -1,3 +1,7 @@
+# Archived 2023-09-12
+
+See [lightbend/akka-meta #245](https://github.com/lightbend/akka-meta/issues/245)
+
 [![CircleCI](https://circleci.com/gh/lightbend/console-charts.svg?style=svg)](https://circleci.com/gh/lightbend/console-charts)
 
 # console-charts
