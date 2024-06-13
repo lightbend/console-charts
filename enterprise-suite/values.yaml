@@ -86,6 +86,13 @@ imageCredentials:
   username: setme
   password: setme
 
+# Assign pods to nodes
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
 # Comma separated list of alertmanager addresses (can be k8s local DNS service names)
 alertManagers:
 
